@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="update-capability-table" author="Pavel Filippov">
+    <sql>truncate table capability cascade;</sql>
+    <sql>create type capability_action_type as enum ('VIEW', 'CREATE', 'EDIT', 'DELETE', 'MANAGE');</sql>
+    <sql>create type capability_type as enum ('SETTINGS', 'DATA', 'PROCEDURAL');</sql>
+    <addColumn tableName="capability">
+      <column name="action" type="capability_action_type">
+        <constraints nullable="false"/>
+      </column>
+      <column name="type" type="capability_type">
+        <constraints nullable="false"/>
+      </column>
+      <column name="direct_parent_ids" type="jsonb"/>
+      <column name="all_parent_ids" type="jsonb"/>
+    </addColumn>
+    <dropColumn tableName="capability">
+      <column name="scope"/>
+    </dropColumn>
+  </changeSet>
+</databaseChangeLog>

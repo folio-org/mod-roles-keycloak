@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="update capability_set varchar fields to text" author="Oleksandr Oliinyk">
+    <modifyDataType columnName="name" newDataType="text" tableName="capability_set"/>
+    <modifyDataType columnName="description" newDataType="text" tableName="capability_set"/>
+    <modifyDataType columnName="resource" newDataType="text" tableName="capability_set"/>
+  </changeSet>
+
+  <changeSet id="update policy varchar fields to text" author="Oleksandr Oliinyk">
+    <modifyDataType columnName="name" newDataType="text" tableName="policy"/>
+    <modifyDataType columnName="description" newDataType="text" tableName="policy"/>
+  </changeSet>
+
+  <changeSet id="update role varchar fields to text" author="Oleksandr Oliinyk">
+    <modifyDataType columnName="name" newDataType="text" tableName="role"/>
+    <modifyDataType columnName="description" newDataType="text" tableName="role"/>
+  </changeSet>
+</databaseChangeLog>

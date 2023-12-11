@@ -1,0 +1,16 @@
+{
+  "errors": [
+    {
+      "message": "size must be between 1 and 255",
+      "type": "MethodArgumentNotValidException",
+      "code": "validation_error",
+      "parameters": [
+        {
+          "key": "entities",
+          "value": "[]"
+        }
+      ]
+    }
+  ],
+  "total_records": 1
+}

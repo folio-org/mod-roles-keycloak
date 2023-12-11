@@ -1,0 +1,18 @@
+{
+  "roles": [
+    {
+      "id": "1e985e76-e9ca-401c-ad8e-0d121a11111e",
+      "name": "admin role",
+      "description": "Role for admin user",
+      "capabilities": [
+      ]
+    },
+    {
+      "id": "2b44b868-b2a2-4ce0-84a0-73d55beee414",
+      "name": "admin role2",
+      "description": "Role for admin user2",
+      "capabilities": [
+      ]
+    }
+  ]
+}

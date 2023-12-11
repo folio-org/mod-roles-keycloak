@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="create-role-capability table" author="Pavel Filippov">
+    <createTable tableName="role_capability">
+      <column name="role_id" type="UUID"/>
+      <column name="capability_id" type="UUID"/>
+      <column name="created_by" type="UUID"/>
+      <column name="created_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="UUID"/>
+      <column name="updated_date" type="TIMESTAMP"/>
+    </createTable>
+    <addPrimaryKey tableName="role_capability" columnNames="role_id,capability_id"/>
+    <addForeignKeyConstraint
+      baseTableName="role_capability"
+      baseColumnNames="role_id"
+      constraintName="fk_role_capability_role"
+      referencedTableName="role"
+      referencedColumnNames="id"/>
+    <addForeignKeyConstraint
+      baseTableName="role_capability"
+      baseColumnNames="capability_id"
+      constraintName="fk_role_capability_capability"
+      referencedTableName="capability"
+      referencedColumnNames="id" />
+  </changeSet>
+</databaseChangeLog>

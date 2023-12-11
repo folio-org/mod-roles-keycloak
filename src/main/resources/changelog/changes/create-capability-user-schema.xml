@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="create-capability-user-tables" author="ooliinyk">
+    <createTable tableName="capability_user">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="UUID">
+        <constraints unique="true" nullable="false"/>
+      </column>
+      <column name="created_by" type="UUID"/>
+      <column name="created_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="UUID"/>
+      <column name="updated_date" type="TIMESTAMP"/>
+    </createTable>
+
+    <createTable tableName="capability_user_mapping">
+      <column name="capability_id" type="UUID"/>
+      <column name="capability_user_id" type="UUID"/>
+    </createTable>
+
+    <addForeignKeyConstraint
+      baseTableName="capability_user_mapping"
+      baseColumnNames="capability_id"
+      constraintName="fk_capability_user_mapping_capability_id"
+      onDelete="CASCADE"
+      onUpdate="RESTRICT"
+      referencedTableName="capability"
+      referencedColumnNames="id"/>
+    <addForeignKeyConstraint
+      baseTableName="capability_user_mapping"
+      baseColumnNames="capability_user_id"
+      constraintName="fk_capability_user_mapping_capability_user_id"
+      onDelete="CASCADE"
+      onUpdate="RESTRICT"
+      referencedTableName="capability_user"
+      referencedColumnNames="id"/>
+  </changeSet>
+</databaseChangeLog>

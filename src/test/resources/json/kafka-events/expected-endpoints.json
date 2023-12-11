@@ -1,0 +1,21 @@
+{
+  "endpoints": [
+    {
+      "path": "/foo/{id}",
+      "method": "GET"
+    },
+    {
+      "path": "/foo/{id}",
+      "method": "PUT"
+    },
+    {
+      "path": "/foo/{id}",
+      "method": "PATCH"
+    },
+    {
+      "path": "/foo",
+      "method": "POST"
+    }
+  ],
+  "totalRecords": 4
+}

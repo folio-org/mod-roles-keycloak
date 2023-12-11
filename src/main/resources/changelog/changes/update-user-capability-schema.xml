@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="update user-capability tables" author="Pavel Filippov">
+    <dropTable tableName="capability_user_mapping" cascadeConstraints="true"/>
+
+    <sql>TRUNCATE TABLE capability_user CASCADE;</sql>
+    <renameTable oldTableName="capability_user" newTableName="user_capability"/>
+    <dropPrimaryKey tableName="user_capability"/>
+    <dropColumn tableName="user_capability" columnName="id"/>
+
+    <addColumn tableName="user_capability">
+      <column name="capability_id" type="uuid"/>
+    </addColumn>
+
+    <addPrimaryKey
+      tableName="user_capability"
+      columnNames="user_id,capability_id"
+      constraintName="pk_user_capability"/>
+
+    <addForeignKeyConstraint
+      baseTableName="user_capability"
+      baseColumnNames="capability_id"
+      constraintName="fk_user_capability_capability"
+      referencedTableName="capability"
+      referencedColumnNames="id"/>
+
+    <dropUniqueConstraint
+      tableName="user_capability"
+      uniqueColumns="user_id"
+      constraintName="capability_user_user_id_key"/>
+  </changeSet>
+</databaseChangeLog>

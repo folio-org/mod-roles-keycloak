@@ -1,0 +1,19 @@
+{
+  "name": "time-based-policy",
+  "description": "policy description in free form",
+  "type": "TIME",
+  "timePolicy": {
+    "repeat": false,
+    "start": "2022-10-01T12:00:00Z",
+    "expires": "2022-10-01T13:00:00Z",
+    "dayOfMonthStart": 15,
+    "dayOfMonthEnd": 20,
+    "monthStart": 10,
+    "monthEnd": 12,
+    "hourStart": 8,
+    "hourEnd": 17,
+    "minuteStart": 0,
+    "minuteEnd": 30,
+    "logic": "POSITIVE"
+  }
+}

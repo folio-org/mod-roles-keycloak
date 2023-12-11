@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "User Capability Set Schema",
+  "description": "User Capability Set",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "description": "User identifier as UUID",
+      "type": "string",
+      "format": "uuid"
+    },
+    "capabilitySetId": {
+      "description": "Capability Set identifier as UUID",
+      "type": "string",
+      "format": "uuid"
+    },
+    "metadata": {
+      "$ref": "../../common/metadata.json"
+    }
+  },
+  "required": [ "userId", "capabilityId" ]
+}

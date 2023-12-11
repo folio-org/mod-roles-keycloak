@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+  <changeSet id="drop-old-parent-ids-columns" author="dmtkachenko">
+    <dropColumn tableName="capability">
+      <column name="direct_parent_ids"/>
+      <column name="all_parent_ids"/>
+    </dropColumn>
+  </changeSet>
+
+  <changeSet id="add-new-parent-ids-columns" author="dmtkachenko">
+    <addColumn tableName="capability">
+      <column name="direct_parent_ids" type="uuid[]"/>
+      <column name="all_parent_ids" type="uuid[]"/>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="add-index-on-parent-ids" author="dmtkachenko">
+    <createIndex tableName="capability" indexName="idx_cap_direct_parent_ids">
+      <column name="direct_parent_ids"/>
+    </createIndex>
+
+    <createIndex tableName="capability" indexName="idx_cap_all_parent_ids">
+      <column name="all_parent_ids"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>

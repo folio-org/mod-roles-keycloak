@@ -1,0 +1,216 @@
+package org.folio.roles.integration.kafka;
+
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
+import static org.apache.commons.lang3.StringUtils.uncapitalize;
+import static org.folio.common.utils.CollectionUtils.toStream;
+import static org.folio.roles.integration.kafka.CapabilityConverterUtils.getRawCapability;
+import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.function.Function;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.tuple.Pair;
+import org.folio.roles.domain.dto.Capability;
+import org.folio.roles.domain.dto.Endpoint;
+import org.folio.roles.domain.dto.HttpMethod;
+import org.folio.roles.integration.kafka.model.CapabilityEvent;
+import org.folio.roles.integration.kafka.model.CapabilityResultHolder;
+import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
+import org.folio.roles.integration.kafka.model.FolioResource;
+import org.folio.roles.integration.kafka.model.ModuleType;
+import org.folio.roles.integration.kafka.model.Permission;
+import org.folio.roles.service.permission.FolioPermissionService;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+
+@Log4j2
+@Service
+@RequiredArgsConstructor
+public class CapabilityEventProcessor {
+
+  private final FolioPermissionService folioPermissionService;
+
+  /**
+   * Creates a {@link CapabilityResultHolder} with {@link Capability} and {@link CapabilitySetDescriptor} values.
+   *
+   * @param event - {@link CapabilityEvent} object to process
+   * @return {@link CapabilityResultHolder} with created {@link Capability} and {@link CapabilitySetDescriptor} objects
+   */
+  public CapabilityResultHolder process(CapabilityEvent event) {
+    var folioResources = event.getResources();
+    if (isEmpty(folioResources)) {
+      return new CapabilityResultHolder(emptyList(), emptyList());
+    }
+
+    return event.getModuleType() == ModuleType.MODULE
+      ? processModuleResources(event, folioResources)
+      : processUiModuleResources(event, folioResources);
+  }
+
+  private CapabilityResultHolder processModuleResources(CapabilityEvent event, List<FolioResource> resources) {
+    var grouped = groupByHavingSubPermissions(resources);
+    var capabilities = mapItems(grouped.get(FALSE), res -> createCapability(event, res));
+    var capabilitySetDescriptors = mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res));
+    return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
+  }
+
+  private CapabilityResultHolder processUiModuleResources(CapabilityEvent event, List<FolioResource> resources) {
+    var grouped = groupByHavingSubPermissions(resources);
+    var capabilities = mapItems(resources, res -> createCapability(event, res));
+    var capabilitySetDescriptors = mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res));
+    return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
+  }
+
+  private static Optional<Capability> createCapability(CapabilityEvent event, FolioResource resource) {
+    var folioPermission = resource.getPermission().getPermissionName();
+    return Optional.of(getRawCapability(folioPermission))
+      .filter(CapabilityConverterUtils::hasRequiredFields)
+      .map(raw -> createCapability(event, resource, raw));
+  }
+
+  private static Capability createCapability(CapabilityEvent event, FolioResource resource, Capability rawCapability) {
+    var permission = resource.getPermission();
+    return new Capability()
+      .name(getCapabilityName(rawCapability))
+      .action(rawCapability.getAction())
+      .resource(rawCapability.getResource())
+      .type(rawCapability.getType())
+      .description(permission.getDescription())
+      .permission(permission.getPermissionName())
+      .applicationId(event.getApplicationId())
+      .endpoints(emptyIfNull(resource.getEndpoints()));
+  }
+
+  private Optional<CapabilitySetDescriptor> createCapabilitySetDescriptor(
+    CapabilityEvent event, FolioResource resource) {
+    var folioPermission = resource.getPermission().getPermissionName();
+    return Optional.of(getRawCapability(folioPermission))
+      .filter(CapabilityConverterUtils::hasRequiredFields)
+      .map(raw -> createCapabilitySetDescriptor(event, resource, raw));
+  }
+
+  private CapabilitySetDescriptor createCapabilitySetDescriptor(
+    CapabilityEvent event, FolioResource res, Capability rawCapability) {
+    var permission = res.getPermission();
+    var subPermissions = permission.getSubPermissions();
+    var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
+
+    var capabilities = subPermissionsExpanded.stream()
+      .map(Permission::getPermissionName)
+      .map(CapabilityConverterUtils::getRawCapability)
+      .filter(CapabilityConverterUtils::hasRequiredFields)
+      .collect(groupingBy(Capability::getResource, TreeMap::new, mapping(Capability::getAction, toList())));
+
+    return new CapabilitySetDescriptor()
+      .name(getCapabilityName(rawCapability))
+      .type(rawCapability.getType())
+      .action(rawCapability.getAction())
+      .resource(rawCapability.getResource())
+      .description(permission.getDescription())
+      .applicationId(event.getApplicationId())
+      .capabilities(capabilities);
+  }
+
+  private static Map<Boolean, List<FolioResource>> groupByHavingSubPermissions(List<FolioResource> folioResources) {
+    return folioResources.stream().collect(groupingBy(CapabilityEventProcessor::hasSubPermissions));
+  }
+
+  private static boolean hasSubPermissions(FolioResource resource) {
+    return isNotEmpty(resource.getPermission().getSubPermissions());
+  }
+
+  private static <T, R> List<R> mapItems(Collection<T> nullableCollection, Function<T, Optional<R>> mapper) {
+    return toStream(nullableCollection)
+      .map(mapper)
+      .flatMap(Optional::stream)
+      .collect(toList());
+  }
+
+  private static <T, V> List<T> cleanDuplicates(List<T> collection, Function<T, V> identifiersMapper) {
+    var resultList = new ArrayList<T>();
+    var visitedIdentifiers = new HashMap<V, Pair<T, Integer>>();
+    for (int i = 0; i < collection.size(); i++) {
+      T element = collection.get(i);
+      var identifier = identifiersMapper.apply(element);
+      var foundElementPair = visitedIdentifiers.get(identifier);
+      if (foundElementPair != null) {
+        var mergeResult = mergeCapabilities(element, foundElementPair.getLeft());
+        if (mergeResult.isEmpty()) {
+          var elementName = element.getClass().getSimpleName();
+          log.info("Duplicated {} name found: resource = {}", uncapitalize(elementName), identifier);
+          continue;
+        }
+
+        resultList.set(foundElementPair.getRight(), mergeResult.get());
+        continue;
+      }
+
+      resultList.add(element);
+      visitedIdentifiers.put(identifier, Pair.of(element, i));
+    }
+
+    return resultList;
+  }
+
+  private static <T> Optional<T> mergeCapabilities(T object, T foundElement) {
+    if (!(object instanceof Capability capability)) {
+      return Optional.empty();
+    }
+
+    var endpoints = capability.getEndpoints();
+    var foundCapability = (Capability) foundElement;
+    var foundEndpoints = foundCapability.getEndpoints();
+    if (endpoints.size() != 1 || foundEndpoints.size() != 1) {
+      return Optional.empty();
+    }
+
+    var endpoint = endpoints.get(0);
+    var foundEndpoint = foundEndpoints.get(0);
+    if (isNotPossibleToMerge(endpoint, foundEndpoint)) {
+      return Optional.empty();
+    }
+
+    var resultCapability = new Capability();
+    BeanUtils.copyProperties(foundCapability, resultCapability);
+    var permission = capability.getPermission();
+    var permissionName = permission.endsWith(".put") ? permission : foundCapability.getPermission();
+    //noinspection unchecked
+    return Optional.of((T) resultCapability
+      .endpoints(List.of(foundEndpoint, endpoint))
+      .permission(permissionName));
+  }
+
+  private static boolean isNotPossibleToMerge(Endpoint endpoint, Endpoint foundEndpoint) {
+    var path = endpoint.getPath();
+    var foundPath = foundEndpoint.getPath();
+    return !(Objects.equals(path, foundPath) && hasEditHttpMethod(endpoint) && hasEditHttpMethod(foundEndpoint));
+  }
+
+  private static boolean hasEditHttpMethod(Endpoint endpoint) {
+    var method = endpoint.getMethod();
+    return method == HttpMethod.PUT || method == HttpMethod.PATCH;
+  }
+
+  private static CapabilityResultHolder toCapabilityResultHolder(List<Capability> capabilities,
+    List<CapabilitySetDescriptor> capabilitySetDescriptors) {
+    var distinctCapabilities = cleanDuplicates(capabilities, Capability::getName);
+    var distinctCapabilitySetDescriptors = cleanDuplicates(capabilitySetDescriptors, CapabilitySetDescriptor::getName);
+    return new CapabilityResultHolder(distinctCapabilities, distinctCapabilitySetDescriptors);
+  }
+}

@@ -1,0 +1,156 @@
+package org.folio.roles.service.capability;
+
+import static java.lang.Integer.MAX_VALUE;
+import static java.util.Collections.emptyList;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.folio.common.utils.CollectionUtils.mapItems;
+import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
+
+import jakarta.persistence.EntityExistsException;
+import jakarta.persistence.EntityNotFoundException;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import org.folio.roles.domain.dto.RoleCapability;
+import org.folio.roles.domain.dto.UserCapabilities;
+import org.folio.roles.domain.entity.RoleCapabilityEntity;
+import org.folio.roles.domain.model.PageResult;
+import org.folio.roles.mapper.entity.RoleCapabilityEntityMapper;
+import org.folio.roles.repository.RoleCapabilityRepository;
+import org.folio.roles.service.permission.RolePermissionService;
+import org.folio.roles.service.role.RoleService;
+import org.folio.roles.utils.CapabilityUtils;
+import org.folio.roles.utils.CollectionUtils;
+import org.folio.roles.utils.UpdateOperationHelper;
+import org.folio.spring.data.OffsetRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Log4j2
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class RoleCapabilityService {
+
+  private final RoleService roleService;
+  private final CapabilityService capabilityService;
+  private final CapabilitySetService capabilitySetService;
+  private final RolePermissionService rolePermissionService;
+  private final RoleCapabilityRepository roleCapabilityRepository;
+  private final CapabilityEndpointService capabilityEndpointService;
+  private final RoleCapabilityEntityMapper roleCapabilityEntityMapper;
+
+  /**
+   * Creates a record(s) associating one or more capabilities with the role.
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
+   * @return {@link UserCapabilities} object with created role-capability relations
+   */
+  @Transactional
+  public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds) {
+    if (isEmpty(capabilityIds)) {
+      throw new IllegalArgumentException("Capability id list is empty");
+    }
+
+    roleService.getById(roleId);
+    var existingEntities = roleCapabilityRepository.findRoleCapabilities(roleId, capabilityIds);
+    var existingCapabilitySetIds = getCapabilityIds(existingEntities);
+    if (isNotEmpty(existingCapabilitySetIds)) {
+      throw new EntityExistsException(String.format(
+        "Relation already exists for role='%s' and capabilities=%s", roleId, existingCapabilitySetIds));
+    }
+
+    return assignCapabilities(roleId, capabilityIds, emptyList());
+  }
+
+  /**
+   * Retrieves role-capability items by CQL query.
+   *
+   * @param query - CQL query as {@link String} object
+   * @param limit - a number of results in response
+   * @param offset - offset in pagination from first record.
+   * @return {@link PageResult} object with found {@link RoleCapability} relation descriptors.
+   */
+  @Transactional(readOnly = true)
+  public PageResult<RoleCapability> find(String query, Integer limit, Integer offset) {
+    var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_ROLE_CAPABILITY_SORT);
+    var entities = roleCapabilityRepository.findByQuery(query, offsetRequest);
+    var roleCapabilities = entities.map(roleCapabilityEntityMapper::convert);
+    return PageResult.fromPage(roleCapabilities);
+  }
+
+  /**
+   * Updates role-capability relations.
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param capabilityIds - list of capabilities that must be assigned to a role
+   */
+  @Transactional
+  public void update(UUID roleId, List<UUID> capabilityIds) {
+    roleService.getById(roleId);
+    var assignedRoleCapabilityEntities = roleCapabilityRepository.findAllByRoleId(roleId);
+    var assignedCapabilityIds = getCapabilityIds(assignedRoleCapabilityEntities);
+    UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "role-capability")
+      .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(roleId, newIds, assignedCapabilityIds)))
+      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+  }
+
+  /**
+   * Removes role-capability relations by role identifier.
+   *
+   * @param roleId - role identifier as {@link UUID}
+   * @throws EntityNotFoundException if role is not found by id or there is no assigned values
+   */
+  @Transactional
+  public void deleteAll(UUID roleId) {
+    roleService.getById(roleId);
+    var roleCapabilityEntities = roleCapabilityRepository.findAllByRoleId(roleId);
+    if (isEmpty(roleCapabilityEntities)) {
+      throw new EntityNotFoundException("Relations between role and capabilities are not found for role: " + roleId);
+    }
+
+    removeCapabilities(roleId, getCapabilityIds(roleCapabilityEntities), emptyList());
+  }
+
+  private PageResult<RoleCapability> assignCapabilities(UUID roleId, List<UUID> newIds, Collection<UUID> assignedIds) {
+    log.debug("Assigning capabilities to role: roleId = {}, capabilityIds = {}", roleId, newIds);
+    capabilityService.checkIds(newIds);
+
+    var entities = mapItems(newIds, id -> new RoleCapabilityEntity(roleId, id));
+    var assignedCapabilityIds = CollectionUtils.union(assignedIds, getCapabilitySetCapabilityIds(roleId));
+    var endpoints = capabilityEndpointService.getByCapabilityIds(newIds, assignedCapabilityIds);
+    rolePermissionService.createPermissions(roleId, endpoints);
+
+    var resultEntities = roleCapabilityRepository.saveAll(entities);
+    var createdRoleCapabilities = mapItems(resultEntities, roleCapabilityEntityMapper::convert);
+    log.info("Capabilities are assigned to role: roleId = {}, capabilityIds = {}", roleId, newIds);
+
+    return PageResult.of(createdRoleCapabilities.size(), createdRoleCapabilities);
+  }
+
+  private void removeCapabilities(UUID roleId, List<UUID> deprecatedIds, Collection<UUID> assignedIds) {
+    log.debug("Revoking capabilities from role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
+    var assignedCapabilityIds = CollectionUtils.union(assignedIds, getCapabilitySetCapabilityIds(roleId));
+    var endpoints = capabilityEndpointService.getByCapabilityIds(deprecatedIds, assignedCapabilityIds);
+    rolePermissionService.deletePermissions(roleId, endpoints);
+    roleCapabilityRepository.deleteRoleCapabilities(roleId, deprecatedIds);
+    log.info("Capabilities are revoked to role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
+  }
+
+  private static List<UUID> getCapabilityIds(List<RoleCapabilityEntity> roleCapabilityEntities) {
+    return mapItems(roleCapabilityEntities, RoleCapabilityEntity::getCapabilityId);
+  }
+
+  private static List<UUID> getCapabilityIds(PageResult<RoleCapability> roleCapabilities) {
+    return mapItems(roleCapabilities.getRecords(), RoleCapability::getCapabilityId);
+  }
+
+  public List<UUID> getCapabilitySetCapabilityIds(UUID roleId) {
+    var capabilitySets = capabilitySetService.findByRoleId(roleId, MAX_VALUE, 0);
+    return CapabilityUtils.getCapabilityIds(capabilitySets);
+  }
+}

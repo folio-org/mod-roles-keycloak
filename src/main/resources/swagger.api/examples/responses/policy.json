@@ -1,0 +1,13 @@
+{
+  "id": "11fda6ae-2ba3-49c1-87be-abeb989c111f",
+  "name": "user-based-policy",
+  "description": "policy description in free form",
+  "type": "USER",
+  "userPolicy": {
+    "users": [
+      "07fda6ae-2ba3-49c1-87be-abeb989c545f",
+      "8e7a85b5-3ffb-4ca4-85cb-aa8614a03459"
+    ],
+    "logic": "POSITIVE"
+  }
+}

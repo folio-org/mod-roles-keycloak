@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="create folio permission table" author="Pavel Filippov">
+    <createTable tableName="permission">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" primaryKeyName="pk_permission"/>
+      </column>
+      <column name="name" type="text"/>
+      <column name="display_name" type="text"/>
+      <column name="description" type="text"/>
+      <column name="visible" type="boolean"/>
+      <column name="replaces" type="text[]"/>
+      <column name="sub_permissions" type="text[]"/>
+    </createTable>
+  </changeSet>
+</databaseChangeLog>

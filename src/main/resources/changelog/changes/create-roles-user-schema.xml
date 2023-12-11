@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet id="create-roles-user-tables" author="yauhen-vavilkin">
+        <createTable tableName="roles_user">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="created_by" type="UUID"/>
+            <column name="created_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="UUID"/>
+            <column name="updated_date" type="TIMESTAMP"/>
+        </createTable>
+        <createTable tableName="user_role">
+            <column name="user_id" type="UUID"/>
+            <column name="role_id" type="UUID"/>
+        </createTable>
+        <createIndex indexName="idx_user_id" tableName="roles_user">
+            <column name="user_id"/>
+        </createIndex>
+        <addForeignKeyConstraint
+                baseTableName="user_role"
+                baseColumnNames="user_id"
+                constraintName="fk_user_users_roles"
+                onDelete="RESTRICT"
+                onUpdate="RESTRICT"
+                referencedTableName="roles_user"
+                referencedColumnNames="id"/>
+        <addForeignKeyConstraint
+                baseTableName="user_role"
+                baseColumnNames="role_id"
+                constraintName="fk_role_users_roles"
+                onDelete="RESTRICT"
+                onUpdate="RESTRICT"
+                referencedTableName="role"
+                referencedColumnNames="id"/>
+    </changeSet>
+</databaseChangeLog>

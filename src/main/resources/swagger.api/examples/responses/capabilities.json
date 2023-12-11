@@ -1,0 +1,25 @@
+{
+  "capabilities": [
+    {
+      "id": "8d2da27c-1d56-48b6-958d-2bfae6d79dc8",
+      "name": "foo_item.create",
+      "description": "Sample: Create foo item",
+      "resource": "Foo Item",
+      "action": "create",
+      "type": "data",
+      "permissions": "foo.item.post",
+      "applicationId": "foo-application-1.0.0",
+      "endpoints": [
+        {
+          "path": "/foo/items",
+          "method": "POST"
+        }
+      ],
+      "metadata": {
+        "createdBy": "f34f76d3-e727-42b5-a409-0ff906edf54e",
+        "createdDate": "2023-06-29T01:57:49.148+00:00"
+      }
+    }
+  ],
+  "totalRecords": 1
+}

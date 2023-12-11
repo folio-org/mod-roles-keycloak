@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "userRole.json",
+  "title": "User-Role Relation Model Schema",
+  "description": "User-role relation model",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "ID of the user"
+    },
+    "roleId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Role identifier"
+    },
+    "metadata": {
+      "$ref": "../common/metadata.json"
+    }
+  },
+  "required": [ "userId", "roleId" ]
+}

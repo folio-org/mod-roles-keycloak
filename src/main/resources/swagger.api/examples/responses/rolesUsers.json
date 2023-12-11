@@ -1,0 +1,39 @@
+{
+  "rolesUsers": [
+    {
+      "id": "3bd546eb-54dd-4fdb-bfdd-51c69292753f",
+      "userId": "61893f40-4739-49fc-bf07-daeff3021f90",
+      "roles": [
+        {
+          "id": "5f2492dd-adcd-445b-9118-bcfa9b406c95",
+          "name": "let-it-be-role-112"
+        }
+      ],
+      "metadata": {
+        "createdDate": "2023-02-11T11:59:14.461+00:00",
+        "createdBy": "00000000-0000-0000-1111-000000000000",
+        "modifiedDate": "2023-02-11T12:04:43.390+00:00",
+        "modifiedBy": "00000000-0000-0000-1111-000000000000"
+      }
+    },
+    {
+      "id": "7b2c1fdf-523a-45fc-a0dc-09a05b8b7f8c",
+      "userId": "52a33f33-0b84-466b-96ba-5a494e46ef7c",
+      "roles": [
+        {
+          "id": "9d6fd16f-5968-493c-99b4-a9dbb445d2a5",
+          "name": "let-it-be-role-981"
+        },
+        {
+          "id": "9692e85d-36f8-4aa4-a064-2b1cd605a32d",
+          "name": "let-it-be-role-101"
+        }
+      ],
+      "metadata": {
+        "createdDate": "2023-02-11T12:03:57.694+00:00",
+        "createdBy": "00000000-0000-0000-1111-000000000000"
+      }
+    }
+  ],
+  "totalRecords": 2
+}

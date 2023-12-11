@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="create folio permission table" author="Pavel Filippov">
+    <createTable tableName="permission">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" primaryKeyName="pk_permission"/>
+      </column>
+      <column name="name" type="text"/>
+      <column name="display_name" type="text"/>
+      <column name="description" type="text"/>
+      <column name="visible" type="boolean"/>
+      <column name="replaces" type="text[]"/>
+      <column name="sub_permissions" type="text[]"/>
+    </createTable>
+
+    <createIndex tableName="permission" indexName="idx_permission_sub_permissions">
+      <column name="sub_permissions"/>
+    </createIndex>
+
+    <addUniqueConstraint
+      tableName="permission"
+      columnNames="name"
+      constraintName="uq_permission_name"/>
+
+    <createIndex tableName="permission" indexName="idx_permission_name">
+      <column name="name"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="create endpoint table" author="Pavel Filippov">
+    <sql>create type http_method as enum ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'TRACE');</sql>
+    <createTable tableName="endpoint">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" primaryKeyName="pk_endpoint"/>
+      </column>
+      <column name="path" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="method" type="http_method">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <addUniqueConstraint
+      tableName="endpoint"
+      columnNames="path,method"
+      constraintName="uq_endpoint_path_method"/>
+  </changeSet>
+
+  <changeSet id="create permission to endpoint link table" author="Pavel Filippov">
+    <createTable tableName="permission_endpoint">
+      <column name="permission_id" type="uuid"/>
+      <column name="endpoint_id" type="uuid"/>
+    </createTable>
+
+    <addPrimaryKey
+      tableName="permission_endpoint"
+      columnNames="permission_id,endpoint_id"/>
+
+    <addForeignKeyConstraint
+      baseTableName="permission_endpoint"
+      baseColumnNames="permission_id"
+      constraintName="fk_permission_endpoint_permission_id"
+      referencedTableName="permission"
+      referencedColumnNames="id"/>
+
+    <addForeignKeyConstraint
+      baseTableName="permission_endpoint"
+      baseColumnNames="endpoint_id"
+      constraintName="fk_permission_endpoint_endpoint_id"
+      referencedTableName="endpoint"
+      referencedColumnNames="id"/>
+  </changeSet>
+</databaseChangeLog>

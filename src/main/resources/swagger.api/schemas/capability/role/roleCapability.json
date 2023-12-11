@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Role-Capability Relation Schema",
+  "description": "Role-Capability Relation Schema",
+  "type": "object",
+  "properties": {
+    "roleId": {
+      "description": "Role identifier as UUID",
+      "type": "string",
+      "format": "uuid"
+    },
+    "capabilityId": {
+      "description": "Capability identifier as UUID",
+      "type": "string",
+      "format": "uuid"
+    },
+    "metadata": {
+      "$ref": "../../common/metadata.json"
+    }
+  }
+}

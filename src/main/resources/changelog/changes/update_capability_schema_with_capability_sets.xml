@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="rename capability to capability_set" author="Pavel Filippov">
+    <renameTable oldTableName="capability" newTableName="capability_set"/>
+    <sql>ALTER INDEX capability_pkey RENAME TO pk_capability_set</sql>
+    <dropColumn tableName="capability_set" columnName="all_parent_ids"/>
+    <dropColumn tableName="capability_set" columnName="direct_parent_ids"/>
+  </changeSet>
+
+  <changeSet id="add capability table" author="Pavel Filippov">
+    <sql>ALTER TYPE capability_action_type RENAME TO capability_action</sql>
+    <createTable tableName="capability">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" primaryKeyName="pk_capability" nullable="false"/>
+      </column>
+      <column name="name" type="text">
+        <constraints unique="true"/>
+      </column>
+      <column name="description" type="text"/>
+      <column name="resource" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="action" type="capability_action">
+        <constraints nullable="false"/>
+      </column>
+      <column name="type" type="capability_type">
+        <constraints nullable="false"/>
+      </column>
+      <column name="application_id" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="folio_permission" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="uuid"/>
+      <column name="created_date" type="timestamp" defaultValueComputed="current_timestamp">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="uuid"/>
+      <column name="updated_date" type="timestamp"/>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="add capability_endpoint table" author="Pavel Filippov">
+    <createTable tableName="capability_endpoint">
+      <column name="capability_id" type="uuid">
+        <constraints
+          nullable="false"
+          foreignKeyName="fk_capability_endpoint_capability_id"
+          references="capability(id)"/>
+      </column>
+      <column name="path" type="text">
+        <constraints nullable="false"/>
+      </column>
+      <column name="method" type="http_method">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <addUniqueConstraint
+      constraintName="uq_capability_endpoint_capability_id_path_method"
+      tableName="capability_endpoint"
+      columnNames="capability_id,path,method"/>
+
+    <createIndex tableName="capability_endpoint" indexName="idx_capability_endpoint_capability_id">
+      <column name="capability_id"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="add capability_set_capability reference table" author="Pavel Filippov">
+    <createTable tableName="capability_set_capability">
+      <column name="capability_set_id" type="uuid">
+        <constraints
+          nullable="false"
+          foreignKeyName="fk_csc_capability_set_id"
+          references="capability_set(id)"/>
+      </column>
+      <column name="capability_id" type="uuid">
+        <constraints
+          nullable="false"
+          foreignKeyName="fk_csc_capability_id"
+          references="capability(id)"/>
+      </column>
+    </createTable>
+
+    <addPrimaryKey
+      tableName="capability_set_capability"
+      columnNames="capability_set_id,capability_id"
+      constraintName="pk_capability_set_capability"/>
+  </changeSet>
+
+  <changeSet id="Rename user_capability to user_capability_set" author="Pavel Filippov">
+    <renameTable oldTableName="user_capability" newTableName="user_capability_set"/>
+
+    <renameColumn
+      tableName="user_capability_set"
+      oldColumnName="capability_id"
+      newColumnName="capability_set_id"/>
+
+    <sql>
+      ALTER TABLE user_capability_set
+        RENAME CONSTRAINT fk_user_capability_capability
+        TO fk_user_capability_set_capability_set_id;
+      ALTER
+      INDEX pk_user_capability RENAME TO pk_user_capability_set;
+    </sql>
+  </changeSet>
+
+  <changeSet id="Rename role_capability to role_capability_set" author="Pavel Filippov">
+    <renameTable oldTableName="role_capability" newTableName="role_capability_set"/>
+
+    <renameColumn
+      tableName="role_capability_set"
+      oldColumnName="capability_id"
+      newColumnName="capability_set_id"/>
+
+    <sql>
+      ALTER TABLE role_capability_set
+        RENAME CONSTRAINT fk_role_capability_capability
+        TO fk_role_capability_set_capability_set_id;
+      ALTER
+      INDEX role_capability_pkey RENAME TO pk_role_capability_set;
+    </sql>
+  </changeSet>
+
+  <changeSet id="create role_capability_table" author="Pavel Filippov">
+    <createTable tableName="role_capability">
+      <column name="role_id" type="uuid">
+        <constraints nullable="false" foreignKeyName="fk_role_capability_role_id" references="role(id)"/>
+      </column>
+      <column name="capability_id" type="uuid">
+        <constraints
+          nullable="false"
+          foreignKeyName="fk_role_capability_capability_id"
+          references="capability(id)"/>
+      </column>
+      <column name="created_by" type="uuid"/>
+      <column name="created_date" type="timestamp" defaultValueComputed="current_timestamp">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="uuid"/>
+      <column name="updated_date" type="timestamp"/>
+    </createTable>
+
+    <addPrimaryKey
+      tableName="role_capability"
+      constraintName="pk_role_capability"
+      columnNames="role_id,capability_id"/>
+  </changeSet>
+
+  <changeSet id="create user_capability_table" author="Pavel Filippov">
+    <createTable tableName="user_capability">
+      <column name="user_id" type="uuid"/>
+      <column name="capability_id" type="uuid">
+        <constraints
+          nullable="false"
+          foreignKeyName="fk_user_capability_capability_id"
+          references="capability(id)"/>
+      </column>
+      <column name="created_by" type="uuid"/>
+      <column name="created_date" type="timestamp" defaultValueComputed="current_timestamp">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="uuid"/>
+      <column name="updated_date" type="timestamp"/>
+    </createTable>
+
+    <addPrimaryKey
+      tableName="user_capability"
+      constraintName="pk_user_capability"
+      columnNames="user_id,capability_id"/>
+  </changeSet>
+
+  <changeSet id="drop deprecated tables" author="Pavel Filippov">
+    <dropTable tableName="capability_permissions"/>
+    <dropTable tableName="permission_endpoint"/>
+    <dropTable tableName="endpoint"/>
+    <dropTable tableName="permission"/>
+  </changeSet>
+</databaseChangeLog>

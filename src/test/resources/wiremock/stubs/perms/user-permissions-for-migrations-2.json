@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/perms/users/7f7bfe5a-bbcd-40c0-bb65-a74294fef178/permissions",
+    "headers": {
+      "x-okapi-tenant": {
+        "equalTo": "test"
+      }
+    },
+    "queryParameters": {
+      "indexField": {
+        "equalTo": "userId"
+      },
+      "expanded": {
+        "equalTo": "true"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "permissionNames": [
+        "perms.users.assign.immutable",
+        "users.migrate.post",
+        "users.item.get"
+      ],
+      "totalRecords": 3
+    }
+  }
+}

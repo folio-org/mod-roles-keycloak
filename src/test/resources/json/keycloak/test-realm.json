@@ -1,0 +1,7 @@
+{
+  "realm": "test",
+  "enabled": true,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": true
+}

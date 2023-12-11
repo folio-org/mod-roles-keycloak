@@ -1,0 +1,22 @@
+{
+  "totalRecords": 3,
+  "permisssions": [
+    {
+      "permissionName": "foo.item.post",
+      "displayName": "foo.item.post display name",
+      "description": "foo.item.post description"
+    },
+    {
+      "permissionName": "foo.item.all",
+      "displayName": "foo.item.all display name",
+      "description": "foo.item.all description",
+      "subPermissions": [ "foo.item.get", "foo.item.post", "foo.item.put", "foo.item.all-methods" ]
+    },
+    {
+      "permissionName": "foo.item.all.new",
+      "replaces": [ "foo.item.all" ],
+      "displayName": "foo.item.all.new display name",
+      "description": "foo.item.all.new description"
+    }
+  ]
+}

@@ -1,0 +1,209 @@
+{
+  "realm": "test",
+  "enabled": true,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": true,
+  "clients": [
+    {
+      "id": "00000000-0000-0000-0000-000000000010",
+      "clientId": "test-login-application",
+      "description": "Client for login operations",
+      "rootUrl": "",
+      "adminUrl": "",
+      "baseUrl": "",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "kc-client-password",
+      "redirectUris": [
+        "/*"
+      ],
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": true,
+      "publicClient": false,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "oidc.ciba.grant.enabled": "false",
+        "backchannel.logout.session.required": "true",
+        "backchannel.logout.url": "",
+        "display.on.consent.screen": "false",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.revoke.offline.tokens": "false"
+      },
+      "fullScopeAllowed": true,
+      "protocolMappers": [
+        {
+          "id": "42aa815c-5f9d-4329-aff1-2ec0a59dff40",
+          "name": "user_id mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "user_id",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "user_id",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "id": "4b927576-ae74-45b3-93d8-d4f0a5c29a82",
+          "name": "Client ID",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientId",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientId",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "id": "957699cb-c087-4e15-9571-6c620700539c",
+          "name": "Client Host",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientHost",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientHost",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "id": "01210577-def1-4526-ba6a-5a6ea536dc71",
+          "name": "username",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "username",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "sub",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "id": "5be84565-f134-41d1-b07a-bd6a0ccd72d7",
+          "name": "Client IP Address",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.session.note": "clientAddress",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "clientAddress",
+            "jsonType.label": "String"
+          }
+        }
+      ],
+      "authorizationSettings": {
+        "allowRemoteResourceManagement": true,
+        "policyEnforcementMode": "ENFORCING",
+        "resources": [],
+        "policies": [
+          {
+            "id": "1e111e11-1111-401c-ad8e-0d121a11111e",
+            "name": "user-based-policy",
+            "description": "hello work",
+            "type": "user",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "users": "[\"user1-for-user-policy\"]"
+            }
+          },
+          {
+            "id": "1e111e11-2222-401c-ad8e-0d121a11111e",
+            "name": "test-role-based-policy",
+            "description": "roles based description",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "roles": "[{\"id\":\"role1-for-policy\",\"required\":false},{\"id\":\"role2-for-policy\",\"required\":false}]"
+            }
+          },
+          {
+            "id": "d86e7054-d51d-4660-8fd0-903c32763928",
+            "name": "time-based-policy",
+            "description": "time based policy description",
+            "type": "time",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "hourEnd": "2",
+              "monthEnd": "2",
+              "noa": "2023-01-28 00:00:00",
+              "minuteEnd": "2",
+              "nbf": "2023-01-25 00:00:00",
+              "hour": "1",
+              "month": "1",
+              "dayMonth": "1",
+              "minute": "1",
+              "dayMonthEnd": "2"
+            }
+          }
+        ],
+        "scopes": [],
+        "decisionStrategy": "UNANIMOUS"
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "username": "user1-for-user-policy",
+      "enabled": true,
+      "attributes": {
+        "user_id": [
+          "61893f40-4739-49fc-bf07-daeff3021f90"
+        ]
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "username": "user2-for-user-policy",
+      "enabled": true,
+      "attributes": {
+        "user_id": [
+          "07fda6ae-1111-49c1-87be-abeb989c545f"
+        ]
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "id": "5eb015a5-7454-4c97-b12c-7fe4162d26a0",
+        "name": "role1-for-policy",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {}
+      },
+      {
+        "id": "392d64d9-ae90-46c7-b338-d20b1744b566",
+        "name": "role2-for-policy",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {}
+      }
+    ]
+  }
+}

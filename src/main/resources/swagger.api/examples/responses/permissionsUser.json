@@ -1,0 +1,7 @@
+{
+  "userId": "61893f40-4739-49fc-bf07-daeff3021f90",
+  "permissions": [
+    "foo.bar.create",
+    "foo.bar.read"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "errors": [
+    {
+      "message": "Failed to find role: id = ww",
+      "type": "KeycloakApiException",
+      "code": "service_error",
+      "parameters": [
+        {
+          "key": "cause",
+          "value": "[404 Not Found] [{\"error\":\"Could not find item with id\"}]"
+        }
+      ]
+    }
+  ],
+  "total_records": 1
+}

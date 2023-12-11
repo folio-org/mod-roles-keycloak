@@ -1,0 +1,58 @@
+package org.folio.roles.domain.entity;
+
+import io.hypersistence.utils.hibernate.type.basic.PostgreSQLEnumType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import java.util.UUID;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import org.folio.roles.domain.model.LogicType;
+import org.folio.roles.repository.generators.FolioUuidGenerator;
+import org.hibernate.annotations.Type;
+
+/**
+ * A JPA entity class that represents a base policy.
+ */
+@Data
+@Entity(name = "policy")
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "type")
+public class BasePolicyEntity extends Auditable {
+
+  /**
+   * The ID of the policy.
+   */
+  @Id
+  @FolioUuidGenerator
+  @Column(name = "id")
+  private UUID id;
+
+  /**
+   * The name of the policy.
+   */
+  @Column(name = "name", nullable = false)
+  private String name;
+
+  /**
+   * The description of the policy.
+   */
+  @Column(name = "description")
+  private String description;
+
+  /**
+   * The logic of the policy.
+   */
+  @Enumerated(EnumType.STRING)
+  @Type(PostgreSQLEnumType.class)
+  @Column(name = "logic", columnDefinition = "logic_type", insertable = false, updatable = false)
+  private LogicType logic;
+}

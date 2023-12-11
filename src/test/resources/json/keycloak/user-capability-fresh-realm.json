@@ -1,0 +1,79 @@
+{
+  "realm": "test",
+  "enabled": true,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": true,
+  "clients": [
+    {
+      "id": "00000000-0000-0000-0000-000000000010",
+      "clientId": "test-login-application",
+      "description": "Client for login operations",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "kc-client-password",
+      "redirectUris": [ "/*" ],
+      "fullScopeAllowed": true,
+      "authorizationSettings": {
+        "allowRemoteResourceManagement": true,
+        "policyEnforcementMode": "ENFORCING",
+        "decisionStrategy": "AFFIRMATIVE",
+        "resources": [
+          {
+            "_id": "994b345b-09b2-416d-ac72-252155be4664",
+            "name": "/foo/items/{id}",
+            "displayName": "/foo/items/{id}",
+            "scopes": [
+              { "name": "DELETE" },
+              { "name": "GET" },
+              { "name": "PUT" }
+            ]
+          },
+          {
+            "_id": "44147c30-e76e-4468-adff-e403bd175aca",
+            "name": "/foo/items",
+            "displayName": "/foo/items",
+            "scopes": [
+              { "name": "POST" }
+            ]
+          },
+          {
+            "name": "/bar/items/{id}",
+            "displayName": "/bar/items/{id}",
+            "_id": "25af74c6-913a-4473-997f-9becbafd743b",
+            "scopes": [
+              { "name": "GET" }
+            ]
+          }
+        ],
+        "scopes": [
+          {
+            "id": "fcf915d3-0a7f-4ee1-bb8a-fc60aa93a4d6",
+            "name": "POST"
+          },
+          {
+            "id": "859b3f82-99aa-48d6-b3d6-9b5d222c3c00",
+            "name": "GET"
+          },
+          {
+            "id": "6eeebe31-7d3c-472a-bd2f-072a345f4963",
+            "name": "DELETE"
+          },
+          {
+            "id": "670288d5-e9e0-446f-aa91-5c1f737cb997",
+            "name": "PUT"
+          }
+        ]
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": "4775e30b-7081-4908-af13-2631fe948c38",
+      "username": "test-user",
+      "enabled": true,
+      "attributes": {
+        "user_id": [ "3e8647ee-2a23-4ca4-896b-95476559c567" ]
+      }
+    }
+  ]
+}

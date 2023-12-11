@@ -1,0 +1,16 @@
+{
+  "realm": "test",
+  "enabled": true,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": true,
+  "roles": {
+    "realm": [
+      {
+        "id": "1e985e76-e9ca-401c-ad8e-0d121a11111e",
+        "name": "role1",
+        "description": "role1_description"
+      }
+    ]
+  }
+}

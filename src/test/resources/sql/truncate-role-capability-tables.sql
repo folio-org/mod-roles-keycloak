@@ -1,0 +1,2 @@
+TRUNCATE TABLE test_mod_roles_keycloak.role_capability CASCADE;
+TRUNCATE TABLE test_mod_roles_keycloak.role_capability_set CASCADE;

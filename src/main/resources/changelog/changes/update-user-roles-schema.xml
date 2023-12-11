@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="update-user-roles-schema" author="Pavel Filippov">
+    <sql>truncate table roles_user cascade;</sql>
+    <dropTable tableName="user_role"/>
+    <renameTable oldTableName="roles_user" newTableName="user_role"/>
+    <dropColumn tableName="user_role" columnName="id"/>
+    <dropIndex tableName="user_role" indexName="idx_user_id"/>
+    <dropUniqueConstraint tableName="user_role" uniqueColumns="user_id" constraintName="roles_user_user_id_key"/>
+    <addColumn tableName="user_role">
+      <column name="role_id" type="uuid"/>
+    </addColumn>
+    <addPrimaryKey tableName="user_role" columnNames="user_id,role_id"/>
+    <addForeignKeyConstraint
+      baseTableName="user_role"
+      baseColumnNames="role_id"
+      constraintName="fk_user_role_role"
+      referencedTableName="role"
+      referencedColumnNames="id"/>
+  </changeSet>
+</databaseChangeLog>

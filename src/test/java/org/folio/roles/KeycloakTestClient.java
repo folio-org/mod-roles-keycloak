@@ -1,0 +1,99 @@
+package org.folio.roles;
+
+import static java.util.stream.Collectors.toList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.folio.roles.support.TestConstants.TENANT_ID;
+import static org.folio.spring.integration.XOkapiHeaders.TENANT;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.http.HttpClient;
+import java.net.http.HttpClient.Version;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.StreamSupport;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j2;
+import org.folio.roles.integration.keyclock.KeycloakAccessTokenService;
+import org.folio.roles.integration.keyclock.KeycloakClientService;
+import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
+import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.springframework.stereotype.Component;
+
+@Log4j2
+@Component
+@RequiredArgsConstructor
+public class KeycloakTestClient {
+
+  private final ObjectMapper objectMapper;
+  private final FolioModuleMetadata folioModuleMetadata;
+  private final KeycloakClientService keycloakClientService;
+  private final KeycloakAccessTokenService keycloakTokenService;
+  private final KeycloakConfigurationProperties keycloakConfiguration;
+
+  private final HttpClient httpClient = HttpClient.newBuilder()
+    .connectTimeout(Duration.ofSeconds(5))
+    .version(Version.HTTP_1_1)
+    .build();
+
+  /**
+   * Implementation is done using {@link HttpClient} client, cause looks like {@link org.keycloak.admin.client.Keycloak}
+   * does not provide API for permissions querying.
+   *
+   * @return list of found permissions
+   */
+  @SneakyThrows
+  public List<String> getPermissionNames() {
+    var headers = Map.<String, Collection<String>>of(TENANT, List.of(TENANT_ID));
+    try (var ignored = new FolioExecutionContextSetter(folioModuleMetadata, headers)) {
+      var keycloakPermissions = findKeycloakPermissions();
+      log.info("Found permissions: {}", keycloakPermissions);
+      return keycloakPermissions;
+    } catch (Exception exception) {
+      throw new AssertionError("Failed to find keycloak permissions", exception);
+    }
+  }
+
+  private List<String> findKeycloakPermissions() throws Exception {
+    var clientId = keycloakClientService.findAndCacheLoginClientUuid();
+    var path = "/admin/realms/{realm}/clients/{clientId}/authz/resource-server/permission";
+
+    var request = keycloakPermissionsRequest(path, clientId);
+
+    var response = httpClient.send(request, BodyHandlers.ofString());
+    assertThat(response.statusCode()).isEqualTo(200);
+
+    var body = response.body();
+    var jsonNode = objectMapper.readTree(body);
+
+    assertThat(jsonNode.isArray()).isTrue();
+    return StreamSupport.stream(jsonNode.spliterator(), false)
+      .map(permission -> permission.path("name").asText())
+      .filter(Objects::nonNull)
+      .collect(toList());
+  }
+
+  private HttpRequest keycloakPermissionsRequest(String path, String clientId) {
+    var uri = fromUriString(keycloakConfiguration.getBaseUrl() + path)
+      .queryParam("first", 0)
+      .queryParam("last", 100)
+      .buildAndExpand(Map.of("realm", TENANT_ID, "clientId", clientId))
+      .encode().toUri();
+
+    return HttpRequest.newBuilder(uri)
+      .GET()
+      .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+      .header(AUTHORIZATION, keycloakTokenService.getToken())
+      .build();
+  }
+}

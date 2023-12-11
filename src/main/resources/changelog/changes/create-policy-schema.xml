@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet id="create-enum-types" author="yauhen-vavilkin">
+        <sql>
+            CREATE TYPE policy_type AS ENUM ('TIME', 'USER', 'ROLE');
+        </sql>
+        <sql>
+            CREATE TYPE logic_type AS ENUM ('POSITIVE', 'NEGATIVE');
+        </sql>
+    </changeSet>
+
+    <changeSet id="create-policy-based-tables" author="yauhen-vavilkin">
+        <createTable tableName="policy">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="type" type="policy_type">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repeat" type="BOOLEAN"/>
+            <column name="start" type="TIMESTAMP"/>
+            <column name="expires" type="TIMESTAMP"/>
+            <column name="day_of_month_start" type="INT4"/>
+            <column name="day_of_month_end" type="INT4"/>
+            <column name="month_start" type="INT4"/>
+            <column name="month_end" type="INT4"/>
+            <column name="hour_start" type="INT4"/>
+            <column name="hour_end" type="INT4"/>
+            <column name="minute_start" type="INT4"/>
+            <column name="minute_end" type="INT4"/>
+            <column name="logic" type="logic_type" defaultValue="POSITIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="UUID"/>
+            <column name="updated_date" type="TIMESTAMP"/>
+            <column name="updated_by" type="UUID"/>
+        </createTable>
+        <createTable tableName="policy_users">
+            <column name="policy_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID"/>
+        </createTable>
+        <createTable tableName="policy_roles">
+            <column name="policy_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role_id" type="UUID"/>
+            <column name="required" type="BOOLEAN"/>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="policy_users"
+                baseColumnNames="policy_id"
+                constraintName="fk_user_policy_user"
+                onDelete="CASCADE"
+                onUpdate="RESTRICT"
+                referencedTableName="policy"
+                referencedColumnNames="id"/>
+        <addForeignKeyConstraint
+                baseTableName="policy_roles"
+                baseColumnNames="policy_id"
+                constraintName="fk_role_policy_role"
+                onDelete="CASCADE"
+                onUpdate="RESTRICT"
+                referencedTableName="policy"
+                referencedColumnNames="id"/>
+    </changeSet>
+</databaseChangeLog>

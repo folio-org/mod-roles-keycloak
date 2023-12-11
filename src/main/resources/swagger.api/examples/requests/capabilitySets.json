@@ -1,0 +1,12 @@
+{
+  "capabilitySets": [
+    {
+      "description": "Sample: Create foo item",
+      "resource": "Foo Item",
+      "action": "create",
+      "type": "data",
+      "applicationId": "foo-application-1.0.0",
+      "capabilities": [ "78c99d2c-15dd-4bd6-99aa-11328549ad62" ]
+    }
+  ]
+}

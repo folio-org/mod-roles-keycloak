@@ -1,0 +1,18 @@
+{
+  "policies": [
+    {
+      "id": "1e589e76-e9ca-401c-ad8e-0d121a11111e",
+      "name": "policy_name",
+      "description": "policy description in free form",
+      "type": "USER",
+      "userPolicy": {
+        "users": [
+          "1e555e76-e9ca-401c-ad8e-0d121a11111e",
+          "2e555e77-e9ca-401c-ad8e-0d121a11111e"
+        ],
+        "logic": "POSITIVE"
+      }
+    }
+  ],
+  "totalRecords": 1
+}

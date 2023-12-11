@@ -1,0 +1,1330 @@
+openapi: 3.0.0
+
+info:
+  title: Mod Roles Keycloak API
+  version: v1
+  description: Mod Roles Keycloak API
+
+servers:
+  - url: http://localhost:8081
+    description: Locally deployed server
+
+paths:
+  /roles/{id}:
+    get:
+      description: Get role by ID
+      operationId: getRole
+      tags:
+        - roles
+      parameters:
+        - $ref: '#/components/parameters/pathRoleId'
+      responses:
+        '200':
+          description: Retrieve a role by id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/role'
+              example:
+                $ref: '#/components/examples/roleResponse'
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    put:
+      description: Update a role
+      operationId: updateRole
+      tags:
+        - roles
+      parameters:
+        - $ref: '#/components/parameters/pathRoleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/role'
+            example:
+              $ref: '#/components/examples/roleRequest'
+      responses:
+        '204':
+          description: Update existing role
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    delete:
+      description: Delete a role
+      operationId: deleteRole
+      tags:
+        - roles
+      parameters:
+        - $ref: '#/components/parameters/pathRoleId'
+      responses:
+        '204':
+          description: Delete a role
+
+  /roles:
+    get:
+      description: Get roles by query
+      operationId: findRoles
+      tags:
+        - roles
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '201':
+          description: Array of roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roles'
+              example:
+                $ref: '#/components/examples/roleResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    post:
+      description: Create a role
+      operationId: createRole
+      tags:
+        - roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/role'
+            example:
+              $ref: '#/components/examples/roleRequest'
+      responses:
+        '201':
+          description: Created role object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/role'
+              example:
+                $ref: '#/components/examples/roleResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /roles/batch:
+    post:
+      description: Create one or more roles
+      operationId: createRoles
+      tags:
+        - roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/rolesRequest'
+            example:
+              $ref: '#/components/examples/rolesRequest'
+      responses:
+        '201':
+          description: Array of created role or roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roles'
+              example:
+                $ref: '#/components/examples/rolesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /roles/users:
+    post:
+      description: Create a record associating role with user
+      operationId: assignRolesToUser
+      tags:
+        - roles-users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/userRolesRequest'
+            example:
+              $ref: '#/components/examples/userRoleRequest'
+      responses:
+        '201':
+          description: Assigned role to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userRoles'
+              example:
+                $ref: '#/components/examples/userRolesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    get:
+      description: Search user-role relations by CQL query
+      operationId: findUserRoles
+      tags:
+        - roles-users
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: Array of roles users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userRoles'
+              example:
+                $ref: '#/components/examples/userRolesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /roles/users/{id}:
+    get:
+      description: Get roles user by user ID
+      operationId: getUserRoles
+      tags:
+        - roles-users
+      parameters:
+        - $ref: '#/components/parameters/pathUserId'
+      responses:
+        '200':
+          description: Retrieve a user-role relation list by user ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userRoles'
+              example:
+                $ref: '#/components/examples/userRolesResponse'
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    put:
+      description: Update a roles user by user ID
+      operationId: updateUserRoles
+      tags:
+        - roles-users
+      parameters:
+        - $ref: '#/components/parameters/pathUserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/userRolesRequest'
+            example:
+              $ref: '#/components/examples/userRolesResponse'
+      responses:
+        '204':
+          description: Update existing roles user
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    delete:
+      description: Delete a roles user by user ID
+      operationId: deleteUserRoles
+      tags:
+        - roles-users
+      parameters:
+        - $ref: '#/components/parameters/pathUserId'
+      responses:
+        '204':
+          description: Delete a roles user
+
+  /roles/capabilities:
+    post:
+      description: Create a record associating one or more capabilities with the role
+      operationId: createRoleCapabilities
+      tags:
+        - role-capability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/roleCapabilitiesRequest'
+            example:
+              $ref: '#/components/examples/roleCapabilitiesRequest'
+      responses:
+        '201':
+          description: Assigned roles to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roleCapabilities'
+              example:
+                $ref: '#/components/examples/roleCapabilitiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    get:
+      description: Get role-capability relation items by CQL query and pagination parameters
+      operationId: getRoleCapabilities
+      tags:
+        - role-capability
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '201':
+          description: Array of roles users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roleCapabilities'
+              example:
+                $ref: '#/components/examples/roleCapabilitiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /roles/{id}/capabilities:
+    get:
+      description: Get capabilities assigned to role by role identifier
+      operationId: findCapabilitiesByRoleId
+      tags:
+        - role-capability
+      parameters:
+        - $ref: '#/components/parameters/pathRoleId'
+        - $ref: '#/components/parameters/expand-capabilities'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: Assigned to a role capabilities in a paginated view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capabilities'
+              example:
+                $ref: '#/components/examples/capabilitiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    put:
+      description: Modifies the set of capabilities assigned to the specified role.
+      operationId: updateRoleCapabilities
+      tags:
+        - role-capability
+      parameters:
+        - $ref: '#/components/parameters/pathRoleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/capabilitiesUpdateRequest'
+            example:
+              $ref: '#/components/examples/capabilitiesUpdateRequest'
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    delete:
+      description: Removes all capabilities assignments for the specified role identifier
+      operationId: deleteRoleCapabilities
+      tags:
+        - role-capability
+      parameters:
+        - $ref: '#/components/parameters/pathRoleId'
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /roles/capability-sets:
+    post:
+      description: Create a record associating one or more capabilities with the role
+      operationId: createRoleCapabilitySets
+      tags:
+        - role-capability-set
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/roleCapabilitySetsRequest'
+            example:
+              $ref: '#/components/examples/roleCapabilitySetsRequest'
+      responses:
+        '201':
+          description: Assigned roles to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roleCapabilitySets'
+              example:
+                $ref: '#/components/examples/roleCapabilitySetsResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    get:
+      description: Get role-capability-set relation items by CQL query
+      operationId: getRoleCapabilitySets
+      tags:
+        - role-capability-set
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '201':
+          description: Array of roles users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roleCapabilitySets'
+              example:
+                $ref: '#/components/examples/roleCapabilitySetsResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /roles/{id}/capability-sets:
+    get:
+      description: Get capability sets assigned to role by role identifier
+      operationId: getCapabilitySetsByRoleId
+      tags:
+        - role-capability-set
+      parameters:
+        - $ref: '#/components/parameters/pathRoleId'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: Assigned to a role capabilities in a paginated view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capabilitySets'
+              example:
+                $ref: '#/components/examples/capabilitySetsResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    put:
+      description: Modifies the set of capability sets assigned to the specified role.
+      operationId: updateRoleCapabilitySets
+      tags:
+        - role-capability-set
+      parameters:
+        - $ref: '#/components/parameters/pathRoleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/capabilitySetsUpdateRequest'
+            example:
+              $ref: '#/components/examples/capabilitySetsUpdateRequest'
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    delete:
+      description: Removes all capability sets assignments for the specified role identifier
+      operationId: deleteRoleCapabilitySets
+      tags:
+        - role-capability-set
+      parameters:
+        - $ref: '#/components/parameters/pathRoleId'
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /policies/{id}:
+    get:
+      description: Get policy by ID
+      operationId: getPolicy
+      tags:
+        - policies
+      parameters:
+        - $ref: '#/components/parameters/pathPolicyId'
+      responses:
+        '200':
+          description: Retrieve a policy by id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/policy'
+              example:
+                $ref: '#/components/examples/policyResponse'
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    put:
+      description: Update a policy
+      operationId: updatePolicy
+      tags:
+        - policies
+      parameters:
+        - $ref: '#/components/parameters/pathPolicyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/policy'
+            example:
+              $ref: '#/components/examples/policyRequest'
+      responses:
+        '204':
+          description: Update existing policy
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    delete:
+      description: Delete a policy
+      operationId: deletePolicy
+      tags:
+        - policies
+      parameters:
+        - $ref: '#/components/parameters/pathPolicyId'
+      responses:
+        '204':
+          description: Delete a policy
+
+  /policies:
+    get:
+      description: Get policies by query
+      operationId: findPolicies
+      tags:
+        - policies
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: Array of policies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/policies'
+              example:
+                $ref: '#/components/examples/policiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    post:
+      description: Create a policy
+      operationId: createPolicy
+      tags:
+        - policies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/policy'
+            example:
+              $ref: '#/components/examples/timeBasedPolicy'
+      responses:
+        '201':
+          description: Created policy object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/policy'
+              example:
+                $ref: '#/components/examples/timeBasedPolicy'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /policies/batch:
+    post:
+      description: Create one or more policies
+      operationId: createPolicies
+      tags:
+        - policies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/policiesRequest'
+            example:
+              $ref: '#/components/examples/policiesRequest'
+      responses:
+        '201':
+          description: Array of created policy or policies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/policies'
+              example:
+                $ref: '#/components/examples/policiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /roles-keycloak/migrate:
+    post:
+      description: Migrate user policies from mod-permission to keycloak
+      operationId: migratePolicies
+      tags:
+        - migrate
+      responses:
+        '204':
+          description: 'User policies have been migrated'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /capabilities:
+    get:
+      description: Get capabilities by query
+      operationId: findCapabilities
+      tags:
+        - capability
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: A collection of capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capabilities'
+              example:
+                $ref: '#/components/examples/capabilitiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /capabilities/{id}:
+    get:
+      description: Get capability by ID
+      operationId: getCapabilityById
+      tags:
+        - capability
+      parameters:
+        - $ref: '#/components/parameters/pathEntityId'
+      responses:
+        '200':
+          description: Retrieve a capability set by id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capability'
+              example:
+                $ref: '#/components/examples/capabilityResponse'
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /capability-sets:
+    post:
+      description: Create a capability set
+      operationId: createCapabilitySet
+      tags:
+        - capability-set
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/capabilitySet'
+            example:
+              $ref: '#/components/examples/capabilitySetRequest'
+      responses:
+        '201':
+          description: Created capability set object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capabilitySet'
+              example:
+                $ref: '#/components/examples/capabilitySetResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    get:
+      description: Get capabilities by query
+      operationId: findCapabilitySets
+      tags:
+        - capability-set
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: A collection of capabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capabilitySets'
+              example:
+                $ref: '#/components/examples/capabilitySetsResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /capability-sets/batch:
+    post:
+      description: Create one or more capability sets
+      operationId: createCapabilitySets
+      tags:
+        - capability-set
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/capabilitySets'
+            example:
+              $ref: '#/components/examples/capabilitySetsRequest'
+      responses:
+        '201':
+          description: Array of created capability set(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capabilitySets'
+              example:
+                $ref: '#/components/examples/capabilitySetsResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /capability-sets/{id}:
+    get:
+      description: Get capability set by ID
+      operationId: getCapabilitySetById
+      tags:
+        - capability-set
+      parameters:
+        - $ref: '#/components/parameters/pathEntityId'
+      responses:
+        '200':
+          description: Retrieve a capability set by id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capabilitySet'
+              example:
+                $ref: '#/components/examples/capabilitySetResponse'
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    put:
+      description: Update a capability set
+      operationId: updateCapabilitySet
+      tags:
+        - capability-set
+      parameters:
+        - $ref: '#/components/parameters/pathEntityId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/capabilitySet'
+            example:
+              $ref: '#/components/examples/capabilitySetRequest'
+      responses:
+        '204':
+          description: Update existing capability
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    delete:
+      description: Delete a capability set
+      operationId: deleteCapabilitySet
+      tags:
+        - capability-set
+      parameters:
+        - $ref: '#/components/parameters/pathEntityId'
+      responses:
+        '204':
+          description: Delete a capability set
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /capability-sets/{id}/capabilities:
+    get:
+      description: Find capabilities by capability set ID
+      operationId: findCapabilitiesByCapabilitySetId
+      tags:
+        - capability
+      parameters:
+        - $ref: '#/components/parameters/pathEntityId'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: Retrieve a capabilities by capability set ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capabilities'
+              example:
+                $ref: '#/components/examples/capabilitiesResponse'
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /users/capabilities:
+    post:
+      description: Create a record associating one or more capabilities with a user.
+      operationId: createUserCapabilities
+      tags:
+        - user-capability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/userCapabilitiesRequest'
+            example:
+              $ref: '#/components/examples/userCapabilitiesRequest'
+      responses:
+        '201':
+          description: Capabilities user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userCapabilities'
+              example:
+                $ref: '#/components/examples/userCapabilitiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    get:
+      description: Search user capabilities by CQL query
+      operationId: getUserCapabilities
+      tags:
+        - user-capability
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: A collection of capabilities users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userCapabilities'
+              example:
+                $ref: '#/components/examples/userCapabilitiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /users/{id}/capabilities:
+    get:
+      description: Retrieve capabilities assigned to role by role identifier
+      operationId: findCapabilitiesByUserId
+      tags:
+        - user-capability
+      parameters:
+        - $ref: '#/components/parameters/pathUserId'
+        - $ref: '#/components/parameters/expand-capabilities'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: Assigned to a role capabilities in a paginated view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capabilities'
+              example:
+                $ref: '#/components/examples/capabilitiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    put:
+      description: Modifies the set of capabilities assigned to the specified user.
+      operationId: updateUserCapabilities
+      tags:
+        - user-capability
+      parameters:
+        - $ref: '#/components/parameters/pathUserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/capabilitiesUpdateRequest'
+            example:
+              $ref: '#/components/examples/capabilitiesUpdateRequest'
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    delete:
+      description: Removes all capability assignments for the specified user identifier
+      operationId: deleteUserCapabilities
+      tags:
+        - user-capability
+      parameters:
+        - $ref: '#/components/parameters/pathUserId'
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /users/capability-sets:
+    post:
+      description: Create a record associating one or more capabilities with a user.
+      operationId: createUserCapabilitySets
+      tags:
+        - user-capability-set
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/userCapabilitySetsRequest'
+            example:
+              $ref: '#/components/examples/userCapabilitySetsRequest'
+      responses:
+        '201':
+          description: Capabilities user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userCapabilitySets'
+              example:
+                $ref: '#/components/examples/userCapabilitySetsResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    get:
+      description: Get user capabilities by CQL query and pagination parameters
+      operationId: getUserCapabilitySets
+      tags:
+        - user-capability-set
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: A collection of capabilities users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userCapabilitySets'
+              example:
+                $ref: '#/components/examples/userCapabilitySetsResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /users/{id}/capability-sets:
+    get:
+      description: Retrieve capability sets assigned to role by role identifier
+      operationId: getCapabilitySetsByUserId
+      tags:
+        - user-capability-set
+      parameters:
+        - $ref: '#/components/parameters/pathUserId'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: Assigned to a role capabilities in a paginated view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/capabilitySets'
+              example:
+                $ref: '#/components/examples/capabilitySetsResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    put:
+      description: Modifies the set of capability sets assigned to the specified user.
+      operationId: updateUserCapabilitySets
+      tags:
+        - user-capability-set
+      parameters:
+        - $ref: '#/components/parameters/pathUserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/capabilitySetsUpdateRequest'
+            example:
+              $ref: '#/components/examples/capabilitySetsUpdateRequest'
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    delete:
+      description: Removes all capability set assignments for the specified user identifier
+      operationId: deleteUserCapabilitySets
+      tags:
+        - user-capability-set
+      parameters:
+        - $ref: '#/components/parameters/pathUserId'
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /permissions/users/{id}:
+    get:
+      description: Get permissions by user ID
+      operationId: getPermissionsUser
+      tags:
+        - permissions-users
+      parameters:
+        - $ref: '#/components/parameters/pathEntityId'
+        - $ref: '#/components/parameters/onlyVisible'
+      responses:
+        '200':
+          description: Retrieve permissions by user id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/permissionsUser'
+              example:
+                $ref: '#/components/examples/permissionsUserResponse'
+        '501':
+          $ref: '#/components/responses/notImplementedResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+components:
+  schemas:
+    # roles
+    role:
+      $ref: schemas/role/role.json
+    roles:
+      $ref: schemas/role/roles.json
+    rolesRequest:
+      $ref: schemas/role/rolesRequest.json
+    userRolesRequest:
+      $ref: schemas/role/userRolesRequest.json
+    userRole:
+      $ref: schemas/role/userRole.json
+    userRoles:
+      $ref: schemas/role/userRoles.json
+
+    # policies
+    policy:
+      $ref: schemas/policy/policy.json
+    policies:
+      $ref: schemas/policy/policies.json
+    policiesRequest:
+      $ref: schemas/policy/policiesRequest.json
+
+    # capabilities
+    capability:
+      $ref: schemas/capability/capability.json
+    capabilities:
+      $ref: schemas/capability/capabilities.json
+    capabilitySet:
+      $ref: schemas/capability/capabilitySet.json
+    capabilitySets:
+      $ref: schemas/capability/capabilitySets.json
+    capabilitiesUpdateRequest:
+      $ref: schemas/capability/capabilitiesUpdateRequest.json
+    capabilitySetsUpdateRequest:
+      $ref: schemas/capability/capabilitySetsUpdateRequest.json
+    userCapabilities:
+      $ref: schemas/capability/user/userCapabilities.json
+    userCapabilitySets:
+      $ref: schemas/capability/user/userCapabilitySets.json
+    userCapabilitiesRequest:
+      $ref: schemas/capability/user/userCapabilitiesRequest.json
+    userCapabilitySetsRequest:
+      $ref: schemas/capability/user/userCapabilitySetsRequest.json
+    roleCapabilities:
+      $ref: schemas/capability/role/roleCapabilities.json
+    roleCapabilitySets:
+      $ref: schemas/capability/role/roleCapabilitySets.json
+    roleCapabilitiesRequest:
+      $ref: schemas/capability/role/roleCapabilitiesRequest.json
+    roleCapabilitySetsRequest:
+      $ref: schemas/capability/role/roleCapabilitySetsRequest.json
+
+    # auth-resources
+    permissionsUser:
+      $ref: schemas/permissions/permissions_user.json
+    errorResponse:
+      $ref: schemas/common/errors.json
+
+  responses:
+    badRequestResponse:
+      description: Error response in JSON format for validation errors.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+          example:
+            $ref: '#/components/examples/badRequestResponse'
+    notFoundResponse:
+      description: Not found error response in JSON format for validation errors.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+          example:
+            $ref: '#/components/examples/notFoundResponse'
+    notImplementedResponse:
+      description: Operation is not supported error response in JSON format for validation errors.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+          example:
+            $ref: '#/components/examples/notImplementedResponse'
+    internalServerErrorResponse:
+      description: Error response for unhandled or critical server exceptions, e.g. NullPointerException.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+          example:
+            $ref: '#/components/examples/internalServerErrorResponse'
+
+  parameters:
+    pathEntityId:
+      in: path
+      required: true
+      name: id
+      description: Entity id
+      schema:
+        type: string
+        format: uuid
+    pathRoleId:
+      in: path
+      required: true
+      name: id
+      description: Role identifier
+      schema:
+        type: string
+        format: uuid
+      example: 1e985e76-e9ca-401c-ad8e-0d121a11111e
+    pathPolicyId:
+      in: path
+      required: true
+      name: id
+      description: Policy identifier
+      schema:
+        type: string
+        format: uuid
+      example: 1e589e76-e9ca-401c-ad8e-0d121a11111e
+    pathUserId:
+      in: path
+      required: true
+      name: id
+      description: User identifier
+      schema:
+        type: string
+        format: uuid
+      example: 1e111e76-1111-401c-ad8e-0d121a11111e
+    query:
+      in: query
+      name: query
+      description: A query string to filter users based on matching criteria in fields.
+      required: false
+      schema:
+        type: string
+      example: role
+    expand:
+      in: query
+      name: expand
+      description: Expand permissions for each role and capability.
+      required: false
+      schema:
+        type: boolean
+        default: false
+      example: false
+    onlyVisible:
+      in: query
+      name: onlyVisible
+      description: Return only visible permission sets
+      required: false
+      schema:
+        type: boolean
+        default: false
+      example: false
+    limit:
+      in: query
+      name: limit
+      description: Limit the number of elements returned in the response.
+      required: false
+      schema:
+        type: integer
+        default: 10
+        minimum: 0
+      example: 20
+    offset:
+      in: query
+      name: offset
+      description: Skip over a number of elements by specifying an offset value for the query.
+      required: false
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      example: 2
+    expand-capabilities:
+      in: query
+      name: expand
+      description: Defines if capability sets must be expanded
+      required: false
+      schema:
+        type: boolean
+        default: false
+
+  examples:
+    # roles
+    roleRequest:
+      $ref: examples/requests/role.json
+    roleResponse:
+      $ref: examples/responses/role.json
+    rolesRequest:
+      $ref: examples/requests/roles.json
+    rolesResponse:
+      $ref: examples/responses/roles.json
+    userRoleResponse:
+      $ref: examples/responses/rolesUsers.json
+    userRolesResponse:
+      $ref: examples/responses/rolesUser.json
+    userRoleRequest:
+      $ref: examples/requests/rolesUserRequest.json
+
+    # policies
+    policiesRequest:
+      $ref: examples/requests/policiesRequest.json
+    timeBasedPolicy:
+      $ref: examples/requests/timeBasedPolicy.json
+    policyRequest:
+      $ref: examples/requests/policyRequest.json
+    policyResponse:
+      $ref: examples/responses/policy.json
+    policiesResponse:
+      $ref: examples/responses/policies.json
+
+    # auth-resources
+    endpointsResponse:
+      $ref: examples/responses/endpoints.json
+    permissionsResponse:
+      $ref: examples/responses/permissions.json
+    permissionsUserResponse:
+      $ref: examples/responses/permissionsUser.json
+
+    # capabilities
+    capabilitySetRequest:
+      $ref: examples/requests/capabilitySet.json
+    capabilitySetsRequest:
+      $ref: examples/requests/capabilitySets.json
+    capabilitySetResponse:
+      $ref: examples/responses/capabilitySet.json
+    capabilitySetsResponse:
+      $ref: examples/responses/capabilitySets.json
+    capabilityResponse:
+      $ref: examples/responses/capability.json
+    capabilitiesResponse:
+      $ref: examples/responses/capabilities.json
+    capabilitySetsUpdateRequest:
+      $ref: examples/requests/updateCapabilitySetsRequest.json
+    capabilitiesUpdateRequest:
+      $ref: examples/requests/updateCapabilitiesRequest.json
+    userCapabilitiesRequest:
+      $ref: examples/requests/capabilitiesUserRequest.json
+    userCapabilitySetsRequest:
+      $ref: examples/requests/userCapabilitySets.json
+    userCapabilitiesResponse:
+      $ref: examples/responses/userCapabilities.json
+    userCapabilitySetsResponse:
+      $ref: examples/responses/userCapabilitySets.json
+    roleCapabilitiesRequest:
+      $ref: examples/requests/roleCapabilities.json
+    roleCapabilitySetsRequest:
+      $ref: examples/requests/roleCapabilitySets.json
+    roleCapabilitiesResponse:
+      $ref: examples/responses/roleCapabilities.json
+    roleCapabilitySetsResponse:
+      $ref: examples/responses/roleCapabilitySets.json
+
+    # errors
+    badRequestResponse:
+      $ref: examples/responses/errors/badRequest.json
+    notFoundResponse:
+      $ref: examples/responses/errors/notFound.json
+    notImplementedResponse:
+      $ref: examples/responses/errors/notImplemented.json
+    internalServerErrorResponse:
+      $ref: examples/responses/errors/internalServerError.json
