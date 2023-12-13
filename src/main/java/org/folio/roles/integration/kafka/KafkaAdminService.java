@@ -16,7 +16,7 @@ public class KafkaAdminService {
   private final ConsumerFactory<String, ResourceEvent> jsonNodeConsumerFactory;
 
   /**
-   * Restarts kafka event listeners in mod-search-ebsco application.
+   * Restarts kafka event listeners in mod-roles-keycloak application.
    */
   public void restartEventListeners() {
     kafkaListenerEndpointRegistry.getAllListenerContainers().forEach(container -> {
