@@ -1,9 +1,12 @@
 {
-  "id": "1e985e76-e9ca-401c-ad8e-0d121a11111e",
-  "name": "admin role",
-  "description": "Role for admin user",
-  "permissions": [
-    "firs_permission",
-    "second_permission"
-  ]
+  "value": {
+    "id": "1e985e76-e9ca-401c-ad8e-0d121a11111e",
+    "name": "admin role",
+    "description": "Role for admin user",
+    "permissions": [
+      "firs_permission",
+      "second_permission"
+    ]
+  }
+
 }

@@ -1,11 +1,13 @@
 {
-  "errors": [
-    {
-      "message": "Operation is not supported",
-      "type": "UnsupportedOperationException",
-      "code": "service_error",
-      "parameters": []
-    }
-  ],
-  "total_records": 1
+  "value": {
+    "errors": [
+      {
+        "message": "Operation is not supported",
+        "type": "UnsupportedOperationException",
+        "code": "service_error",
+        "parameters": []
+      }
+    ],
+    "total_records": 1
+  }
 }

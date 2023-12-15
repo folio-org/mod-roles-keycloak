@@ -1,9 +1,12 @@
 {
-  "errors": [
-    {
-      "type": "NullPointerException",
-      "code": "service_error"
-    }
-  ],
-  "total_records": 1
+  "value": {
+    "errors": [
+      {
+        "type": "NullPointerException",
+        "code": "service_error"
+      }
+    ],
+    "total_records": 1
+  }
+
 }
