@@ -147,7 +147,7 @@ class KeycloakPolicyServiceTest {
     }
 
     @Test
-    void positive_return_empty_optional_creation_failed() {
+    void create_positive_alreadyExists() {
       var policy = createTimePolicy();
 
       doThrow(FeignException.Conflict.class).when(client)
