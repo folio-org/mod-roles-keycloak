@@ -1,5 +1,6 @@
 package org.folio.roles.integration.keyclock;
 
+import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.http.HttpStatus.CONFLICT;
@@ -14,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.domain.dto.PolicyType;
+import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.client.PolicyClient;
 import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.roles.integration.keyclock.model.policy.UserPolicy;
@@ -115,9 +117,10 @@ public class KeycloakPolicyService {
       }
       var type = policy.getType().getValue().toLowerCase();
       var token = tokenService.getToken();
+
       client.create(token, context.getTenantId(), getClientId(), type, request);
     } catch (FeignException e) {
-      throw new KeycloakApiException("Failed to create policy", e, e.status());
+      processErrorResponse(policy, e);
     }
   }
 
@@ -134,6 +137,18 @@ public class KeycloakPolicyService {
       .map(userService::findKeycloakIdByUserId)
       .collect(toList());
     userPolicy.setUsers(keycloakUserIds);
+  }
+
+  private static void processErrorResponse(Policy policy, FeignException e) {
+    if (e instanceof FeignException.Conflict) {
+      log.info("Policy already exists in Keycloak [name: {}]", policy.getName());
+      return;
+    }
+
+    throw new ServiceException(format(
+      "Error during policy creation in Keycloak. Details: status = %s, message = %s",
+      e.status(), e.contentUTF8()),
+      "policy", policy.getName());
   }
 
   private static boolean isUserPolicy(Policy policy) {
