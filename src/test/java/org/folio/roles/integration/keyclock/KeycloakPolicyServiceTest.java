@@ -24,6 +24,7 @@ import static org.folio.roles.support.PolicyUtils.userPolicy;
 import static org.folio.roles.support.TestConstants.LOGIN_CLIENT_SUFFIX;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -146,13 +147,12 @@ class KeycloakPolicyServiceTest {
     }
 
     @Test
-    void negative_return_empty_optional_creation_failed() {
+    void positive_return_empty_optional_creation_failed() {
       var policy = createTimePolicy();
 
       doThrow(FeignException.Conflict.class).when(client)
         .create(anyString(), any(), any(), any(), any());
-
-      assertThrows(KeycloakApiException.class, () -> keycloakPolicyService.create(policy));
+      assertDoesNotThrow(() -> keycloakPolicyService.create(policy));
     }
   }
 
