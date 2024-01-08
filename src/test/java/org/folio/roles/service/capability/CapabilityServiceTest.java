@@ -351,13 +351,13 @@ class CapabilityServiceTest {
 
     @Test
     void positiveOnlyVisiblePermissions() {
-      var prefixes = ArgumentCaptor.forClass(String[].class);
+      var prefixes = ArgumentCaptor.forClass(String.class);
       var permissions = List.of(PERMISSION_NAME);
       when(capabilityRepository.findVisibleFolioPermissions(eq(USER_ID), prefixes.capture())).thenReturn(permissions);
       var result = capabilityService.getUserPermissions(USER_ID, true);
 
       assertThat(result).containsExactly(PERMISSION_NAME);
-      assertThat(prefixes.getValue()).containsExactly("ui-", "module", "plugin");
+      assertThat(prefixes.getValue()).isEqualTo("{ui-, module, plugin}");
     }
   }
 }

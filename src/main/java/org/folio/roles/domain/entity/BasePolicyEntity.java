@@ -1,6 +1,5 @@
 package org.folio.roles.domain.entity;
 
-import io.hypersistence.utils.hibernate.type.basic.PostgreSQLEnumType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
@@ -15,7 +14,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.folio.roles.domain.model.LogicType;
 import org.folio.roles.repository.generators.FolioUuidGenerator;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * A JPA entity class that represents a base policy.
@@ -52,7 +52,7 @@ public class BasePolicyEntity extends Auditable {
    * The logic of the policy.
    */
   @Enumerated(EnumType.STRING)
-  @Type(PostgreSQLEnumType.class)
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "logic", columnDefinition = "logic_type", insertable = false, updatable = false)
   private LogicType logic;
 }

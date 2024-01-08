@@ -113,7 +113,7 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
   List<CapabilityEntity> findByCapabilitySetIds(@Param("ids") Collection<UUID> capabilitySetIds);
 
   @Query(nativeQuery = true, value = """
-    WITH prefixes AS (SELECT prefix || '%' AS prefix FROM UNNEST(:prefixes) prefix)
+    WITH prefixes AS (SELECT prefix || '%' AS prefix FROM UNNEST(cast(:prefixes as text[])) prefix)
     SELECT DISTINCT c.folio_permission FROM (
       SELECT uc.user_id, uc.capability_id FROM user_capability uc
 
@@ -136,7 +136,7 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     INNER JOIN capability c ON uc.capability_id = c.id
     INNER JOIN prefixes p ON c.folio_permission LIKE p.prefix
     WHERE uc.user_id = :user_id""")
-  List<String> findVisibleFolioPermissions(@Param("user_id") UUID userId, @Param("prefixes") String[] prefixes);
+  List<String> findVisibleFolioPermissions(@Param("user_id") UUID userId, @Param("prefixes") String prefixes);
 
   @Query(nativeQuery = true, value = """
     SELECT DISTINCT c.folio_permission FROM (
