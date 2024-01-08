@@ -38,7 +38,7 @@ class FolioUuidGeneratorImplTest {
     when(sharedSessionContractImplementor.getEntityPersister(null, testEntity)).thenReturn(entityPersister);
     when(entityPersister.getIdentifier(testEntity, sharedSessionContractImplementor)).thenReturn(null);
 
-    var result = folioUuidGenerator.generate(sharedSessionContractImplementor, testEntity);
+    var result = folioUuidGenerator.generate(sharedSessionContractImplementor, testEntity, null, null);
 
     assertThat(result).isNotNull();
   }
@@ -50,7 +50,7 @@ class FolioUuidGeneratorImplTest {
     when(sharedSessionContractImplementor.getEntityPersister(null, testEntity)).thenReturn(entityPersister);
     when(entityPersister.getIdentifier(testEntity, sharedSessionContractImplementor)).thenReturn(entityId);
 
-    var result = folioUuidGenerator.generate(sharedSessionContractImplementor, testEntity);
+    var result = folioUuidGenerator.generate(sharedSessionContractImplementor, testEntity, null, null);
 
     assertThat(result).isEqualTo(entityId);
   }

@@ -1,12 +1,12 @@
 package org.folio.roles.domain.entity;
 
-import io.hypersistence.utils.hibernate.type.basic.PostgreSQLEnumType;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Data;
 import org.folio.roles.domain.dto.HttpMethod;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @Embeddable
@@ -15,6 +15,6 @@ public class EmbeddableEndpoint {
   private String path;
 
   @Enumerated(EnumType.STRING)
-  @Type(PostgreSQLEnumType.class)
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   private HttpMethod method;
 }

@@ -25,6 +25,8 @@ import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.dto.CapabilitySets;
 import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
 import org.folio.roles.domain.entity.CapabilitySetEntity;
+import org.folio.roles.domain.entity.type.EntityCapabilityAction;
+import org.folio.roles.domain.entity.type.EntityCapabilityType;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CapabilitySetUtils {
@@ -118,10 +120,10 @@ public class CapabilitySetUtils {
     entity.setName(getCapabilityName(resource, action));
     entity.setDescription(String.format("Capability to %s a %s", action.getValue(), resource.toLowerCase()));
     entity.setResource(resource);
-    entity.setAction(action);
+    entity.setAction(EntityCapabilityAction.from(action));
     entity.setApplicationId(APPLICATION_ID);
     entity.setCapabilities(capabilityIds);
-    entity.setType(DATA);
+    entity.setType(EntityCapabilityType.DATA);
     return entity;
   }
 

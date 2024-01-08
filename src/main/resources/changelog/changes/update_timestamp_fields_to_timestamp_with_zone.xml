@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="update user_role varchar timestamp to timestamptz" author="Roman Leshchenko">
+    <modifyDataType columnName="created_date" newDataType="timestamptz" tableName="user_role"/>
+    <modifyDataType columnName="updated_date" newDataType="timestamptz" tableName="user_role"/>
+  </changeSet>
+  
+  <changeSet id="update capability varchar timestamp to timestamptz" author="Roman Leshchenko">
+    <modifyDataType columnName="created_date" newDataType="timestamptz" tableName="capability"/>
+    <modifyDataType columnName="updated_date" newDataType="timestamptz" tableName="capability"/>
+  </changeSet>  
+  
+  <changeSet id="update capability_set varchar timestamp to timestamptz" author="Roman Leshchenko">
+    <modifyDataType columnName="created_date" newDataType="timestamptz" tableName="capability_set"/>
+    <modifyDataType columnName="updated_date" newDataType="timestamptz" tableName="capability_set"/>
+  </changeSet>  
+  
+  <changeSet id="update policy varchar timestamp to timestamptz" author="Roman Leshchenko">
+    <modifyDataType columnName="created_date" newDataType="timestamptz" tableName="policy"/>
+    <modifyDataType columnName="updated_date" newDataType="timestamptz" tableName="policy"/>
+  </changeSet>  
+  
+  <changeSet id="update role varchar timestamp to timestamptz" author="Roman Leshchenko">
+    <modifyDataType columnName="created_date" newDataType="timestamptz" tableName="role"/>
+    <modifyDataType columnName="updated_date" newDataType="timestamptz" tableName="role"/>
+  </changeSet>  
+  
+  <changeSet id="update role_capability varchar timestamp to timestamptz" author="Roman Leshchenko">
+    <modifyDataType columnName="created_date" newDataType="timestamptz" tableName="role_capability"/>
+    <modifyDataType columnName="updated_date" newDataType="timestamptz" tableName="role_capability"/>
+  </changeSet>  
+  
+  <changeSet id="update role_capability_set varchar timestamp to timestamptz" author="Roman Leshchenko">
+    <modifyDataType columnName="created_date" newDataType="timestamptz" tableName="role_capability_set"/>
+    <modifyDataType columnName="updated_date" newDataType="timestamptz" tableName="role_capability_set"/>
+  </changeSet>  
+  
+  <changeSet id="update user_capability varchar timestamp to timestamptz" author="Roman Leshchenko">
+    <modifyDataType columnName="created_date" newDataType="timestamptz" tableName="user_capability"/>
+    <modifyDataType columnName="updated_date" newDataType="timestamptz" tableName="user_capability"/>
+  </changeSet>  
+  
+  <changeSet id="update user_capability_set varchar timestamp to timestamptz" author="Roman Leshchenko">
+    <modifyDataType columnName="created_date" newDataType="timestamptz" tableName="user_capability_set"/>
+    <modifyDataType columnName="updated_date" newDataType="timestamptz" tableName="user_capability_set"/>
+  </changeSet>  
+</databaseChangeLog>

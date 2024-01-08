@@ -16,6 +16,8 @@ import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.entity.CapabilityEntity;
+import org.folio.roles.domain.entity.type.EntityCapabilityAction;
+import org.folio.roles.domain.entity.type.EntityCapabilityType;
 
 @UtilityClass
 public class CapabilityUtils {
@@ -100,9 +102,9 @@ public class CapabilityUtils {
     entity.setId(id);
     entity.setName(getCapabilityName(resource, action));
     entity.setResource(resource);
-    entity.setAction(action);
+    entity.setAction(EntityCapabilityAction.from(action));
     entity.setApplicationId(CapabilityUtils.APPLICATION_ID);
-    entity.setType(DATA);
+    entity.setType(EntityCapabilityType.DATA);
     entity.setPermission(permission);
     return entity;
   }

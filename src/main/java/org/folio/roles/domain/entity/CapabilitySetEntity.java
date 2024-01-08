@@ -2,7 +2,6 @@ package org.folio.roles.domain.entity;
 
 import static jakarta.persistence.FetchType.EAGER;
 
-import io.hypersistence.utils.hibernate.type.basic.PostgreSQLEnumType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -17,12 +16,13 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.folio.roles.domain.dto.CapabilityAction;
-import org.folio.roles.domain.dto.CapabilityType;
+import org.folio.roles.domain.entity.type.EntityCapabilityAction;
+import org.folio.roles.domain.entity.type.EntityCapabilityType;
 import org.folio.roles.repository.generators.FolioUuidGenerator;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 
@@ -51,14 +51,14 @@ public class CapabilitySetEntity extends Auditable {
   private String applicationId;
 
   @Enumerated(EnumType.STRING)
-  @Type(PostgreSQLEnumType.class)
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "action", columnDefinition = "capability_action_type")
-  private CapabilityAction action;
+  private EntityCapabilityAction action;
 
   @Enumerated(EnumType.STRING)
-  @Type(PostgreSQLEnumType.class)
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "type", columnDefinition = "capability_type")
-  private CapabilityType type;
+  private EntityCapabilityType type;
 
   @ToString.Exclude
   @EqualsAndHashCode.Exclude
