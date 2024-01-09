@@ -22,7 +22,7 @@
     }
   },
   "required": [
-    "roleId",
+    "userId",
     "capabilityIds"
   ]
 }
