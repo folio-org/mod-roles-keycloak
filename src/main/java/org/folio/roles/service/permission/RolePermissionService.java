@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.Policy;
-import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationService;
@@ -34,9 +33,9 @@ public class RolePermissionService implements PermissionService {
   public void createPermissions(UUID roleId, List<Endpoint> endpoints) {
     log.info("Creating permissions for role: id = {}, endpoints = {}", () -> roleId, () -> convertToString(endpoints));
     var role = roleService.getById(roleId);
-    var policyName = getPolicyName(role.getName());
-    var policy = policyService.getOrCreatePolicy(policyName, ROLE, () -> createNewRolePolicy(role));
-    keycloakAuthService.createPermissions(policy, endpoints, getPermissionNameGenerator(role.getName()));
+    var policyName = getPolicyName(role.getId());
+    var policy = policyService.getOrCreatePolicy(policyName, ROLE, () -> createNewRolePolicy(roleId));
+    keycloakAuthService.createPermissions(policy, endpoints, getPermissionNameGenerator(roleId));
   }
 
   @Override
@@ -44,24 +43,24 @@ public class RolePermissionService implements PermissionService {
   public void deletePermissions(UUID roleId, List<Endpoint> endpoints) {
     log.debug("Removing permissions for role: id = {}, endpoints = {}", () -> roleId, () -> convertToString(endpoints));
     var role = roleService.getById(roleId);
-    var policyName = getPolicyName(role.getName());
+    var policyName = getPolicyName(role.getId());
     var policy = policyService.getByNameAndType(policyName, ROLE);
-    keycloakAuthService.deletePermissions(policy, endpoints, getPermissionNameGenerator(role.getName()));
+    keycloakAuthService.deletePermissions(policy, endpoints, getPermissionNameGenerator(roleId));
   }
 
-  private static Function<Endpoint, String> getPermissionNameGenerator(String roleName) {
-    return endpoint -> format("%s access for role '%s' to '%s'", endpoint.getMethod(), roleName, endpoint.getPath());
+  private static Function<Endpoint, String> getPermissionNameGenerator(UUID roleId) {
+    return endpoint -> format("%s access for role '%s' to '%s'", endpoint.getMethod(), roleId, endpoint.getPath());
   }
 
-  private static Policy createNewRolePolicy(Role role) {
+  private static String getPolicyName(UUID roleId) {
+    return "Policy for role: " + roleId;
+  }
+
+  private static Policy createNewRolePolicy(UUID roleId) {
     return new Policy()
       .type(ROLE)
-      .name(getPolicyName(role.getName()))
-      .description("System generated policy for role: " + role.getName())
-      .rolePolicy(new RolePolicy().addRolesItem(new RolePolicyRole().id(role.getId())));
-  }
-
-  private static String getPolicyName(String roleName) {
-    return "Policy for role: " + roleName;
+      .name(getPolicyName(roleId))
+      .description("System generated policy for role: " + roleId)
+      .rolePolicy(new RolePolicy().addRolesItem(new RolePolicyRole().id(roleId)));
   }
 }

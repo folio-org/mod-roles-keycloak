@@ -412,6 +412,6 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
   }
 
   protected static String kcPermissionName(Endpoint endpoint) {
-    return String.format("%s access for role 'test-role' to '%s'", endpoint.getMethod(), endpoint.getPath());
+    return String.format("%s access for role '%s' to '%s'", endpoint.getMethod(), ROLE_ID, endpoint.getPath());
   }
 }

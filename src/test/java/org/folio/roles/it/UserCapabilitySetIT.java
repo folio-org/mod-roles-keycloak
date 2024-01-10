@@ -399,6 +399,6 @@ class UserCapabilitySetIT extends BaseIntegrationTest {
   }
 
   protected static String kcPermissionName(Endpoint endpoint) {
-    return String.format("%s access for user 'test-user' to '%s'", endpoint.getMethod(), endpoint.getPath());
+    return String.format("%s access for user '%s' to '%s'", endpoint.getMethod(), USER_ID, endpoint.getPath());
   }
 }

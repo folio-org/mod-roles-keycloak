@@ -21,7 +21,9 @@ import org.folio.roles.domain.dto.RolePolicyRole;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationService;
 import org.folio.roles.service.policy.PolicyService;
 import org.folio.roles.service.role.RoleService;
+import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -44,13 +46,18 @@ class RolePermissionServiceTest {
   @Captor private ArgumentCaptor<Supplier<Policy>> newPolicyCaptor;
   @Captor private ArgumentCaptor<Function<Endpoint, String>> nameGeneratorCaptor;
 
+  @AfterEach
+  void tearDown() {
+    TestUtils.verifyNoMoreInteractions(this);
+  }
+
   @Nested
   @DisplayName("createPermissions")
   class CreatePermissions {
 
     @Test
     void positive() {
-      var policyName = "Policy for role: role1";
+      var policyName = "Policy for role: " + ROLE_ID;
       var policy = rolePolicy(policyName);
       var endpoint = endpoint("/foo/entities", GET);
       var endpoints = List.of(endpoint);
@@ -62,9 +69,9 @@ class RolePermissionServiceTest {
       rolePermissionService.createPermissions(ROLE_ID, endpoints);
 
       var policyNameGenerator = nameGeneratorCaptor.getValue();
-      assertThat(policyNameGenerator.apply(endpoint)).isEqualTo("GET access for role 'role1' to '/foo/entities'");
+      assertThat(policyNameGenerator.apply(endpoint)).isEqualTo("GET access for role '%s' to '/foo/entities'", ROLE_ID);
       assertThat(newPolicyCaptor.getValue().get()).isEqualTo(new Policy().type(ROLE).name(policyName)
-        .description("System generated policy for role: role1")
+        .description("System generated policy for role: " + ROLE_ID)
         .rolePolicy(new RolePolicy().addRolesItem(new RolePolicyRole().id(ROLE_ID))));
     }
   }
@@ -75,7 +82,7 @@ class RolePermissionServiceTest {
 
     @Test
     void positive() {
-      var policyName = "Policy for role: role1";
+      var policyName = "Policy for role: " + ROLE_ID;
       var policy = rolePolicy(policyName);
       var endpoint = endpoint("/foo/entities", GET);
       var endpoints = List.of(endpoint);
@@ -87,7 +94,7 @@ class RolePermissionServiceTest {
       rolePermissionService.deletePermissions(ROLE_ID, endpoints);
 
       var policyNameGenerator = nameGeneratorCaptor.getValue();
-      assertThat(policyNameGenerator.apply(endpoint)).isEqualTo("GET access for role 'role1' to '/foo/entities'");
+      assertThat(policyNameGenerator.apply(endpoint)).isEqualTo("GET access for role '%s' to '/foo/entities'", ROLE_ID);
     }
   }
 }
