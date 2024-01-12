@@ -32,10 +32,9 @@ public class UserPermissionService implements PermissionService {
   public void createPermissions(UUID userId, List<Endpoint> endpoints) {
     log.info("Creating permissions for user: id = {}, endpoints = {}", () -> userId, () -> convertToString(endpoints));
     var kcUser = keycloakUserService.getKeycloakUserByUserId(userId);
-    var username = kcUser.getUserName();
-    var policyName = getPolicyName(username);
-    var userPolicy = policyService.getOrCreatePolicy(policyName, USER, () -> createNewUserPolicy(userId, username));
-    keycloakAuthService.createPermissions(userPolicy, endpoints, getPermissionNameGenerator(username));
+    var policyName = getPolicyName(kcUser.getUserId());
+    var userPolicy = policyService.getOrCreatePolicy(policyName, USER, () -> createNewUserPolicy(userId));
+    keycloakAuthService.createPermissions(userPolicy, endpoints, getPermissionNameGenerator(userId));
   }
 
   @Override
@@ -43,25 +42,25 @@ public class UserPermissionService implements PermissionService {
   public void deletePermissions(UUID userId, List<Endpoint> endpoints) {
     log.debug("Removing permissions for user: id = {}, endpoints = {}", () -> userId, () -> convertToString(endpoints));
     var kcUser = keycloakUserService.getKeycloakUserByUserId(userId);
-    var username = kcUser.getUserName();
-    var policyName = getPolicyName(username);
+    var folioUserId = kcUser.getUserId();
+    var policyName = getPolicyName(kcUser.getUserId());
     var policy = policyService.getByNameAndType(policyName, USER);
-    keycloakAuthService.deletePermissions(policy, endpoints, getPermissionNameGenerator(username));
+    keycloakAuthService.deletePermissions(policy, endpoints, getPermissionNameGenerator(folioUserId));
   }
 
-  private static Function<Endpoint, String> getPermissionNameGenerator(String username) {
-    return endpoint -> format("%s access for user '%s' to '%s'", endpoint.getMethod(), username, endpoint.getPath());
+  private static Function<Endpoint, String> getPermissionNameGenerator(UUID userId) {
+    return endpoint -> format("%s access for user '%s' to '%s'", endpoint.getMethod(), userId, endpoint.getPath());
   }
 
-  private static String getPolicyName(String username) {
-    return "Policy for user: " + username;
+  private static String getPolicyName(UUID userId) {
+    return "Policy for user: " + userId;
   }
 
-  private static Policy createNewUserPolicy(UUID userId, String username) {
+  private static Policy createNewUserPolicy(UUID userId) {
     return new Policy()
       .type(USER)
-      .name(getPolicyName(username))
-      .description("System generated policy for user: " + username)
+      .name(getPolicyName(userId))
+      .description("System generated policy for user: " + userId)
       .userPolicy(new UserPolicy().users(List.of(userId)));
   }
 }

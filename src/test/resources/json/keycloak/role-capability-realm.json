@@ -65,8 +65,8 @@
         "policies": [
           {
             "id": "dec68c30-4f93-4481-95bd-9ec587b15c1c",
-            "name": "Policy for role: test-role",
-            "description": "System generated policy for role: role1",
+            "name": "Policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e",
+            "description": "System generated policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e",
             "type": "role",
             "logic": "POSITIVE",
             "decisionStrategy": "UNANIMOUS",
@@ -75,25 +75,25 @@
             }
           },
           {
-            "name": "GET access for role 'test-role' to '/foo/items/{id}'",
+            "name": "GET access for role '1e985e76-e9ca-401c-ad8e-0d121a11111e' to '/foo/items/{id}'",
             "type": "scope",
             "logic": "POSITIVE",
             "decisionStrategy": "UNANIMOUS",
             "config": {
               "resources": "[\"/foo/items/{id}\"]",
               "scopes": "[\"GET\"]",
-              "applyPolicies": "[\"Policy for role: test-role\"]"
+              "applyPolicies": "[\"Policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e\"]"
             }
           },
           {
-            "name": "POST access for role 'test-role' to '/foo/items'",
+            "name": "POST access for role '1e985e76-e9ca-401c-ad8e-0d121a11111e' to '/foo/items'",
             "type": "scope",
             "logic": "POSITIVE",
             "decisionStrategy": "UNANIMOUS",
             "config": {
               "resources": "[\"/foo/items\"]",
               "scopes": "[\"POST\"]",
-              "applyPolicies": "[\"Policy for role: test-role\"]"
+              "applyPolicies": "[\"Policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e\"]"
             }
           }
         ],
