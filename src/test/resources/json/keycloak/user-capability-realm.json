@@ -65,8 +65,8 @@
         "policies": [
           {
             "id": "ce49bb90-0a59-4f74-a25c-2dbb2728cdf6",
-            "name": "Policy for user: test-user",
-            "description": "System generated policy for user: test-user",
+            "name": "Policy for user: 3e8647ee-2a23-4ca4-896b-95476559c567",
+            "description": "System generated policy for user: 3e8647ee-2a23-4ca4-896b-95476559c567",
             "type": "user",
             "logic": "POSITIVE",
             "decisionStrategy": "UNANIMOUS",
@@ -75,25 +75,25 @@
             }
           },
           {
-            "name": "GET access for user 'test-user' to '/foo/items/{id}'",
+            "name": "GET access for user '3e8647ee-2a23-4ca4-896b-95476559c567' to '/foo/items/{id}'",
             "type": "scope",
             "logic": "POSITIVE",
             "decisionStrategy": "UNANIMOUS",
             "config": {
               "resources": "[\"/foo/items/{id}\"]",
               "scopes": "[\"GET\"]",
-              "applyPolicies": "[\"Policy for user: test-user\"]"
+              "applyPolicies": "[\"Policy for user: 3e8647ee-2a23-4ca4-896b-95476559c567\"]"
             }
           },
           {
-            "name": "POST access for user 'test-user' to '/foo/items'",
+            "name": "POST access for user '3e8647ee-2a23-4ca4-896b-95476559c567' to '/foo/items'",
             "type": "scope",
             "logic": "POSITIVE",
             "decisionStrategy": "UNANIMOUS",
             "config": {
               "resources": "[\"/foo/items\"]",
               "scopes": "[\"POST\"]",
-              "applyPolicies": "[\"Policy for user: test-user\"]"
+              "applyPolicies": "[\"Policy for user: 3e8647ee-2a23-4ca4-896b-95476559c567\"]"
             }
           }
         ],

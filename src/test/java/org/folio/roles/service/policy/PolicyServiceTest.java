@@ -186,7 +186,7 @@ class PolicyServiceTest {
       when(entityService.findByName(POLICY_NAME)).thenReturn(Optional.empty());
       assertThatThrownBy(() -> service.getByNameAndType(POLICY_NAME, ROLE))
         .isInstanceOf(EntityNotFoundException.class)
-        .hasMessage("Role policy is not found by name: %s and type: %s", POLICY_NAME, ROLE);
+        .hasMessage("Role policy is not found by name: '%s' and type: %s", POLICY_NAME, ROLE);
     }
 
     @Test
@@ -195,7 +195,7 @@ class PolicyServiceTest {
       when(entityService.findByName(POLICY_NAME)).thenReturn(Optional.of(userPolicy));
       assertThatThrownBy(() -> service.getByNameAndType(POLICY_NAME, ROLE))
         .isInstanceOf(EntityNotFoundException.class)
-        .hasMessage("Role policy is not found by name: %s and type: %s", POLICY_NAME, ROLE);
+        .hasMessage("Role policy is not found by name: '%s' and type: %s", POLICY_NAME, ROLE);
     }
   }
 

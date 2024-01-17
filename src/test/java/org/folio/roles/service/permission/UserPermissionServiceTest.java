@@ -20,7 +20,9 @@ import org.folio.roles.domain.dto.UserPolicy;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationService;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.roles.service.policy.PolicyService;
+import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -43,13 +45,18 @@ class UserPermissionServiceTest {
   @Captor private ArgumentCaptor<Supplier<Policy>> newPolicyCaptor;
   @Captor private ArgumentCaptor<Function<Endpoint, String>> nameGeneratorCaptor;
 
+  @AfterEach
+  void tearDown() {
+    TestUtils.verifyNoMoreInteractions(this);
+  }
+
   @Nested
   @DisplayName("createPermissions")
   class CreatePermissions {
 
     @Test
     void positive() {
-      var policyName = "Policy for user: test-user";
+      var policyName = "Policy for user: " + USER_ID;
       var policy = userPolicy(policyName);
       var endpoint = endpoint("/foo/entities", GET);
       var endpoints = List.of(endpoint);
@@ -60,10 +67,10 @@ class UserPermissionServiceTest {
 
       userPermissionService.createPermissions(USER_ID, endpoints);
 
-      var expectedPermissionName = "GET access for user 'test-user' to '/foo/entities'";
+      var expectedPermissionName = String.format("GET access for user '%s' to '/foo/entities'", USER_ID);
       assertThat(nameGeneratorCaptor.getValue().apply(endpoint)).isEqualTo(expectedPermissionName);
       assertThat(newPolicyCaptor.getValue().get()).isEqualTo(new Policy().type(USER).name(policyName)
-        .description("System generated policy for user: test-user")
+        .description("System generated policy for user: " + USER_ID)
         .userPolicy(new UserPolicy().users(List.of(USER_ID))));
     }
   }
@@ -74,7 +81,7 @@ class UserPermissionServiceTest {
 
     @Test
     void positive() {
-      var policyName = "Policy for user: test-user";
+      var policyName = "Policy for user: " + USER_ID;
       var policy = userPolicy(policyName);
       var endpoint = endpoint("/foo/entities", GET);
       var endpoints = List.of(endpoint);
@@ -86,7 +93,7 @@ class UserPermissionServiceTest {
       userPermissionService.deletePermissions(USER_ID, endpoints);
 
       var policyNameGenerator = nameGeneratorCaptor.getValue();
-      assertThat(policyNameGenerator.apply(endpoint)).isEqualTo("GET access for user 'test-user' to '/foo/entities'");
+      assertThat(policyNameGenerator.apply(endpoint)).isEqualTo("GET access for user '%s' to '/foo/entities'", USER_ID);
     }
   }
 }

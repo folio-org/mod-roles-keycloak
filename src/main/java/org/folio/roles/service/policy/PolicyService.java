@@ -120,7 +120,7 @@ public class PolicyService {
     return entityService.findByName(name)
       .filter(policy -> policy.getType() == type)
       .orElseThrow(() -> new EntityNotFoundException(String.format(
-        "Role policy is not found by name: %s and type: %s", name, type)));
+        "Role policy is not found by name: '%s' and type: %s", name, type)));
   }
 
   /**

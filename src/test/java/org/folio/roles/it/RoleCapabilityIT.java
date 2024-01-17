@@ -26,6 +26,7 @@ import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.USER_ID;
 import static org.folio.test.TestUtils.asJsonString;
+import static org.folio.test.TestUtils.parseResponse;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -45,6 +46,7 @@ import org.folio.roles.KeycloakTestClient;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.Endpoint;
+import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.test.extensions.KeycloakRealms;
@@ -305,7 +307,7 @@ class RoleCapabilityIT extends BaseIntegrationTest {
   }
 
   @Test
-  @KeycloakRealms("/json/keycloak/user-capability-realm.json")
+  @KeycloakRealms("/json/keycloak/role-capability-realm.json")
   @Sql(scripts = {
     "classpath:/sql/populate-test-role.sql",
     "classpath:/sql/populate-role-policy.sql",
@@ -321,6 +323,39 @@ class RoleCapabilityIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.errors[0].code", is("not_found_error")))
       .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
       .andExpect(jsonPath("$.errors[0].message", is(expectedErrorMessage)));
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-capability-fresh-realm.json")
+  @Sql(scripts = "classpath:/sql/capabilities/populate-capabilities.sql")
+  void assignCapabilities_positive_roleNameIsChanged() throws Exception {
+    var testRole = new Role().name("Test User Role").description("Test user role description");
+    var testRoleJson = asJsonString(testRole);
+    var roleResponse = mockMvc.perform(post("/roles")
+        .content(testRoleJson)
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isCreated())
+      .andExpect(content().json(testRoleJson))
+      .andReturn();
+
+    var roleId = parseResponse(roleResponse, Role.class).getId();
+    postRoleCapabilities(roleCapabilitiesRequest(roleId, List.of(FOO_CREATE_CAPABILITY)));
+
+    mockMvc.perform(put("/roles/{id}", roleId)
+        .content(asJsonString(testRole.name("Test User Role Updated")))
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
+
+    postRoleCapabilities(roleCapabilitiesRequest(roleId, List.of(FOO_VIEW_CAPABILITY)));
+
+    assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
+      kcPermissionName(roleId, fooItemPostEndpoint()),
+      kcPermissionName(roleId, fooItemGetEndpoint())
+    ));
   }
 
   static void updateRoleCapabilities(CapabilitiesUpdateRequest request) throws Exception {
@@ -346,6 +381,10 @@ class RoleCapabilityIT extends BaseIntegrationTest {
   }
 
   protected static String kcPermissionName(Endpoint endpoint) {
-    return String.format("%s access for role 'test-role' to '%s'", endpoint.getMethod(), endpoint.getPath());
+    return kcPermissionName(ROLE_ID, endpoint);
+  }
+
+  protected static String kcPermissionName(UUID roleId, Endpoint endpoint) {
+    return String.format("%s access for role '%s' to '%s'", endpoint.getMethod(), roleId, endpoint.getPath());
   }
 }
