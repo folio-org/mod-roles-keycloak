@@ -38,9 +38,9 @@
     <edge-api-utils.version>1.2.0</edge-api-utils.version>
     <folio-spring-support.version>7.3.0-SNAPSHOT</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
-    <folio-java-checkstyle.version>1.0.0-SNAPSHOT</folio-java-checkstyle.version>
-    <folio-backend-common.version>1.1.0-SNAPSHOT</folio-backend-common.version>
-    <folio-secret-store.version>1.1.0-SNAPSHOT</folio-secret-store.version>
+    <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
+    <folio-backend-common.version>1.0.0</folio-backend-common.version>
+    <folio-secret-store.version>1.0.0</folio-secret-store.version>
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
     </mod-roles-keycloak.yaml-file>
@@ -525,6 +525,14 @@
     </repository>
   </repositories>
 
+  <pluginRepositories>
+    <pluginRepository>
+      <id>folio-nexus</id>
+      <name>FOLIO Maven repository</name>
+      <url>https://repository.folio.org/repository/maven-folio</url>
+    </pluginRepository>
+  </pluginRepositories>
+
   <distributionManagement>
     <repository>
       <id>folio-nexus</id>
@@ -541,6 +549,13 @@
       <layout>default</layout>
     </snapshotRepository>
   </distributionManagement>
+
+  <scm>
+    <url>https://github.com/folio-org/mod-roles-keycloak</url>
+    <connection>scm:git:git://github.com:folio-org/mod-roles-keycloak.git</connection>
+    <developerConnection>scm:git:git@github.com:folio-org/mod-roles-keycloak.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
 
   <profiles>
     <profile>
