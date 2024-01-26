@@ -100,6 +100,6 @@ public class FolioPermissionService {
   }
 
   private static boolean isUiPermission(String permissionName) {
-    return startsWithAny(permissionName, "ui-", "module", "plugin");
+    return startsWithAny(permissionName, "ui-", "module", "plugin", "settings");
   }
 }
