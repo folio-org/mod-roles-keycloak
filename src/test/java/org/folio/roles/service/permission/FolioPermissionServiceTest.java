@@ -6,6 +6,7 @@ import static org.folio.roles.support.AuthResourceUtils.fooPermission;
 import static org.folio.roles.support.AuthResourceUtils.fooPermissionEntity;
 import static org.folio.roles.support.AuthResourceUtils.permission;
 import static org.folio.roles.support.AuthResourceUtils.permissionEntity;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.mapper.entity.PermissionEntityMapper;
 import org.folio.roles.repository.PermissionRepository;
@@ -22,6 +24,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -103,14 +108,16 @@ class FolioPermissionServiceTest {
       assertThat(result).containsExactly(expectedPermission);
     }
 
-    @Test
-    void positive_expandUiPermissionSet() {
+    @ParameterizedTest
+    @MethodSource("uiPermissionPrefixProvider")
+    @DisplayName("positive_expandUiPermissionSet_parametrized")
+    void positive_expandUiPermissionSet(String uiPrefix) {
       var id = UUID.randomUUID();
       var id1 = UUID.randomUUID();
       var id2 = UUID.randomUUID();
 
       var subPermissions = List.of("foo.item.get", "foo.item.post");
-      var sourcePermissionName = "ui-foo.item.create";
+      var sourcePermissionName = uiPrefix + "-foo.item.create";
       var rootEntity = permissionEntity(id, sourcePermissionName, subPermissions.toArray(String[]::new));
       var fooItemGetEntity = permissionEntity(id1, "foo.item.get");
       var fooItemPostEntity = permissionEntity(id2, "foo.item.post");
@@ -156,6 +163,15 @@ class FolioPermissionServiceTest {
     void positive_emptyPermission() {
       var result = service.expandPermissionNames(emptyList());
       assertThat(result).isEmpty();
+    }
+
+    private static Stream<Arguments> uiPermissionPrefixProvider() {
+      return Stream.of(
+        arguments("ui"),
+        arguments("module"),
+        arguments("plugin"),
+        arguments("settings")
+      );
     }
   }
 }
