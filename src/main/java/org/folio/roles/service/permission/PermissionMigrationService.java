@@ -276,14 +276,13 @@ public class PermissionMigrationService {
     var folioPermissions = attributes.get("folio_permissions");
 
     var resourceName = res.getName();
-    if (folioPermissions == null) {
+    if (CollectionUtils.isEmpty(folioPermissions)) {
       log.info("Skipping resource because folio permission is empty, name: {}", resourceName);
       return Collections.emptyMap();
     }
 
-    var stringArray = folioPermissions.iterator().next().split(",");
     var resultMap = new HashMap<String, AuthResourceHolder>();
-    for (var permissionValue : stringArray) {
+    for (var permissionValue : folioPermissions) {
       var permissionWithScopes = permissionValue.split("#");
       if (permissionWithScopes.length == 1) {
         log.info("Skipping resource because folio permission does not have scopes, name: {}", resourceName);
