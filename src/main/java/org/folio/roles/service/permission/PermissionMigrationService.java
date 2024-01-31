@@ -14,6 +14,7 @@ import static org.folio.common.utils.CollectionUtils.toStream;
 import jakarta.ws.rs.ClientErrorException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -281,8 +282,10 @@ public class PermissionMigrationService {
       return Collections.emptyMap();
     }
 
+    var parsedPermissions =
+      folioPermissions.stream().flatMap(p -> Arrays.stream(p.split(","))).toList();
     var resultMap = new HashMap<String, AuthResourceHolder>();
-    for (var permissionValue : folioPermissions) {
+    for (var permissionValue : parsedPermissions) {
       var permissionWithScopes = permissionValue.split("#");
       if (permissionWithScopes.length == 1) {
         log.info("Skipping resource because folio permission does not have scopes, name: {}", resourceName);
