@@ -45,17 +45,17 @@
     </mod-roles-keycloak.yaml-file>
 
     <!-- Test dependencies versions -->
-    <testcontainer.version>1.19.3</testcontainer.version>
+    <testcontainer.version>1.19.4</testcontainer.version>
     <folio-backend-testing.version>1.0.0</folio-backend-testing.version>
 
     <!-- Plugins versions -->
-    <maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
-    <maven-checkstyle.version>10.12.7</maven-checkstyle.version>
+    <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
+    <maven-checkstyle.version>10.13.0</maven-checkstyle.version>
     <maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
     <openapi-generator.version>7.2.0</openapi-generator.version>
-    <keycloak-admin-client.version>23.0.4</keycloak-admin-client.version>
+    <keycloak-admin-client.version>23.0.5</keycloak-admin-client.version>
   </properties>
 
   <dependencies>
