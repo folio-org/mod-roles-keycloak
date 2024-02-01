@@ -1,0 +1,64 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+  <changeSet id="MODROLESKC-7@@create-role-loadable-type-enum" author="dmtkachenko">
+    <sql>
+      CREATE TYPE ROLE_LOADABLE_TYPE AS ENUM ('DEFAULT', 'SUPPORT');
+    </sql>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@create-role-loadable-table" author="dmtkachenko">
+    <createTable tableName="role_loadable">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" primaryKeyName="pk_role_loadable"/>
+      </column>
+      <column name="name" type="VARCHAR(64)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="VARCHAR(255)"/>
+      <column name="type" type="role_loadable_type" defaultValue="DEFAULT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="created_by" type="UUID"/>
+      <column name="created_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="UUID"/>
+      <column name="updated_date" type="TIMESTAMP"/>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@create-unq-role-loadable-name" author="dmtkachenko">
+    <addUniqueConstraint
+      columnNames="name"
+      tableName="role_loadable"
+      constraintName="unq_role_loadable_name"
+      deferrable="false"
+      initiallyDeferred="false"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@create-role-loadable-permission-table" author="dmtkachenko">
+    <createTable tableName="role_loadable_permission">
+      <column name="role_loadable_id" type="UUID">
+        <constraints
+          nullable="false"
+          foreignKeyName="fk_role_loadable_perm_role_loadable_id"
+          references="role_loadable(id)"/>
+      </column>
+      <column name="folio_permission" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@create-pk-role-loadable-permission" author="dmtkachenko">
+    <addPrimaryKey
+      columnNames="role_loadable_id,folio_permission"
+      tableName="role_loadable_permission"
+      constraintName="pk_role_loadable_permission"/>
+  </changeSet>
+
+</databaseChangeLog>

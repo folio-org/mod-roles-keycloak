@@ -1,0 +1,12 @@
+{
+  "roles": [
+    {
+      "id": "000a3974-2aaa-4557-a7c7-d06b9ed8c0c2",
+      "name": "Check-out All",
+      "description": "Role for Check-out All",
+      "permissions": [
+        "ui-checkout.all"
+      ]
+    }
+  ]
+}

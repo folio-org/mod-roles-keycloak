@@ -1,0 +1,31 @@
+{
+  "roles": [
+    {
+      "id": "0f0c7402-da94-4ca3-a992-7a097dfa9633",
+      "name": "Acquisition Observer",
+      "description": "Role for Acquisition Observer",
+      "permissions": [
+        "ui-agreements.agreements.view",
+        "ui-agreements.resources.view",
+        "ui-finance.fiscal-year.view",
+        "ui-finance.fund-budget.view",
+        "ui-finance.group.view",
+        "ui-finance.ledger.view",
+        "ui-plugin-find-agreement.search",
+        "ui-inventory.instance.view",
+        "ui-invoice.invoice.view",
+        "ui-orders.orders.view",
+        "ui-organizations.creds.view",
+        "ui-organizations.view",
+        "ui-receiving.view",
+        "ui-requests.view",
+        "ui-users.viewperms",
+        "ui-users.viewproxies",
+        "ui-users.viewuserservicepoints",
+        "ui-users.view",
+        "ui-users.loans.view",
+        "ui-users.requests.all"
+      ]
+    }
+  ]
+}
