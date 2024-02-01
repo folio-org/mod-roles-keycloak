@@ -6,7 +6,6 @@ import static org.folio.roles.support.AuthResourceUtils.fooPermission;
 import static org.folio.roles.support.AuthResourceUtils.fooPermissionEntity;
 import static org.folio.roles.support.AuthResourceUtils.permission;
 import static org.folio.roles.support.AuthResourceUtils.permissionEntity;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -14,7 +13,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Stream;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.mapper.entity.PermissionEntityMapper;
 import org.folio.roles.repository.PermissionRepository;
@@ -25,8 +23,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -109,7 +106,7 @@ class FolioPermissionServiceTest {
     }
 
     @ParameterizedTest
-    @MethodSource("uiPermissionPrefixProvider")
+    @ValueSource(strings = {"ui", "module", "plugin", "settings"})
     @DisplayName("positive_expandUiPermissionSet_parametrized")
     void positive_expandUiPermissionSet(String uiPrefix) {
       var id = UUID.randomUUID();
@@ -133,7 +130,10 @@ class FolioPermissionServiceTest {
 
       var result = service.expandPermissionNames(List.of(sourcePermissionName));
 
-      assertThat(result).isEqualTo(List.of(permission(id1, "foo.item.get"), permission(id2, "foo.item.post")));
+      assertThat(result).containsExactly(
+        permission(id, sourcePermissionName),
+        permission(id1, "foo.item.get"),
+        permission(id2, "foo.item.post"));
     }
 
     @Test
@@ -163,15 +163,6 @@ class FolioPermissionServiceTest {
     void positive_emptyPermission() {
       var result = service.expandPermissionNames(emptyList());
       assertThat(result).isEmpty();
-    }
-
-    private static Stream<Arguments> uiPermissionPrefixProvider() {
-      return Stream.of(
-        arguments("ui"),
-        arguments("module"),
-        arguments("plugin"),
-        arguments("settings")
-      );
     }
   }
 }

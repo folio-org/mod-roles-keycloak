@@ -2,12 +2,10 @@ package org.folio.roles.service.permission;
 
 import static java.util.Collections.emptyList;
 import static java.util.function.Predicate.not;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.collections4.ListUtils.union;
-import static org.apache.commons.lang3.StringUtils.startsWithAny;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.Collectors.toLinkedHashMap;
 
@@ -55,9 +53,7 @@ public class FolioPermissionService {
       currPermissionNames = getSubPermissionNames(foundPermissionEntities, foundPermissions);
     } while (isNotEmpty(currPermissionNames));
 
-    return permissionEntityMapper.toDto(foundEntities).stream()
-      .filter(not(permission -> isUiPermission(permission.getPermissionName())))
-      .collect(toList());
+    return permissionEntityMapper.toDto(foundEntities);
   }
 
   /**
@@ -97,9 +93,5 @@ public class FolioPermissionService {
 
   private static Set<String> getAsSetOfStrings(Collection<String> permissionNames) {
     return permissionNames instanceof Set ? (Set<String>) permissionNames : new LinkedHashSet<>(permissionNames);
-  }
-
-  private static boolean isUiPermission(String permissionName) {
-    return startsWithAny(permissionName, "ui-", "module", "plugin", "settings");
   }
 }
