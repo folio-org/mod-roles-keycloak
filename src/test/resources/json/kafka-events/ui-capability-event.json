@@ -1,0 +1,49 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "folio_module-1.0.0",
+    "moduleType": "ui-module",
+    "applicationId": "test-application-0.0.1",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "settings.enabled",
+          "displayName": "UI: settings area is enabled"
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "settings.test.enabled",
+          "displayName": "Settings (Test): display list of settings pages for test module",
+          "subPermissions": [ "settings.enabled" ]
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "ui-test.foo.view",
+          "displayName": "Users: Can view test values",
+          "description": "Permission description for 'ui-test.view'",
+          "subPermissions": [
+            "settings.test.enabled",
+            "foo.item.get"
+          ],
+          "visible": true
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "ui-test.foo.create",
+          "displayName": "Users: Can view test values",
+          "description": "Permission description for 'ui-test.view'",
+          "subPermissions": [
+            "ui-test.foo.view",
+            "foo.item.create"
+          ],
+          "visible": true
+        }
+      }
+    ]
+  }
+}
