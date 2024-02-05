@@ -1,0 +1,12 @@
+{
+  "roles": [
+    {
+      "id": "d1c8f3b4-1f40-4106-a038-35ed218bb1f4",
+      "name": "Data Export",
+      "description": "Role for Data Export",
+      "permissions": [
+        "ui-data-export.app.enabled"
+      ]
+    }
+  ]
+}

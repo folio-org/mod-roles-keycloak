@@ -1,0 +1,51 @@
+{
+  "roles": [
+    {
+      "id": "cb856ca3-9ade-4509-91d9-b59b332b5d13",
+      "name": "Circulation Manager",
+      "description": "Role for Circulation Manager",
+      "permissions": [
+        "ui-checkin.all",
+        "ui-checkout.all",
+        "ui-plugin-create-inventory-records.create",
+        "ui-users.feefineactions",
+        "ui-inventory.instance.view",
+        "ui-inventory.item.markasmissing",
+        "ui-notes.item.assign-unassign",
+        "ui-notes.item.create",
+        "ui-notes.item.delete",
+        "ui-notes.item.edit",
+        "ui-notes.item.view",
+        "ui-requests.all",
+        "ui-tags.view",
+        "ui-tags.all",
+        "ui-users.editperms",
+        "ui-users.edituserservicepoints",
+        "ui-users.feesfines.actions.all",
+        "ui-users.patron_blocks",
+        "ui-users.editproxies",
+        "ui-users.opentransactions",
+        "ui-users.delete",
+        "ui-users.lost-items.requiring-actual-cost",
+        "ui-users.edit",
+        "ui-users.viewperms",
+        "ui-users.viewproxies",
+        "ui-users.viewuserservicepoints",
+        "ui-users.view",
+        "ui-users.cashDrawerReport",
+        "ui-users.financialTransactionReport",
+        "ui-users.manualProcessRefundsReport",
+        "ui-users.reset.password",
+        "ui-users.loans.claim-item-returned",
+        "ui-users.loans.declare-item-lost",
+        "ui-users.loans.declare-claimed-returned-item-as-missing",
+        "ui-users.loans.renew-override",
+        "ui-users.loans.renew",
+        "ui-users.loans.all",
+        "ui-users.loans.add-patron-info",
+        "ui-users.loans.add-staff-info",
+        "ui-users.requests.all"
+      ]
+    }
+  ]
+}

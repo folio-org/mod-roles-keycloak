@@ -1,0 +1,32 @@
+{
+  "roles": [
+    {
+      "id": "58e7f519-3ff6-4fc2-a123-80cf2d728103",
+      "name": "ERM Observer",
+      "description": "Role for ERM Observer",
+      "permissions": [
+        "ui-agreements.agreements.view",
+        "ui-agreements.resources.view",
+        "ui-agreements.platforms.view",
+        "ui-dashboard.dashboards.manage",
+        "ui-eholdings.app.enabled",
+        "ui-eholdings.costperuse.view",
+        "ui-erm-comparisons.jobs.view",
+        "ui-local-kb-admin.kbs.view",
+        "ui-local-kb-admin.proxyServer.view",
+        "ui-licenses.licenses.view",
+        "ui-local-kb-admin.jobs.view",
+        "ui-notes.item.view",
+        "ui-organizations.view",
+        "ui-agreements.supplementaryProperties.view",
+        "ui-agreements.appSettings.view",
+        "ui-agreements.generalSettings.view",
+        "ui-agreements.picklists.view",
+        "ui-licenses.appSettings.view",
+        "ui-licenses.terms.view",
+        "ui-licenses.picklists.view",
+        "ui-users.view"
+      ]
+    }
+  ]
+}

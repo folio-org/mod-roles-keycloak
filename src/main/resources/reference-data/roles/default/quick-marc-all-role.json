@@ -1,0 +1,13 @@
+{
+  "roles": [
+    {
+      "id": "19ab41c5-20a7-4c2c-8246-dca7d60a92ea",
+      "name": "Quick MARC All",
+      "description": "Role for Quick MARC All",
+      "permissions": [
+        "ui-quick-marc.quick-marc-editor.all",
+        "ui-quick-marc.quick-marc-editor.duplicate"
+      ]
+    }
+  ]
+}

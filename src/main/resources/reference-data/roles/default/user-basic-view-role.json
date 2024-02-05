@@ -1,0 +1,12 @@
+{
+  "roles": [
+    {
+      "id": "1cc4a127-cbbb-415a-8bbb-f499eec12d83",
+      "name": "User Basic View",
+      "description": "Role for User Basic View",
+      "permissions": [
+        "ui-users.view"
+      ]
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 package org.folio.roles.service.capability;
 
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -22,7 +24,9 @@ import org.folio.roles.domain.entity.CapabilityEntity;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.CapabilityRepository;
+import org.folio.roles.service.event.DomainEvent;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +40,7 @@ public class CapabilityService {
   private final CapabilityRepository capabilityRepository;
   private final CapabilityEntityMapper capabilityEntityMapper;
   @Lazy private final CapabilitySetService capabilitySetService;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates folio resources from incoming resource event.
@@ -59,7 +64,12 @@ public class CapabilityService {
     }
 
     var foundCapabilityNames = capabilityRepository.findCapabilityNames(capabilityNames);
-    saveCapabilities(capabilities, foundCapabilityNames);
+    var savedEntities = saveCapabilities(capabilities, foundCapabilityNames);
+
+    if (isNotEmpty(savedEntities)) {
+      var saved = capabilityEntityMapper.convert(savedEntities);
+      eventPublisher.publishEvent(DomainEvent.created(saved));
+    }
   }
 
   /**
@@ -216,14 +226,14 @@ public class CapabilityService {
     if (!onlyVisible) {
       return capabilityRepository.findAllFolioPermissions(userId);
     }
-    
+
     String permissionPrefixesParam = Arrays.stream(visiblePermissionPrefixes)
       .collect(joining(", ", "{", "}"));
-    
+
     return capabilityRepository.findVisibleFolioPermissions(userId, permissionPrefixesParam);
   }
 
-  private void saveCapabilities(List<Capability> capabilities, Set<String> foundNames) {
+  private List<CapabilityEntity> saveCapabilities(List<Capability> capabilities, Set<String> foundNames) {
     var capabilityEntities = new ArrayList<CapabilityEntity>();
     for (var capability : capabilities) {
       var capabilityName = capability.getName();
@@ -234,8 +244,6 @@ public class CapabilityService {
       capabilityEntities.add(capabilityEntityMapper.convert(capability));
     }
 
-    if (CollectionUtils.isNotEmpty(capabilityEntities)) {
-      capabilityRepository.saveAll(capabilityEntities);
-    }
+    return isNotEmpty(capabilityEntities) ? capabilityRepository.saveAll(capabilityEntities) : emptyList();
   }
 }

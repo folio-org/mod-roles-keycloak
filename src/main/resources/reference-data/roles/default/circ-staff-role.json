@@ -1,0 +1,43 @@
+{
+  "roles": [
+    {
+      "id": "c7fe446f-819c-4490-9a59-08b6f78a7807",
+      "name": "Circulation Staff",
+      "description": "Role for Circulation Staff",
+      "permissions": [
+        "ui-checkin.all",
+        "ui-checkout.all",
+        "ui-plugin-create-inventory-records.create",
+        "ui-inventory.instance.view",
+        "ui-inventory.item.markasmissing",
+        "ui-notes.item.assign-unassign",
+        "ui-notes.item.create",
+        "ui-notes.item.delete",
+        "ui-notes.item.edit",
+        "ui-notes.item.view",
+        "ui-requests.all",
+        "ui-tags.view",
+        "ui-tags.all",
+        "ui-users.editperms",
+        "ui-users.edituserservicepoints",
+        "ui-users.feesfines.actions.all",
+        "ui-users.patron_blocks",
+        "ui-users.editproxies",
+        "ui-users.edit",
+        "ui-users.viewperms",
+        "ui-users.viewproxies",
+        "ui-users.viewuserservicepoints",
+        "ui-users.reset.password",
+        "ui-users.loans.claim-item-returned",
+        "ui-users.loans.declare-item-lost",
+        "ui-users.loans.declare-claimed-returned-item-as-missing",
+        "ui-users.loans.renew-override",
+        "ui-users.loans.all",
+        "ui-users.loans.add-patron-info",
+        "ui-users.loans.add-staff-info",
+        "ui-users.requests.all",
+        "ui-users.settings.view"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 package org.folio.roles.domain.entity;
 
-import static jakarta.persistence.FetchType.EAGER;
+import static jakarta.persistence.FetchType.LAZY;
 
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -8,11 +8,9 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.util.Set;
-import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -28,18 +26,9 @@ import org.springframework.data.domain.Sort.Direction;
 @Entity
 @Table(name = "role_loadable")
 @EqualsAndHashCode(callSuper = true)
-public class LoadableRoleEntity extends Auditable {
+public class LoadableRoleEntity extends RoleEntity {
 
   public static final Sort DEFAULT_LOADABLE_ROLE_SORT = Sort.by(Direction.ASC, "name");
-
-  @Id
-  private UUID id;
-
-  @Column(name = "name", nullable = false)
-  private String name;
-
-  @Column(name = "description", nullable = false)
-  private String description;
 
   @Enumerated(EnumType.STRING)
   @JdbcTypeCode(SqlTypes.NAMED_ENUM)
@@ -49,7 +38,7 @@ public class LoadableRoleEntity extends Auditable {
   @ToString.Exclude
   @EqualsAndHashCode.Exclude
   @Fetch(FetchMode.SUBSELECT)
-  @ElementCollection(fetch = EAGER)
+  @ElementCollection(fetch = LAZY)
   @CollectionTable(name = "role_loadable_permission", joinColumns = @JoinColumn(name = "role_loadable_id"))
   @Column(name = "folio_permission", nullable = false)
   private Set<String> permissions;

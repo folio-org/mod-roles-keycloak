@@ -1,0 +1,21 @@
+{
+  "roles": [
+    {
+      "id": "16df97c5-4c7f-4a8b-82dc-41dc11504ce7",
+      "name": "Data Import",
+      "description": "Role for Data Import",
+      "permissions": [
+        "ui-inventory.all-permissions.TEMPORARY",
+        "ui-inventory.settings.list.view",
+        "ui-data-import.settings.manage",
+        "ui-data-import.settings.readOnly",
+        "ui-data-import.manage",
+        "ui-data-import.logs.delete",
+        "ui-invoice.acq.unit.assignment.assign",
+        "ui-invoice.invoice.create",
+        "ui-invoice.invoice.delete",
+        "ui-invoice.settings.all"
+      ]
+    }
+  ]
+}

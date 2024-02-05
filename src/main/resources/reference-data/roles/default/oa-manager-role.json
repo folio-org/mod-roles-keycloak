@@ -1,0 +1,30 @@
+{
+  "roles": [
+    {
+      "id": "fd51dce2-421b-4efe-aa49-5f2e86e3eac4",
+      "name": "OA Manager",
+      "description": "Role for OA Manager",
+      "permissions": [
+        "ui-agreements.agreements.delete",
+        "ui-agreements.agreements.edit",
+        "ui-agreements.resources.edit",
+        "ui-agreements.platforms.edit",
+        "ui-agreements.agreements.file.download",
+        "ui-agreements.agreements.view",
+        "ui-agreements.resources.view",
+        "ui-agreements.platforms.view",
+        "ui-dashboard.dashboards.manage",
+        "ui-plugin-find-agreement.search",
+        "ui-invoice.approve",
+        "ui-invoice.acq.unit.assignment.assign",
+        "ui-invoice.invoice.create",
+        "ui-invoice.invoice.delete",
+        "ui-invoice.cancel",
+        "ui-invoice.pay",
+        "ui-invoice.voucherExport",
+        "ui-oa.oa.view",
+        "ui-oa.oa.manage"
+      ]
+    }
+  ]
+}

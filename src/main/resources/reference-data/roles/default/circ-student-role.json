@@ -1,0 +1,29 @@
+{
+  "roles": [
+    {
+      "id": "0718035e-a3f5-43b7-bbe3-8303592ae14e",
+      "name": "Circulation Student",
+      "description": "Role for Circulation Student",
+      "permissions": [
+        "ui-checkin.all",
+        "ui-checkout.circulation",
+        "ui-circulation-log.log-event.view",
+        "ui-plugin-create-inventory-records.create",
+        "ui-inventory.instance.view",
+        "ui-notes.item.assign-unassign",
+        "ui-notes.item.create",
+        "ui-notes.item.view",
+        "ui-requests.create",
+        "ui-tags.view",
+        "ui-users.feesfines.view",
+        "ui-users.viewperms",
+        "ui-users.viewproxies",
+        "ui-users.viewuserservicepoints",
+        "ui-users.view",
+        "ui-users.loans.renew",
+        "ui-users.loans.view",
+        "ui-users.requests.all"
+      ]
+    }
+  ]
+}

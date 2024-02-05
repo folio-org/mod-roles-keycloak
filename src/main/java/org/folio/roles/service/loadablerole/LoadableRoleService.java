@@ -1,9 +1,11 @@
-package org.folio.roles.service.role;
+package org.folio.roles.service.loadablerole;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.model.LoadableRole;
 import org.folio.roles.mapper.entity.LoadableRoleEntityMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
@@ -20,21 +22,23 @@ public class LoadableRoleService {
   private final LoadableRoleEntityMapper mapper;
 
   @Transactional(readOnly = true)
-  public Role getById(UUID id) {
+  public LoadableRole getById(UUID id) {
     var entity = repository.getReferenceById(id);
-    log.debug("Loadable role has been found: id = {}, name = {}", entity.getId(), entity.getName());
     return mapper.toRole(entity);
   }
 
   @Transactional(readOnly = true)
-  public boolean existsById(UUID id) {
-    return repository.existsById(id);
+  public Optional<LoadableRole> findByIdOrName(UUID id, String name) {
+    return repository.findByIdOrName(id, name)
+      .map(mapper::toRole);
   }
 
   public LoadableRole save(LoadableRole role) {
+    requireNonNull(role.getId(), "Loadable role id is null");
+
     var entity = mapper.toRoleEntity(role);
     var saved = repository.save(entity);
-    log.debug("Loadable role has been saved: id = {}, name = {}", role.getId(), role.getName());
+
     return mapper.toRole(saved);
   }
 
