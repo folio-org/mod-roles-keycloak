@@ -17,8 +17,7 @@
         "description": "Capability set identifier",
         "format": "uuid"
       },
-      "minItems": 1,
-      "maxItems": 255
+      "minItems": 1
     }
   },
   "required": [ "roleId", "capabilitySetIds" ]

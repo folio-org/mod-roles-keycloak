@@ -194,7 +194,7 @@ class RoleCapabilityIT extends BaseIntegrationTest {
   void assignCapabilities_negative_emptyCapabilities() throws Exception {
     attemptToPostRoleCapabilities(roleCapabilitiesRequest(ROLE_ID, emptyList()))
       .andExpect(status().isBadRequest())
-      .andExpectAll(argumentNotValidErr("size must be between 1 and 255", "capabilityIds", "[]"));
+      .andExpectAll(argumentNotValidErr("size must be between 1 and 2147483647", "capabilityIds", "[]"));
   }
 
   @Test
