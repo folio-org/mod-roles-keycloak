@@ -25,6 +25,7 @@ import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.CapabilityRepository;
 import org.folio.roles.service.event.DomainEvent;
+import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
@@ -41,6 +42,7 @@ public class CapabilityService {
   private final CapabilityEntityMapper capabilityEntityMapper;
   @Lazy private final CapabilitySetService capabilitySetService;
   private final ApplicationEventPublisher eventPublisher;
+  private final FolioExecutionContext folioExecutionContext;
 
   /**
    * Creates folio resources from incoming resource event.
@@ -68,7 +70,7 @@ public class CapabilityService {
 
     if (isNotEmpty(savedEntities)) {
       var saved = capabilityEntityMapper.convert(savedEntities);
-      eventPublisher.publishEvent(DomainEvent.created(saved));
+      eventPublisher.publishEvent(DomainEvent.created(saved).withContext(folioExecutionContext));
     }
   }
 

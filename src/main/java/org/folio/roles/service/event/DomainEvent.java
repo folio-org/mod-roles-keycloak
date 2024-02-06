@@ -5,6 +5,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import org.folio.spring.FolioExecutionContext;
 
 @Getter
 @ToString
@@ -15,6 +16,7 @@ public final class DomainEvent<T> {
   private final T newObject;
   private final T oldObject;
   private final DomainEventType type;
+  private FolioExecutionContext context;
 
   public static <T> DomainEvent<T> created(T newObject) {
     return new DomainEvent<>(newObject, null, DomainEventType.CREATE);
@@ -26,5 +28,10 @@ public final class DomainEvent<T> {
 
   public static <T> DomainEvent<T> deleted(T oldObject) {
     return new DomainEvent<>(null, oldObject, DomainEventType.DELETE);
+  }
+
+  public DomainEvent<T> withContext(FolioExecutionContext context) {
+    this.context = context;
+    return this;
   }
 }

@@ -27,6 +27,7 @@ import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.CapabilitySetEntityMapper;
 import org.folio.roles.repository.CapabilitySetRepository;
 import org.folio.roles.service.event.DomainEvent;
+import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ public class CapabilitySetService {
   private final CapabilityService capabilityService;
   private final CapabilitySetRepository repository;
   private final CapabilitySetEntityMapper mapper;
+  private final FolioExecutionContext folioExecutionContext;
   private final ApplicationEventPublisher eventPublisher;
 
   /**
@@ -62,7 +64,7 @@ public class CapabilitySetService {
     var savedEntity = repository.save(capabilityEntity);
 
     CapabilitySet saved = mapper.convert(savedEntity);
-    eventPublisher.publishEvent(DomainEvent.created(saved));
+    eventPublisher.publishEvent(DomainEvent.created(saved).withContext(folioExecutionContext));
 
     return saved;
   }
@@ -127,7 +129,8 @@ public class CapabilitySetService {
     var capabilitySetEntity = repository.getReferenceById(id);
     repository.delete(capabilitySetEntity);
 
-    eventPublisher.publishEvent(DomainEvent.deleted(mapper.convert(capabilitySetEntity)));
+    eventPublisher.publishEvent(DomainEvent.deleted(mapper.convert(capabilitySetEntity))
+      .withContext(folioExecutionContext));
   }
 
   @Transactional(readOnly = true)
@@ -185,7 +188,8 @@ public class CapabilitySetService {
     var entity = mapper.convert(capabilitySet);
     var savedEntity = repository.saveAndFlush(entity);
 
-    eventPublisher.publishEvent(DomainEvent.updated(mapper.convert(savedEntity), mapper.convert(foundEntity)));
+    eventPublisher.publishEvent(DomainEvent.updated(mapper.convert(savedEntity), mapper.convert(foundEntity))
+      .withContext(folioExecutionContext));
   }
 
   /**
