@@ -204,7 +204,7 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
     var request = roleCapabilitySetsRequest(ROLE_ID, emptyList());
     attemptToPostRoleCapabilitySets(request)
       .andExpect(status().isBadRequest())
-      .andExpectAll(argumentNotValidErr("size must be between 1 and 255", "capabilitySetIds", "[]"));
+      .andExpectAll(argumentNotValidErr("size must be between 1 and 2147483647", "capabilitySetIds", "[]"));
   }
 
   @Test
