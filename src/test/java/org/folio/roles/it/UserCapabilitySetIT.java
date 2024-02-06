@@ -198,7 +198,7 @@ class UserCapabilitySetIT extends BaseIntegrationTest {
     var request = userCapabilitySetsRequest(USER_ID, emptyList());
     attemptToPostUserCapabilitySets(request)
       .andExpect(status().isBadRequest())
-      .andExpectAll(argumentNotValidErr("size must be between 1 and 255", "capabilitySetIds", "[]"));
+      .andExpectAll(argumentNotValidErr("size must be between 1 and 2147483647", "capabilitySetIds", "[]"));
   }
 
   @Test

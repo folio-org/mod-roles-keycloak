@@ -71,7 +71,6 @@
           "subPermissions": [ "foo.item.get" ]
         }
       },
-
       {
         "permission": {
           "permissionName": "foo.item.edit",

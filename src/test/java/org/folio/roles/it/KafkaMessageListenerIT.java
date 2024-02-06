@@ -21,6 +21,7 @@ import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 import static org.folio.roles.utils.TestValues.readValue;
 import static org.folio.test.TestUtils.asJsonString;
 import static org.folio.test.TestUtils.parseResponse;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -29,6 +30,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -107,8 +109,33 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     sendCapabilityEventAndCheckResult();
   }
 
+  @Test
+  void handleCapabilityEvent_positive_uiPermissions() throws Exception {
+    var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
+    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
+
+    var uiCapabilityEvent = readValue("json/kafka-events/ui-capability-event.json", ResourceEvent.class);
+    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, uiCapabilityEvent);
+
+    await().untilAsserted(() -> doGet("/capabilities").andDo(print()).andExpect(jsonPath("$.totalRecords", is(8))));
+    await().untilAsserted(() -> doGet("/capability-sets").andDo(print()).andExpect(jsonPath("$.totalRecords", is(7))));
+
+    var searchResult = doGet(get("/capability-sets")
+      .queryParam("query", "name == \"ui-test_foo.create\"")
+      .headers(okapiHeaders()))
+      .andExpect(jsonPath("$.totalRecords", is(1)))
+      .andReturn();
+
+    var foundCapabilitySet = parseResponse(searchResult, CapabilitySets.class).getCapabilitySets().get(0);
+    assertThat(foundCapabilitySet.getCapabilities()).hasSize(6);
+
+    doGet("/capability-sets/{id}/capabilities", foundCapabilitySet.getId())
+      .andExpect(jsonPath("$.capabilities[*].name", containsInAnyOrder("foo_item.create", "foo_item.edit",
+        "foo_item.view", "settings_enabled.view", "settings_test_enabled.view", "ui-test_foo.view")));
+  }
+
   private void sendCapabilityEventAndCheckResult() throws Exception {
-    var capabilityEvent = readValue("json/kafka-events/folio-resources-event.json", ResourceEvent.class);
+    var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
 
     var expectedCapabilitiesJson = asJsonString(capabilities(
@@ -118,7 +145,6 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       fooItemCapability(VIEW, "foo.item.get", fooItemGetEndpoint())));
 
     await().untilAsserted(() -> doGet("/capabilities")
-      .andDo(print())
       .andExpect(content().json(expectedCapabilitiesJson))
       .andExpect(jsonPath("$.capabilities[0].metadata.createdDate", notNullValue()))
       .andExpect(jsonPath("$.capabilities[1].metadata.createdDate", notNullValue()))
@@ -132,7 +158,6 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       fooItemCapabilitySet(VIEW)));
 
     await().untilAsserted(() -> doGet("/capability-sets")
-      .andDo(print())
       .andExpect(content().json(expectedCapabilitySets))
       .andExpect(jsonPath("$.capabilitySets[0].metadata.createdDate", notNullValue()))
       .andExpect(jsonPath("$.capabilitySets[1].metadata.createdDate", notNullValue()))
@@ -151,7 +176,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
 
   @Test
   void handleCapabilityEvent_positive_eventIsSentWhenTenantIsDisabled() {
-    var capabilityEvent = readValue("json/kafka-events/folio-resources-event.json", ResourceEvent.class);
+    var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
     await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(4))));
     await().untilAsserted(() -> doGet("/capability-sets").andExpect(jsonPath("$.totalRecords", is(4))));
@@ -169,7 +194,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   @ParameterizedTest(name = "[{index}] name={0}")
   @DisplayName("handleCapabilityEvent_negative_parameterizedForNonRetryableExceptions")
   void handleCapabilityEvent_negative_parameterized(@SuppressWarnings("unused") String name, Throwable throwable) {
-    var capabilityEvent = readValue("json/kafka-events/folio-resources-event.json", ResourceEvent.class);
+    var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
     doThrow(throwable).when(capabilityService).createSafe(eq(APPLICATION_ID), anyList());
 

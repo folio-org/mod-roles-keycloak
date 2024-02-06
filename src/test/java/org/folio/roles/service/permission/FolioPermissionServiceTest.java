@@ -22,6 +22,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -103,14 +105,16 @@ class FolioPermissionServiceTest {
       assertThat(result).containsExactly(expectedPermission);
     }
 
-    @Test
-    void positive_expandUiPermissionSet() {
+    @ParameterizedTest
+    @ValueSource(strings = {"ui", "module", "plugin", "settings"})
+    @DisplayName("positive_expandUiPermissionSet_parametrized")
+    void positive_expandUiPermissionSet(String uiPrefix) {
       var id = UUID.randomUUID();
       var id1 = UUID.randomUUID();
       var id2 = UUID.randomUUID();
 
       var subPermissions = List.of("foo.item.get", "foo.item.post");
-      var sourcePermissionName = "ui-foo.item.create";
+      var sourcePermissionName = uiPrefix + "-foo.item.create";
       var rootEntity = permissionEntity(id, sourcePermissionName, subPermissions.toArray(String[]::new));
       var fooItemGetEntity = permissionEntity(id1, "foo.item.get");
       var fooItemPostEntity = permissionEntity(id2, "foo.item.post");
@@ -126,7 +130,10 @@ class FolioPermissionServiceTest {
 
       var result = service.expandPermissionNames(List.of(sourcePermissionName));
 
-      assertThat(result).isEqualTo(List.of(permission(id1, "foo.item.get"), permission(id2, "foo.item.post")));
+      assertThat(result).containsExactly(
+        permission(id, sourcePermissionName),
+        permission(id1, "foo.item.get"),
+        permission(id2, "foo.item.post"));
     }
 
     @Test
