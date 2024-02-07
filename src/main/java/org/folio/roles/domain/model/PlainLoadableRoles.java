@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor(staticName = "of")
-public class LoadableRoles {
+public class PlainLoadableRoles {
 
   @NotNull @Valid
-  private List<@Valid LoadableRole> roles = new ArrayList<>();
+  private List<@Valid PlainLoadableRole> roles = new ArrayList<>();
 }

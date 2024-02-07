@@ -1,22 +1,22 @@
 package org.folio.roles.domain.entity;
 
-import static jakarta.persistence.FetchType.LAZY;
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
-import jakarta.persistence.CollectionTable;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.JoinColumn;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.domain.Sort;
@@ -35,11 +35,34 @@ public class LoadableRoleEntity extends RoleEntity {
   @Column(name = "type", columnDefinition = "role_loadable_type")
   private EntityLoadableRoleType type;
 
-  @ToString.Exclude
+  @OneToMany(cascade = CascadeType.ALL,
+    fetch = FetchType.LAZY,
+    mappedBy = "role",
+    orphanRemoval = true)
   @EqualsAndHashCode.Exclude
-  @Fetch(FetchMode.SUBSELECT)
-  @ElementCollection(fetch = LAZY)
-  @CollectionTable(name = "role_loadable_permission", joinColumns = @JoinColumn(name = "role_loadable_id"))
-  @Column(name = "folio_permission", nullable = false)
-  private Set<String> permissions;
+  @ToString.Exclude
+  private Set<LoadablePermissionEntity> permissions = new HashSet<>();
+
+  public void setPermissions(Collection<LoadablePermissionEntity> newPermissions) {
+    removeExistingPermissions();
+
+    emptyIfNull(newPermissions).forEach(this::addPermission);
+  }
+
+  public void addPermission(LoadablePermissionEntity permission) {
+    permission.setRoleId(this.getId());
+    permission.setRole(this);
+
+    permissions.add(permission);
+  }
+
+  private void removeExistingPermissions() {
+    for (var itr = permissions.iterator(); itr.hasNext(); ) {
+      var perm = itr.next();
+
+      perm.setRoleId(null);
+      perm.setRole(null);
+      itr.remove();
+    }
+  }
 }

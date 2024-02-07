@@ -1,16 +1,20 @@
 package org.folio.roles.service.reference;
 
+import static java.util.stream.Collectors.toSet;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.domain.model.LoadablePermission;
 import org.folio.roles.domain.model.LoadableRole;
 import org.folio.roles.domain.model.LoadableRoleType;
-import org.folio.roles.domain.model.LoadableRoles;
+import org.folio.roles.domain.model.PlainLoadableRole;
+import org.folio.roles.domain.model.PlainLoadableRoles;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.utils.ResourceHelper;
 import org.springframework.stereotype.Component;
@@ -32,23 +36,23 @@ public class RolesDataLoader implements ReferenceDataLoader {
   }
 
   private void loadDefaultRoles() {
-    toStream(resourceHelper.readObjectsFromDirectory(DEFAULT_ROLES_DATA_DIR, LoadableRoles.class))
+    toStream(resourceHelper.readObjectsFromDirectory(DEFAULT_ROLES_DATA_DIR, PlainLoadableRoles.class))
       .flatMap(roles -> toStream(roles.getRoles()))
       .map(role -> role.type(LoadableRoleType.DEFAULT))
       .forEach(updateOrCreateRole());
   }
 
-  private Consumer<LoadableRole> updateOrCreateRole() {
-    return role -> {
-      var toSave = service.findByIdOrName(role.getId(), role.getName())
-        .map(copyDataFrom(role))
-        .orElseGet(withId(role));
+  private Consumer<PlainLoadableRole> updateOrCreateRole() {
+    return plainRole -> {
+      var toSave = service.findByIdOrName(plainRole.getId(), plainRole.getName())
+        .map(copyDataFrom(plainRole))
+        .orElseGet(withId(toLoadableRole(plainRole)));
 
       service.save(toSave);
     };
   }
 
-  private static Function<LoadableRole, LoadableRole> copyDataFrom(LoadableRole source) {
+  private static Function<LoadableRole, LoadableRole> copyDataFrom(PlainLoadableRole source) {
     return target -> {
       if (target.getType() != source.getType()) {
         throw new IllegalArgumentException("Loadable role type cannot be changed: original = " + target.getType() +
@@ -56,9 +60,26 @@ public class RolesDataLoader implements ReferenceDataLoader {
       }
       target.setName(source.getName());
       target.setDescription(source.getDescription());
-      target.setPermissions(source.getPermissions());
+
+      target.setPermissions(toLoadablePerms(source.getPermissions()));
+
       return target;
     };
+  }
+
+  private static LoadableRole toLoadableRole(PlainLoadableRole source) {
+    return LoadableRole.builder()
+      .id(source.getId())
+      .name(source.getName())
+      .description(source.getDescription())
+      .type(source.getType())
+      .permissions(toLoadablePerms(source.getPermissions()))
+      .metadata(source.getMetadata())
+      .build();
+  }
+
+  private static Set<LoadablePermission> toLoadablePerms(Set<String> permissions) {
+    return toStream(permissions).map(LoadablePermission::of).collect(toSet());
   }
 
   private static Supplier<LoadableRole> withId(LoadableRole role) {
