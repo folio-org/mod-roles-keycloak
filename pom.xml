@@ -38,15 +38,15 @@
     <folio-spring-support.version>8.0.0</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
-    <folio-backend-common.version>1.0.0</folio-backend-common.version>
-    <folio-secret-store.version>1.0.0</folio-secret-store.version>
+    <folio-backend-common.version>1.1.0</folio-backend-common.version>
+    <folio-secret-store.version>1.1.0</folio-secret-store.version>
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
     </mod-roles-keycloak.yaml-file>
 
     <!-- Test dependencies versions -->
     <testcontainer.version>1.19.4</testcontainer.version>
-    <folio-backend-testing.version>1.0.0</folio-backend-testing.version>
+    <folio-backend-testing.version>1.1.0</folio-backend-testing.version>
 
     <!-- Plugins versions -->
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
