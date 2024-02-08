@@ -2,9 +2,7 @@ package org.folio.roles.service.loadablerole;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -24,21 +22,9 @@ public class LoadableRoleService {
   private final LoadableRoleEntityMapper mapper;
 
   @Transactional(readOnly = true)
-  public LoadableRole getById(UUID id) {
-    var entity = repository.getReferenceById(id);
-    return mapper.toRole(entity);
-  }
-
-  @Transactional(readOnly = true)
   public Optional<LoadableRole> findByIdOrName(UUID id, String name) {
     return repository.findByIdOrName(id, name)
       .map(mapper::toRole);
-  }
-
-  @Transactional(readOnly = true)
-  public List<LoadableRole> findAllByPermissions(Set<String> permissionNames) {
-    var entities = repository.findAllByPermissions(permissionNames);
-    return mapper.toRoles(entities);
   }
 
   public LoadableRole save(LoadableRole role) {

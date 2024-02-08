@@ -46,7 +46,7 @@ public class RolesDataLoader implements ReferenceDataLoader {
     return plainRole -> {
       var toSave = service.findByIdOrName(plainRole.getId(), plainRole.getName())
         .map(copyDataFrom(plainRole))
-        .orElseGet(withId(toLoadableRole(plainRole)));
+        .orElseGet(toLoadableRole(withId(plainRole)));
 
       service.save(toSave);
     };
@@ -61,34 +61,34 @@ public class RolesDataLoader implements ReferenceDataLoader {
       target.setName(source.getName());
       target.setDescription(source.getDescription());
 
-      target.setPermissions(toLoadablePerms(source.getPermissions()));
+      target.setPermissions(toLoadablePerms(target.getId(), source.getPermissions()));
 
       return target;
     };
   }
 
-  private static LoadableRole toLoadableRole(PlainLoadableRole source) {
-    return LoadableRole.builder()
+  private static Supplier<LoadableRole> toLoadableRole(PlainLoadableRole source) {
+    return () -> LoadableRole.builder()
       .id(source.getId())
       .name(source.getName())
       .description(source.getDescription())
       .type(source.getType())
-      .permissions(toLoadablePerms(source.getPermissions()))
+      .permissions(toLoadablePerms(source.getId(), source.getPermissions()))
       .metadata(source.getMetadata())
       .build();
   }
 
-  private static Set<LoadablePermission> toLoadablePerms(Set<String> permissions) {
-    return toStream(permissions).map(LoadablePermission::of).collect(toSet());
+  private static Set<LoadablePermission> toLoadablePerms(UUID roleId, Set<String> permissions) {
+    return toStream(permissions)
+      .map(permName -> LoadablePermission.of(roleId, permName))
+      .collect(toSet());
   }
 
-  private static Supplier<LoadableRole> withId(LoadableRole role) {
-    return () -> {
-      if (role.getId() == null) {
-        role.setId(UUID.randomUUID());
-      }
+  private static PlainLoadableRole withId(PlainLoadableRole role) {
+    if (role.getId() == null) {
+      role.setId(UUID.randomUUID());
+    }
 
-      return role;
-    };
+    return role;
   }
 }

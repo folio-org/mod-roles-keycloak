@@ -1,5 +1,7 @@
 package org.folio.roles.domain.model;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
@@ -16,6 +18,9 @@ import org.folio.roles.domain.dto.Metadata;
 public class LoadablePermission {
 
   @NotNull
+  private UUID roleId;
+
+  @NotNull
   private String permissionName;
 
   @Valid
@@ -27,8 +32,16 @@ public class LoadablePermission {
   @Valid
   private Metadata metadata;
 
-  public static LoadablePermission of(String permissionName) {
+  public static LoadablePermission of(UUID roleId, String permissionName) {
+    if (roleId == null) {
+      throw new IllegalArgumentException("Role id is null");
+    }
+    if (isBlank(permissionName)) {
+      throw new IllegalArgumentException("Permission name is blank");
+    }
+
     var result = new LoadablePermission();
+    result.setRoleId(roleId);
     result.setPermissionName(permissionName);
 
     return result;
