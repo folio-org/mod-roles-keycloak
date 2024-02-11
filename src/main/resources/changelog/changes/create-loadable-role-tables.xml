@@ -45,6 +45,8 @@
       <column name="folio_permission" type="VARCHAR(255)">
         <constraints nullable="false"/>
       </column>
+      <column name="capability_id" type="UUID"/>
+      <column name="capability_set_id" type="UUID"/>
     </createTable>
   </changeSet>
 
@@ -63,6 +65,26 @@
       referencedTableName="role_loadable"
       referencedColumnNames="id"
       onDelete="CASCADE"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@add-fk-role-loadable-perm-capability-id" author="dmtkachenko">
+    <addForeignKeyConstraint
+      constraintName="fk_role_loadable_perm_capability_id"
+      baseTableName="role_loadable_permission"
+      baseColumnNames="capability_id"
+      referencedTableName="capability"
+      referencedColumnNames="id"
+      onDelete="NO ACTION"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@add-fk-role-loadable-perm-capability-set-id" author="dmtkachenko">
+    <addForeignKeyConstraint
+      constraintName="fk_role_loadable_perm_capability_set_id"
+      baseTableName="role_loadable_permission"
+      baseColumnNames="capability_set_id"
+      referencedTableName="capability_set"
+      referencedColumnNames="id"
+      onDelete="NO ACTION"/>
   </changeSet>
 
 </databaseChangeLog>

@@ -1,13 +1,12 @@
 package org.folio.roles.utils;
 
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
+import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -29,7 +28,7 @@ public class CollectionUtils {
       .collect(toList());
   }
 
-  public static <T, R> Set<R> mapItemsToSet(Collection<T> source, Function<? super T, ? extends R> mapper) {
-    return toStream(source).map(mapper).collect(toSet());
+  public static <T> Optional<T> findOne(Collection<T> source) {
+    return emptyIfNull(source).size() == 1 ? Optional.ofNullable(source.iterator().next()) : Optional.empty();
   }
 }
