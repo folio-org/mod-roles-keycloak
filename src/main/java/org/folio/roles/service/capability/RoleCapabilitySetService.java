@@ -18,6 +18,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.RoleCapabilitySet;
 import org.folio.roles.domain.entity.RoleCapabilitySetEntity;
+import org.folio.roles.domain.entity.key.RoleCapabilitySetKey;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.mapper.entity.RoleCapabilitySetEntityMapper;
 import org.folio.roles.repository.RoleCapabilitySetRepository;
@@ -115,6 +116,24 @@ public class RoleCapabilitySetService {
 
     var capabilitySetIds = getSetIds(roleCapabilityEntities);
     removeCapabilities(roleId, capabilitySetIds, emptyList());
+  }
+
+  /**
+   * Removes role assigned capability set using role identifier and capability set id.
+   *
+   * @param roleId  - role identifier as {@link UUID}
+   * @param capabilitySetId  - capability set identifier as {@link UUID}
+   * @throws jakarta.persistence.EntityNotFoundException if assignment is not found by role id and capability set id
+   */
+  @Transactional
+  public void delete(UUID roleId, UUID capabilitySetId) {
+    var entity = roleCapabilitySetRepository.findById(RoleCapabilitySetKey.of(roleId, capabilitySetId));
+    if (entity.isEmpty()) {
+      throw new EntityNotFoundException("Relations between role and capability set is not found: roleId = " + roleId
+        + ", capabilitySetId = " + capabilitySetId);
+    }
+
+    removeCapabilities(roleId, List.of(capabilitySetId), emptyList());
   }
 
   private PageResult<RoleCapabilitySet> assignCapabilities(

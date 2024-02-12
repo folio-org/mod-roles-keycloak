@@ -1,5 +1,7 @@
 package org.folio.roles.service.event;
 
+import static java.util.Objects.requireNonNull;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -25,14 +27,21 @@ public final class DomainEvent<T> {
   }
 
   public static <T> DomainEvent<T> created(T newObject) {
+    requireNonNull(newObject, "New object has to be not null");
+
     return new DomainEvent<>(newObject, null, DomainEventType.CREATE);
   }
 
   public static <T> DomainEvent<T> updated(T newObject, T oldObject) {
+    requireNonNull(newObject, "New object has to be not null");
+    requireNonNull(oldObject, "Old object has to be not null");
+
     return new DomainEvent<>(newObject, oldObject, DomainEventType.UPDATE);
   }
 
   public static <T> DomainEvent<T> deleted(T oldObject) {
+    requireNonNull(oldObject, "Old object has to be not null");
+
     return new DomainEvent<>(null, oldObject, DomainEventType.DELETE);
   }
 

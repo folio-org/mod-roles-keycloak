@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -25,6 +26,7 @@ import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
 import org.folio.roles.service.event.DomainEvent;
+import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -53,13 +55,11 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
     log.info("Handling created capabilities: {}", () -> toNames(capabilities));
 
-    try (var ignored = new FolioExecutionContextSetter(event.getContext())) {
-      var capabilityByPerm = capabilities.stream().collect(toMap(Capability::getPermission, identity()));
+    var capabilityByPerm = capabilities.stream().collect(toMap(Capability::getPermission, identity()));
 
-      var roleIdWithPermissions = findRoleWithPermissionsByPermissionNames(capabilityByPerm.keySet());
-
-      roleIdWithPermissions.forEach(assignCapabilitiesToRole(capabilityByPerm));
-    }
+    applyActionToRoles(() -> findRoleWithPermissionsByPermissionNames(capabilityByPerm.keySet()),
+      assignCapabilitiesToRole(capabilityByPerm),
+      event.getContext());
   }
 
   @Async
@@ -70,23 +70,28 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     var capabilitySet = event.getNewObject();
     log.info("Handling created capability set: {}", () -> shortDescription(capabilitySet));
 
-    try (var ignored = new FolioExecutionContextSetter(event.getContext())) {
-      var relatedCapability = getCapabilityByCapabilitySetName(capabilitySet.getName());
-      log.debug("Capability found by capability set name: {}", relatedCapability);
-
-      var capabilityPerm = relatedCapability.getPermission();
-
-      var roleIdWithPermissions = findRoleWithPermissionsByPermissionNames(List.of(capabilityPerm));
-
-      roleIdWithPermissions.forEach(assignCapabilitySetToRole(capabilitySet));
-    }
+    applyActionToRoles(findRolesWithPermissionsByCapabilitySet(capabilitySet),
+      assignCapabilitySetToRole(capabilitySet),
+      event.getContext());
   }
 
   @Async
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).UPDATE")
   public void handleCapabilitySetUpdatedEvent(DomainEvent<CapabilitySet> event) {
-    try (var ignored = new FolioExecutionContextSetter(event.getContext())) {
+    log.debug("\"Capability Set Updated\" event received: {}", event);
+
+    var capabilitySet = event.getNewObject();
+    var oldCapabilitySet = event.getOldObject();
+    
+    if (capabilitySet.getId() != oldCapabilitySet.getId()) {
+      throw new IllegalArgumentException("Ids of old and new version of capability set don't match: oldId = "
+        + oldCapabilitySet.getId() + ", newId = " + capabilitySet.getId());
     }
+
+    log.info("Handling updated capability set: {}", () -> shortDescription(capabilitySet));
+
+    // reflecting changes in the roles due to modification of a capability set currently is not supported
+    // by Role Capability Set service
   }
 
   @Async
@@ -97,16 +102,21 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     var capabilitySet = event.getOldObject();
     log.info("Handling deleted capability set: {}", () -> shortDescription(capabilitySet));
 
-    try (var ignored = new FolioExecutionContextSetter(event.getContext())) {
+    applyActionToRoles(findRolesWithPermissionsByCapabilitySet(capabilitySet),
+      deleteCapabilitySetFromRole(capabilitySet),
+      event.getContext());
+  }
+
+  private Supplier<Map<UUID, List<LoadablePermission>>> findRolesWithPermissionsByCapabilitySet(
+    CapabilitySet capabilitySet) {
+    return () -> {
       var relatedCapability = getCapabilityByCapabilitySetName(capabilitySet.getName());
       log.debug("Capability found by capability set name: {}", relatedCapability);
 
       var capabilityPerm = relatedCapability.getPermission();
 
-      var roleIdWithPermissions = findRoleWithPermissionsByPermissionNames(List.of(capabilityPerm));
-
-      roleIdWithPermissions.forEach(deleteCapabilitySetFromRole(capabilitySet));
-    }
+      return findRoleWithPermissionsByPermissionNames(List.of(capabilityPerm));
+    };
   }
 
   private Map<UUID, List<LoadablePermission>> findRoleWithPermissionsByPermissionNames(
@@ -153,12 +163,26 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       log.info("Removing capability set from loadable role: roleId = {}, permission = {}, capabilitySet = {}",
         () -> roleId, () -> rolePermission, () -> shortDescription(capabilitySet));
 
-      // TODO (Dima Tkachenko): change to "delete"
-      roleCapabilitySetService.create(roleId, List.of(capabilitySet.getId()));
+      roleCapabilitySetService.delete(roleId, capabilitySet.getId());
 
       rolePermission.setCapabilitySetId(null);
       service.save(rolePermission);
     };
+  }
+
+  private Capability getCapabilityByCapabilitySetName(String capabilitySetName) {
+    var capability = findOne(capabilityService.findByNames(List.of(capabilitySetName)));
+    return capability.orElseThrow(
+      () -> new EntityNotFoundException("Single capability is not found by capability set name: " + capabilitySetName));
+  }
+
+  private static void applyActionToRoles(Supplier<Map<UUID, List<LoadablePermission>>> rolesWithPermissionsSupplier,
+    BiConsumer<UUID, List<LoadablePermission>> action, FolioExecutionContext context) {
+    try (var ignored = new FolioExecutionContextSetter(context)) {
+      var roleIdWithPermissions = rolesWithPermissionsSupplier.get();
+
+      roleIdWithPermissions.forEach(action);
+    }
   }
 
   private static LoadablePermission getSingleLoadablePermission(UUID roleId, List<LoadablePermission> rolePermissions) {
@@ -167,12 +191,6 @@ public class LoadableRoleCapabilityAssignmentProcessor {
         + "roleId = " + roleId + ", rolePermissions = " + rolePermissions);
     }
     return rolePermissions.get(0);
-  }
-
-  private Capability getCapabilityByCapabilitySetName(String capabilitySetName) {
-    var capability = findOne(capabilityService.findByNames(List.of(capabilitySetName)));
-    return capability.orElseThrow(
-      () -> new EntityNotFoundException("Single capability is not found by capability set name: " + capabilitySetName));
   }
 
   private static Collection<String> toNames(Collection<Capability> capabilities) {
