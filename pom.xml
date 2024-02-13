@@ -33,7 +33,7 @@
     <apache-commons-collections4.version>4.4</apache-commons-collections4.version>
     <openapi-tools.jackson-databind-nullable.version>0.2.6</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
-    <hypersistence-utils-hibernate-63.version>3.7.1</hypersistence-utils-hibernate-63.version>
+    <hypersistence-utils-hibernate-63.version>3.7.2</hypersistence-utils-hibernate-63.version>
     <edge-api-utils.version>1.2.0</edge-api-utils.version>
     <folio-spring-support.version>8.0.0</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
