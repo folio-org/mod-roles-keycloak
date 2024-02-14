@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "d028d508-b6fa-43a9-8456-8aa1c354b074",
       "name": "Circulation Observer",
       "description": "Role for Circulation Observer",
       "permissions": [

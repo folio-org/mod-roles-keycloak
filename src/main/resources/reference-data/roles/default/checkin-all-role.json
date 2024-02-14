@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "3f878cc1-914b-442c-9e95-c014b26a980e",
       "name": "Check-in All",
       "description": "Role for Check-in All",
       "permissions": [

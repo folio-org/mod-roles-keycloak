@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "3d34c5e3-ccb5-4fb2-b9b5-2bf61f2a199a",
       "name": "Technical Service Staff",
       "description": "Role for Technical Service Staff",
       "permissions": [

@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "0d416050-0adf-469b-9195-53a20d4203a6",
       "name": "Acquisition Administrator",
       "description": "Role for Acquisition Administrator",
       "permissions": [

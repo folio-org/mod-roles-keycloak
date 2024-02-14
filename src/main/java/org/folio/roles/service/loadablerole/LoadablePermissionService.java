@@ -1,7 +1,5 @@
 package org.folio.roles.service.loadablerole;
 
-import static org.folio.common.utils.CollectionUtils.mapItems;
-
 import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +22,7 @@ public class LoadablePermissionService {
   @Transactional(readOnly = true)
   public List<LoadablePermission> findAllByPermissions(Collection<String> permissionNames) {
     var entities = repository.findAllByPermissionNameIn(permissionNames);
-    return mapItems(entities, mapper::toPermission);
+    return mapper.toPermission(entities);
   }
 
   public LoadablePermission save(LoadablePermission perm) {
@@ -35,7 +33,7 @@ public class LoadablePermissionService {
   }
 
   public void saveAll(List<LoadablePermission> perms) {
-    var entities = mapItems(perms, mapper::toPermissionEntity);
+    var entities = mapper.toPermissionEntity(perms);
     repository.saveAll(entities);
   }
 }

@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "58e7f519-3ff6-4fc2-a123-80cf2d728103",
       "name": "ERM Observer",
       "description": "Role for ERM Observer",
       "permissions": [

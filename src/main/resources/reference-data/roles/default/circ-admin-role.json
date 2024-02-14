@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "3e5d88cd-148f-4cb3-95a3-b4341d5ad4e2",
       "name": "Circulation Administrator",
       "description": "Role for Circulation Administrator",
       "permissions": [

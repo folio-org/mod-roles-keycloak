@@ -3,13 +3,17 @@ package org.folio.roles.service.reference;
 import static com.google.common.collect.ImmutableList.of;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
+import static org.folio.roles.domain.model.LoadableRoleType.DEFAULT;
+import static org.folio.roles.domain.model.LoadableRoleType.SUPPORT;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.folio.roles.domain.dto.Role;
-import org.folio.roles.domain.dto.Roles;
-import org.folio.roles.service.role.RoleService;
+import java.util.List;
+import java.util.Optional;
+import org.folio.roles.domain.model.LoadableRole;
+import org.folio.roles.domain.model.PlainLoadableRole;
+import org.folio.roles.domain.model.PlainLoadableRoles;
+import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.utils.ResourceHelper;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.Test;
@@ -23,67 +27,74 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class RolesDataLoaderTest {
 
   @InjectMocks private RolesDataLoader rolesDataLoader;
-  @Mock private RoleService roleService;
+  @Mock private LoadableRoleService roleService;
   @Mock private ResourceHelper resourceHelper;
 
   @Test
   void loadReferenceData_positive_ifCreate() {
-    var role = new Role().name("role1");
-    var roles = new Roles().roles(of(role));
+    var role = new PlainLoadableRole().name("role1");
+    var roles = new PlainLoadableRoles().roles(List.of(role));
+    var loadableRole = new LoadableRole().name(role.getName()).type(DEFAULT);
 
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", Roles.class))
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
       .thenReturn(of(roles));
-    when(roleService.create(role)).thenReturn(role);
+    when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
+    when(roleService.save(loadableRole)).thenReturn(loadableRole);
 
     rolesDataLoader.loadReferenceData();
-
-    verify(resourceHelper).readObjectsFromDirectory("reference-data/roles", Roles.class);
-    verify(roleService).create(role);
   }
 
   @Test
   void loadReferenceData_positive_ifUpdate() {
-    var role = new Role().name("role1").id(randomUUID());
-    var roles = new Roles().roles(of(role));
+    var role = new PlainLoadableRole().name("role1");
+    var roles = new PlainLoadableRoles().roles(List.of(role));
+    var loadableRole = new LoadableRole().id(randomUUID()).name(role.getName()).type(DEFAULT);
 
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", Roles.class))
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
       .thenReturn(of(roles));
-    when(roleService.update(role)).thenReturn(role);
-    when(roleService.existById(role.getId())).thenReturn(true);
+    when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(loadableRole));
+    when(roleService.save(loadableRole)).thenReturn(loadableRole);
 
     rolesDataLoader.loadReferenceData();
-
-    verify(resourceHelper).readObjectsFromDirectory("reference-data/roles", Roles.class);
-    verify(roleService).update(role);
-    verify(roleService).existById(role.getId());
   }
 
   @Test
   void loadReferenceData_positive_createIfNotExist() {
-    var role = new Role().name("role1").id(randomUUID());
-    var roles = new Roles().roles(of(role));
+    var role = new PlainLoadableRole().name("role1").id(randomUUID());
+    var roles = new PlainLoadableRoles().roles(List.of(role));
+    var loadableRole = new LoadableRole().id(role.getId()).name(role.getName()).type(DEFAULT);
 
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", Roles.class))
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
       .thenReturn(of(roles));
-    when(roleService.create(role)).thenReturn(role);
-    when(roleService.existById(role.getId())).thenReturn(false);
+    when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
+    when(roleService.save(loadableRole)).thenReturn(loadableRole);
 
     rolesDataLoader.loadReferenceData();
-
-    verify(resourceHelper).readObjectsFromDirectory("reference-data/roles", Roles.class);
-    verify(roleService).create(role);
-    verify(roleService).existById(role.getId());
   }
 
   @Test
-  void loadReferenceData_negative_ifError() {
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", Roles.class))
+  void loadReferenceData_negative_ifReadError() {
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
       .thenThrow(new IllegalStateException("Failed to deserialize data"));
 
     assertThatThrownBy(() -> rolesDataLoader.loadReferenceData()).isInstanceOf(IllegalStateException.class)
       .hasMessage("Failed to deserialize data");
 
-    verify(resourceHelper).readObjectsFromDirectory("reference-data/roles", Roles.class);
     verifyNoInteractions(roleService);
+  }
+
+  @Test
+  void loadReferenceData_negative_ifTypeMismatch() {
+    var role = new PlainLoadableRole().name("role1").type(DEFAULT);
+    var roles = new PlainLoadableRoles().roles(List.of(role));
+    var loadableRole = new LoadableRole().id(randomUUID()).name(role.getName()).type(SUPPORT);
+
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
+      .thenReturn(of(roles));
+    when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(loadableRole));
+
+    assertThatThrownBy(() -> rolesDataLoader.loadReferenceData())
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Loadable role type cannot be changed: original = %s, new = %s", SUPPORT, DEFAULT);
   }
 }

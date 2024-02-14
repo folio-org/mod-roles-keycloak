@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "fd51dce2-421b-4efe-aa49-5f2e86e3eac4",
       "name": "OA Manager",
       "description": "Role for OA Manager",
       "permissions": [

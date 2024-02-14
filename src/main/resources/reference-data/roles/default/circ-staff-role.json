@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "c7fe446f-819c-4490-9a59-08b6f78a7807",
       "name": "Circulation Staff",
       "description": "Role for Circulation Staff",
       "permissions": [

@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "31245e48-7ec2-4742-91c3-07248501fd73",
       "name": "ERM Manager",
       "description": "Role for ERM Manager",
       "permissions": [

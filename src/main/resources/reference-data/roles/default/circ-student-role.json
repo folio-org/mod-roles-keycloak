@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "0718035e-a3f5-43b7-bbe3-8303592ae14e",
       "name": "Circulation Student",
       "description": "Role for Circulation Student",
       "permissions": [

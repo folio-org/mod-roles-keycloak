@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "c9f6a918-6b98-4a9f-a6de-1a77ffca03be",
       "name": "Cataloger",
       "description": "Role for Cataloger",
       "permissions": [

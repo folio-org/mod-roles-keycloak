@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "6a8bdc49-66ab-4d2d-b089-a220ede64e4f",
       "name": "Data Export Admin",
       "description": "Role for Data Export Admin",
       "permissions": [

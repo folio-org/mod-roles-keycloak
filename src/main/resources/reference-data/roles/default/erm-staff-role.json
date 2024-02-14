@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "d0fa52d7-c47a-4057-94d6-fe529df81186",
       "name": "ERM Staff",
       "description": "Role for ERM Staff",
       "permissions": [

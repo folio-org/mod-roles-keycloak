@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "cb856ca3-9ade-4509-91d9-b59b332b5d13",
       "name": "Circulation Manager",
       "description": "Role for Circulation Manager",
       "permissions": [

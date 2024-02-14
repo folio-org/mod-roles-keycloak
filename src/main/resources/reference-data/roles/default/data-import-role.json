@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "16df97c5-4c7f-4a8b-82dc-41dc11504ce7",
       "name": "Data Import",
       "description": "Role for Data Import",
       "permissions": [

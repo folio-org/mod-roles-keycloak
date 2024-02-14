@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "95a3a6b1-21ad-47df-b5b0-ea06dae7d21f",
       "name": "OA Observer",
       "description": "Role for OA Observer",
       "permissions": [

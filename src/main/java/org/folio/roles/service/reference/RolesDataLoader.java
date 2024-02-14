@@ -46,7 +46,7 @@ public class RolesDataLoader implements ReferenceDataLoader {
     return plainRole -> {
       var toSave = service.findByIdOrName(plainRole.getId(), plainRole.getName())
         .map(copyDataFrom(plainRole))
-        .orElseGet(toLoadableRole(withId(plainRole)));
+        .orElseGet(toLoadableRole(plainRole));
 
       service.save(toSave);
     };
@@ -55,8 +55,8 @@ public class RolesDataLoader implements ReferenceDataLoader {
   private static Function<LoadableRole, LoadableRole> copyDataFrom(PlainLoadableRole source) {
     return target -> {
       if (target.getType() != source.getType()) {
-        throw new IllegalArgumentException("Loadable role type cannot be changed: original = " + target.getType() +
-          ", new = " + source.getType());
+        throw new IllegalArgumentException("Loadable role type cannot be changed: original = " + target.getType()
+          + ", new = " + source.getType());
       }
       target.setName(source.getName());
       target.setDescription(source.getDescription());
@@ -68,27 +68,18 @@ public class RolesDataLoader implements ReferenceDataLoader {
   }
 
   private static Supplier<LoadableRole> toLoadableRole(PlainLoadableRole source) {
-    return () -> LoadableRole.builder()
+    return () -> new LoadableRole()
       .id(source.getId())
       .name(source.getName())
       .description(source.getDescription())
       .type(source.getType())
       .permissions(toLoadablePerms(source.getId(), source.getPermissions()))
-      .metadata(source.getMetadata())
-      .build();
+      .metadata(source.getMetadata());
   }
 
   private static Set<LoadablePermission> toLoadablePerms(UUID roleId, Set<String> permissions) {
     return toStream(permissions)
       .map(permName -> LoadablePermission.of(roleId, permName))
       .collect(toSet());
-  }
-
-  private static PlainLoadableRole withId(PlainLoadableRole role) {
-    if (role.getId() == null) {
-      role.setId(UUID.randomUUID());
-    }
-
-    return role;
   }
 }

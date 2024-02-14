@@ -2,6 +2,7 @@ package org.folio.roles.mapper.entity;
 
 import static org.mapstruct.InjectionStrategy.CONSTRUCTOR;
 
+import java.util.List;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.LoadableRoleEntity;
 import org.folio.roles.domain.model.LoadablePermission;
@@ -24,6 +25,10 @@ public interface LoadableRoleEntityMapper {
   @Mapping(target = "role", ignore = true)
   LoadablePermissionEntity toPermissionEntity(LoadablePermission role);
 
+  List<LoadablePermissionEntity> toPermissionEntity(List<LoadablePermission> entity);
+
   @AuditableMapping
   LoadablePermission toPermission(LoadablePermissionEntity entity);
+
+  List<LoadablePermission> toPermission(List<LoadablePermissionEntity> entity);
 }

@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "066fa155-7e46-446e-b1e0-65d869c43295",
       "name": "Acquisition Manager",
       "description": "Role for Acquisition Manager",
       "permissions": [

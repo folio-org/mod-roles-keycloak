@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "0f0c7402-da94-4ca3-a992-7a097dfa9633",
       "name": "Acquisition Observer",
       "description": "Role for Acquisition Observer",
       "permissions": [

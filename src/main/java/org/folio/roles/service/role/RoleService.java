@@ -113,7 +113,7 @@ public class RoleService {
   @Transactional
   public Role update(Role role) {
     Assert.notNull(role.getId(), "Role should has ID");
-    var actualRole = keycloakService.findById(role.getId());
+    var actualRole = keycloakService.getById(role.getId());
     keycloakService.update(role);
     try {
       return entityService.update(role);
@@ -131,7 +131,7 @@ public class RoleService {
    */
   @Transactional
   public void deleteById(UUID id) {
-    var actualRole = keycloakService.findById(id);
+    var actualRole = keycloakService.getById(id);
     entityService.deleteById(id);
     try {
       keycloakService.deleteById(id);
@@ -140,17 +140,6 @@ public class RoleService {
       entityService.create(actualRole);
       throw e;
     }
-  }
-
-  /**
-   * Check if role exists by ID.
-   *
-   * @param id - role identifier
-   * @return true if role exists, false otherwise
-   */
-  @Transactional(readOnly = true)
-  public boolean existById(UUID id) {
-    return entityService.existById(id);
   }
 
   private Optional<Role> createSafe(Role role) {

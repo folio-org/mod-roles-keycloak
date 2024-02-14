@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "c693704e-e567-43df-8f0b-9f9832e2fb66",
       "name": "Metadata Admin",
       "description": "Role for Metadata Admin",
       "permissions": [

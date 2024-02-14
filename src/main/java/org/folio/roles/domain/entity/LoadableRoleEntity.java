@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -39,8 +38,6 @@ public class LoadableRoleEntity extends RoleEntity {
     fetch = FetchType.LAZY,
     mappedBy = "role",
     orphanRemoval = true)
-  @EqualsAndHashCode.Exclude
-  @ToString.Exclude
   private Set<LoadablePermissionEntity> permissions = new HashSet<>();
 
   public void setPermissions(Collection<LoadablePermissionEntity> newPermissions) {

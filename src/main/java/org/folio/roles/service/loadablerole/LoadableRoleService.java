@@ -1,12 +1,12 @@
 package org.folio.roles.service.loadablerole;
 
-import static java.util.Objects.requireNonNull;
-
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.model.LoadableRole;
+import org.folio.roles.exception.ServiceException;
+import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.entity.LoadableRoleEntityMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.springframework.stereotype.Service;
@@ -20,6 +20,7 @@ public class LoadableRoleService {
 
   private final LoadableRoleRepository repository;
   private final LoadableRoleEntityMapper mapper;
+  private final KeycloakRoleService keycloakService;
 
   @Transactional(readOnly = true)
   public Optional<LoadableRole> findByIdOrName(UUID id, String name) {
@@ -28,15 +29,42 @@ public class LoadableRoleService {
   }
 
   public LoadableRole save(LoadableRole role) {
-    requireNonNull(role.getId(), "Loadable role id is null");
-
-    var entity = mapper.toRoleEntity(role);
-    var saved = repository.save(entity);
-
-    return mapper.toRole(saved);
+    return hasRole(role) ? updateRole(role) : createRole(role);
   }
 
-  public void deleteById(UUID id) {
-    repository.deleteById(id);
+  private boolean hasRole(LoadableRole role) {
+    return role.getId() != null && repository.existsById(role.getId());
+  }
+
+  private LoadableRole createRole(LoadableRole role) {
+    keycloakService.create(role); // role id populate inside the method, as a side effect
+
+    try {
+      var created = saveToDb(role);
+      log.info("Loadable role has been created: id = {}, name = {}", role.getId(), role.getName());
+
+      return created;
+    } catch (Exception exception) {
+      keycloakService.deleteById(role.getId());
+      throw new ServiceException("Failed to create loadable role", "cause", exception.getMessage());
+    }
+  }
+
+  private LoadableRole updateRole(LoadableRole role) {
+    var saved = saveToDb(role);
+    keycloakService.update(saved);
+
+    log.info("Loadable role has been updated: id = {}, name = {}", role.getId(), role.getName());
+
+    return saved;
+  }
+
+  private LoadableRole saveToDb(LoadableRole role) {
+    assert role.getId() != null;
+
+    var entity = mapper.toRoleEntity(role);
+    var savedEntity = repository.save(entity);
+
+    return mapper.toRole(savedEntity);
   }
 }

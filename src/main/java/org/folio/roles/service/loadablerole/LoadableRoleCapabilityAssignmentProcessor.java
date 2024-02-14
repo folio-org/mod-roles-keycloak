@@ -126,7 +126,8 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       .collect(groupingBy(LoadablePermission::getRoleId));
   }
 
-  private BiConsumer<UUID, List<LoadablePermission>> assignCapabilitiesToRole(Map<String, Capability> capabilityByPerm) {
+  private BiConsumer<UUID, List<LoadablePermission>> assignCapabilitiesToRole(
+    Map<String, Capability> capabilityByPerm) {
     return (roleId, rolePermissions) -> {
       log.info("Assigning capabilities to loadable role: roleId = {}, affectedPermissions = {}", () -> roleId,
         () -> toPermissionNames(rolePermissions));

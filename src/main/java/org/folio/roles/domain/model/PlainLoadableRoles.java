@@ -15,4 +15,9 @@ public class PlainLoadableRoles {
 
   @NotNull @Valid
   private List<@Valid PlainLoadableRole> roles = new ArrayList<>();
+
+  public PlainLoadableRoles roles(List<@Valid PlainLoadableRole> roles) {
+    this.roles = roles;
+    return this;
+  }
 }

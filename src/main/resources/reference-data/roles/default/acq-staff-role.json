@@ -1,7 +1,6 @@
 {
   "roles": [
     {
-      "id": "bd3a717b-0330-43e6-8b3d-620d10343b32",
       "name": "Acquisition Staff",
       "description": "Role for Acquisition Staff",
       "permissions": [

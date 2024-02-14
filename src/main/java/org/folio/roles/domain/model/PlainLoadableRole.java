@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -23,10 +25,27 @@ public class PlainLoadableRole extends Role {
 
   @Valid @Size(min = 1)
   @Schema(name = "permissions", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
-  private Set<String> permissions;
+  private Set<String> permissions = new HashSet<>();
+
+  public PlainLoadableRole id(UUID id) {
+    return (PlainLoadableRole) super.id(id);
+  }
+
+  public PlainLoadableRole name(String name) {
+    return (PlainLoadableRole) super.name(name);
+  }
+
+  public PlainLoadableRole description(String description) {
+    return (PlainLoadableRole) super.description(description);
+  }
 
   public PlainLoadableRole type(LoadableRoleType type) {
     this.type = type;
+    return this;
+  }
+
+  public PlainLoadableRole permissions(Set<String> permissions) {
+    this.permissions = permissions;
     return this;
   }
 }
