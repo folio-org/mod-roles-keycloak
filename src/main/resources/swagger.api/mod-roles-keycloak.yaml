@@ -1248,83 +1248,84 @@ components:
         type: boolean
         default: false
 
-  examples:
-    # roles
-    roleRequest:
-      $ref: examples/requests/role.json
-    roleResponse:
-      $ref: examples/responses/role.json
-    rolesRequest:
-      $ref: examples/requests/roles.json
-    rolesResponse:
-      $ref: examples/responses/roles.json
-    userRoleResponse:
-      $ref: examples/responses/rolesUsers.json
-    userRolesResponse:
-      $ref: examples/responses/rolesUser.json
-    userRoleRequest:
-      $ref: examples/requests/rolesUserRequest.json
+#  examples:
+#    # roles
+#    roleRequest:
+#      $ref: examples/requests/role.json
+#    roleResponse:
+#      $ref: examples/responses/role.json
+#    rolesRequest:
+#      $ref: examples/requests/roles.json
+#    rolesResponse:
+#      $ref: examples/responses/roles.json
+#    userRoleResponse:
+#      $ref: examples/responses/rolesUsers.json
+#    userRolesResponse:
+#      $ref: examples/responses/rolesUser.json
+#    userRoleRequest:
+#      $ref: examples/requests/rolesUserRequest.json
+#
+#    # policies
+#    policiesRequest:
+#      $ref: examples/requests/policiesRequest.json
+#    timeBasedPolicy:
+#      $ref: examples/requests/timeBasedPolicy.json
+#    policyRequest:
+#      $ref: examples/requests/policyRequest.json
+#    policyResponse:
+#      $ref: examples/responses/policy.json
+#    policiesResponse:
+#      $ref: examples/responses/policies.json
+#
+#    # auth-resources
+#    endpointsResponse:
+#      $ref: examples/responses/endpoints.json
+#    permissionsResponse:
+#      $ref: examples/responses/permissions.json
+#    permissionsUserResponse:
+#      $ref: examples/responses/permissionsUser.json
+#
+#    # capabilities
+#    capabilitySetRequest:
+#      $ref: examples/requests/capabilitySet.json
+#    capabilitySetsRequest:
+#      $ref: examples/requests/capabilitySets.json
+#    capabilitySetResponse:
+#      $ref: examples/responses/capabilitySet.json
+#    capabilitySetsResponse:
+#      $ref: examples/responses/capabilitySets.json
+#    capabilityResponse:
+#      $ref: examples/responses/capability.json
+#    capabilitiesResponse:
+#      $ref: examples/responses/capabilities.json
+#    capabilitySetsUpdateRequest:
+#      $ref: examples/requests/updateCapabilitySetsRequest.json
+#    capabilitiesUpdateRequest:
+#      $ref: examples/requests/updateCapabilitiesRequest.json
+#    userCapabilitiesRequest:
+#      $ref: examples/requests/capabilitiesUserRequest.json
+#    userCapabilitySetsRequest:
+#      $ref: examples/requests/userCapabilitySets.json
+#    userCapabilitiesResponse:
+#      $ref: examples/responses/userCapabilities.json
+#    userCapabilitySetsResponse:
+#      $ref: examples/responses/userCapabilitySets.json
+#    roleCapabilitiesRequest:
+#      $ref: examples/requests/roleCapabilities.json
+#    roleCapabilitySetsRequest:
+#      $ref: examples/requests/roleCapabilitySets.json
+#    roleCapabilitiesResponse:
+#      $ref: examples/responses/roleCapabilities.json
+#    roleCapabilitySetsResponse:
+#      $ref: examples/responses/roleCapabilitySets.json
+#
+#    # errors
+#    badRequestResponse:
+#      $ref: examples/responses/errors/badRequest.json
+#    notFoundResponse:
+#      $ref: examples/responses/errors/notFound.json
+#    notImplementedResponse:
+#      $ref: examples/responses/errors/notImplemented.json
+#    internalServerErrorResponse:
+#      $ref: examples/responses/errors/internalServerError.json
 
-    # policies
-    policiesRequest:
-      $ref: examples/requests/policiesRequest.json
-    timeBasedPolicy:
-      $ref: examples/requests/timeBasedPolicy.json
-    policyRequest:
-      $ref: examples/requests/policyRequest.json
-    policyResponse:
-      $ref: examples/responses/policy.json
-    policiesResponse:
-      $ref: examples/responses/policies.json
-
-    # auth-resources
-    endpointsResponse:
-      $ref: examples/responses/endpoints.json
-    permissionsResponse:
-      $ref: examples/responses/permissions.json
-    permissionsUserResponse:
-      $ref: examples/responses/permissionsUser.json
-
-    # capabilities
-    capabilitySetRequest:
-      $ref: examples/requests/capabilitySet.json
-    capabilitySetsRequest:
-      $ref: examples/requests/capabilitySets.json
-    capabilitySetResponse:
-      $ref: examples/responses/capabilitySet.json
-    capabilitySetsResponse:
-      $ref: examples/responses/capabilitySets.json
-    capabilityResponse:
-      $ref: examples/responses/capability.json
-    capabilitiesResponse:
-      $ref: examples/responses/capabilities.json
-    capabilitySetsUpdateRequest:
-      $ref: examples/requests/updateCapabilitySetsRequest.json
-    capabilitiesUpdateRequest:
-      $ref: examples/requests/updateCapabilitiesRequest.json
-    userCapabilitiesRequest:
-      $ref: examples/requests/capabilitiesUserRequest.json
-    userCapabilitySetsRequest:
-      $ref: examples/requests/userCapabilitySets.json
-    userCapabilitiesResponse:
-      $ref: examples/responses/userCapabilities.json
-    userCapabilitySetsResponse:
-      $ref: examples/responses/userCapabilitySets.json
-    roleCapabilitiesRequest:
-      $ref: examples/requests/roleCapabilities.json
-    roleCapabilitySetsRequest:
-      $ref: examples/requests/roleCapabilitySets.json
-    roleCapabilitiesResponse:
-      $ref: examples/responses/roleCapabilities.json
-    roleCapabilitySetsResponse:
-      $ref: examples/responses/roleCapabilitySets.json
-
-    # errors
-    badRequestResponse:
-      $ref: examples/responses/errors/badRequest.json
-    notFoundResponse:
-      $ref: examples/responses/errors/notFound.json
-    notImplementedResponse:
-      $ref: examples/responses/errors/notImplemented.json
-    internalServerErrorResponse:
-      $ref: examples/responses/errors/internalServerError.json
