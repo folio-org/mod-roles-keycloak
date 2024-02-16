@@ -37,15 +37,16 @@ public class LoadableRoleService {
   }
 
   private LoadableRole createRole(LoadableRole role) {
-    keycloakService.create(role); // role id populate inside the method, as a side effect
+    // role id populate inside the method, as a side effect, and the original object returned
+    var roleWithId = (LoadableRole) keycloakService.create(role);
 
     try {
-      var created = saveToDb(role);
+      var created = saveToDb(roleWithId);
       log.info("Loadable role has been created: id = {}, name = {}", role.getId(), role.getName());
 
       return created;
     } catch (Exception exception) {
-      keycloakService.deleteById(role.getId());
+      keycloakService.deleteById(roleWithId.getId());
       throw new ServiceException("Failed to create loadable role", "cause", exception.getMessage());
     }
   }
