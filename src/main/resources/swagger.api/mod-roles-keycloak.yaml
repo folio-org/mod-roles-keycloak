@@ -1328,3 +1328,4 @@ components:
       $ref: examples/responses/errors/notImplemented.json
     internalServerErrorResponse:
       $ref: examples/responses/errors/internalServerError.json
+
