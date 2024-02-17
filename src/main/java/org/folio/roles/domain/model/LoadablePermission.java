@@ -37,4 +37,29 @@ public class LoadablePermission {
 
     return result;
   }
+
+  public LoadablePermission roleId(UUID roleId) {
+    this.roleId = roleId;
+    return this;
+  }
+
+  public LoadablePermission permissionName(String permissionName) {
+    this.permissionName = permissionName;
+    return this;
+  }
+
+  public LoadablePermission capabilityId(UUID capabilityId) {
+    this.capabilityId = capabilityId;
+    return this;
+  }
+
+  public LoadablePermission capabilitySetId(UUID capabilitySetId) {
+    this.capabilitySetId = capabilitySetId;
+    return this;
+  }
+
+  public LoadablePermission metadata(Metadata metadata) {
+    this.metadata = metadata;
+    return this;
+  }
 }

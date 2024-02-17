@@ -16,10 +16,10 @@ import org.mockito.Spy;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class TestUtils {
 
-  private static final Pool<Kryo> kryoPool;
+  private static final Pool<Kryo> KRYO_POOL;
 
   static {
-    kryoPool = new Pool<>(true, false, 10) {
+    KRYO_POOL = new Pool<>(true, false, 10) {
       protected Kryo create() {
         var kryo = new Kryo();
 
@@ -42,11 +42,11 @@ public class TestUtils {
   }
 
   public static <T> T copy(T object) {
-    Kryo kryo = kryoPool.obtain();
+    Kryo kryo = KRYO_POOL.obtain();
 
     var copy = kryo.copy(object);
 
-    kryoPool.free(kryo);
+    KRYO_POOL.free(kryo);
     return copy;
   }
 }

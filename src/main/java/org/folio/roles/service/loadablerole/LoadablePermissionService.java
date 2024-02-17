@@ -32,8 +32,10 @@ public class LoadablePermissionService {
     return mapper.toPermission(saved);
   }
 
-  public void saveAll(List<LoadablePermission> perms) {
+  public List<LoadablePermission> saveAll(List<LoadablePermission> perms) {
     var entities = mapper.toPermissionEntity(perms);
-    repository.saveAll(entities);
+    var saved = repository.saveAll(entities);
+
+    return mapper.toPermission(saved);
   }
 }

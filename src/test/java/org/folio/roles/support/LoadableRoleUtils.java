@@ -1,25 +1,31 @@
 package org.folio.roles.support;
 
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
-import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.support.AuditableUtils.populateAuditable;
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissionEntity;
-import static org.instancio.Select.all;
+import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissions;
+import static org.instancio.Select.field;
+import static org.instancio.Select.root;
 
+import java.util.HashSet;
 import lombok.experimental.UtilityClass;
 import org.folio.roles.domain.entity.LoadableRoleEntity;
 import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
 import org.folio.roles.domain.model.LoadableRole;
 import org.instancio.Instancio;
+import org.instancio.Model;
+import org.instancio.OnCompleteCallback;
 
 @UtilityClass
 public class LoadableRoleUtils {
 
+  private static final Model<LoadableRole> LOADABLE_ROLE_MODEL = Instancio.of(LoadableRole.class)
+    .supply(field(LoadableRole::getPermissions), () -> new HashSet<>(loadablePermissions(10)))
+    .onComplete(root(), completeRoleInit())
+    .toModel();
+
   public static LoadableRole loadableRole() {
-    return Instancio.of(LoadableRole.class)
-      .supply(all(String.class), gen -> capitalize(randomAlphabetic(10, 20)))
-      .create();
+    return Instancio.of(LOADABLE_ROLE_MODEL).create();
   }
 
   public static LoadableRoleEntity loadableRoleEntity(LoadableRole role) {
@@ -35,5 +41,16 @@ public class LoadableRoleUtils {
     populateAuditable(entity, role.getMetadata());
 
     return entity;
+  }
+
+  private static OnCompleteCallback<LoadableRole> completeRoleInit() {
+    return (LoadableRole role) -> {
+      var roleId = role.getId();
+
+      role.setName("Role " + roleId);
+      role.setDescription("Description of role " + roleId);
+
+      role.getPermissions().forEach(loadablePermission -> loadablePermission.setRoleId(roleId));
+    };
   }
 }

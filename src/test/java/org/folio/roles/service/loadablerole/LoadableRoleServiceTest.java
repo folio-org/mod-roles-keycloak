@@ -1,5 +1,7 @@
 package org.folio.roles.service.loadablerole;
 
+import static java.util.UUID.randomUUID;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.LoadableRoleUtils.loadableRole;
@@ -9,14 +11,13 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
-import java.util.UUID;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.entity.LoadableRoleEntityMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
+import org.instancio.junit.InstancioExtension;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
+@ExtendWith(InstancioExtension.class)
 class LoadableRoleServiceTest {
 
   @InjectMocks private LoadableRoleService service;
@@ -54,8 +56,8 @@ class LoadableRoleServiceTest {
 
   @Test
   void findByIdOrName_positive_notFound() {
-    var roleId = UUID.randomUUID();
-    var roleName = RandomStringUtils.randomAlphabetic(10);
+    var roleId = randomUUID();
+    var roleName = randomAlphabetic(10);
 
     when(repository.findByIdOrName(roleId, roleName)).thenReturn(Optional.empty());
 

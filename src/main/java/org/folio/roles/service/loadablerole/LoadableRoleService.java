@@ -42,7 +42,7 @@ public class LoadableRoleService {
 
     try {
       var created = saveToDb(roleWithId);
-      log.info("Loadable role has been created: id = {}, name = {}", role.getId(), role.getName());
+      log.info("Loadable role has been created: id = {}, name = {}", created.getId(), created.getName());
 
       return created;
     } catch (Exception exception) {
