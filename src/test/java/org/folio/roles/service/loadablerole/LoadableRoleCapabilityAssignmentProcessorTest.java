@@ -13,6 +13,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -86,6 +87,28 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     });
 
     processor.handleCapabilitiesCreatedEvent(event);
+  }
+
+  @Test
+  void handleCapabilitiesCreatedEvent_positive_loadablePermissionsNotFound() {
+    var capability1 = capability(randomUUID(), "permission1");
+    var capability2 = capability(randomUUID(), "permission2");
+    var capabilities = List.of(capability1, capability2);
+    final var event = DomainEvent.created(capabilities).withContext(context);
+
+    when(service.findAllByPermissions(new HashSet<>(mapItems(capabilities, Capability::getPermission))))
+      .thenReturn(emptyList());
+
+    processor.handleCapabilitiesCreatedEvent(event);
+  }
+
+  @Test
+  void handleCapabilitiesCreatedEvent_positive_emptyCapabilitiesInEvent() {
+    var event = DomainEvent.created(Collections.<Capability>emptyList()).withContext(context);
+
+    assertThatThrownBy(() -> processor.handleCapabilitiesCreatedEvent(event))
+      .isInstanceOf(IllegalArgumentException.class)
+      .hasMessage("Capabilities Created event contains no data");
   }
 
   @Test

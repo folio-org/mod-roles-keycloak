@@ -147,13 +147,13 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     return (roleId, rolePermissions) -> {
       var rolePermission = getSingleLoadablePermission(roleId, rolePermissions);
 
-      log.info("Assigning capability set to loadable role: roleId = {}, permission = {}, capabilitySet = {}",
-        () -> roleId, () -> rolePermission, () -> shortDescription(capabilitySet));
-
       roleCapabilitySetService.create(roleId, List.of(capabilitySet.getId()));
 
       rolePermission.setCapabilitySetId(capabilitySet.getId());
       service.save(rolePermission);
+
+      log.info("Capability set assigned to loadable role: roleId = {}, permission = {}, capabilitySet = {}",
+        () -> roleId, () -> rolePermission, () -> shortDescription(capabilitySet));
     };
   }
 
@@ -161,13 +161,13 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     return (roleId, rolePermissions) -> {
       var rolePermission = getSingleLoadablePermission(roleId, rolePermissions);
 
-      log.info("Removing capability set from loadable role: roleId = {}, permission = {}, capabilitySet = {}",
-        () -> roleId, () -> rolePermission, () -> shortDescription(capabilitySet));
-
       roleCapabilitySetService.delete(roleId, capabilitySet.getId());
 
       rolePermission.setCapabilitySetId(null);
       service.save(rolePermission);
+
+      log.info("Capability set removed from loadable role: roleId = {}, permission = {}, capabilitySet = {}",
+        () -> roleId, () -> rolePermission, () -> shortDescription(capabilitySet));
     };
   }
 
@@ -219,8 +219,8 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       UUID capabilityId = capability.getId();
       perm.setCapabilityId(capabilityId);
 
-      log.debug("Capability assigned to loadable permission: capabilityId = {}, roleId = {}, permission = {}",
-        capabilityId, perm.getRoleId(), permissionName);
+      log.debug("Capability assigned to loadable permission: roleId = {}, permission = {}, capabilityId = {}",
+        perm.getRoleId(), permissionName, capabilityId);
     };
   }
 
