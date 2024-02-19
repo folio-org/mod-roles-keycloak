@@ -47,6 +47,12 @@
       </column>
       <column name="capability_id" type="UUID"/>
       <column name="capability_set_id" type="UUID"/>
+      <column name="created_by" type="UUID"/>
+      <column name="created_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="UUID"/>
+      <column name="updated_date" type="TIMESTAMP"/>
     </createTable>
   </changeSet>
 
@@ -74,7 +80,7 @@
       baseColumnNames="capability_id"
       referencedTableName="capability"
       referencedColumnNames="id"
-      onDelete="NO ACTION"/>
+      onDelete="NO ACTION"/> <!-- TODO (Dima Tkachenko): or SET NULL ??? -->
   </changeSet>
 
   <changeSet id="MODROLESKC-7@@add-fk-role-loadable-perm-capability-set-id" author="dmtkachenko">
@@ -84,7 +90,7 @@
       baseColumnNames="capability_set_id"
       referencedTableName="capability_set"
       referencedColumnNames="id"
-      onDelete="NO ACTION"/>
+      onDelete="NO ACTION"/> <!-- TODO (Dima Tkachenko): or SET NULL ??? -->
   </changeSet>
 
 </databaseChangeLog>

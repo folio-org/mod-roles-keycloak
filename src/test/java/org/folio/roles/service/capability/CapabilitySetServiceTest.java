@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -491,7 +492,7 @@ class CapabilitySetServiceTest {
       var entity = capabilitySetEntity();
       var capabilitySet = capabilitySet();
 
-      when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenReturn(entity);
+      when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(entity));
       when(mapper.convert(entity)).thenReturn(capabilitySet);
       doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(DELETE, null, capabilitySet)));
 
@@ -503,7 +504,7 @@ class CapabilitySetServiceTest {
     @Test
     void negative_entityNotFound() {
       var entity = capabilitySetEntity();
-      when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenThrow(EntityNotFoundException.class);
+      when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.empty());
 
       assertThatThrownBy(() -> capabilitySetService.delete(CAPABILITY_SET_ID))
         .isInstanceOf(EntityNotFoundException.class);

@@ -126,7 +126,9 @@ public class CapabilitySetService {
    */
   @Transactional
   public void delete(UUID id) {
-    var capabilitySetEntity = repository.getReferenceById(id);
+    var capabilitySetEntity = repository.findById(id)
+      .orElseThrow(() -> new EntityNotFoundException("Capability set is not found: id = " + id));
+
     repository.delete(capabilitySetEntity);
 
     eventPublisher.publishEvent(DomainEvent.deleted(mapper.convert(capabilitySetEntity))
