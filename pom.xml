@@ -39,7 +39,7 @@
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
     <folio-backend-common.version>1.1.0</folio-backend-common.version>
-    <folio-secret-store.version>1.1.0</folio-secret-store.version>
+    <folio-secret-store.version>1.2.0</folio-secret-store.version>
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
     </mod-roles-keycloak.yaml-file>
