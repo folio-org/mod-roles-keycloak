@@ -294,7 +294,7 @@ class CapabilitySetIT extends BaseIntegrationTest {
     mockMvc.perform(delete("/capability-sets/{id}", UUID.randomUUID())
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER))
-      .andExpect(status().isNoContent());
+      .andExpect(status().isNotFound());
   }
 
   @Test
