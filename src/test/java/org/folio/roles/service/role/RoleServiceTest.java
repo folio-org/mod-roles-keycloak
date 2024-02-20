@@ -64,6 +64,7 @@ class RoleServiceTest {
     void create() {
       var role = role();
       when(keycloakService.create(role)).thenReturn(role);
+      when(entityService.create(role)).thenReturn(role);
 
       facade.create(role);
 
@@ -78,7 +79,7 @@ class RoleServiceTest {
       when(entityService.create(role)).thenThrow(RuntimeException.class);
 
       assertThrows(ServiceException.class, () -> facade.create(role));
-      verify(keycloakService, times(1)).deleteById(role.getId());
+      verify(keycloakService).deleteById(role.getId());
     }
 
     @Test
@@ -137,14 +138,15 @@ class RoleServiceTest {
   }
 
   @Nested
-  @DisplayName("updateByName")
+  @DisplayName("updateFoundByName")
   class UpdateByName {
 
     @Test
     void positive() {
       var role = role();
+      when(entityService.create(role)).thenReturn(role);
 
-      facade.updateByName(role);
+      facade.updateFoundByName(role);
 
       verify(keycloakService).update(role);
       verify(entityService).create(role);
@@ -157,8 +159,8 @@ class RoleServiceTest {
       when(keycloakService.update(any())).thenReturn(role);
       when(entityService.create(role)).thenThrow(RuntimeException.class);
 
-      assertThrows(RuntimeException.class, () -> facade.updateByName(role));
-      verify(keycloakService, times(2)).update(any());
+      assertThrows(ServiceException.class, () -> facade.updateFoundByName(role));
+      verify(keycloakService).update(any());
     }
   }
 

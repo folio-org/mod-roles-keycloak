@@ -97,7 +97,7 @@ class KeycloakRoleServiceTest {
   class FindByName {
 
     @Test
-    void positive_returns_role() {
+    void positive_returnsRole() {
       var role = role();
       var keycloakRole = keycloakRole();
 
@@ -110,7 +110,7 @@ class KeycloakRoleServiceTest {
     }
 
     @Test
-    void positive_returns_empty_role_when_not_found() {
+    void positive_returnsEmptyRoleWhenNotFound() {
       when(roleClient.findByName(anyString(), anyString(), anyString())).thenThrow(FeignException.NotFound.class);
 
       var actual = roleService.findByName(ROLE_NAME);
@@ -118,7 +118,7 @@ class KeycloakRoleServiceTest {
     }
 
     @Test
-    void negative_throws_keycloak_api_exception_while_feign_exception() {
+    void negative_throwsKeycloakApiExceptionWhileFeignException() {
       when(roleClient.findByName(anyString(), anyString(), anyString())).thenThrow(FeignException.class);
 
       assertThrows(KeycloakApiException.class, () -> roleService.findByName(ROLE_NAME));

@@ -29,16 +29,8 @@ public class RolesDataLoader implements ReferenceDataLoader {
       .collect(toSet());
 
     for (var role : preparedRoles) {
-      if (role.getName() != null) {
-        keycloakRoleService.findByName(role.getName())
-          .ifPresentOrElse(foundRole -> {
-            var updatedRole = roleService.updateByName(foundRole);
-            log.info("Role has been updated: id = {}, name = {}", updatedRole.getId(), updatedRole.getName());
-          }, () -> {
-            var createdRole = roleService.create(role);
-            log.info("Role has been created: id = {}, name = {}", createdRole.getId(), createdRole.getName());
-          });
-      }
+      keycloakRoleService.findByName(role.getName())
+        .ifPresentOrElse(roleService::updateFoundByName, () -> roleService.create(role));
     }
   }
 }

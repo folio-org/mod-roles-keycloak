@@ -36,7 +36,6 @@ class RolesDataLoaderTest {
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles", Roles.class))
       .thenReturn(of(roles));
-    when(roleService.create(role)).thenReturn(role);
 
     rolesDataLoader.loadReferenceData();
 
@@ -52,12 +51,11 @@ class RolesDataLoaderTest {
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles", Roles.class))
       .thenReturn(of(roles));
     when(keycloakRoleService.findByName("role1")).thenReturn(Optional.of(role));
-    when(roleService.updateByName(role)).thenReturn(role);
 
     rolesDataLoader.loadReferenceData();
 
     verify(resourceHelper).readObjectsFromDirectory("reference-data/roles", Roles.class);
-    verify(roleService).updateByName(role);
+    verify(roleService).updateFoundByName(role);
     verify(keycloakRoleService).findByName(role.getName());
   }
 
@@ -69,7 +67,6 @@ class RolesDataLoaderTest {
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles", Roles.class))
       .thenReturn(of(roles));
     when(keycloakRoleService.findByName("role1")).thenReturn(Optional.empty());
-    when(roleService.create(role)).thenReturn(role);
 
     rolesDataLoader.loadReferenceData();
 
