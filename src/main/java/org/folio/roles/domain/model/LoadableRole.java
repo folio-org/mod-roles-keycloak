@@ -25,14 +25,17 @@ public final class LoadableRole extends Role {
   @Size(min = 1)
   private Set<LoadablePermission> permissions = new HashSet<>();
 
+  @Override
   public LoadableRole id(UUID id) {
     return (LoadableRole) super.id(id);
   }
 
+  @Override
   public LoadableRole name(String name) {
     return (LoadableRole) super.name(name);
   }
 
+  @Override
   public LoadableRole description(String description) {
     return (LoadableRole) super.description(description);
   }
@@ -47,6 +50,7 @@ public final class LoadableRole extends Role {
     return this;
   }
 
+  @Override
   public LoadableRole metadata(Metadata metadata) {
     return (LoadableRole) super.metadata(metadata);
   }

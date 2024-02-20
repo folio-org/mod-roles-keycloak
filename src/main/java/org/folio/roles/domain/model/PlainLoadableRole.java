@@ -27,14 +27,17 @@ public class PlainLoadableRole extends Role {
   @Schema(name = "permissions", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
   private Set<String> permissions = new HashSet<>();
 
+  @Override
   public PlainLoadableRole id(UUID id) {
     return (PlainLoadableRole) super.id(id);
   }
 
+  @Override
   public PlainLoadableRole name(String name) {
     return (PlainLoadableRole) super.name(name);
   }
 
+  @Override
   public PlainLoadableRole description(String description) {
     return (PlainLoadableRole) super.description(description);
   }

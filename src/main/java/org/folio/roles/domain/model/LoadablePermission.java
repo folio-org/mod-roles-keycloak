@@ -3,6 +3,8 @@ package org.folio.roles.domain.model;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import jakarta.validation.Valid;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +16,9 @@ import org.folio.roles.domain.dto.Metadata;
 @NoArgsConstructor
 @AllArgsConstructor(staticName = "of")
 @EqualsAndHashCode
-public class LoadablePermission {
+public class LoadablePermission implements Serializable {
+
+  @Serial private static final long serialVersionUID = -239609750570311095L;
 
   @Valid
   private UUID roleId;
