@@ -44,7 +44,7 @@ public class KeycloakRoleService {
       log.debug("Role has been found by name: name = {}", name);
       return of(roleMapper.toRole(keycloakRole));
     } catch (FeignException.NotFound e) {
-      log.info("Role not found by name: name = {}", name);
+      log.debug("Role not found by name: name = {}", name);
       return empty();
     } catch (FeignException e) {
       throw new KeycloakApiException("Failed to find role by name: name = " + name, e, e.status());
