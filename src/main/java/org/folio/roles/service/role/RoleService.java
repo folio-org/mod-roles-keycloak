@@ -125,6 +125,25 @@ public class RoleService {
   }
 
   /**
+   * Update one role by name.
+   *
+   * @param role - role for updating
+   * @return updated role {@link Role}
+   */
+  @Transactional
+  public Role updateByName(Role role) {
+    Assert.notNull(role.getId(), "Role should have ID");
+    var actualRole = keycloakService.update(role);
+    try {
+      return entityService.create(role);
+    } catch (Exception e) {
+      log.debug("Rollback role state in Keycloak: id = {}, name = {}", actualRole.getId(), actualRole.getName());
+      keycloakService.update(actualRole);
+      throw e;
+    }
+  }
+
+  /**
    * Delete role by ID.
    *
    * @param id - role identifier

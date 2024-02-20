@@ -1,6 +1,7 @@
 package org.folio.roles.integration.keyclock;
 
 import static java.util.Optional.empty;
+import static java.util.Optional.of;
 import static java.util.stream.Collectors.toList;
 
 import feign.FeignException;
@@ -30,17 +31,29 @@ public class KeycloakRoleService {
   public Role findById(UUID id) {
     try {
       var keycloakRole = roleClient.findById(context.getTenantId(), tokenService.getToken(), id);
-      log.debug("Role has been created: name = {}", keycloakRole.getName());
+      log.debug("Role has been found: name = {}", keycloakRole.getName());
       return roleMapper.toRole(keycloakRole);
     } catch (FeignException e) {
       throw new KeycloakApiException("Failed to find role: id = " + id, e, e.status());
     }
   }
 
+  public Optional<Role> findByName(String name) {
+    try {
+      var keycloakRole = roleClient.findByName(context.getTenantId(), tokenService.getToken(), name);
+      log.info("Role has been found by name: name = {}", name);
+      return of(roleMapper.toRole(keycloakRole));
+    } catch (FeignException.NotFound e) {
+      log.info("Role not found by name: name = {}", name);
+      return empty();
+    } catch (FeignException e) {
+      throw new KeycloakApiException("Failed to find role by name: name = " + name, e, e.status());
+    }
+  }
+
   public Roles search(String query, Integer offset, Integer limit) {
     try {
-      var keycloakRoles = roleClient.find(context.getTenantId(), tokenService.getToken(), offset, limit,
-        query);
+      var keycloakRoles = roleClient.find(context.getTenantId(), tokenService.getToken(), offset, limit, query);
       var roles = keycloakRoles.stream().map(roleMapper::toRole).collect(toList());
       log.debug("Roles have been found: names = {}", () -> extractRolesNames(roles));
       return buildRoles(roles);
