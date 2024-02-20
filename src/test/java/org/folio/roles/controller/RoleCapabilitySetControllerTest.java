@@ -30,6 +30,7 @@ import org.folio.roles.service.role.RoleService;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -43,6 +44,7 @@ class RoleCapabilitySetControllerTest {
   @Autowired private MockMvc mockMvc;
   @MockBean private RoleService roleService;
   @MockBean private CapabilitySetService capabilitySetService;
+  @Qualifier("apiRoleCapabilitySetService")
   @MockBean private RoleCapabilitySetService roleCapabilitySetService;
 
   @Test

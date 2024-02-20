@@ -13,6 +13,7 @@ import org.folio.roles.rest.resource.RoleCapabilityApi;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.role.RoleService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,6 +23,7 @@ public class RoleCapabilityController implements RoleCapabilityApi {
 
   private final RoleService roleEntityService;
   private final CapabilityService capabilityService;
+  @Qualifier("apiRoleCapabilityService")
   private final RoleCapabilityService roleCapabilityService;
 
   @Override

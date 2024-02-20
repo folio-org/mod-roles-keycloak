@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
 import org.folio.roles.domain.model.LoadableRole;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
@@ -26,6 +27,11 @@ public class LoadableRoleService {
   public Optional<LoadableRole> findByIdOrName(UUID id, String name) {
     return repository.findByIdOrName(id, name)
       .map(mapper::toRole);
+  }
+
+  @Transactional(readOnly = true)
+  public boolean isDefaultRole(UUID id) {
+    return repository.existsByIdAndType(id, EntityLoadableRoleType.DEFAULT);
   }
 
   public LoadableRole save(LoadableRole role) {
