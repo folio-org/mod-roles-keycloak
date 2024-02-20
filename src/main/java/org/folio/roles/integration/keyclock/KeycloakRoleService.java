@@ -41,7 +41,7 @@ public class KeycloakRoleService {
   public Optional<Role> findByName(String name) {
     try {
       var keycloakRole = roleClient.findByName(context.getTenantId(), tokenService.getToken(), name);
-      log.info("Role has been found by name: name = {}", name);
+      log.debug("Role has been found by name: name = {}", name);
       return of(roleMapper.toRole(keycloakRole));
     } catch (FeignException.NotFound e) {
       log.info("Role not found by name: name = {}", name);
