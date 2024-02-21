@@ -58,6 +58,21 @@
     <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
     <openapi-generator.version>7.3.0</openapi-generator.version>
     <keycloak-admin-client.version>23.0.6</keycloak-admin-client.version>
+
+    <sonar.exclusions>
+      <!--
+        exclude:
+         - exclude domain classes, which are essentially simple POJO classes
+           most of their body is generated with lombok. here is nothing to test or analyse
+         - rest resources (generated API)
+      -->
+      src/main/java/**/domain/**/*,
+      src/main/java/**/configuration/**/*,
+      src/main/java/**/rest/resource/**/*,
+      src/main/java/**/mapper/**/*,
+      src/main/java/**/integration/**/model/**/*,
+      src/main/java/**/*Application.java
+    </sonar.exclusions>
   </properties>
 
   <dependencies>
@@ -583,7 +598,6 @@
                most of their body is generated with lombok. here is nothing to test or analyse
              - rest resources (generated API)
           -->
-          src/main/java/**/cql/**/*,
           src/main/java/**/domain/**/*,
           src/main/java/**/configuration/**/*,
           src/main/java/**/rest/resource/**/*,

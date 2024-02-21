@@ -133,6 +133,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     capabilityService.checkIds(newIds);
 
     var entities = mapItems(newIds, id -> new RoleCapabilityEntity(roleId, id));
+    @SuppressWarnings("java:S6809")
     var assignedCapabilityIds = CollectionUtils.union(assignedIds, getCapabilitySetCapabilityIds(roleId));
     var endpoints = capabilityEndpointService.getByCapabilityIds(newIds, assignedCapabilityIds);
     rolePermissionService.createPermissions(roleId, endpoints);
@@ -146,6 +147,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
   private void removeCapabilities(UUID roleId, List<UUID> deprecatedIds, Collection<UUID> assignedIds) {
     log.debug("Revoking capabilities from role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
+    @SuppressWarnings("java:S6809")
     var assignedCapabilityIds = CollectionUtils.union(assignedIds, getCapabilitySetCapabilityIds(roleId));
     var endpoints = capabilityEndpointService.getByCapabilityIds(deprecatedIds, assignedCapabilityIds);
     rolePermissionService.deletePermissions(roleId, endpoints);
