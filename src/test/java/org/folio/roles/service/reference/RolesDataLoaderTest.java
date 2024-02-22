@@ -7,8 +7,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.Roles;
+import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.service.role.RoleService;
 import org.folio.roles.utils.ResourceHelper;
 import org.folio.test.types.UnitTest;
@@ -24,6 +26,7 @@ class RolesDataLoaderTest {
 
   @InjectMocks private RolesDataLoader rolesDataLoader;
   @Mock private RoleService roleService;
+  @Mock private KeycloakRoleService keycloakRoleService;
   @Mock private ResourceHelper resourceHelper;
 
   @Test
@@ -33,7 +36,6 @@ class RolesDataLoaderTest {
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles", Roles.class))
       .thenReturn(of(roles));
-    when(roleService.create(role)).thenReturn(role);
 
     rolesDataLoader.loadReferenceData();
 
@@ -48,14 +50,13 @@ class RolesDataLoaderTest {
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles", Roles.class))
       .thenReturn(of(roles));
-    when(roleService.update(role)).thenReturn(role);
-    when(roleService.existById(role.getId())).thenReturn(true);
+    when(keycloakRoleService.findByName("role1")).thenReturn(Optional.of(role));
 
     rolesDataLoader.loadReferenceData();
 
     verify(resourceHelper).readObjectsFromDirectory("reference-data/roles", Roles.class);
-    verify(roleService).update(role);
-    verify(roleService).existById(role.getId());
+    verify(roleService).updateFoundByName(role);
+    verify(keycloakRoleService).findByName(role.getName());
   }
 
   @Test
@@ -65,14 +66,13 @@ class RolesDataLoaderTest {
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles", Roles.class))
       .thenReturn(of(roles));
-    when(roleService.create(role)).thenReturn(role);
-    when(roleService.existById(role.getId())).thenReturn(false);
+    when(keycloakRoleService.findByName("role1")).thenReturn(Optional.empty());
 
     rolesDataLoader.loadReferenceData();
 
     verify(resourceHelper).readObjectsFromDirectory("reference-data/roles", Roles.class);
     verify(roleService).create(role);
-    verify(roleService).existById(role.getId());
+    verify(keycloakRoleService).findByName(role.getName());
   }
 
   @Test

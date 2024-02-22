@@ -82,7 +82,9 @@ public class RoleService {
   public Role create(Role role) {
     var createdRole = keycloakService.create(role);
     try {
-      return entityService.create(createdRole);
+      Role savedRole = entityService.create(createdRole);
+      log.debug("Role has been created: id = {}, name = {}", savedRole.getId(), savedRole.getName());
+      return savedRole;
     } catch (Exception exception) {
       keycloakService.deleteById(createdRole.getId());
       throw new ServiceException("Failed to create role", "cause", exception.getMessage());
@@ -121,6 +123,25 @@ public class RoleService {
       log.debug("Rollback role state in Keycloak: id = {}, name = {}", actualRole.getId(), actualRole.getName());
       keycloakService.update(actualRole);
       throw e;
+    }
+  }
+
+  /**
+   * Update one role found by name.
+   *
+   * @param role - role for updating
+   * @return updated role {@link Role}
+   */
+  @Transactional
+  public Role updateFoundByName(Role role) {
+    Assert.notNull(role.getId(), "Role should have ID");
+    keycloakService.update(role);
+    try {
+      Role updatedRole = entityService.create(role);
+      log.debug("Role has been updated: id = {}, name = {}", updatedRole.getId(), updatedRole.getName());
+      return updatedRole;
+    } catch (Exception e) {
+      throw new ServiceException("Failed to update role found by name", "cause", e.getMessage());
     }
   }
 

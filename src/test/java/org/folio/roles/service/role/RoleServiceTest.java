@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
+import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.DisplayName;
@@ -56,8 +57,30 @@ class RoleServiceTest {
   }
 
   @Nested
-  @DisplayName("update")
+  @DisplayName("create")
   class Create {
+
+    @Test
+    void create() {
+      var role = role();
+      when(keycloakService.create(role)).thenReturn(role);
+      when(entityService.create(role)).thenReturn(role);
+
+      facade.create(role);
+
+      verify(keycloakService).create(role);
+      verify(entityService).create(role);
+    }
+
+    @Test
+    void negative_create() {
+      var role = role();
+      when(keycloakService.create(role)).thenReturn(role);
+      when(entityService.create(role)).thenThrow(RuntimeException.class);
+
+      assertThrows(ServiceException.class, () -> facade.create(role));
+      verify(keycloakService).deleteById(role.getId());
+    }
 
     @Test
     void positive() {
@@ -111,6 +134,33 @@ class RoleServiceTest {
 
       assertThrows(RuntimeException.class, () -> facade.update(role));
       verify(keycloakService, times(2)).update(any());
+    }
+  }
+
+  @Nested
+  @DisplayName("updateFoundByName")
+  class UpdateByName {
+
+    @Test
+    void positive() {
+      var role = role();
+      when(entityService.create(role)).thenReturn(role);
+
+      facade.updateFoundByName(role);
+
+      verify(keycloakService).update(role);
+      verify(entityService).create(role);
+    }
+
+    @Test
+    void negative_repositoryThrowsException() {
+      var role = role();
+
+      when(keycloakService.update(any())).thenReturn(role);
+      when(entityService.create(role)).thenThrow(RuntimeException.class);
+
+      assertThrows(ServiceException.class, () -> facade.updateFoundByName(role));
+      verify(keycloakService).update(any());
     }
   }
 
