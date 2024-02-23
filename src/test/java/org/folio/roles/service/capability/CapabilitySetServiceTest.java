@@ -71,6 +71,17 @@ class CapabilitySetServiceTest {
     TestUtils.verifyNoMoreInteractions(this);
   }
 
+  private void mockFolioExecutionContextCalls() {
+    when(folioExecutionContext.getTenantId()).thenReturn(null);
+    when(folioExecutionContext.getUserId()).thenReturn(null);
+    when(folioExecutionContext.getToken()).thenReturn(null);
+    when(folioExecutionContext.getOkapiUrl()).thenReturn(null);
+    when(folioExecutionContext.getRequestId()).thenReturn(null);
+    when(folioExecutionContext.getFolioModuleMetadata()).thenReturn(null);
+    when(folioExecutionContext.getAllHeaders()).thenReturn(null);
+    when(folioExecutionContext.getOkapiHeaders()).thenReturn(null);
+  }
+
   private static Consumer<DomainEvent<CapabilitySet>> isDomainEventOf(DomainEventType type, CapabilitySet newValue,
     CapabilitySet oldValue) {
     return event -> {
@@ -95,6 +106,7 @@ class CapabilitySetServiceTest {
       when(capabilitySetRepository.save(capabilitySetEntity)).thenReturn(capabilitySetEntity);
       when(mapper.convert(capabilitySetEntity)).thenReturn(capabilitySet);
 
+      mockFolioExecutionContextCalls();
       doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(CREATE, capabilitySet, null)));
 
       var actual = capabilitySetService.create(capabilitySet);
@@ -139,6 +151,7 @@ class CapabilitySetServiceTest {
       when(capabilitySetRepository.save(capabilitySetEntity)).thenReturn(capabilitySetEntity);
       when(mapper.convert(capabilitySetEntity)).thenReturn(capabilitySet);
 
+      mockFolioExecutionContextCalls();
       doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(CREATE, capabilitySet, null)));
 
       var capabilitySets = List.of(capabilitySet);
@@ -219,6 +232,7 @@ class CapabilitySetServiceTest {
       when(mapper.convert(foundEntity)).thenReturn(foundCapabilitySet);
       when(capabilitySetRepository.saveAndFlush(updatedEntity)).thenReturn(updatedEntity);
 
+      mockFolioExecutionContextCalls();
       doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(UPDATE, updatedCapabilitySet,
         foundCapabilitySet)));
 
@@ -239,6 +253,7 @@ class CapabilitySetServiceTest {
       when(mapper.convert(foundEntity)).thenReturn(foundCapabilitySet);
       when(capabilitySetRepository.saveAndFlush(updatedEntity)).thenReturn(updatedEntity);
 
+      mockFolioExecutionContextCalls();
       doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(UPDATE, updatedCapabilitySet,
         foundCapabilitySet)));
 
@@ -260,6 +275,7 @@ class CapabilitySetServiceTest {
       when(mapper.convert(foundEntity)).thenReturn(foundCapabilitySet);
       when(capabilitySetRepository.saveAndFlush(updatedEntity)).thenReturn(updatedEntity);
 
+      mockFolioExecutionContextCalls();
       doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(UPDATE, updatedCapabilitySet,
         foundCapabilitySet)));
 
@@ -494,6 +510,7 @@ class CapabilitySetServiceTest {
 
       when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(entity));
       when(mapper.convert(entity)).thenReturn(capabilitySet);
+      mockFolioExecutionContextCalls();
       doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(DELETE, null, capabilitySet)));
 
       capabilitySetService.delete(CAPABILITY_SET_ID);

@@ -1,7 +1,6 @@
 package org.folio.roles.service.loadablerole;
 
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.common.utils.CollectionUtils.mapItems;
@@ -13,7 +12,6 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -22,9 +20,9 @@ import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
-import org.folio.roles.service.event.DomainEvent;
+import org.folio.roles.service.event.CapabilityCollectionEvent;
+import org.folio.roles.service.event.CapabilitySetEvent;
 import org.folio.roles.support.TestUtils;
-import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.test.types.UnitTest;
@@ -47,12 +45,26 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Mock private CapabilityService capabilityService;
   @Mock private RoleCapabilityService roleCapabilityService;
   @Mock private RoleCapabilitySetService roleCapabilitySetService;
-  @Mock private FolioModuleMetadata moduleMetadata;
   private FolioExecutionContext context;
 
   @BeforeEach
   void setUp() {
-    context = new DefaultFolioExecutionContext(moduleMetadata, emptyMap());
+    context = new FolioExecutionContext() {
+      @Override
+      public FolioModuleMetadata getFolioModuleMetadata() {
+        return new FolioModuleMetadata() {
+          @Override
+          public String getModuleName() {
+            return null;
+          }
+
+          @Override
+          public String getDBSchemaName(String tenantId) {
+            return null;
+          }
+        };
+      }
+    };
   }
 
   @AfterEach
@@ -65,7 +77,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     var capability1 = capability(randomUUID(), "permission1");
     var capability2 = capability(randomUUID(), "permission2");
     var capabilities = List.of(capability1, capability2);
-    final var event = DomainEvent.created(capabilities).withContext(context);
+    final var event = (CapabilityCollectionEvent<List<Capability>>) CapabilityCollectionEvent.created(capabilities)
+      .withContext(context);
 
     var perms = loadablePermissions(10);
     for (int i = 0; i < perms.size(); i++) {
@@ -74,7 +87,6 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
       perm.setCapabilityId(null); // reset capset id, it should be populated by the processor
     }
 
-    when(moduleMetadata.getModuleName()).thenReturn(null);
     when(service.findAllByPermissions(new HashSet<>(mapItems(capabilities, Capability::getPermission))))
       .thenReturn(perms);
 
@@ -94,7 +106,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     var capability1 = capability(randomUUID(), "permission1");
     var capability2 = capability(randomUUID(), "permission2");
     var capabilities = List.of(capability1, capability2);
-    final var event = DomainEvent.created(capabilities).withContext(context);
+    final var event = (CapabilityCollectionEvent<List<Capability>>) CapabilityCollectionEvent.created(capabilities)
+      .withContext(context);
 
     when(service.findAllByPermissions(new HashSet<>(mapItems(capabilities, Capability::getPermission))))
       .thenReturn(emptyList());
@@ -104,7 +117,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
 
   @Test
   void handleCapabilitiesCreatedEvent_positive_emptyCapabilitiesInEvent() {
-    var event = DomainEvent.created(Collections.<Capability>emptyList()).withContext(context);
+    var event = (CapabilityCollectionEvent<List<Capability>>) CapabilityCollectionEvent.created(emptyList())
+      .withContext(context);
 
     assertThatThrownBy(() -> processor.handleCapabilitiesCreatedEvent(event))
       .isInstanceOf(IllegalArgumentException.class)
@@ -114,7 +128,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Test
   void handleCapabilitySetCreatedEvent_positive() {
     var capabilitySet = capabilitySet();
-    final var event = DomainEvent.created(capabilitySet).withContext(context);
+    final var event = (CapabilitySetEvent) CapabilitySetEvent.created(capabilitySet).withContext(context);
     var capability = capability();
 
     var perms = loadablePermissions(10);
@@ -123,7 +137,6 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
       perm.setCapabilitySetId(null); // reset capset id, it should be populated by the processor
     });
 
-    when(moduleMetadata.getModuleName()).thenReturn(null);
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
     when(service.findAllByPermissions(List.of(capability.getPermission()))).thenReturn(perms);
     perms.forEach(perm -> {
@@ -139,10 +152,9 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Test
   void handleCapabilitySetCreatedEvent_positive_loadablePermissionsNotFound() {
     var capabilitySet = capabilitySet();
-    final var event = DomainEvent.created(capabilitySet).withContext(context);
+    final var event = (CapabilitySetEvent) CapabilitySetEvent.created(capabilitySet).withContext(context);
     var capability = capability();
 
-    when(moduleMetadata.getModuleName()).thenReturn(null);
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
     when(service.findAllByPermissions(List.of(capability.getPermission()))).thenReturn(emptyList());
 
@@ -152,7 +164,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Test
   void handleCapabilitySetCreatedEvent_negative_capabilityNotFound() {
     var capabilitySet = capabilitySet();
-    var event = DomainEvent.created(capabilitySet).withContext(context);
+    var event = (CapabilitySetEvent) CapabilitySetEvent.created(capabilitySet).withContext(context);
 
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(emptyList());
 
@@ -165,7 +177,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   void handleCapabilitySetUpdatedEvent_positive() {
     var oldCapabilitySet = capabilitySet();
     var newCapabilitySet = capabilitySet(List.of(randomUUID()));
-    var event = DomainEvent.updated(newCapabilitySet, oldCapabilitySet).withContext(context);
+    var event = (CapabilitySetEvent) CapabilitySetEvent.updated(newCapabilitySet, oldCapabilitySet)
+      .withContext(context);
 
     processor.handleCapabilitySetUpdatedEvent(event);
   }
@@ -174,7 +187,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   void handleCapabilitySetUpdatedEvent_negative_capabilitySetIdMismatch() {
     var oldCapabilitySet = capabilitySet();
     var newCapabilitySet = capabilitySet(randomUUID(), List.of(randomUUID()));
-    var event = DomainEvent.updated(newCapabilitySet, oldCapabilitySet).withContext(context);
+    var event = (CapabilitySetEvent) CapabilitySetEvent.updated(newCapabilitySet, oldCapabilitySet)
+      .withContext(context);
 
     assertThatThrownBy(() -> processor.handleCapabilitySetUpdatedEvent(event))
       .isInstanceOf(IllegalArgumentException.class)
@@ -184,7 +198,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Test
   void handleCapabilitySetDeletedEvent_positive() {
     var capabilitySet = capabilitySet();
-    final var event = DomainEvent.deleted(capabilitySet).withContext(context);
+    final var event = (CapabilitySetEvent) CapabilitySetEvent.deleted(capabilitySet).withContext(context);
     var capability = capability();
 
     var perms = loadablePermissions(10);
@@ -193,7 +207,6 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
       perm.setCapabilitySetId(capabilitySet.getId()); // set capset id, it should be reset by the processor
     });
 
-    when(moduleMetadata.getModuleName()).thenReturn(null);
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
     when(service.findAllByPermissions(List.of(capability.getPermission()))).thenReturn(perms);
     perms.forEach(perm -> {
@@ -209,10 +222,9 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Test
   void handleCapabilitySetDeletedEvent_positive_loadablePermissionsNotFound() {
     var capabilitySet = capabilitySet();
-    final var event = DomainEvent.deleted(capabilitySet).withContext(context);
+    final var event = (CapabilitySetEvent) CapabilitySetEvent.deleted(capabilitySet).withContext(context);
     var capability = capability();
 
-    when(moduleMetadata.getModuleName()).thenReturn(null);
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
     when(service.findAllByPermissions(List.of(capability.getPermission()))).thenReturn(emptyList());
 
@@ -222,7 +234,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Test
   void handleCapabilitySetDeletedEvent_negative_capabilityNotFound() {
     var capabilitySet = capabilitySet();
-    var event = DomainEvent.deleted(capabilitySet).withContext(context);
+    var event = (CapabilitySetEvent) CapabilitySetEvent.deleted(capabilitySet).withContext(context);
 
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(emptyList());
 

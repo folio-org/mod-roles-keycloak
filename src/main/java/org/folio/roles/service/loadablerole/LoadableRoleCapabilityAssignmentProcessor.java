@@ -8,7 +8,6 @@ import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.utils.CollectionUtils.findOne;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -25,16 +24,19 @@ import org.folio.roles.domain.model.LoadablePermission;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
-import org.folio.roles.service.event.DomainEvent;
+import org.folio.roles.service.event.CapabilityCollectionEvent;
+import org.folio.roles.service.event.CapabilitySetEvent;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Log4j2
 @Service
-@Transactional
+@Transactional(propagation = Propagation.REQUIRES_NEW)
 @RequiredArgsConstructor
 public class LoadableRoleCapabilityAssignmentProcessor {
 
@@ -45,7 +47,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
   @Async
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).CREATE")
-  public void handleCapabilitiesCreatedEvent(DomainEvent<? extends Collection<Capability>> event) {
+  public void handleCapabilitiesCreatedEvent(CapabilityCollectionEvent<? extends Collection<Capability>> event) {
     log.debug("\"Capabilities Created\" event received: {}", event);
 
     var capabilities = event.getNewObject();
@@ -64,7 +66,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
   @Async
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).CREATE")
-  public void handleCapabilitySetCreatedEvent(DomainEvent<CapabilitySet> event) {
+  public void handleCapabilitySetCreatedEvent(CapabilitySetEvent event) {
     log.debug("\"Capability Set Created\" event received: {}", event);
 
     var capabilitySet = event.getNewObject();
@@ -77,7 +79,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
   @Async
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).UPDATE")
-  public void handleCapabilitySetUpdatedEvent(DomainEvent<CapabilitySet> event) {
+  public void handleCapabilitySetUpdatedEvent(CapabilitySetEvent event) {
     log.debug("\"Capability Set Updated\" event received: {}", event);
 
     var capabilitySet = event.getNewObject();
@@ -96,7 +98,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
   @Async
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).DELETE")
-  public void handleCapabilitySetDeletedEvent(DomainEvent<CapabilitySet> event) {
+  public void handleCapabilitySetDeletedEvent(CapabilitySetEvent event) {
     log.debug("\"Capability Set Deleted\" event received: {}", event);
 
     var capabilitySet = event.getOldObject();
@@ -181,6 +183,8 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     BiConsumer<UUID, List<LoadablePermission>> action, FolioExecutionContext context) {
     try (var ignored = new FolioExecutionContextSetter(context)) {
       var roleIdWithPermissions = rolesWithPermissionsSupplier.get();
+
+      log.debug("Action will be applied to the following roles/permissions: {}", roleIdWithPermissions);
 
       roleIdWithPermissions.forEach(action);
     }
