@@ -1,20 +1,23 @@
 package org.folio.roles.service.loadablerole;
 
 import static java.util.function.Function.identity;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.utils.CollectionUtils.findOne;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -57,7 +60,9 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
     log.info("Handling created capabilities: {}", () -> toNames(capabilities));
 
-    var capabilityByPerm = capabilities.stream().collect(toMap(Capability::getPermission, identity()));
+    var capabilityByPerm = capabilities.stream()
+      .filter(not(isTechnicalCapability()))
+      .collect(toMap(Capability::getPermission, identity()));
 
     applyActionToRoles(() -> findRoleWithPermissionsByPermissionNames(capabilityByPerm.keySet()),
       assignCapabilitiesToRole(capabilityByPerm),
@@ -113,6 +118,13 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     CapabilitySet capabilitySet) {
     return () -> {
       var relatedCapability = getCapabilityByCapabilitySetName(capabilitySet.getName());
+
+      if (relatedCapability == null) {
+        log.warn("Capability related to capability set is not found by capability set name: {}. "
+            + "Capability set will be skipped", capabilitySet.getName());
+        return Collections.emptyMap();
+      }
+
       log.debug("Capability found by capability set name: {}", relatedCapability);
 
       var capabilityPerm = relatedCapability.getPermission();
@@ -154,7 +166,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       rolePermission.setCapabilitySetId(capabilitySet.getId());
       service.save(rolePermission);
 
-      log.info("Capability set assigned to loadable role: roleId = {}, permission = {}, capabilitySet = {}",
+      log.info("Capability set assigned to loadable permission: roleId = {}, permission = {}, capabilitySet = {}",
         () -> roleId, () -> rolePermission, () -> shortDescription(capabilitySet));
     };
   }
@@ -173,10 +185,21 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     };
   }
 
+  @Nullable
   private Capability getCapabilityByCapabilitySetName(String capabilitySetName) {
-    var capability = findOne(capabilityService.findByNames(List.of(capabilitySetName)));
-    return capability.orElseThrow(
-      () -> new EntityNotFoundException("Single capability is not found by capability set name: " + capabilitySetName));
+    return findOne(capabilityService.findByNames(List.of(capabilitySetName))).orElse(null);
+  }
+
+  private static Predicate<Capability> isTechnicalCapability() {
+    return capability -> {
+      var technical = isEmpty(capability.getEndpoints());
+
+      if (technical) {
+        log.debug("Technical capability found: {}. Skipping...", capability);
+      }
+
+      return technical;
+    };
   }
 
   private static void applyActionToRoles(Supplier<Map<UUID, List<LoadablePermission>>> rolesWithPermissionsSupplier,

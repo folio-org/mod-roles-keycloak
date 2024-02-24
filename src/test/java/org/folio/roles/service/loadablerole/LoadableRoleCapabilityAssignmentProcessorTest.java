@@ -11,7 +11,6 @@ import static org.folio.roles.support.TestUtils.copy;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
-import jakarta.persistence.EntityNotFoundException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -162,15 +161,13 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   }
 
   @Test
-  void handleCapabilitySetCreatedEvent_negative_capabilityNotFound() {
+  void handleCapabilitySetCreatedEvent_positive_capabilityNotFound() {
     var capabilitySet = capabilitySet();
     var event = (CapabilitySetEvent) CapabilitySetEvent.created(capabilitySet).withContext(context);
 
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(emptyList());
 
-    assertThatThrownBy(() -> processor.handleCapabilitySetCreatedEvent(event))
-      .isInstanceOf(EntityNotFoundException.class)
-      .hasMessage("Single capability is not found by capability set name: %s", capabilitySet.getName());
+    processor.handleCapabilitySetCreatedEvent(event);
   }
 
   @Test
@@ -232,15 +229,13 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   }
 
   @Test
-  void handleCapabilitySetDeletedEvent_negative_capabilityNotFound() {
+  void handleCapabilitySetDeletedEvent_positive_capabilityNotFound() {
     var capabilitySet = capabilitySet();
     var event = (CapabilitySetEvent) CapabilitySetEvent.deleted(capabilitySet).withContext(context);
 
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(emptyList());
 
-    assertThatThrownBy(() -> processor.handleCapabilitySetDeletedEvent(event))
-      .isInstanceOf(EntityNotFoundException.class)
-      .hasMessage("Single capability is not found by capability set name: %s", capabilitySet.getName());
+    processor.handleCapabilitySetDeletedEvent(event);
   }
 
   private static UUID capabilityIdByPermName(List<Capability> capabilities, String permissionName) {
