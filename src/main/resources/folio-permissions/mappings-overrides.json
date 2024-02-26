@@ -715,6 +715,21 @@
     "action": "execute",
     "type": "procedural"
   },
+  "users-keycloak.password-reset-link.generate": {
+    "resource": "Users-keycloak Password-Reset-Link Generate",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "users-keycloak.password-reset-link.validate": {
+    "resource": "Users-keycloak Password-Reset-Link Validate",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "users-keycloak.password-reset-link.reset": {
+    "resource": "Users-keycloak Password-Reset-Link Reset",
+    "action": "execute",
+    "type": "procedural"
+  },
   "mod-settings.global.write.mod-circulation": {
     "resource": "Mod-Circulation Admin Settings",
     "action": "edit",
