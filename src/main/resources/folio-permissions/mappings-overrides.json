@@ -199,6 +199,16 @@
     "action": "view",
     "type": "data"
   },
+  "users-keycloak.read.basic": {
+    "resource": "Users-Keycloak Basic-Information",
+    "action": "view",
+    "type": "data"
+  },
+  "users-keycloak.read.restricted": {
+    "resource": "Users-Keycloak Restricted-Information",
+    "action": "view",
+    "type": "data"
+  },
   "ui-bulk-edit.view.base": {
     "resource": "UI-Bulk-Edit Base",
     "action": "view",
