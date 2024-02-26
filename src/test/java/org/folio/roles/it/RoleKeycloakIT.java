@@ -9,6 +9,7 @@ import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.USER_ID;
 import static org.folio.test.TestUtils.asJsonString;
 import static org.folio.test.TestUtils.parseResponse;
+import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -158,11 +159,30 @@ class RoleKeycloakIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-roles.json")
-  @Sql("classpath:/sql/populate-role.sql")
+  @Sql(scripts = {
+    "classpath:/sql/populate-role-capability-for-deletion.sql",
+    "classpath:/sql/populate-user-role-for-deletion.sql",
+    "classpath:/sql/populate-role-policy.sql"
+  })
   void deleteRole_positive() throws Exception {
-    mockMvc.perform(delete("/roles/{id}", ROLE_1.getId()).header(TENANT, TENANT_ID)
-        .header(USER_ID, USER_ID_HEADER))
-      .andExpect(status().isNoContent());
+    doDelete("/roles/{id}", ROLE_1.getId());
+
+    attemptGet("/roles/{id}", ROLE_1.getId())
+      .andExpect(status().isNotFound())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
+      .andExpect(jsonPath("$.errors[0].code", is("not_found_error")));
+
+    attemptGet("/roles/{id}/capabilities", ROLE_1.getId())
+      .andExpect(status().isNotFound())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
+      .andExpect(jsonPath("$.errors[0].code", is("not_found_error")));
+
+    doGet("/roles/users/{userId}", fromString("8c6d12fa-33a7-48c9-8769-71168d441345"))
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(jsonPath("$.userRoles", emptyIterable()))
+      .andExpect(jsonPath("$.totalRecords", is(0)));
   }
 
   @Test
