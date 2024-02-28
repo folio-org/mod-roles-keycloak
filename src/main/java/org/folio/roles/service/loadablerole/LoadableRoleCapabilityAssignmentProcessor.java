@@ -31,7 +31,6 @@ import org.folio.roles.service.event.CapabilityCollectionEvent;
 import org.folio.roles.service.event.CapabilitySetEvent;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,7 +47,6 @@ public class LoadableRoleCapabilityAssignmentProcessor {
   private final RoleCapabilityService roleCapabilityService;
   private final RoleCapabilitySetService roleCapabilitySetService;
 
-  @Async
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).CREATE")
   public void handleCapabilitiesCreatedEvent(CapabilityCollectionEvent<? extends Collection<Capability>> event) {
     log.debug("\"Capabilities Created\" event received: {}", event);
@@ -69,7 +67,6 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       event.getContext());
   }
 
-  @Async
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).CREATE")
   public void handleCapabilitySetCreatedEvent(CapabilitySetEvent event) {
     log.debug("\"Capability Set Created\" event received: {}", event);
@@ -82,7 +79,6 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       event.getContext());
   }
 
-  @Async
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).UPDATE")
   public void handleCapabilitySetUpdatedEvent(CapabilitySetEvent event) {
     log.debug("\"Capability Set Updated\" event received: {}", event);
@@ -101,7 +97,6 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     // by Role Capability Set service
   }
 
-  @Async
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).DELETE")
   public void handleCapabilitySetDeletedEvent(CapabilitySetEvent event) {
     log.debug("\"Capability Set Deleted\" event received: {}", event);

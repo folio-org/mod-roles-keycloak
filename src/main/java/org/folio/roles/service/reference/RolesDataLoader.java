@@ -36,6 +36,13 @@ public class RolesDataLoader implements ReferenceDataLoader {
   }
 
   private void loadDefaultRoles() {
+    var roleCount = service.defaultRoleCount();
+
+    if (roleCount > 0) {
+      log.info("Default loadable roles already present in DB. Subsequent updates are not supported");
+      return;
+    }
+
     toStream(resourceHelper.readObjectsFromDirectory(DEFAULT_ROLES_DATA_DIR, PlainLoadableRoles.class))
       .flatMap(roles -> toStream(roles.getRoles()))
       .map(role -> role.type(LoadableRoleType.DEFAULT))

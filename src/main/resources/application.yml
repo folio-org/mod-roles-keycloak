@@ -34,12 +34,6 @@ spring:
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-  task:
-    execution:
-      pool:
-        core-size: ${TASK_EXECUTION_POOL_CORE_SIZE:5}
-        max-size: ${TASK_EXECUTION_POOL_MAX_SIZE:50}
-      thread-name-prefix: ${TASK_EXECUTION_THREAD_NAME_PREFIX:async-thread-}
 
 coffee-boots:
   cache:

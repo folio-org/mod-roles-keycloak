@@ -12,4 +12,6 @@ public interface LoadableRoleRepository extends BaseCqlJpaRepository<LoadableRol
   Optional<LoadableRoleEntity> findByIdOrName(UUID id, String name);
 
   boolean existsByIdAndType(UUID id, EntityLoadableRoleType type);
+
+  int countAllByType(EntityLoadableRoleType type);
 }
