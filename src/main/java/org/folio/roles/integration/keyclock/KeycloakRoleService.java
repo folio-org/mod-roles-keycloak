@@ -44,6 +44,20 @@ public class KeycloakRoleService {
     }
   }
 
+  public Optional<Role> findByName(String name) {
+    try {
+      var keycloakRole = roleClient.findByName(context.getTenantId(), tokenService.getToken(), name);
+      log.debug("Role has been found by name: name = {}", name);
+
+      return Optional.of(roleMapper.toRole(keycloakRole));
+    } catch (FeignException.NotFound e) {
+      log.debug("Role hasn't been found by name: name = {}", name);
+      return Optional.empty();
+    } catch (FeignException e) {
+      throw new KeycloakApiException("Failed to find role by name: name = " + name, e, e.status());
+    }
+  }
+
   public Role getById(UUID id) {
     return findById(id).orElseThrow(() -> new KeycloakApiException("Failed to find role: id = " + id,
         new NotFoundException("Could not find role with id"), NOT_FOUND.value()));

@@ -82,7 +82,9 @@ public class RoleService {
   public Role create(Role role) {
     var createdRole = keycloakService.create(role);
     try {
-      return entityService.create(createdRole);
+      Role savedRole = entityService.create(createdRole);
+      log.debug("Role has been created: id = {}, name = {}", savedRole.getId(), savedRole.getName());
+      return savedRole;
     } catch (Exception exception) {
       keycloakService.deleteById(createdRole.getId());
       throw new ServiceException("Failed to create role", "cause", exception.getMessage());
