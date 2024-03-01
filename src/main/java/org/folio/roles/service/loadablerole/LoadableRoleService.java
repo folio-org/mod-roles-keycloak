@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.model.LoadableRole;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
@@ -50,12 +49,9 @@ public class LoadableRoleService {
   }
 
   private LoadableRole createRole(LoadableRole role) {
-    // role can be present in Keycloak, so trying to find the one by the name first
-    var roleWithId = keycloakService.findByName(role.getName())
-      .map(found -> copyDataFrom(found, role))
-      // role id populate inside the method, as a side effect, and the original object returned
-      .orElseGet(() -> (LoadableRole) keycloakService.create(role));
-    
+    // role id populate inside the method, as a side effect, and the original object returned
+    var roleWithId = (LoadableRole) keycloakService.create(role);
+
     try {
       var created = saveToDb(roleWithId);
       log.info("Loadable role has been created: id = {}, name = {}", created.getId(), created.getName());
@@ -83,12 +79,5 @@ public class LoadableRoleService {
     var savedEntity = repository.save(entity);
 
     return mapper.toRole(savedEntity);
-  }
-
-  private static LoadableRole copyDataFrom(Role role, LoadableRole loadableRole) {
-    return loadableRole
-      .id(role.getId())
-      .name(role.getName())
-      .description(role.getDescription());
   }
 }

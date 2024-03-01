@@ -31,12 +31,6 @@ public class CustomTenantService extends TenantService {
   }
 
   @Override
-  protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
-    log.debug("Restarting event listeners after tenant update");
-    kafkaAdminService.restartEventListeners();
-  }
-
-  @Override
   public void loadReferenceData() {
     try {
       log.info("Loading reference data");
@@ -46,5 +40,19 @@ public class CustomTenantService extends TenantService {
       throw new IllegalStateException("Unable to load reference data", e);
     }
     log.info("Finished loading reference data");
+  }
+
+  @Override
+  protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
+    log.debug("Restarting event listeners after tenant update");
+    kafkaAdminService.restartEventListeners();
+  }
+
+  @Override
+  public void deleteTenant(TenantAttributes tenantAttributes) {
+    if (tenantExists()) {
+      log.warn("Tenant's data cannot be deleted to avoid inconsistency between the module and Keycloak. "
+        + "Please manually drop the schema if it's really necessary: schema = {}", getSchemaName());
+    }
   }
 }
