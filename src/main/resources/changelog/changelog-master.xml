@@ -23,5 +23,6 @@
   <include file="changes/create-permission-table.xml" relativeToChangelogFile="true"/>
   <include file="changes/update_varchar_fields_to_text.xml" relativeToChangelogFile="true"/>
   <include file="changes/update_timestamp_fields_to_timestamp_with_zone.xml" relativeToChangelogFile="true"/>
+  <include file="changes/update-role-deletion-constraints.xml" relativeToChangelogFile="true"/>
   <include file="changes/create-loadable-role-tables.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

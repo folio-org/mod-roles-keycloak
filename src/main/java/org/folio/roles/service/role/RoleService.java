@@ -127,6 +127,25 @@ public class RoleService {
   }
 
   /**
+   * Update one role found by name.
+   *
+   * @param role - role for updating
+   * @return updated role {@link Role}
+   */
+  @Transactional
+  public Role updateFoundByName(Role role) {
+    Assert.notNull(role.getId(), "Role should have ID");
+    keycloakService.update(role);
+    try {
+      Role updatedRole = entityService.create(role);
+      log.debug("Role has been updated: id = {}, name = {}", updatedRole.getId(), updatedRole.getName());
+      return updatedRole;
+    } catch (Exception e) {
+      throw new ServiceException("Failed to update role found by name", "cause", e.getMessage());
+    }
+  }
+
+  /**
    * Delete role by ID.
    *
    * @param id - role identifier

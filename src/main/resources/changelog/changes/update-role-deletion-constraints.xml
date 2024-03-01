@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="update role_capability, user_roles, policy_roles constraint" author="Yaroslav Kiriak">
+    <dropForeignKeyConstraint baseTableName="user_role" constraintName="fk_user_role_role"/>
+    <addForeignKeyConstraint
+      baseTableName="user_role"
+      baseColumnNames="role_id"
+      constraintName="fk_user_role_role"
+      onDelete="CASCADE"
+      referencedTableName="role"
+      referencedColumnNames="id"/>
+    <dropForeignKeyConstraint baseTableName="role_capability" constraintName="fk_role_capability_role_id"/>
+    <addForeignKeyConstraint
+      baseTableName="role_capability"
+      baseColumnNames="role_id"
+      constraintName="fk_role_capability_role_id"
+      onDelete="CASCADE"
+      referencedTableName="role"
+      referencedColumnNames="id"/>
+    <addForeignKeyConstraint
+      baseTableName="policy_roles"
+      baseColumnNames="role_id"
+      constraintName="fk_role_policy_role_id"
+      onDelete="CASCADE"
+      referencedTableName="role"
+      referencedColumnNames="id"/>
+  </changeSet>
+</databaseChangeLog>

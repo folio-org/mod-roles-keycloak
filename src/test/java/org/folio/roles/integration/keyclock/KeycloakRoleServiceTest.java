@@ -2,6 +2,7 @@ package org.folio.roles.integration.keyclock;
 
 import static org.folio.roles.support.KeycloakUtils.ACCESS_TOKEN;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
+import static org.folio.roles.support.RoleUtils.ROLE_NAME;
 import static org.folio.roles.support.RoleUtils.keycloakRole;
 import static org.folio.roles.support.RoleUtils.role;
 import static org.folio.roles.support.RoleUtils.role2;
@@ -92,6 +93,39 @@ class KeycloakRoleServiceTest {
   }
 
   @Nested
+  @DisplayName("findByName")
+  class FindByName {
+
+    @Test
+    void positive_returnsRole() {
+      var role = role();
+      var keycloakRole = keycloakRole();
+
+      when(roleClient.findByName(anyString(), anyString(), eq(role.getName()))).thenReturn(keycloakRole);
+
+      var actual = roleService.findByName(role.getName());
+
+      assertTrue(actual.isPresent());
+      assertEquals(actual.get(), role());
+    }
+
+    @Test
+    void positive_returnsEmptyRoleWhenNotFound() {
+      when(roleClient.findByName(anyString(), anyString(), anyString())).thenThrow(FeignException.NotFound.class);
+
+      var actual = roleService.findByName(ROLE_NAME);
+      assertTrue(actual.isEmpty());
+    }
+
+    @Test
+    void negative_throwsKeycloakApiExceptionWhileFeignException() {
+      when(roleClient.findByName(anyString(), anyString(), anyString())).thenThrow(FeignException.class);
+
+      assertThrows(KeycloakApiException.class, () -> roleService.findByName(ROLE_NAME));
+    }
+  }
+
+  @Nested
   @DisplayName("create")
   class Create {
 
@@ -99,8 +133,6 @@ class KeycloakRoleServiceTest {
     void positive_returns_optional_of_created_roles() {
       var keycloakRole = keycloakRole();
       var role = role();
-      var roles = new Roles().addRolesItem(role);
-      roles.setTotalRecords(roles.getRoles().size());
       var token = tokenService.getToken();
 
       when(roleClient.findByName(anyString(), eq(token), eq(keycloakRole.getName()))).thenReturn(keycloakRole);

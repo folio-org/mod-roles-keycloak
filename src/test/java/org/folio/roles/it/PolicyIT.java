@@ -117,6 +117,7 @@ class PolicyIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-policies-empty.json")
+  @Sql("classpath:/sql/populate-roles-for-policies-batch.sql")
   void createPolicies_positive() throws Exception {
     var response = mockMvc.perform(post("/policies/batch")
         .content(objectMapper.writeValueAsString(new PoliciesRequest()

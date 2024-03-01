@@ -199,6 +199,16 @@
     "action": "view",
     "type": "data"
   },
+  "users-keycloak.read.basic": {
+    "resource": "Users-Keycloak Basic-Information",
+    "action": "view",
+    "type": "data"
+  },
+  "users-keycloak.read.restricted": {
+    "resource": "Users-Keycloak Restricted-Information",
+    "action": "view",
+    "type": "data"
+  },
   "ui-bulk-edit.view.base": {
     "resource": "UI-Bulk-Edit Base",
     "action": "view",
@@ -714,5 +724,85 @@
     "resource": "Users-bl Password-Reset-Link Reset",
     "action": "execute",
     "type": "procedural"
+  },
+  "users-keycloak.password-reset-link.generate": {
+    "resource": "Users-keycloak Password-Reset-Link Generate",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "users-keycloak.password-reset-link.validate": {
+    "resource": "Users-keycloak Password-Reset-Link Validate",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "users-keycloak.password-reset-link.reset": {
+    "resource": "Users-keycloak Password-Reset-Link Reset",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "mod-settings.global.write.mod-circulation": {
+    "resource": "Mod-Circulation Admin Settings",
+    "action": "edit",
+    "type": "settings"
+  },
+  "mod-settings.global.read.mod-circulation": {
+    "resource": "Mod-Circulation Admin Settings",
+    "action": "view",
+    "type": "settings"
+  },
+  "consortia.inventory.share.local.instance": {
+    "resource": "Consortia Inventory Share Local Instance",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "data-export.job.item.send": {
+    "resource": "Data-Export Job Item Send",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ermusageharvester.jobs.purge": {
+    "resource": "Erm-Usage-Harvester Jobs Purge",
+    "action": "delete",
+    "type": "data"
+  },
+  "fqm.query.purge": {
+    "resource": "Fqm Query Purge",
+    "action": "delete",
+    "type": "data"
+  },
+  "lists.item.refresh": {
+    "resource": "Lists Item Refresh",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "source-storage.records.fetch": {
+    "resource": "Source-Storage Records Fetch",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-courses.view-settings": {
+    "resource": "UI-Courses Settings View",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-invoice.payDifferentFY": {
+    "resource": "UI-Invoice Pay Different FY",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-oai-pmh.logs": {
+    "resource": "UI-Oai-Pmh Logs",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-users.loans.add-patron-info": {
+    "resource": "UI-Users Loans Add Patron-Info",
+    "action": "edit",
+    "type": "data"
+  },
+  "ui-users.loans.add-staff-info": {
+    "resource": "UI-Users Loans Add Staff-Info",
+    "action": "edit",
+    "type": "data"
   }
 }
