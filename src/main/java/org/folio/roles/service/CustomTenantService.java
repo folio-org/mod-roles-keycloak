@@ -50,9 +50,10 @@ public class CustomTenantService extends TenantService {
 
   @Override
   public void deleteTenant(TenantAttributes tenantAttributes) {
-    if (tenantExists()) {
+    /*if (tenantExists()) {
       log.warn("Tenant's data cannot be deleted to avoid inconsistency between the module and Keycloak. "
         + "Please manually drop the schema if it's really necessary: schema = {}", getSchemaName());
-    }
+    }*/
+    super.deleteTenant(tenantAttributes);
   }
 }
