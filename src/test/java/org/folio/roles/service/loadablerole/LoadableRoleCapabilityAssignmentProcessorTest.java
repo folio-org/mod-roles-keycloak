@@ -8,7 +8,6 @@ import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissions;
 import static org.folio.roles.support.TestUtils.copy;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
@@ -190,52 +189,6 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     assertThatThrownBy(() -> processor.handleCapabilitySetUpdatedEvent(event))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Ids of old and new version of capability set don't match");
-  }
-
-  @Test
-  void handleCapabilitySetDeletedEvent_positive() {
-    var capabilitySet = capabilitySet();
-    final var event = (CapabilitySetEvent) CapabilitySetEvent.deleted(capabilitySet).withContext(context);
-    var capability = capability();
-
-    var perms = loadablePermissions(10);
-    perms.forEach(perm -> {
-      perm.setPermissionName(capability.getPermission());
-      perm.setCapabilitySetId(capabilitySet.getId()); // set capset id, it should be reset by the processor
-    });
-
-    when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
-    when(service.findAllByPermissions(List.of(capability.getPermission()))).thenReturn(perms);
-    perms.forEach(perm -> {
-      doNothing().when(roleCapabilitySetService).delete(perm.getRoleId(), capabilitySet.getId());
-
-      var permWithoutCapabilitySetId = copy(perm).capabilitySetId(null);
-      when(service.save(permWithoutCapabilitySetId)).thenReturn(permWithoutCapabilitySetId);
-    });
-
-    processor.handleCapabilitySetDeletedEvent(event);
-  }
-
-  @Test
-  void handleCapabilitySetDeletedEvent_positive_loadablePermissionsNotFound() {
-    var capabilitySet = capabilitySet();
-    final var event = (CapabilitySetEvent) CapabilitySetEvent.deleted(capabilitySet).withContext(context);
-    var capability = capability();
-
-    when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
-    when(service.findAllByPermissions(List.of(capability.getPermission()))).thenReturn(emptyList());
-
-    processor.handleCapabilitySetDeletedEvent(event);
-  }
-
-  @Test
-  void handleCapabilitySetDeletedEvent_positive_capabilityNotFound() {
-    var capabilitySet = capabilitySet();
-    var event = (CapabilitySetEvent) CapabilitySetEvent.deleted(capabilitySet).withContext(context);
-
-    when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(emptyList());
-
-    processor.handleCapabilitySetDeletedEvent(event);
   }
 
   private static UUID capabilityIdByPermName(List<Capability> capabilities, String permissionName) {

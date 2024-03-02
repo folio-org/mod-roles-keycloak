@@ -130,9 +130,6 @@ public class CapabilitySetService {
       .orElseThrow(() -> new EntityNotFoundException("Capability set is not found: id = " + id));
 
     repository.delete(capabilitySetEntity);
-
-    eventPublisher.publishEvent(CapabilitySetEvent.deleted(mapper.convert(capabilitySetEntity))
-      .withContext(folioExecutionContext));
   }
 
   @Transactional(readOnly = true)

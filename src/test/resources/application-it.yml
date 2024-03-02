@@ -19,6 +19,8 @@ application:
     ephemeral:
       content:
         it-test_master_folio-backend-admin-client: ${KC_ADMIN_CLIENT_SECRET}
+  tenant-service:
+    force-purge: true
 
 header:
   validation:

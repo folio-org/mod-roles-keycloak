@@ -80,7 +80,7 @@
       baseColumnNames="capability_id"
       referencedTableName="capability"
       referencedColumnNames="id"
-      onDelete="NO ACTION"/> <!-- TODO (Dima Tkachenko): or SET NULL ??? -->
+      onDelete="RESTRICT"/>
   </changeSet>
 
   <changeSet id="MODROLESKC-7@@add-fk-role-loadable-perm-capability-set-id" author="dmtkachenko">
@@ -90,7 +90,7 @@
       baseColumnNames="capability_set_id"
       referencedTableName="capability_set"
       referencedColumnNames="id"
-      onDelete="NO ACTION"/> <!-- TODO (Dima Tkachenko): or SET NULL ??? -->
+      onDelete="RESTRICT"/>
   </changeSet>
 
 </databaseChangeLog>

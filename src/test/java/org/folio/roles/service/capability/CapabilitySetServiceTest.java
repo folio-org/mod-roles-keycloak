@@ -8,7 +8,6 @@ import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.entity.CapabilitySetEntity.DEFAULT_CAPABILITY_SET_SORT;
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.service.event.DomainEventType.CREATE;
-import static org.folio.roles.service.event.DomainEventType.DELETE;
 import static org.folio.roles.service.event.DomainEventType.UPDATE;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
@@ -506,12 +505,8 @@ class CapabilitySetServiceTest {
     @Test
     void positive() {
       var entity = capabilitySetEntity();
-      var capabilitySet = capabilitySet();
 
       when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(entity));
-      when(mapper.convert(entity)).thenReturn(capabilitySet);
-      mockFolioExecutionContextCalls();
-      doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(DELETE, null, capabilitySet)));
 
       capabilitySetService.delete(CAPABILITY_SET_ID);
 

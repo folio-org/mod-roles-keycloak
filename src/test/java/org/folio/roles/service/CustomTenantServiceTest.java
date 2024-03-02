@@ -41,7 +41,7 @@ class CustomTenantServiceTest {
   void setUp() {
     var referenceDataLoader = of(rolesDataLoader, policiesDataLoader);
     customTenantService = new CustomTenantService(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService,
-      referenceDataLoader);
+      referenceDataLoader, false);
   }
 
   @Test

@@ -97,18 +97,6 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     // by Role Capability Set service
   }
 
-  @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).DELETE")
-  public void handleCapabilitySetDeletedEvent(CapabilitySetEvent event) {
-    log.debug("\"Capability Set Deleted\" event received: {}", event);
-
-    var capabilitySet = event.getOldObject();
-    log.info("Handling deleted capability set: {}", () -> shortDescription(capabilitySet));
-
-    applyActionToRoles(findRolesWithPermissionsByCapabilitySet(capabilitySet),
-      deleteCapabilitySetFromRole(capabilitySet),
-      event.getContext());
-  }
-
   private Supplier<Map<UUID, List<LoadablePermission>>> findRolesWithPermissionsByCapabilitySet(
     CapabilitySet capabilitySet) {
     return () -> {
@@ -162,20 +150,6 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       service.save(rolePermission);
 
       log.info("Capability set assigned to loadable permission: roleId = {}, permission = {}, capabilitySet = {}",
-        () -> roleId, () -> rolePermission, () -> shortDescription(capabilitySet));
-    };
-  }
-
-  private BiConsumer<UUID, List<LoadablePermission>> deleteCapabilitySetFromRole(CapabilitySet capabilitySet) {
-    return (roleId, rolePermissions) -> {
-      var rolePermission = getSingleLoadablePermission(roleId, rolePermissions);
-
-      roleCapabilitySetService.delete(roleId, capabilitySet.getId());
-
-      rolePermission.setCapabilitySetId(null);
-      service.save(rolePermission);
-
-      log.info("Capability set removed from loadable role: roleId = {}, permission = {}, capabilitySet = {}",
         () -> roleId, () -> rolePermission, () -> shortDescription(capabilitySet));
     };
   }
