@@ -35,11 +35,11 @@
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <hypersistence-utils-hibernate-63.version>3.7.3</hypersistence-utils-hibernate-63.version>
     <edge-api-utils.version>1.2.0</edge-api-utils.version>
-    <folio-spring-support.version>8.0.0</folio-spring-support.version>
+    <folio-spring-support.version>8.1.0</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
-    <folio-backend-common.version>1.2.0</folio-backend-common.version>
-    <folio-secret-store.version>1.2.0</folio-secret-store.version>
+    <folio-backend-common.version>1.3.0</folio-backend-common.version>
+    <folio-secret-store.version>1.3.0</folio-secret-store.version>
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
     </mod-roles-keycloak.yaml-file>
@@ -50,7 +50,7 @@
 
     <!-- Plugins versions -->
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    <maven-checkstyle.version>10.13.0</maven-checkstyle.version>
+    <maven-checkstyle.version>10.14.0</maven-checkstyle.version>
     <maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
