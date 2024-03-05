@@ -1,6 +1,5 @@
 package org.folio.roles.service.reference;
 
-import static java.util.stream.Collectors.toList;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.List;
@@ -88,6 +87,6 @@ public class RolesDataLoader implements ReferenceDataLoader {
   private static List<LoadablePermission> toLoadablePerms(UUID roleId, Set<String> permissions) {
     return toStream(permissions)
       .map(permName -> new LoadablePermission().roleId(roleId).permissionName(permName))
-      .collect(toList());
+      .toList();
   }
 }

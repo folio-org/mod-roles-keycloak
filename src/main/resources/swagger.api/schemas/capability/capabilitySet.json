@@ -24,6 +24,7 @@
       "pattern": "^[A-Za-z\\s]+$"
     },
     "action": {
+      "description": "The action this capability is associated with, e.g. create",
       "$ref": "capabilityAction.json"
     },
     "applicationId": {
@@ -31,6 +32,7 @@
       "type": "string"
     },
     "type": {
+      "description": "The type of capability",
       "$ref": "capabilityType.json"
     },
     "capabilities": {

@@ -55,7 +55,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
   "classpath:/sql/truncate-capability-tables.sql",
   "classpath:/sql/truncate-role-capability-tables.sql"
 })
-public class LoadableRoleProcessingIT extends BaseIntegrationTest {
+class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
   private static final String CIRC_MANAGER_ROLE_NAME = "Circulation Manager";
   private static final String CIRC_STUDENT_ROLE_NAME = "Circulation Student";
@@ -83,7 +83,7 @@ public class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
     await().untilAsserted(() -> {
       int count = unassignedCapabilitySetCountForPermissionLike("ui-notes");
-      assertThat(count).isEqualTo(0);
+      assertThat(count).isZero();
     });
 
     var capSetByName = getExistingCapabilitySets();
@@ -102,7 +102,7 @@ public class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
     await().untilAsserted(() -> {
       int count = unassignedCapabilitySetCountForPermissionLike("ui-notes");
-      assertThat(count).isEqualTo(0);
+      assertThat(count).isZero();
     });
 
     // tags' events
@@ -111,7 +111,7 @@ public class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
     await().untilAsserted(() -> {
       int count = unassignedCapabilitySetCountForPermissionLike("ui-tags");
-      assertThat(count).isEqualTo(0);
+      assertThat(count).isZero();
     });
 
     var capSetByName = getExistingCapabilitySets();
@@ -131,7 +131,7 @@ public class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
     await().untilAsserted(() -> {
       int count = unassignedCapabilityCountForPermissionLike("notes.item");
-      assertThat(count).isEqualTo(0);
+      assertThat(count).isZero();
     });
 
     var capabilitiesByName = getExistingCapabilities();
@@ -225,7 +225,7 @@ public class LoadableRoleProcessingIT extends BaseIntegrationTest {
       .andReturn();
     var loadableRoles = parseResponse(mvcResult, LoadableRoles.class).getLoadableRoles();
     assertThat(loadableRoles).isNotEmpty();
-    assertThat(loadableRoles.size()).isEqualTo(1);
+    assertThat(loadableRoles).hasSize(1);
     return loadableRoles.get(0);
   }
 

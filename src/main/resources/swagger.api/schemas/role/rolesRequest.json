@@ -6,6 +6,7 @@
   "type": "object",
   "properties": {
     "roles": {
+      "description": "Collection of roles",
       "type": "array",
       "items": {
         "$ref": "role.json"
