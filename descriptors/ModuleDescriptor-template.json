@@ -309,6 +309,17 @@
       ]
     },
     {
+      "id": "loadable-roles",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/loadable-roles",
+          "permissionsRequired": [ "loadable-roles.collection.get" ]
+        }
+      ]
+    },
+    {
       "id": "_tenant",
       "version": "2.0",
       "interfaceType": "system",
@@ -669,6 +680,11 @@
       "permissionName": "permissions.users.item.get",
       "displayName": "Permissions - get user permissions",
       "description": "Get user permissions based on assigned roles and capabilities"
+    },
+    {
+      "permissionName": "loadable-roles.collection.get",
+      "displayName": "Loadable roles collection get",
+      "description": "Searching loadable roles"
     }
   ],
   "requires": [
