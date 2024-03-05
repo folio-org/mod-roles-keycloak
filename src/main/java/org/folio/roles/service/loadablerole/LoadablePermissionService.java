@@ -4,8 +4,8 @@ import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.roles.domain.model.LoadablePermission;
-import org.folio.roles.mapper.entity.LoadableRoleEntityMapper;
+import org.folio.roles.domain.dto.LoadablePermission;
+import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadablePermissionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class LoadablePermissionService {
 
   private final LoadablePermissionRepository repository;
-  private final LoadableRoleEntityMapper mapper;
+  private final LoadableRoleMapper mapper;
 
   @Transactional(readOnly = true)
   public List<LoadablePermission> findAllByPermissions(Collection<String> permissionNames) {

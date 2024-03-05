@@ -1,25 +1,30 @@
-package org.folio.roles.mapper.entity;
+package org.folio.roles.mapper;
 
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.mapstruct.InjectionStrategy.CONSTRUCTOR;
 
 import java.util.List;
+import org.folio.roles.domain.dto.LoadablePermission;
+import org.folio.roles.domain.dto.LoadableRole;
+import org.folio.roles.domain.dto.LoadableRoles;
+import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.LoadableRoleEntity;
-import org.folio.roles.domain.model.LoadablePermission;
-import org.folio.roles.domain.model.LoadableRole;
-import org.folio.roles.mapper.AuditableEntityMapping;
-import org.folio.roles.mapper.AuditableMapping;
+import org.folio.roles.mapper.entity.DateConvertHelper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.data.domain.Page;
 
 @Mapper(componentModel = "spring", injectionStrategy = CONSTRUCTOR, uses = DateConvertHelper.class)
-public interface LoadableRoleEntityMapper {
+public interface LoadableRoleMapper {
 
   @AuditableEntityMapping
   LoadableRoleEntity toRoleEntity(LoadableRole role);
 
   @AuditableMapping
   LoadableRole toRole(LoadableRoleEntity entity);
+
+  Role toRegularRole(LoadableRole role);
 
   @AuditableEntityMapping
   @Mapping(target = "role", ignore = true)
@@ -31,4 +36,10 @@ public interface LoadableRoleEntityMapper {
   LoadablePermission toPermission(LoadablePermissionEntity entity);
 
   List<LoadablePermission> toPermission(List<LoadablePermissionEntity> entity);
+
+  default LoadableRoles toLoadableRoles(Page<LoadableRole> pageable) {
+    return new LoadableRoles()
+      .loadableRoles(emptyIfNull(pageable.getContent()))
+      .totalRecords(pageable.getTotalElements());
+  }
 }

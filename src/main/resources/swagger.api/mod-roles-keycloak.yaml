@@ -1063,6 +1063,28 @@ paths:
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
 
+  /loadable-roles:
+    get:
+      description: Get loadable roles by query
+      operationId: findLoadableRoles
+      tags:
+        - loadable-roles
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '201':
+          description: Array of roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/loadableRoles'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
 components:
   schemas:
     # roles
@@ -1078,6 +1100,10 @@ components:
       $ref: schemas/role/userRole.json
     userRoles:
       $ref: schemas/role/userRoles.json
+    loadableRole:
+      $ref: schemas/role/loadableRole.json
+    loadableRoles:
+      $ref: schemas/role/loadableRoles.json
 
     # policies
     policy:

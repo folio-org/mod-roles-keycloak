@@ -23,7 +23,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilitySet;
-import org.folio.roles.domain.model.LoadablePermission;
+import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;

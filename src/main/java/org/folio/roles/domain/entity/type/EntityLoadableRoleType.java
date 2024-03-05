@@ -1,6 +1,6 @@
 package org.folio.roles.domain.entity.type;
 
-import org.folio.roles.domain.model.LoadableRoleType;
+import org.folio.roles.domain.dto.LoadableRoleType;
 
 public enum EntityLoadableRoleType {
 

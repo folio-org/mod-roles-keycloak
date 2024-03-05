@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "loadableRoles.json",
+  "title": "List of Loadable Roles Schema",
+  "description": "List of loadable roles",
+  "type": "object",
+  "properties": {
+    "loadableRoles": {
+      "description": "List of loadable roles",
+      "type": "array",
+      "items": {
+        "$ref": "loadableRole.json"
+      },
+      "minItems": 1
+    },
+    "totalRecords": {
+      "readOnly": true,
+      "description": "The total number of records matching the provided criteria",
+      "type": "integer",
+      "format": "int64"
+    }
+  },
+  "required": [
+    "loadableRoles"
+  ]
+}

@@ -1,16 +1,19 @@
 package org.folio.roles.service.loadablerole;
 
+import static org.folio.roles.domain.entity.LoadableRoleEntity.DEFAULT_LOADABLE_ROLE_SORT;
 import static org.folio.roles.domain.entity.type.EntityLoadableRoleType.DEFAULT;
 
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.roles.domain.model.LoadableRole;
+import org.folio.roles.domain.dto.LoadableRole;
+import org.folio.roles.domain.dto.LoadableRoles;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
-import org.folio.roles.mapper.entity.LoadableRoleEntityMapper;
+import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
+import org.folio.spring.data.OffsetRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,8 +24,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class LoadableRoleService {
 
   private final LoadableRoleRepository repository;
-  private final LoadableRoleEntityMapper mapper;
+  private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
+
+  @Transactional(readOnly = true)
+  public LoadableRoles find(String query, Integer limit, Integer offset) {
+    var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_LOADABLE_ROLE_SORT);
+    var rolePage = repository.findByQuery(query, offsetRequest).map(mapper::toRole);
+
+    return mapper.toLoadableRoles(rolePage);
+  }
 
   @Transactional(readOnly = true)
   public Optional<LoadableRole> findByIdOrName(UUID id, String name) {
@@ -48,24 +59,26 @@ public class LoadableRoleService {
     return role.getId() != null && repository.existsById(role.getId());
   }
 
-  private LoadableRole createRole(LoadableRole role) {
+  private LoadableRole createRole(LoadableRole loadableRole) {
+    var role = mapper.toRegularRole(loadableRole);
     // role id populate inside the method, as a side effect, and the original object returned
-    var roleWithId = (LoadableRole) keycloakService.create(role);
+    var roleWithId = keycloakService.create(role);
+    loadableRole.setId(roleWithId.getId());
 
     try {
-      var created = saveToDb(roleWithId);
+      var created = saveToDb(loadableRole);
       log.info("Loadable role has been created: id = {}, name = {}", created.getId(), created.getName());
 
       return created;
     } catch (Exception exception) {
-      keycloakService.deleteById(roleWithId.getId());
+      keycloakService.deleteById(loadableRole.getId());
       throw new ServiceException("Failed to create loadable role", "cause", exception.getMessage());
     }
   }
 
   private LoadableRole updateRole(LoadableRole role) {
     var saved = saveToDb(role);
-    keycloakService.update(saved);
+    keycloakService.update(mapper.toRegularRole(saved));
 
     log.info("Loadable role has been updated: id = {}, name = {}", role.getId(), role.getName());
 

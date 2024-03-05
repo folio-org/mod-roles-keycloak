@@ -8,8 +8,8 @@ import static org.folio.roles.support.LoadablePermissionUtils.loadablePermission
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissions;
 import static org.mockito.Mockito.when;
 
-import org.folio.roles.domain.model.LoadablePermission;
-import org.folio.roles.mapper.entity.LoadableRoleEntityMapper;
+import org.folio.roles.domain.dto.LoadablePermission;
+import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
@@ -28,7 +28,7 @@ class LoadablePermissionServiceTest {
 
   @InjectMocks private LoadablePermissionService service;
   @Mock private LoadablePermissionRepository repository;
-  @Mock private LoadableRoleEntityMapper mapper;
+  @Mock private LoadableRoleMapper mapper;
 
   @AfterEach
   void tearDown() {

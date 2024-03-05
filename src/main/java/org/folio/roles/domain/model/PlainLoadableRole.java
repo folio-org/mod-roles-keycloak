@@ -10,8 +10,8 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.folio.roles.domain.dto.LoadableRoleType;
 import org.folio.roles.domain.dto.Role;
-import org.folio.roles.domain.model.LoadableRoleType.Values;
 
 @Data
 @NoArgsConstructor
@@ -20,7 +20,7 @@ public class PlainLoadableRole extends Role {
 
   @NotNull
   @Valid
-  @Schema(name = "type", requiredMode = Schema.RequiredMode.REQUIRED, defaultValue = Values.DEFAULT_VALUE)
+  @Schema(name = "type", requiredMode = Schema.RequiredMode.REQUIRED, defaultValue = "default")
   private LoadableRoleType type;
 
   @Valid @Size(min = 1)

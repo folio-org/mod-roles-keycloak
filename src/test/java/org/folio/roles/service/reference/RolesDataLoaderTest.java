@@ -1,16 +1,17 @@
 package org.folio.roles.service.reference;
 
 import static com.google.common.collect.ImmutableList.of;
+import static java.util.Collections.emptyList;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.folio.roles.domain.model.LoadableRoleType.DEFAULT;
-import static org.folio.roles.domain.model.LoadableRoleType.SUPPORT;
+import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
+import static org.folio.roles.domain.dto.LoadableRoleType.SUPPORT;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import org.folio.roles.domain.model.LoadableRole;
+import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.model.PlainLoadableRole;
 import org.folio.roles.domain.model.PlainLoadableRoles;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
@@ -41,7 +42,7 @@ class RolesDataLoaderTest {
   void loadReferenceData_positive_ifCreate() {
     var role = new PlainLoadableRole().name("role1");
     var roles = new PlainLoadableRoles().roles(List.of(role));
-    var loadableRole = new LoadableRole().name(role.getName()).type(DEFAULT);
+    var loadableRole = new LoadableRole().name(role.getName()).type(DEFAULT).permissions(emptyList());
 
     when(roleService.defaultRoleCount()).thenReturn(0);
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
@@ -63,7 +64,7 @@ class RolesDataLoaderTest {
   void loadReferenceData_positive_createIfNotExist() {
     var role = new PlainLoadableRole().name("role1").id(randomUUID());
     var roles = new PlainLoadableRoles().roles(List.of(role));
-    var loadableRole = new LoadableRole().id(role.getId()).name(role.getName()).type(DEFAULT);
+    var loadableRole = new LoadableRole().id(role.getId()).name(role.getName()).type(DEFAULT).permissions(emptyList());
 
     when(roleService.defaultRoleCount()).thenReturn(0);
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))

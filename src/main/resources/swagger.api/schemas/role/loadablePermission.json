@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "loadablePermission.json",
+  "title": "Loadable Permission schema",
+  "description": "Loadable Permission",
+  "type": "object",
+  "properties": {
+    "roleId": {
+      "description": "Loadable Role identifier",
+      "type": "string",
+      "format": "uuid"
+    },
+    "permissionName": {
+      "description": "Permission name",
+      "type": "string"
+    },
+    "capabilityId": {
+      "description": "Capability Id associated with this permission",
+      "type": "string",
+      "format": "uuid"
+    },
+    "capabilitySetId": {
+      "description": "Capability Set Id associated with this permission",
+      "type": "string",
+      "format": "uuid"
+    },
+    "metadata": {
+      "readOnly": true,
+      "$ref": "../common/metadata.json"
+    }
+  },
+  "required": [
+    "permissionName"
+  ]
+}

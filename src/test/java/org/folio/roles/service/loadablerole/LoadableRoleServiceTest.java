@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.LoadableRoleUtils.loadableRole;
 import static org.folio.roles.support.LoadableRoleUtils.loadableRoleEntity;
+import static org.folio.roles.support.LoadableRoleUtils.regularRole;
 import static org.folio.roles.support.TestUtils.copy;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -13,7 +14,7 @@ import static org.mockito.Mockito.when;
 import java.util.Optional;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
-import org.folio.roles.mapper.entity.LoadableRoleEntityMapper;
+import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
@@ -33,7 +34,7 @@ class LoadableRoleServiceTest {
 
   @InjectMocks private LoadableRoleService service;
   @Mock private LoadableRoleRepository repository;
-  @Mock private LoadableRoleEntityMapper mapper;
+  @Mock private LoadableRoleMapper mapper;
   @Mock private KeycloakRoleService keycloakService;
 
   @AfterEach
@@ -71,8 +72,11 @@ class LoadableRoleServiceTest {
     var role = loadableRole();
     var newRole = copy(role).id(null);
     var roleEntity = loadableRoleEntity(role);
+    var regularRole = regularRole(role);
+    var newRegularRole = copy(regularRole).id(null);
 
-    when(keycloakService.create(newRole)).thenReturn(role);
+    when(mapper.toRegularRole(newRole)).thenReturn(newRegularRole);
+    when(keycloakService.create(newRegularRole)).thenReturn(regularRole);
 
     when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
     when(repository.save(roleEntity)).thenReturn(roleEntity);
@@ -87,6 +91,7 @@ class LoadableRoleServiceTest {
   void save_positive_whenUpdating() {
     var role = loadableRole();
     var roleEntity = loadableRoleEntity(role);
+    var regularRole = regularRole(role);
 
     when(repository.existsById(role.getId())).thenReturn(true);
 
@@ -94,7 +99,8 @@ class LoadableRoleServiceTest {
     when(repository.save(roleEntity)).thenReturn(roleEntity);
     when(mapper.toRole(roleEntity)).thenReturn(role);
 
-    when(keycloakService.update(role)).thenReturn(role);
+    when(mapper.toRegularRole(role)).thenReturn(regularRole);
+    when(keycloakService.update(regularRole)).thenReturn(regularRole);
 
     var actual = service.save(role);
 
@@ -106,8 +112,11 @@ class LoadableRoleServiceTest {
     var role = loadableRole();
     var newRole = copy(role).id(null);
     var roleEntity = loadableRoleEntity(role);
+    var regularRole = regularRole(role);
+    var newRegularRole = copy(regularRole).id(null);
 
-    when(keycloakService.create(newRole)).thenReturn(role);
+    when(mapper.toRegularRole(newRole)).thenReturn(newRegularRole);
+    when(keycloakService.create(newRegularRole)).thenReturn(regularRole);
 
     when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
     when(repository.save(roleEntity)).thenThrow(new DataIntegrityViolationException("Save failed"));

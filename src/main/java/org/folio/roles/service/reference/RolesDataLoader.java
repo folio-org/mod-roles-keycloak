@@ -1,8 +1,9 @@
 package org.folio.roles.service.reference;
 
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.toList;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -10,9 +11,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.roles.domain.model.LoadablePermission;
-import org.folio.roles.domain.model.LoadableRole;
-import org.folio.roles.domain.model.LoadableRoleType;
+import org.folio.roles.domain.dto.LoadablePermission;
+import org.folio.roles.domain.dto.LoadableRole;
+import org.folio.roles.domain.dto.LoadableRoleType;
 import org.folio.roles.domain.model.PlainLoadableRole;
 import org.folio.roles.domain.model.PlainLoadableRoles;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
@@ -84,9 +85,9 @@ public class RolesDataLoader implements ReferenceDataLoader {
       .metadata(source.getMetadata());
   }
 
-  private static Set<LoadablePermission> toLoadablePerms(UUID roleId, Set<String> permissions) {
+  private static List<LoadablePermission> toLoadablePerms(UUID roleId, Set<String> permissions) {
     return toStream(permissions)
-      .map(permName -> LoadablePermission.of(roleId, permName))
-      .collect(toSet());
+      .map(permName -> new LoadablePermission().roleId(roleId).permissionName(permName))
+      .collect(toList());
   }
 }
