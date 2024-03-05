@@ -1,3 +1,5 @@
+SET SEARCH_PATH = 'test_mod_roles_keycloak';
+
 INSERT INTO role (id, name, description, created_by, created_date, updated_by, updated_date)
   VALUES ('5a3a3b6d-ea37-4faf-98fe-91ded163a89e', 'Circulation Manager', 'Role for Circulation Manager',
           null, '2024-02-24 12:00:00+00:00', null, null),

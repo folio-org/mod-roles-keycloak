@@ -1,0 +1,92 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "mod-tags-2.1.0",
+    "moduleType": "module",
+    "applicationId": "app-platform-minimal-0.0.9",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "tags.collection.get",
+          "displayName": "Tags - get tags collection",
+          "description": "Get tags collection"
+        },
+        "endpoints": [
+          {
+            "path": "/tags",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "tags.item.post",
+          "displayName": "Tags - create tag",
+          "description": "Create tag"
+        },
+        "endpoints": [
+          {
+            "path": "/tags",
+            "method": "POST"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "tags.item.get",
+          "displayName": "Tags - get individual tag from storage",
+          "description": "Get individual tag"
+        },
+        "endpoints": [
+          {
+            "path": "/tags/{id}",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "tags.item.put",
+          "displayName": "Tags - modify tag",
+          "description": "Modify tag"
+        },
+        "endpoints": [
+          {
+            "path": "/tags/{id}",
+            "method": "PUT"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "tags.item.delete",
+          "displayName": "Tags - delete tag",
+          "description": "Delete tag"
+        },
+        "endpoints": [
+          {
+            "path": "/tags/{id}",
+            "method": "DELETE"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "tags.all",
+          "displayName": "Tags module - all permissions",
+          "description": "Entire set of permissions needed to use the tags module",
+          "subPermissions": [
+            "tags.collection.get",
+            "tags.item.get",
+            "tags.item.post",
+            "tags.item.put",
+            "tags.item.delete"
+          ],
+          "visible": false
+        }
+      }
+    ]
+  }
+}
