@@ -44,9 +44,10 @@ public class TestUtils {
   public static <T> T copy(T object) {
     Kryo kryo = KRYO_POOL.obtain();
 
-    var copy = kryo.copy(object);
-
-    KRYO_POOL.free(kryo);
-    return copy;
+    try {
+      return kryo.copy(object);
+    } finally {
+      KRYO_POOL.free(kryo);
+    }
   }
 }
