@@ -1,0 +1,22 @@
+{
+  "roles": [
+    {
+      "name": "Copy Cataloger",
+      "description": "Role for Copy Cataloger",
+      "permissions": [
+        "ui-inventory.items.mark-items-withdrawn",
+        "ui-inventory.holdings.move",
+        "ui-inventory.item.move",
+        "ui-inventory.instance.edit",
+        "ui-inventory.holdings.delete",
+        "ui-inventory.item.delete",
+        "ui-inventory.item.markasmissing",
+        "ui-inventory.settings.list.view",
+        "ui-data-export.settings.enabled",
+        "ui-data-import.settings.manage",
+        "ui-data-export.app.enabled",
+        "ui-quick-marc.quick-marc-editor.all"
+      ]
+    }
+  ]
+}

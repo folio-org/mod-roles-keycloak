@@ -1,0 +1,16 @@
+{
+  "roles": [
+    {
+      "name": "OA Staff",
+      "description": "Role for OA Staff",
+      "permissions": [
+        "ui-agreements.agreements.view",
+        "ui-plugin-find-agreement.search",
+        "ui-invoice.acq.unit.assignment.assign",
+        "ui-invoice.invoice.create",
+        "ui-oa.oa.view",
+        "ui-oa.oa.manage"
+      ]
+    }
+  ]
+}

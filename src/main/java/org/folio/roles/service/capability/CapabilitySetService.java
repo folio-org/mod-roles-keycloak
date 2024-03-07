@@ -26,7 +26,10 @@ import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.CapabilitySetEntityMapper;
 import org.folio.roles.repository.CapabilitySetRepository;
+import org.folio.roles.service.event.CapabilitySetEvent;
+import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +41,8 @@ public class CapabilitySetService {
   private final CapabilityService capabilityService;
   private final CapabilitySetRepository repository;
   private final CapabilitySetEntityMapper mapper;
+  private final FolioExecutionContext folioExecutionContext;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates a capability.
@@ -57,7 +62,11 @@ public class CapabilitySetService {
 
     var capabilityEntity = mapper.convert(capabilitySet);
     var savedEntity = repository.save(capabilityEntity);
-    return mapper.convert(savedEntity);
+
+    CapabilitySet saved = mapper.convert(savedEntity);
+    eventPublisher.publishEvent(CapabilitySetEvent.created(saved).withContext(folioExecutionContext));
+
+    return saved;
   }
 
   /**
@@ -117,7 +126,9 @@ public class CapabilitySetService {
    */
   @Transactional
   public void delete(UUID id) {
-    var capabilitySetEntity = repository.getReferenceById(id);
+    var capabilitySetEntity = repository.findById(id)
+      .orElseThrow(() -> new EntityNotFoundException("Capability set is not found: id = " + id));
+
     repository.delete(capabilitySetEntity);
   }
 
@@ -174,7 +185,11 @@ public class CapabilitySetService {
 
     capabilityService.checkIds(capabilitySet.getCapabilities());
     var entity = mapper.convert(capabilitySet);
-    repository.saveAndFlush(entity);
+    var savedEntity = repository.saveAndFlush(entity);
+
+    eventPublisher.publishEvent(CapabilitySetEvent
+      .updated(mapper.convert(savedEntity), mapper.convert(foundEntity))
+      .withContext(folioExecutionContext));
   }
 
   /**

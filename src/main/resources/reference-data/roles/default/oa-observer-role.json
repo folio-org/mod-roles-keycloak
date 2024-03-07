@@ -1,0 +1,13 @@
+{
+  "roles": [
+    {
+      "name": "OA Observer",
+      "description": "Role for OA Observer",
+      "permissions": [
+        "ui-agreements.agreements.view",
+        "ui-invoice.invoice.view",
+        "ui-oa.oa.view"
+      ]
+    }
+  ]
+}

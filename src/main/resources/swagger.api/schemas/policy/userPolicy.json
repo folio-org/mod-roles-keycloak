@@ -1,4 +1,5 @@
 {
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "description": "Object containing the details of the user-based policy",
   "properties": {

@@ -77,7 +77,7 @@ class KeycloakRoleServiceTest {
 
       when(roleClient.findById(anyString(), eq(token), eq(role.getId()))).thenReturn(keycloakRole);
 
-      var actual = roleService.findById(role.getId());
+      var actual = roleService.getById(role.getId());
 
       assertEquals(actual, role());
     }
@@ -88,7 +88,7 @@ class KeycloakRoleServiceTest {
 
       when(roleClient.findById(anyString(), eq(token), any(UUID.class))).thenThrow(FeignException.class);
 
-      assertThrows(KeycloakApiException.class, () -> roleService.findById(ROLE_ID));
+      assertThrows(KeycloakApiException.class, () -> roleService.getById(ROLE_ID));
     }
   }
 

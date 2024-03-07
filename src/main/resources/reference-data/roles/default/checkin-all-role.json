@@ -1,0 +1,11 @@
+{
+  "roles": [
+    {
+      "name": "Check-in All",
+      "description": "Role for Check-in All",
+      "permissions": [
+        "ui-checkin.all"
+      ]
+    }
+  ]
+}

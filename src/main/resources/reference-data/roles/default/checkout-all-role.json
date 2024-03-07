@@ -1,0 +1,11 @@
+{
+  "roles": [
+    {
+      "name": "Check-out All",
+      "description": "Role for Check-out All",
+      "permissions": [
+        "ui-checkout.all"
+      ]
+    }
+  ]
+}

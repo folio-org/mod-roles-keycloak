@@ -1,0 +1,11 @@
+{
+  "roles": [
+    {
+      "name": "Data Export",
+      "description": "Role for Data Export",
+      "permissions": [
+        "ui-data-export.app.enabled"
+      ]
+    }
+  ]
+}

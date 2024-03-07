@@ -1,5 +1,7 @@
 package org.folio.roles.it;
 
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.String.valueOf;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
@@ -37,13 +39,15 @@ class ReferenceDataIT extends BaseIntegrationTest {
 
     mockMvc.perform(get("/roles")
         .header(TENANT, TENANT_ID)
-        .header(USER_ID, USER_ID_HEADER))
+        .header(USER_ID, USER_ID_HEADER)
+        .queryParam("limit", valueOf(MAX_VALUE)))
       .andExpect(status().isOk())
-      .andExpect(jsonPath("$.totalRecords").value(3));
+      .andExpect(jsonPath("$.totalRecords").value(29));
 
     mockMvc.perform(get("/policies")
         .header(TENANT, TENANT_ID)
-        .header(USER_ID, USER_ID_HEADER))
+        .header(USER_ID, USER_ID_HEADER)
+        .queryParam("limit", valueOf(MAX_VALUE)))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.totalRecords").value(1))
       .andExpect(jsonPath("$.policies[0].name").value(equalTo("Business Hours")));

@@ -129,7 +129,7 @@ class RoleServiceTest {
     void negative_repositoryThrowsException() {
       var role = role();
 
-      when(keycloakService.findById(any())).thenReturn(role);
+      when(keycloakService.getById(any())).thenReturn(role);
       when(entityService.update(role)).thenThrow(RuntimeException.class);
 
       assertThrows(RuntimeException.class, () -> facade.update(role));
@@ -199,7 +199,7 @@ class RoleServiceTest {
     void negative_repositoryThrowsException() {
       var role = role();
 
-      when(keycloakService.findById(ROLE_ID)).thenReturn(role);
+      when(keycloakService.getById(ROLE_ID)).thenReturn(role);
       doThrow(RuntimeException.class).when(keycloakService).deleteById(ROLE_ID);
 
       assertThrows(RuntimeException.class, () -> facade.deleteById(ROLE_ID));

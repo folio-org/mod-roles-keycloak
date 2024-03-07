@@ -1,0 +1,96 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+  <changeSet id="MODROLESKC-7@@add-unq-role-name" author="dmtkachenko">
+    <addUniqueConstraint
+      constraintName="unq_role_name"
+      tableName="role"
+      columnNames="name"
+      deferrable="false"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@create-role-loadable-type-enum" author="dmtkachenko">
+    <sql>
+      CREATE TYPE ROLE_LOADABLE_TYPE AS ENUM ('DEFAULT', 'SUPPORT');
+    </sql>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@create-role-loadable-table" author="dmtkachenko">
+    <createTable tableName="role_loadable">
+      <column name="id" type="UUID">
+        <constraints primaryKey="true" primaryKeyName="pk_role_loadable"/>
+      </column>
+      <column name="type" type="role_loadable_type" defaultValue="DEFAULT">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@add-fk-role-loadable-role-id" author="dmtkachenko">
+    <addForeignKeyConstraint
+      constraintName="fk_role_loadable_role_id"
+      baseTableName="role_loadable"
+      baseColumnNames="id"
+      referencedTableName="role"
+      referencedColumnNames="id"
+      onDelete="RESTRICT"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@create-role-loadable-permission-table" author="dmtkachenko">
+    <createTable tableName="role_loadable_permission">
+      <column name="role_loadable_id" type="UUID"/>
+      <column name="folio_permission" type="VARCHAR(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="capability_id" type="UUID"/>
+      <column name="capability_set_id" type="UUID"/>
+      <column name="created_by" type="UUID"/>
+      <column name="created_date" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+        <constraints nullable="false"/>
+      </column>
+      <column name="updated_by" type="UUID"/>
+      <column name="updated_date" type="TIMESTAMP"/>
+    </createTable>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@add-pk-role-loadable-permission" author="dmtkachenko">
+    <addPrimaryKey
+      columnNames="role_loadable_id,folio_permission"
+      tableName="role_loadable_permission"
+      constraintName="pk_role_loadable_permission"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@add-fk-role-loadable-perm-role-loadable-id" author="dmtkachenko">
+    <addForeignKeyConstraint
+      constraintName="fk_role_loadable_perm_role_loadable_id"
+      baseTableName="role_loadable_permission"
+      baseColumnNames="role_loadable_id"
+      referencedTableName="role_loadable"
+      referencedColumnNames="id"
+      onDelete="CASCADE"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@add-fk-role-loadable-perm-capability-id" author="dmtkachenko">
+    <addForeignKeyConstraint
+      constraintName="fk_role_loadable_perm_capability_id"
+      baseTableName="role_loadable_permission"
+      baseColumnNames="capability_id"
+      referencedTableName="capability"
+      referencedColumnNames="id"
+      onDelete="RESTRICT"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-7@@add-fk-role-loadable-perm-capability-set-id" author="dmtkachenko">
+    <addForeignKeyConstraint
+      constraintName="fk_role_loadable_perm_capability_set_id"
+      baseTableName="role_loadable_permission"
+      baseColumnNames="capability_set_id"
+      referencedTableName="capability_set"
+      referencedColumnNames="id"
+      onDelete="RESTRICT"/>
+  </changeSet>
+
+</databaseChangeLog>

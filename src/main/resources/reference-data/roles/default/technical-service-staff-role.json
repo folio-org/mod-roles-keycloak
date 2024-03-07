@@ -1,0 +1,44 @@
+{
+  "roles": [
+    {
+      "name": "Technical Service Staff",
+      "description": "Role for Technical Service Staff",
+      "permissions": [
+        "ui-inventory.items.mark-items-withdrawn",
+        "ui-inventory.holdings.move",
+        "ui-inventory.item.move",
+        "ui-inventory.instance.edit",
+        "ui-inventory.holdings.delete",
+        "ui-inventory.item.delete",
+        "ui-inventory.item.markasmissing",
+        "ui-inventory.settings.hrid-handling",
+        "ui-inventory.settings.ill-policies",
+        "ui-inventory.settings.instance-note-types",
+        "ui-inventory.settings.electronic-access-relationships",
+        "ui-inventory.settings.alternative-title-types",
+        "ui-inventory.settings.call-number-types",
+        "ui-inventory.settings.classification-types",
+        "ui-inventory.settings.contributor-types",
+        "ui-inventory.settings.instance-formats",
+        "ui-inventory.settings.holdings-note-types",
+        "ui-inventory.settings.holdings-types",
+        "ui-inventory.settings.instance-statuses",
+        "ui-inventory.settings.item-note-types",
+        "ui-inventory.settings.loantypes",
+        "ui-inventory.settings.modes-of-issuance",
+        "ui-inventory.settings.instance-types",
+        "ui-inventory.settings.materialtypes",
+        "ui-inventory.settings.nature-of-content-terms",
+        "ui-inventory.settings.identifier-types",
+        "ui-inventory.settings.statistical-code-types",
+        "ui-inventory.settings.statistical-codes",
+        "ui-inventory.settings.list.view",
+        "ui-data-export.settings.enabled",
+        "ui-data-import.settings.manage",
+        "ui-data-export.app.enabled",
+        "ui-quick-marc.quick-marc-editor.all",
+        "ui-quick-marc.quick-marc-editor.duplicate"
+      ]
+    }
+  ]
+}

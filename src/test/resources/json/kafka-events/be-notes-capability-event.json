@@ -1,0 +1,242 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "mod-notes-5.1.0",
+    "moduleType": "module",
+    "applicationId": "app-platform-minimal-0.0.9",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "notes.collection.get",
+          "displayName": "Notes - get notes collection",
+          "description": "Get notes collection"
+        },
+        "endpoints": [
+          {
+            "path": "/notes",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "notes.domain.all",
+          "displayName": "Notes - allow access to all domains",
+          "description": "All domains"
+        },
+        "endpoints": [
+          {
+            "path": "/notes",
+            "method": "GET"
+          },
+          {
+            "path": "/notes",
+            "method": "POST"
+          },
+          {
+            "path": "/notes/{id}",
+            "method": "GET"
+          },
+          {
+            "path": "/notes/{id}",
+            "method": "PUT"
+          },
+          {
+            "path": "/notes/{id}",
+            "method": "DELETE"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "notes.item.post",
+          "displayName": "Notes - create note",
+          "description": "Create note"
+        },
+        "endpoints": [
+          {
+            "path": "/notes",
+            "method": "POST"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "notes.item.get",
+          "displayName": "Notes - get individual note from storage",
+          "description": "Get individual note"
+        },
+        "endpoints": [
+          {
+            "path": "/notes/{id}",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "notes.item.put",
+          "displayName": "Notes - modify note",
+          "description": "Modify note"
+        },
+        "endpoints": [
+          {
+            "path": "/notes/{id}",
+            "method": "PUT"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "notes.item.delete",
+          "displayName": "Notes - delete note",
+          "description": "Delete note"
+        },
+        "endpoints": [
+          {
+            "path": "/notes/{id}",
+            "method": "DELETE"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "note.types.collection.get",
+          "displayName": "Note types - get note types collection",
+          "description": "Get note types collection"
+        },
+        "endpoints": [
+          {
+            "path": "/note-types",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "note.types.item.get",
+          "displayName": "Note types - get individual note type from storage",
+          "description": "Get individual note type"
+        },
+        "endpoints": [
+          {
+            "path": "/note-types/{typeId}",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "note.types.item.post",
+          "displayName": "Note types - create note type",
+          "description": "Create note type"
+        },
+        "endpoints": [
+          {
+            "path": "/note-types",
+            "method": "POST"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "note.types.item.put",
+          "displayName": "Note types - modify note type",
+          "description": "Modify note type"
+        },
+        "endpoints": [
+          {
+            "path": "/note-types/{id}",
+            "method": "PUT"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "note.types.item.delete",
+          "displayName": "Note types - delete note type",
+          "description": "Delete note type"
+        },
+        "endpoints": [
+          {
+            "path": "/note-types/{id}",
+            "method": "DELETE"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "note.links.collection.put",
+          "displayName": "Note links - update note links",
+          "description": "Update note links"
+        },
+        "endpoints": [
+          {
+            "path": "/note-links/type/{type}/id/{id}",
+            "method": "PUT"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "notes.collection.get.by.status",
+          "displayName": "Notes - get notes collection sorted by status",
+          "description": "Get notes collection by status and domain"
+        },
+        "endpoints": [
+          {
+            "path": "/note-links/domain/{domain}/type/{type}/id/{id}",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "notes.allops",
+          "displayName": "Notes module - all CRUD permissions",
+          "description": "Entire set of permissions needed to use the notes modules, but no domain permissions",
+          "subPermissions": [
+            "notes.collection.get",
+            "notes.item.get",
+            "notes.item.post",
+            "notes.item.put",
+            "notes.item.delete",
+            "note.links.collection.put",
+            "notes.collection.get.by.status"
+          ],
+          "visible": false
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "note.types.allops",
+          "displayName": "Note types - all CRUD permissions",
+          "description": "Entire set of permissions needed to use the note type for note module",
+          "subPermissions": [
+            "note.types.item.get",
+            "note.types.collection.get",
+            "note.types.item.post",
+            "note.types.item.put",
+            "note.types.item.delete"
+          ],
+          "visible": false
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "notes.all",
+          "displayName": "Notes module - all permissions and all domains",
+          "description": "Entire set of permissions needed to use the notes modules on any domain",
+          "subPermissions": [
+            "notes.allops",
+            "notes.domain.all",
+            "note.types.allops"
+          ],
+          "visible": false
+        }
+      }
+    ]
+  }
+}

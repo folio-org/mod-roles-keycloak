@@ -1,0 +1,367 @@
+{
+  "realm": "test",
+  "enabled": true,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": true,
+  "roles": {
+    "realm": [
+      {
+        "id": "5a3a3b6d-ea37-4faf-98fe-91ded163a89e",
+        "name": "Circulation Manager",
+        "description": "Role for Circulation Manager",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "c198b6a0-7dc4-4564-9d21-525d2697c33a",
+        "attributes": { }
+      },
+      {
+        "id": "c14cfe6f-b971-4117-884c-7b5efd1cf076",
+        "name": "Circulation Student",
+        "description": "Role for Circulation Student",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "c198b6a0-7dc4-4564-9d21-525d2697c33a",
+        "attributes": { }
+      }
+    ]
+  },
+  "groups": [ ],
+  "localizationTexts": { },
+  "users": [],
+  "clients": [
+    {
+      "id": "00000000-0000-0000-0000-000000000010",
+      "clientId": "test-login-application",
+      "name": "test-login-application",
+      "description": "Client for login operations",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "kc-client-password",
+      "redirectUris": [
+        "/*"
+      ],
+      "webOrigins": [
+        "/*"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": true,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "protocol": "openid-connect",
+      "authenticationFlowBindingOverrides": { },
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "authorizationSettings": {
+        "allowRemoteResourceManagement": true,
+        "policyEnforcementMode": "ENFORCING",
+        "resources": [
+          {
+            "name": "/notes/{id}",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#notes.item.get",
+                "GET#notes.domain.all",
+                "PUT#notes.item.put",
+                "PUT#notes.domain.all",
+                "DELETE#notes.item.delete",
+                "DELETE#notes.domain.all"
+              ]
+            },
+            "_id": "6d5091ea-5ca9-4dda-8488-cdb236e40033",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "DELETE"
+              },
+              {
+                "name": "GET"
+              },
+              {
+                "name": "PUT"
+              }
+            ]
+          },
+          {
+            "name": "/note-types",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#note.types.collection.get",
+                "POST#note.types.item.post"
+              ]
+            },
+            "_id": "2cfba601-35ea-42dc-96a2-bf66eb8ae9b7",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "GET"
+              },
+              {
+                "name": "POST"
+              }
+            ]
+          },
+          {
+            "name": "/note-types/{typeId}",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#note.types.item.get"
+              ]
+            },
+            "_id": "2d94f557-0ccc-4dd9-9f0a-fc85166ac618",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "GET"
+              }
+            ]
+          },
+          {
+            "name": "/note-types/{id}",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "PUT#note.types.item.put",
+                "DELETE#note.types.item.delete"
+              ]
+            },
+            "_id": "87b527bc-befe-4376-8a4c-77004b012953",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "DELETE"
+              },
+              {
+                "name": "PUT"
+              }
+            ]
+          },
+          {
+            "name": "/note-links/type/{type}/id/{id}",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "PUT#note.links.collection.put"
+              ]
+            },
+            "_id": "0918d2ef-1733-472d-88c1-38f4fcd5018a",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "PUT"
+              }
+            ]
+          },
+          {
+            "name": "/notes",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#notes.collection.get",
+                "GET#notes.domain.all",
+                "POST#notes.item.post",
+                "POST#notes.domain.all"
+              ]
+            },
+            "_id": "f308b8be-9160-4c78-a556-f37d5b86e707",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "GET"
+              },
+              {
+                "name": "POST"
+              }
+            ]
+          },
+          {
+            "name": "/note-links/domain/{domain}/type/{type}/id/{id}",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#notes.collection.get.by.status"
+              ]
+            },
+            "_id": "66675daf-0eb2-468c-9e0c-dc4c37c5b2ee",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "GET"
+              }
+            ]
+          },
+          {
+            "name": "/tags",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#tags.collection.get",
+                "POST#tags.item.post"
+              ]
+            },
+            "_id": "045664f7-ab4f-4a9f-8ff7-9b0bc4f3d4cf",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "GET"
+              },
+              {
+                "name": "POST"
+              }
+            ]
+          },
+          {
+            "name": "/tags/{id}",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#tags.item.get",
+                "PUT#tags.item.put",
+                "DELETE#tags.item.delete"
+              ]
+            },
+            "_id": "286ad58f-d920-49af-8d52-82f4e1f99076",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "DELETE"
+              },
+              {
+                "name": "GET"
+              },
+              {
+                "name": "PUT"
+              }
+            ]
+          },
+          {
+            "name": "/user-tenants",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#user-tenants.collection.get",
+                "POST#user-tenants.item.post"
+              ]
+            },
+            "_id": "4f55b4f5-e2c3-4d82-a088-baadffff714c",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "GET"
+              },
+              {
+                "name": "POST"
+              }
+            ]
+          },
+          {
+            "name": "/users/{id}",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#users.item.get",
+                "PUT#users.item.put",
+                "DELETE#users.item.delete"
+              ]
+            },
+            "_id": "5ba6d7f1-11a2-41b4-8de4-28cb0fee8168",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "DELETE"
+              },
+              {
+                "name": "GET"
+              },
+              {
+                "name": "PUT"
+              }
+            ]
+          },
+          {
+            "name": "/users",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#users.collection.get",
+                "POST#users.item.post",
+                "DELETE#users.collection.delete"
+              ]
+            },
+            "_id": "ecb4048b-0598-4b49-a380-9ecdca61a27a",
+            "uris": [ ],
+            "scopes": [
+              {
+                "name": "DELETE"
+              },
+              {
+                "name": "GET"
+              },
+              {
+                "name": "POST"
+              }
+            ]
+          }
+        ],
+        "scopes": [
+          {
+            "id": "276bf647-de10-4664-a42d-1a4d088236c8",
+            "name": "TRACE"
+          },
+          {
+            "id": "1e93540c-ffff-4be6-8723-fcee2ad20b28",
+            "name": "GET",
+            "iconUri": "GET",
+            "displayName": "GET"
+          },
+          {
+            "id": "fb5db005-cbd4-45f8-921c-4039f4bb6b0d",
+            "name": "POST",
+            "iconUri": "POST",
+            "displayName": "POST"
+          },
+          {
+            "id": "0b07eebe-e599-4b1d-af2e-0d77238160ac",
+            "name": "PUT",
+            "iconUri": "PUT",
+            "displayName": "PUT"
+          },
+          {
+            "id": "0985e9b2-bc76-45e3-9b3c-a462f3f97fd6",
+            "name": "DELETE",
+            "iconUri": "DELETE",
+            "displayName": "DELETE"
+          },
+          {
+            "id": "d0b4878a-753f-4b85-8d4e-29302757e7f5",
+            "name": "PATCH",
+            "iconUri": "PATCH",
+            "displayName": "PATCH"
+          },
+          {
+            "id": "1ec58690-2298-4d24-99a9-818468359c64",
+            "name": "OPTIONS",
+            "iconUri": "OPTIONS",
+            "displayName": "OPTIONS"
+          },
+          {
+            "id": "8e8582d9-723d-4e39-a571-b413e3d6da00",
+            "name": "HEAD"
+          }
+        ],
+        "decisionStrategy": "AFFIRMATIVE"
+      }
+    }
+  ]
+}

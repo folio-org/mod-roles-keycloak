@@ -1,0 +1,12 @@
+{
+  "roles": [
+    {
+      "name": "Quick MARC All",
+      "description": "Role for Quick MARC All",
+      "permissions": [
+        "ui-quick-marc.quick-marc-editor.all",
+        "ui-quick-marc.quick-marc-editor.duplicate"
+      ]
+    }
+  ]
+}

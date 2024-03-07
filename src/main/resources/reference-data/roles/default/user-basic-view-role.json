@@ -1,0 +1,11 @@
+{
+  "roles": [
+    {
+      "name": "User Basic View",
+      "description": "Role for User Basic View",
+      "permissions": [
+        "ui-users.view"
+      ]
+    }
+  ]
+}

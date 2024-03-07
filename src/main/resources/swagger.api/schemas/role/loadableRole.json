@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Loadable Role schema",
+  "description": "Loadable Role",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "role.json"
+    }
+  ],
+  "properties": {
+    "type": {
+      "description": "Loadable role type",
+      "$ref": "loadableRoleType.json"
+    },
+    "permissions": {
+      "description": "List of permissions associated with role",
+      "type": "array",
+      "items": {
+        "$ref": "loadablePermission.json"
+      }
+    }
+  }
+}

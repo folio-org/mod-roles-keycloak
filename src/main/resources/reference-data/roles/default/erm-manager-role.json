@@ -1,0 +1,41 @@
+{
+  "roles": [
+    {
+      "name": "ERM Manager",
+      "description": "Role for ERM Manager",
+      "permissions": [
+        "ui-agreements.agreements.delete",
+        "ui-agreements.agreements.edit",
+        "ui-agreements.resources.edit",
+        "ui-agreements.platforms.edit",
+        "ui-agreements.agreements.file.download",
+        "ui-dashboard.dashboards.manage",
+        "ui-eholdings.titles-packages.create-delete",
+        "ui-eholdings.records.edit",
+        "ui-eholdings.package-title.select-unselect",
+        "ui-eholdings.costperuse.view",
+        "ui-erm-comparisons.jobs.edit",
+        "ui-erm-comparisons.jobs.delete",
+        "ui-plugin-find-agreement.search",
+        "ui-plugin-find-eresource.search",
+        "ui-plugin-find-license.search",
+        "ui-licenses.licenses.edit",
+        "ui-licenses.licenses.file.download",
+        "ui-licenses.licenses.delete",
+        "ui-local-kb-admin.jobs.edit",
+        "ui-local-kb-admin.jobs.delete",
+        "ui-notes.item.assign-unassign",
+        "ui-notes.item.create",
+        "ui-notes.item.delete",
+        "ui-notes.item.edit",
+        "ui-notes.item.view",
+        "ui-orders.order.reopen",
+        "ui-orders.order.unopen",
+        "ui-organizations.creds.manage",
+        "ui-organizations.create",
+        "ui-organizations.delete",
+        "ui-users.view"
+      ]
+    }
+  ]
+}

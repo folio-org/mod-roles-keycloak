@@ -1,0 +1,33 @@
+{
+  "roles": [
+    {
+      "name": "ERM Staff",
+      "description": "Role for ERM Staff",
+      "permissions": [
+        "ui-agreements.agreements.edit",
+        "ui-agreements.resources.edit",
+        "ui-agreements.platforms.edit",
+        "ui-agreements.agreements.file.download",
+        "ui-dashboard.dashboards.manage",
+        "ui-eholdings.records.edit",
+        "ui-eholdings.package-title.select-unselect",
+        "ui-eholdings.costperuse.view",
+        "ui-erm-comparisons.jobs.edit",
+        "ui-plugin-find-agreement.search",
+        "ui-plugin-find-eresource.search",
+        "ui-plugin-find-license.search",
+        "ui-licenses.licenses.edit",
+        "ui-licenses.licenses.file.download",
+        "ui-local-kb-admin.jobs.edit",
+        "ui-notes.item.assign-unassign",
+        "ui-notes.item.create",
+        "ui-notes.item.delete",
+        "ui-notes.item.edit",
+        "ui-notes.item.view",
+        "ui-organizations.creds.view",
+        "ui-organizations.create",
+        "ui-users.view"
+      ]
+    }
+  ]
+}

@@ -48,7 +48,7 @@ import org.springframework.data.domain.PageImpl;
 @ExtendWith(MockitoExtension.class)
 class RoleCapabilitySetServiceTest {
 
-  @InjectMocks private RoleCapabilitySetService roleCapabilitySetService;
+  @InjectMocks private RoleCapabilitySetServiceImpl roleCapabilitySetService;
 
   @Mock private RoleService roleService;
   @Mock private CapabilityService capabilityService;

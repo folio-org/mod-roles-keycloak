@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.folio.roles.domain.entity.type.EntityCapabilityAction;
 import org.folio.roles.domain.entity.type.EntityCapabilityType;
 import org.folio.roles.repository.generators.FolioUuidGenerator;
@@ -60,8 +59,6 @@ public class CapabilitySetEntity extends Auditable {
   @Column(name = "type", columnDefinition = "capability_type")
   private EntityCapabilityType type;
 
-  @ToString.Exclude
-  @EqualsAndHashCode.Exclude
   @Fetch(FetchMode.SUBSELECT)
   @ElementCollection(fetch = EAGER)
   @CollectionTable(name = "capability_set_capability", joinColumns = @JoinColumn(name = "capability_set_id"))
