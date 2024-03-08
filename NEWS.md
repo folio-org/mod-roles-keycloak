@@ -1,6 +1,11 @@
 ## Version `v1.2.0` (in progress)
 
 ---
+## Version `v1.1.1` (08.03.2024)
+### Changes:
+* Added default/reference roles (MODROLESKC-7).
+
+---
 ## Version `v1.1.0` (27.02.2024)
 ### Changes:
 * Added onDelete cascade constraints to role_capability, user_roles, policy_roles associations (MODROLESKC-157).
