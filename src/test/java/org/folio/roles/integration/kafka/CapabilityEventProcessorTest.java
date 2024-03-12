@@ -85,7 +85,7 @@ class CapabilityEventProcessorTest {
     var csDescription = csResource + " - permission set description";
     var capability = capability(null, resource, VIEW, itemGetPermName).description(description);
     var uiCapability = capability(null, csResource, VIEW, itemViewPermName).description(csDescription);
-    var capabilitySetDesc = capabilitySetDescriptor(csResource, Map.of(resource, List.of(VIEW)));
+    var capabilitySetDesc = capabilitySetDescriptor(csResource, itemViewPermName, Map.of(resource, List.of(VIEW)));
     var permission = permission(itemGetPermName).description(description);
     var permissionSet = permission(itemViewPermName, itemGetPermName).description(csDescription);
 
@@ -194,11 +194,12 @@ class CapabilityEventProcessorTest {
     return new CapabilityResultHolder(capabilities, sets);
   }
 
-  private static CapabilitySetDescriptor capabilitySetDescriptor(String resource,
+  private static CapabilitySetDescriptor capabilitySetDescriptor(String resource, String permissionName,
     Map<String, List<CapabilityAction>> capabilities) {
     return new CapabilitySetDescriptor()
       .name(getCapabilityName(resource, CapabilityAction.VIEW))
       .resource(resource)
+      .permission(permissionName)
       .action(CapabilityAction.VIEW)
       .type(DATA)
       .applicationId(APPLICATION_ID)

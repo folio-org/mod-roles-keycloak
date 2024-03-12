@@ -1,6 +1,5 @@
 package org.folio.roles.utils;
 
-import static java.util.stream.Collectors.toList;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.Collection;
@@ -55,7 +54,7 @@ public class CapabilityUtils {
       .filter(CollectionUtils::isNotEmpty)
       .flatMap(Collection::stream)
       .distinct()
-      .collect(toList());
+      .toList();
   }
 
   /**
@@ -70,6 +69,6 @@ public class CapabilityUtils {
       .filter(CollectionUtils::isNotEmpty)
       .flatMap(Collection::stream)
       .distinct()
-      .collect(toList());
+      .toList();
   }
 }

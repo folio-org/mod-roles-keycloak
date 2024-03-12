@@ -124,6 +124,7 @@ public class CapabilityEventProcessor {
       .resource(rawCapability.getResource())
       .description(permission.getDescription())
       .applicationId(event.getApplicationId())
+      .permission(permission.getPermissionName())
       .capabilities(capabilities);
   }
 

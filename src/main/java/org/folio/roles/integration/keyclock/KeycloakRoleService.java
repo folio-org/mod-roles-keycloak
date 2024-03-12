@@ -65,9 +65,8 @@ public class KeycloakRoleService {
 
   public Roles search(String query, Integer offset, Integer limit) {
     try {
-      var keycloakRoles = roleClient.find(context.getTenantId(), tokenService.getToken(), offset, limit,
-        query);
-      var roles = keycloakRoles.stream().map(roleMapper::toRole).collect(toList());
+      var keycloakRoles = roleClient.find(context.getTenantId(), tokenService.getToken(), offset, limit, query);
+      var roles = keycloakRoles.stream().map(roleMapper::toRole).toList();
       log.debug("Roles have been found: names = {}", () -> extractRolesNames(roles));
       return buildRoles(roles);
     } catch (FeignException e) {

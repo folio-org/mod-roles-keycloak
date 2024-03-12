@@ -124,6 +124,10 @@ public final class UpdateOperationHelper<T> {
     return isEmpty(values) ? new LinkedHashSet<>() : new LinkedHashSet<>(values);
   }
 
+  /**
+   * Result of subtraction must be mutable.
+   */
+  @SuppressWarnings("java:S6204")
   private static <T> List<T> subtract(Set<T> a, Set<T> b) {
     return CollectionUtils.toStream(a)
       .filter(value -> !b.contains(value))

@@ -25,6 +25,11 @@ public class CapabilitySetDescriptor {
   private String resource;
 
   /**
+   * A Folio permission name.
+   */
+  private String permission;
+
+  /**
    * Capability set action.
    */
   private CapabilityAction action;
@@ -112,6 +117,16 @@ public class CapabilitySetDescriptor {
   public CapabilitySetDescriptor capabilities(
     Map<String, List<CapabilityAction>> capabilities) {
     this.capabilities = capabilities;
+    return this;
+  }
+
+  /**
+   * Sets permission field and returns {@link CapabilitySetDescriptor}.
+   *
+   * @return modified {@link CapabilitySetDescriptor} value
+   */
+  public CapabilitySetDescriptor permission(String permission) {
+    this.permission = permission;
     return this;
   }
 }

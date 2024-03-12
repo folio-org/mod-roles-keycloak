@@ -35,6 +35,10 @@
       "description": "The type of capability",
       "$ref": "capabilityType.json"
     },
+    "permission": {
+      "description": "Folio permission name",
+      "type": "string"
+    },
     "capabilities": {
       "description": "List with assigned capability ids",
       "type": "array",
