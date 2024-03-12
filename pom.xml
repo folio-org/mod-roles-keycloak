@@ -56,7 +56,7 @@
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
     <openapi-generator.version>7.4.0</openapi-generator.version>
-    <keycloak-admin-client.version>24.0.1</keycloak-admin-client.version>
+    <keycloak-admin-client.version>23.0.7</keycloak-admin-client.version>
 
     <sonar.exclusions>
       <!--
