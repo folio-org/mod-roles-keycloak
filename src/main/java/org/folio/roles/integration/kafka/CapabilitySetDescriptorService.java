@@ -2,7 +2,6 @@ package org.folio.roles.integration.kafka;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
@@ -106,13 +105,13 @@ public class CapabilitySetDescriptorService {
     return capabilityNames.stream()
       .map(capabilityName -> getCapabilityId(capabilityIdsMap, capabilityName))
       .flatMap(Optional::stream)
-      .collect(toList());
+      .toList();
   }
 
   private static List<String> getAllCapabilityNames(Map<String, List<String>> requiredCapabilityNames) {
     return requiredCapabilityNames.values().stream()
       .flatMap(Collection::stream)
-      .collect(toList());
+      .toList();
   }
 
   private Optional<UUID> getCapabilityId(Map<String, UUID> existingCapabilityIdsMap, String capabilityName) {
@@ -135,7 +134,7 @@ public class CapabilitySetDescriptorService {
       .map(entry -> getCapabilityNames(descriptor, entry))
       .flatMap(Collection::stream)
       .distinct()
-      .collect(toList());
+      .toList();
   }
 
   private static Collection<String> getCapabilityNames(CapabilitySetDescriptor descriptor,

@@ -139,32 +139,12 @@
     },
     {
       "id": "capability-sets",
-      "version": "1.0",
+      "version": "2.0",
       "handlers": [
         {
           "methods": [ "GET" ],
           "pathPattern": "/capability-sets/{id}",
           "permissionsRequired": [ "capability-sets.item.get" ]
-        },
-        {
-          "methods": [ "PUT"],
-          "pathPattern": "/capability-sets/{id}",
-          "permissionsRequired": [ "capability-sets.item.put" ]
-        },
-        {
-          "methods": [ "DELETE" ],
-          "pathPattern": "/capability-sets/{id}",
-          "permissionsRequired": [ "capability-sets.item.delete" ]
-        },
-        {
-          "methods": [ "POST" ],
-          "pathPattern": "/capability-sets",
-          "permissionsRequired": [ "capability-sets.item.post" ]
-        },
-        {
-          "methods": [ "POST" ],
-          "pathPattern": "/capability-sets/batch",
-          "permissionsRequired": [ "capability-sets.collection.post" ]
         },
         {
           "methods": [ "GET" ],
@@ -493,26 +473,6 @@
       "description": "Searching capabilities"
     },
     {
-      "permissionName": "capability-sets.item.post",
-      "displayName": "Capability Set - create record",
-      "description": "Create a capability set record"
-    },
-    {
-      "permissionName": "capability-sets.item.put",
-      "displayName": "Capability Set - update record by ID",
-      "description": "Update capability set record"
-    },
-    {
-      "permissionName": "capability-sets.item.delete",
-      "displayName": "Capability Set - delete record by ID",
-      "description": "Delete capability set record"
-    },
-    {
-      "permissionName": "capability-sets.collection.post",
-      "displayName": "Capability Set - create batch of records",
-      "description": "Create one or more capability set records"
-    },
-    {
       "permissionName": "capabilities.all",
       "displayName": "Capabilities - all permissions",
       "description": "All permissions for capability management",
@@ -520,11 +480,7 @@
         "capabilities.item.get",
         "capabilities.collection.get",
         "capability-sets.capabilities.collection.get",
-        "capability-sets.item.get",
         "capability-sets.collection.get",
-        "capability-sets.item.put",
-        "capability-sets.item.delete",
-        "capability-sets.item.post",
         "capability-sets.collection.post"
       ]
     },

@@ -660,32 +660,6 @@ paths:
           $ref: '#/components/responses/internalServerErrorResponse'
 
   /capability-sets:
-    post:
-      description: Create a capability set
-      operationId: createCapabilitySet
-      tags:
-        - capability-set
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/capabilitySet'
-            example:
-              $ref: '#/components/examples/capabilitySetRequest'
-      responses:
-        '201':
-          description: Created capability set object
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/capabilitySet'
-              example:
-                $ref: '#/components/examples/capabilitySetResponse'
-        '400':
-          $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
     get:
       description: Get capabilities by query
       operationId: findCapabilitySets
@@ -698,34 +672,6 @@ paths:
       responses:
         '200':
           description: A collection of capabilities
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/capabilitySets'
-              example:
-                $ref: '#/components/examples/capabilitySetsResponse'
-        '400':
-          $ref: '#/components/responses/badRequestResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
-
-  /capability-sets/batch:
-    post:
-      description: Create one or more capability sets
-      operationId: createCapabilitySets
-      tags:
-        - capability-set
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/capabilitySets'
-            example:
-              $ref: '#/components/examples/capabilitySetsRequest'
-      responses:
-        '201':
-          description: Array of created capability set(s)
           content:
             application/json:
               schema:
@@ -754,42 +700,6 @@ paths:
                 $ref: '#/components/schemas/capabilitySet'
               example:
                 $ref: '#/components/examples/capabilitySetResponse'
-        '404':
-          $ref: '#/components/responses/notFoundResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
-    put:
-      description: Update a capability set
-      operationId: updateCapabilitySet
-      tags:
-        - capability-set
-      parameters:
-        - $ref: '#/components/parameters/pathEntityId'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/capabilitySet'
-            example:
-              $ref: '#/components/examples/capabilitySetRequest'
-      responses:
-        '204':
-          description: Update existing capability
-        '404':
-          $ref: '#/components/responses/notFoundResponse'
-        '500':
-          $ref: '#/components/responses/internalServerErrorResponse'
-    delete:
-      description: Delete a capability set
-      operationId: deleteCapabilitySet
-      tags:
-        - capability-set
-      parameters:
-        - $ref: '#/components/parameters/pathEntityId'
-      responses:
-        '204':
-          description: Delete a capability set
         '404':
           $ref: '#/components/responses/notFoundResponse'
         '500':

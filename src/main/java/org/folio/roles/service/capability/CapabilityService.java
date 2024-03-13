@@ -1,15 +1,14 @@
 package org.folio.roles.service.capability;
 
+import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -213,7 +212,7 @@ public class CapabilityService {
   public List<Capability> findByIds(Collection<UUID> capabilityIds) {
     return capabilityRepository.findAllById(capabilityIds).stream()
       .map(capabilityEntityMapper::convert)
-      .collect(toList());
+      .toList();
   }
 
   /**
@@ -229,8 +228,7 @@ public class CapabilityService {
       return capabilityRepository.findAllFolioPermissions(userId);
     }
 
-    String permissionPrefixesParam = Arrays.stream(visiblePermissionPrefixes)
-      .collect(joining(", ", "{", "}"));
+    var permissionPrefixesParam = stream(visiblePermissionPrefixes).collect(joining(", ", "{", "}"));
 
     return capabilityRepository.findVisibleFolioPermissions(userId, permissionPrefixesParam);
   }

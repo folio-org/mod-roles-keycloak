@@ -31,7 +31,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.testcontainers.shaded.org.awaitility.Durations.FIVE_HUNDRED_MILLISECONDS;
@@ -117,8 +116,8 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     var uiCapabilityEvent = readValue("json/kafka-events/ui-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, uiCapabilityEvent);
 
-    await().untilAsserted(() -> doGet("/capabilities").andDo(print()).andExpect(jsonPath("$.totalRecords", is(8))));
-    await().untilAsserted(() -> doGet("/capability-sets").andDo(print()).andExpect(jsonPath("$.totalRecords", is(7))));
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(8))));
+    await().untilAsserted(() -> doGet("/capability-sets").andExpect(jsonPath("$.totalRecords", is(7))));
 
     var searchResult = doGet(get("/capability-sets")
       .queryParam("query", "name == \"ui-test_foo.create\"")

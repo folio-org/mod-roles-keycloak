@@ -1,6 +1,5 @@
 package org.folio.roles.integration.kafka;
 
-import static java.util.stream.Collectors.toList;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 
@@ -59,6 +58,6 @@ public class KafkaMessageListener {
     return toStream(event.getResources())
       .map(FolioResource::getPermission)
       .filter(Objects::nonNull)
-      .collect(toList());
+      .toList();
   }
 }

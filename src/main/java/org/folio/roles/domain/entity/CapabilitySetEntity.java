@@ -59,6 +59,9 @@ public class CapabilitySetEntity extends Auditable {
   @Column(name = "type", columnDefinition = "capability_type")
   private EntityCapabilityType type;
 
+  @Column(name = "folio_permission")
+  private String permission;
+
   @Fetch(FetchMode.SUBSELECT)
   @ElementCollection(fetch = EAGER)
   @CollectionTable(name = "capability_set_capability", joinColumns = @JoinColumn(name = "capability_set_id"))
