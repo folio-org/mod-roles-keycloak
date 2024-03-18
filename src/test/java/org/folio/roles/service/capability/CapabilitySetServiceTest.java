@@ -46,8 +46,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -124,10 +122,11 @@ class CapabilitySetServiceTest {
     }
 
     @Test
-    void negative_nameIsTaken() {
+    void negative_nameIsTakenForNewCapabilitySet() {
       var capabilityToCreate = capabilitySet();
 
       when(capabilitySetRepository.existsByName("test_resource.create")).thenReturn(true);
+      when(capabilitySetRepository.existsById(CAPABILITY_SET_ID)).thenReturn(false);
 
       assertThatThrownBy(() -> capabilitySetService.create(capabilityToCreate))
         .isInstanceOf(RequestValidationException.class)
@@ -137,6 +136,26 @@ class CapabilitySetServiceTest {
           assertThat(validationException.getKey()).isEqualTo("name");
           assertThat(validationException.getValue()).isEqualTo("test_resource.create");
         });
+    }
+
+    @Test
+    void negative_nameIsTakenForExistingCapabilitySet() {
+      var capabilitySet = capabilitySet();
+      var capabilitySetEntity = capabilitySetEntity();
+
+      when(capabilitySetRepository.existsByName("test_resource.create")).thenReturn(true);
+      when(capabilitySetRepository.existsById(CAPABILITY_SET_ID)).thenReturn(true);
+      when(capabilitySetRepository.save(capabilitySetEntity)).thenReturn(capabilitySetEntity);
+      when(mapper.convert(capabilitySet)).thenReturn(capabilitySetEntity);
+      when(mapper.convert(capabilitySetEntity)).thenReturn(capabilitySet);
+      doNothing().when(capabilityService).checkIds(List.of(CAPABILITY_ID));
+
+      mockFolioExecutionContextCalls();
+      doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(CREATE, capabilitySet, null)));
+
+      var actual = capabilitySetService.create(capabilitySet);
+
+      assertThat(actual).isEqualTo(capabilitySet);
     }
 
     @Test
@@ -167,9 +186,11 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive_batchRequest_nameIsTaken() {
-      when(capabilitySetRepository.existsByName("test_resource.create")).thenReturn(true);
-
       var capabilitySets = List.of(capabilitySet());
+
+      when(capabilitySetRepository.existsByName("test_resource.create")).thenReturn(true);
+      when(capabilitySetRepository.existsById(CAPABILITY_SET_ID)).thenReturn(false);
+
       var actual = capabilitySetService.create(capabilitySets);
 
       assertThat(actual).isEmpty();
@@ -526,16 +547,21 @@ class CapabilitySetServiceTest {
   }
 
   @Nested
-  @DisplayName("existsByName")
-  class ExistsByName {
+  @DisplayName("findByName")
+  class FindByName {
 
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void positive_parameterized(boolean exists) {
+    @Test
+    void positive() {
       var capabilityName = "test_resource.view";
-      when(capabilitySetRepository.existsByName(capabilityName)).thenReturn(exists);
-      var result = capabilitySetService.existsByName(capabilityName);
-      assertThat(result).isEqualTo(exists);
+      var capabilitySet = capabilitySet();
+      var capabilitySetEntity = capabilitySetEntity();
+
+      when(capabilitySetRepository.findByName(capabilityName)).thenReturn(Optional.of(capabilitySetEntity));
+      when(mapper.convert(capabilitySetEntity)).thenReturn(capabilitySet);
+
+      var result = capabilitySetService.findByName(capabilityName);
+
+      assertThat(result).isEqualTo(Optional.of(capabilitySet));
     }
   }
 

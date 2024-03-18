@@ -14,9 +14,7 @@ import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.CapabilityUtils.capabilityEntity;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.TestConstants.USER_ID;
-import static org.mockito.ArgumentMatchers.anyIterable;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -62,9 +60,9 @@ class CapabilityServiceTest {
 
     @Test
     void positive() {
-      var capability = capability();
+      var capability = capability().id(null);
       var capabilityEntity = capabilityEntity();
-      when(capabilityRepository.findCapabilityNames(Set.of("test_resource.create"))).thenReturn(emptySet());
+      when(capabilityRepository.findAllByNames(Set.of("test_resource.create"))).thenReturn(emptyList());
       when(capabilityEntityMapper.convert(capability)).thenReturn(capabilityEntity);
 
       capabilityService.createSafe(APPLICATION_ID, List.of(capability));
@@ -74,13 +72,16 @@ class CapabilityServiceTest {
 
     @Test
     void positive_capabilityByNameExists() {
-      var capability = capability();
+      var capability = capability().id(null);
+      var capabilityEntity = capabilityEntity();
       var capabilityNames = Set.of("test_resource.create");
-      when(capabilityRepository.findCapabilityNames(capabilityNames)).thenReturn(capabilityNames);
+
+      when(capabilityRepository.findAllByNames(capabilityNames)).thenReturn(List.of(capabilityEntity));
+      when(capabilityEntityMapper.convert(capability())).thenReturn(capabilityEntity);
 
       capabilityService.createSafe(APPLICATION_ID, List.of(capability));
 
-      verify(capabilityRepository, never()).saveAll(anyIterable());
+      verify(capabilityRepository).saveAll(List.of(capabilityEntity));
     }
 
     @Test

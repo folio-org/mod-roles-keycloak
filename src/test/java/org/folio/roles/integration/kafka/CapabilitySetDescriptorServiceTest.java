@@ -17,6 +17,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
@@ -53,7 +55,7 @@ class CapabilitySetDescriptorServiceTest {
 
     when(capabilityService.findByNames(List.of("foo.create"))).thenReturn(List.of(capability));
     when(capabilitySetMapper.convert(APPLICATION_ID, capabilitySetDescriptor)).thenReturn(capabilitySet());
-    when(capabilitySetService.existsByName("test_resource.create")).thenReturn(false);
+    when(capabilitySetService.findByName("test_resource.create")).thenReturn(Optional.empty());
 
     capabilitySetDescriptorService.createSafe(APPLICATION_ID, List.of(capabilitySetDescriptor));
 
@@ -72,7 +74,7 @@ class CapabilitySetDescriptorServiceTest {
     var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", List.of(CREATE)));
 
     when(capabilitySetMapper.convert(APPLICATION_ID, capabilitySetDescriptor)).thenReturn(capabilitySet());
-    when(capabilitySetService.existsByName("test_resource.create")).thenReturn(false);
+    when(capabilitySetService.findByName("test_resource.create")).thenReturn(Optional.empty());
     when(capabilityService.findByNames(List.of("foo.create"))).thenReturn(List.of(capability));
 
     var capabilitySetDescriptors = List.of(capabilitySetDescriptor, capabilitySetDescriptor);
@@ -83,22 +85,24 @@ class CapabilitySetDescriptorServiceTest {
 
   @Test
   void createSafe_positive_capabilitySetAlreadyExists() {
+    var capability = capability(CAPABILITY_ID, "Foo", CREATE, "foo.item.create");
     var capabilitySetName = "test_resource.create";
     var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", List.of(CREATE)));
 
-    when(capabilitySetMapper.convert(APPLICATION_ID, capabilitySetDescriptor)).thenReturn(capabilitySet());
-    when(capabilitySetService.existsByName(capabilitySetName)).thenReturn(true);
+    when(capabilitySetMapper.convert(APPLICATION_ID, capabilitySetDescriptor)).thenReturn(capabilitySet((UUID) null));
+    when(capabilitySetService.findByName(capabilitySetName)).thenReturn(Optional.of(capabilitySet()));
+    when(capabilityService.findByNames(List.of("foo.create"))).thenReturn(List.of(capability));
 
     capabilitySetDescriptorService.createSafe(APPLICATION_ID, List.of(capabilitySetDescriptor));
 
-    verify(capabilitySetService, never()).create(any(CapabilitySet.class));
+    verify(capabilitySetService).create(capabilitySet(List.of(CAPABILITY_ID)));
   }
 
   @Test
   void createSafe_positive_capabilitySetWithoutCapabilities() {
     var capabilitySetDescriptor = capabilitySetDescriptor(emptyMap());
     when(capabilitySetMapper.convert(APPLICATION_ID, capabilitySetDescriptor)).thenReturn(capabilitySet());
-    when(capabilitySetService.existsByName("test_resource.create")).thenReturn(false);
+    when(capabilitySetService.findByName("test_resource.create")).thenReturn(Optional.empty());
 
     capabilitySetDescriptorService.createSafe(APPLICATION_ID, List.of(capabilitySetDescriptor));
 
@@ -109,7 +113,7 @@ class CapabilitySetDescriptorServiceTest {
   void createSafe_positive_capabilitySetWithoutActions() {
     var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", emptyList()));
     when(capabilitySetMapper.convert(APPLICATION_ID, capabilitySetDescriptor)).thenReturn(capabilitySet());
-    when(capabilitySetService.existsByName("test_resource.create")).thenReturn(false);
+    when(capabilitySetService.findByName("test_resource.create")).thenReturn(Optional.empty());
 
     capabilitySetDescriptorService.createSafe(APPLICATION_ID, List.of(capabilitySetDescriptor));
 
@@ -120,7 +124,7 @@ class CapabilitySetDescriptorServiceTest {
   void createSafe_positive_capabilitySetWithNotFoundCapability() {
     var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", List.of(CREATE)));
     when(capabilitySetMapper.convert(APPLICATION_ID, capabilitySetDescriptor)).thenReturn(capabilitySet());
-    when(capabilitySetService.existsByName("test_resource.create")).thenReturn(false);
+    when(capabilitySetService.findByName("test_resource.create")).thenReturn(Optional.empty());
     when(capabilityService.findByNames(List.of("foo.create"))).thenReturn(emptyList());
 
     capabilitySetDescriptorService.createSafe(APPLICATION_ID, List.of(capabilitySetDescriptor));

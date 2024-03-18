@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -53,7 +54,7 @@ public class CapabilitySetService {
   @Transactional
   public CapabilitySet create(CapabilitySet capabilitySet) {
     var name = getCapabilityName(capabilitySet.getResource(), capabilitySet.getAction());
-    if (repository.existsByName(name)) {
+    if (repository.existsByName(name) && !repository.existsById(capabilitySet.getId())) {
       throw new RequestValidationException("Capability set name is already taken", "name", name);
     }
 
@@ -236,14 +237,14 @@ public class CapabilitySetService {
   }
 
   /**
-   * Checks if capability set exists by name.
+   * Finds capability set by name.
    *
    * @param capabilitySetName - capability set name as {@link String}
-   * @return true if capability exists by name, false - otherwise
+   * @return {@link Optional} of {@link CapabilitySet} object, {@link Optional#empty()} otherwise
    */
   @Transactional(readOnly = true)
-  public boolean existsByName(String capabilitySetName) {
-    return repository.existsByName(capabilitySetName);
+  public Optional<CapabilitySet> findByName(String capabilitySetName) {
+    return repository.findByName(capabilitySetName).map(mapper::convert);
   }
 
   /**
