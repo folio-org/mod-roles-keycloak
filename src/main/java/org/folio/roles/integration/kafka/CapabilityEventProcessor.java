@@ -70,6 +70,15 @@ public class CapabilityEventProcessor {
     return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
   }
 
+  /**
+   * Here, the capabilities will be created for all permissions, even those that are
+   * so-called "PermissionSets" and include "SubPermissions."
+   * It is needed to support "FOLIO PermissionSets" using plain Eureka CapabilitySets.
+   * The Capabilities created to reflect the CapabilitySets are called "Technical Capabilities" and do not refer
+   * to any actual permissions/access grants that can be available to users.
+   * Such Capabilities can be distinguished by the following criteria: the end-points list of the capability must be empty,
+   * and the capability name must be equal to the capability set name that it reflects.
+   */
   private CapabilityResultHolder processUiModuleResources(CapabilityEvent event, List<FolioResource> resources) {
     var grouped = groupByHavingSubPermissions(resources);
     var capabilities = mapItems(resources, res -> createCapability(event, res));
