@@ -54,12 +54,16 @@ public class CapabilitySetDescriptorService {
       var capabilitySetName = capabilitySet.getName();
       if (requiredCapabilityNames.containsKey(capabilitySetName)) {
         log.warn("Duplicated capability found: name = {}", capabilitySetName);
-      } else if (capabilitySetService.existsByName(capabilitySetName)) {
-        log.warn("CapabilitySet by name already exists: name = {}", capabilitySetName);
-      } else {
-        capabilitySets.add(capabilitySet);
-        requiredCapabilityNames.put(capabilitySetName, getRequiredCapabilityNames(capabilitySetDescriptor));
+        continue;
       }
+
+      capabilitySetService.findByName(capabilitySetName).ifPresent(cs -> {
+        log.warn("CapabilitySet by name already exists: name = {}", capabilitySetName);
+        capabilitySet.setId(cs.getId());
+      });
+
+      capabilitySets.add(capabilitySet);
+      requiredCapabilityNames.put(capabilitySetName, getRequiredCapabilityNames(capabilitySetDescriptor));
     }
 
     createCapabilitySets(requiredCapabilityNames, capabilitySets);

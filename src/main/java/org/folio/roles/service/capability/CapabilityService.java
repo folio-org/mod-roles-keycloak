@@ -2,7 +2,9 @@ package org.folio.roles.service.capability;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
@@ -13,7 +15,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -64,7 +66,8 @@ public class CapabilityService {
       capabilityNames.add(capabilityName);
     }
 
-    var foundCapabilityNames = capabilityRepository.findCapabilityNames(capabilityNames);
+    var foundCapabilityNames = capabilityRepository.findAllByNames(capabilityNames).stream()
+      .collect(toMap(CapabilityEntity::getName, identity(), (o1, o2) -> o2));
     var savedEntities = saveCapabilities(capabilities, foundCapabilityNames);
 
     if (isNotEmpty(savedEntities)) {
@@ -229,19 +232,23 @@ public class CapabilityService {
     }
 
     var permissionPrefixesParam = stream(visiblePermissionPrefixes).collect(joining(", ", "{", "}"));
-
     return capabilityRepository.findVisibleFolioPermissions(userId, permissionPrefixesParam);
   }
 
-  private List<CapabilityEntity> saveCapabilities(List<Capability> capabilities, Set<String> foundNames) {
+  private List<CapabilityEntity> saveCapabilities(List<Capability> capabilities,
+    Map<String, CapabilityEntity> capabilitiesByName) {
     var capabilityEntities = new ArrayList<CapabilityEntity>();
     for (var capability : capabilities) {
       var capabilityName = capability.getName();
-      if (foundNames.contains(capabilityName)) {
+
+      var capabilityByName = capabilitiesByName.get(capabilityName);
+      if (capabilityByName != null) {
         log.warn("Capability by name already exists: name = {}", capabilityName);
-        continue;
+        capability.setId(capabilityByName.getId());
       }
-      capabilityEntities.add(capabilityEntityMapper.convert(capability));
+
+      var convert = capabilityEntityMapper.convert(capability);
+      capabilityEntities.add(convert);
     }
 
     return isNotEmpty(capabilityEntities) ? capabilityRepository.saveAll(capabilityEntities) : emptyList();

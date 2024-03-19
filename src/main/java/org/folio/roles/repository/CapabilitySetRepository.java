@@ -2,6 +2,7 @@ package org.folio.roles.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.entity.CapabilitySetEntity;
@@ -59,4 +60,6 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
 
   @Query("select distinct entity.id from CapabilitySetEntity entity where entity.id in :ids order by entity.id")
   Set<UUID> findCapabilitySetIdsByIdIn(@Param("ids") Collection<UUID> capabilitySetIds);
+
+  Optional<CapabilitySetEntity> findByName(String capabilitySetName);
 }

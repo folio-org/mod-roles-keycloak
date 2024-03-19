@@ -1,0 +1,17 @@
+INSERT INTO test_mod_roles_keycloak.permission (id, name, display_name, description, sub_permissions)
+VALUES ('cf720dbd-3fc8-4b2e-88f9-90a8028a2b71', 'foo.item.get', 'foo.item.get - display name',
+        'foo.item.get - description', NULL),
+       ('2bc87977-e643-4f62-8bdf-10b73859acfc', 'foo.item.put', 'foo.item.put - display name',
+        'foo.item.put - description', NULL),
+       ('00d9a508-107d-44f5-8bab-3b6239c1978f', 'foo.item.post', 'foo.item.post - display name',
+        'foo.item.post - description', NULL),
+       ('36be139f-93a4-4c8b-8a39-319743979a30', 'foo.item.delete', 'foo.item.delete - display name',
+        'foo.item.delete - description', NULL),
+       ('6981e7ba-f058-4218-91aa-f9db88e7bf2a', 'foo.item.view', 'foo_item.view - display name',
+        'foo_item.view - description', '{foo.item.get}'),
+       ('07471ae0-710e-4132-8b27-cc3357fe9de9', 'foo.item.edit', 'foo_item.edit - display name',
+        'foo_item.edit - description', '{foo.item.view,foo.item.put}'),
+       ('dbf287df-427d-4b0f-a229-a98bd3fc1522', 'foo.item.create', 'foo_item.create - display name',
+        'foo_item.create - description', '{foo.item.edit,foo.item.post}'),
+       ('0d933fd3-c7dd-4559-aec4-b4607e784dc8', 'foo.item.all', 'foo_item.manage - display name',
+        'foo_item.manage - description', '{foo.item.view,foo.item.edit,foo.item.create,foo.item.delete}');

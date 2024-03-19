@@ -22,6 +22,7 @@ import static org.folio.roles.utils.TestValues.readValue;
 import static org.folio.test.TestUtils.asJsonString;
 import static org.folio.test.TestUtils.parseResponse;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -73,7 +74,10 @@ import org.testcontainers.shaded.org.awaitility.core.ConditionFactory;
 
 @Log4j2
 @IntegrationTest
-@Sql(executionPhase = AFTER_TEST_METHOD, scripts = "classpath:/sql/truncate-capability-tables.sql")
+@Sql(executionPhase = AFTER_TEST_METHOD, scripts = {
+  "classpath:/sql/truncate-capability-tables.sql",
+  "classpath:/sql/truncate-permission-table.sql"
+})
 class KafkaMessageListenerIT extends BaseIntegrationTest {
 
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
@@ -106,6 +110,23 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   @Sql("classpath:/sql/kafka-message-listener-it/partial-capabilities.sql")
   void handleCapabilityEvent_positive_partiallyPopulatedCapabilities() throws Exception {
     sendCapabilityEventAndCheckResult();
+  }
+
+  @Test
+  @Sql("classpath:/sql/kafka-message-listener-it/all-permissions.sql")
+  @Sql("classpath:/sql/kafka-message-listener-it/all-capabilities.sql")
+  void handleCapabilityEvent_positive_upgradeEvent() {
+    var capabilityEvent = readValue("json/kafka-events/be-capability-event-v2.json", ResourceEvent.class);
+    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
+
+    await().untilAsserted(() ->
+      doGet("/capabilities/366240cd-fb38-42c1-9e72-1694532ecf06")
+        .andExpect(jsonPath("$.applicationId", is("test-application-0.0.2"))));
+
+    await().untilAsserted(() ->
+      doGet("/capability-sets/12277da3-d05d-41de-ae74-0e8ec59f1dcc")
+        .andExpect(jsonPath("$.applicationId", is("test-application-0.0.2")))
+        .andExpect(jsonPath("$.capabilities", hasSize(3))));
   }
 
   @Test

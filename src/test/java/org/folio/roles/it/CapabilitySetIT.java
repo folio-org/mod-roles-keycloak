@@ -1,6 +1,5 @@
 package org.folio.roles.it;
 
-import static java.util.UUID.fromString;
 import static org.folio.roles.domain.dto.CapabilityAction.CREATE;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.dto.CapabilityAction.MANAGE;
@@ -45,9 +44,6 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 @SqlMergeMode(MERGE)
 @Sql(scripts = "classpath:/sql/truncate-capability-tables.sql", executionPhase = AFTER_TEST_METHOD)
 class CapabilitySetIT extends BaseIntegrationTest {
-
-  private static final UUID CREATED_BY_USER_ID = fromString("11111111-1111-4011-1111-0d121a11111e");
-  private static final UUID UPDATED_BY_USER_ID = fromString(USER_ID_HEADER);
 
   @BeforeAll
   static void beforeAll() {
@@ -103,7 +99,23 @@ class CapabilitySetIT extends BaseIntegrationTest {
   })
   void findCapabilitySets_positive_cqlQuery() throws Exception {
     mockMvc.perform(get("/capability-sets")
-        .param("query", "name==\"foo_item.create\"")
+        .queryParam("query", "name==\"foo_item.create\"")
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER))
+      .andExpect(status().isOk())
+      .andExpect(content().json(asJsonString(capabilitySets(
+        capabilitySet(FOO_CREATE_CAPABILITY_SET, FOO_RESOURCE, CREATE, FOO_CREATE_CAPABILITIES)
+      ))));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capability-sets/populate-capability-sets.sql",
+  })
+  void findCapabilitySets_positive_byPermissionName() throws Exception {
+    mockMvc.perform(get("/capability-sets")
+        .queryParam("query", "permission==\"foo.item.create\"")
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER))
       .andExpect(status().isOk())
