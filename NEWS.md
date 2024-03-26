@@ -1,4 +1,8 @@
-## Version `v1.2.0` (in progress)
+## Version `v1.3.0` (in progress)
+
+## Version `v1.2.0` (26.03.2024)
+* Update capabilities instead of skipping (MODROLESKC-171)
+* Add folio-permission name to capability-set (MODROLESKC-172)
 
 ---
 ## Version `v1.1.1` (08.03.2024)
