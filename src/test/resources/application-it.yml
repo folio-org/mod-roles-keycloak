@@ -21,6 +21,11 @@ application:
         it-test_master_folio-backend-admin-client: ${KC_ADMIN_CLIENT_SECRET}
   tenant-service:
     force-purge: true
+  keycloak:
+    tls:
+      enabled: true
+      trust-store-path: classpath:certificates/test.truststore.jks
+      trust-store-password: secretpassword
 
 header:
   validation:
