@@ -20,7 +20,7 @@ import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.test.base.BaseBackendIntegrationTest;
 import org.folio.test.extensions.EnableKafka;
-import org.folio.test.extensions.EnableKeycloak;
+import org.folio.test.extensions.EnableKeycloakTlsMode;
 import org.folio.test.extensions.EnablePostgres;
 import org.folio.test.extensions.EnableWireMock;
 import org.folio.test.extensions.impl.KeycloakExecutionListener;
@@ -46,7 +46,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @EnableWireMock
 @EnablePostgres
 @SpringBootTest
-@EnableKeycloak
+@EnableKeycloakTlsMode
 @ActiveProfiles("it")
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = AFTER_CLASS)

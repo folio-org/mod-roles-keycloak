@@ -1,6 +1,7 @@
 package org.folio.roles;
 
 import static java.util.stream.Collectors.toList;
+import static javax.net.ssl.SSLContext.getInstance;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
@@ -10,16 +11,23 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.Socket;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509ExtendedTrustManager;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -42,6 +50,7 @@ public class KeycloakTestClient {
   private final KeycloakConfigurationProperties keycloakConfiguration;
 
   private final HttpClient httpClient = HttpClient.newBuilder()
+    .sslContext(dummySslContext())
     .connectTimeout(Duration.ofSeconds(5))
     .version(Version.HTTP_1_1)
     .build();
@@ -95,5 +104,44 @@ public class KeycloakTestClient {
       .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
       .header(AUTHORIZATION, keycloakTokenService.getToken())
       .build();
+  }
+
+  @SneakyThrows
+  private static SSLContext dummySslContext() {
+    var dummyTrustManager = new X509ExtendedTrustManager() {
+
+      @Override
+      public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) {
+      }
+
+      @Override
+      public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
+      }
+
+      @Override
+      public void checkClientTrusted(X509Certificate[] chain, String authType) {
+      }
+
+      @Override
+      public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) {
+      }
+
+      @Override
+      public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
+      }
+
+      @Override
+      public void checkServerTrusted(X509Certificate[] chain, String authType) {
+      }
+
+      @Override
+      public X509Certificate[] getAcceptedIssuers() {
+        return new X509Certificate[0];
+      }
+    };
+
+    var sslContext = getInstance("TLS");
+    sslContext.init(null, new TrustManager[] {dummyTrustManager}, new SecureRandom());
+    return sslContext;
   }
 }
