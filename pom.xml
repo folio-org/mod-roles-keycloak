@@ -34,7 +34,6 @@
     <openapi-tools.jackson-databind-nullable.version>0.2.6</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <hypersistence-utils-hibernate-63.version>3.7.3</hypersistence-utils-hibernate-63.version>
-    <edge-api-utils.version>1.4.1</edge-api-utils.version>
     <folio-spring-support.version>8.1.0</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
@@ -158,12 +157,6 @@
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.folio</groupId>
-      <artifactId>edge-api-utils</artifactId>
-      <version>${edge-api-utils.version}</version>
     </dependency>
 
     <dependency>

@@ -74,7 +74,6 @@ class KafkaMessageListenerTest {
           "endpoints", List.of(Map.of("path", "/test-items/{id}", "method", "GET")))
         ));
 
-      when(metadata.getModuleName()).thenReturn("mod-roles-keycloak");
       when(capabilityEventProcessor.process(capabilityEvent())).thenReturn(capabilityResultHolder());
 
       var resourceEvent = ResourceEvent.builder()
