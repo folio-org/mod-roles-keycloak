@@ -20,7 +20,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -111,8 +110,8 @@ class PolicyIT extends BaseIntegrationTest {
       .andExpect(content().json(policyToCreateAsJson))
       .andExpect(jsonPath("$.metadata.createdBy").value(equalTo(USER_ID_HEADER)))
       .andExpect(jsonPath("$.metadata.createdDate").value(notNullValue()))
-      .andExpect(jsonPath("$.metadata.modifiedBy").doesNotExist())
-      .andExpect(jsonPath("$.metadata.modifiedDate").doesNotExist());
+      .andExpect(jsonPath("$.metadata.modifiedBy").value(equalTo(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.metadata.modifiedDate").value(notNullValue()));
   }
 
   @Test
@@ -139,8 +138,8 @@ class PolicyIT extends BaseIntegrationTest {
       var metadata = policy.getMetadata();
       assertNotNull(metadata.getCreatedBy());
       assertNotNull(metadata.getCreatedDate());
-      assertNull(metadata.getModifiedBy());
-      assertNull(metadata.getModifiedDate());
+      assertNotNull(metadata.getModifiedBy());
+      assertNotNull(metadata.getModifiedDate());
     });
   }
 

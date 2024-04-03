@@ -16,7 +16,6 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -113,8 +112,8 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.id").value(notNullValue()))
       .andExpect(jsonPath("$.metadata.createdBy").value(equalTo(USER_ID_HEADER)))
       .andExpect(jsonPath("$.metadata.createdDate").value(notNullValue()))
-      .andExpect(jsonPath("$.metadata.modifiedBy").doesNotExist())
-      .andExpect(jsonPath("$.metadata.modifiedDate").doesNotExist());
+      .andExpect(jsonPath("$.metadata.modifiedBy").value(equalTo(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.metadata.modifiedDate").value(notNullValue()));
   }
 
   @Test
@@ -138,14 +137,14 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       var role1Metadata = roles.getRoles().get(0).getMetadata();
       assertNotNull(role1Metadata.getCreatedBy());
       assertNotNull(role1Metadata.getCreatedDate());
-      assertNull(role1Metadata.getModifiedBy());
-      assertNull(role1Metadata.getModifiedDate());
+      assertNotNull(role1Metadata.getModifiedBy());
+      assertNotNull(role1Metadata.getModifiedDate());
 
       var role2Metadata = roles.getRoles().get(1).getMetadata();
       assertNotNull(role2Metadata.getCreatedBy());
       assertNotNull(role2Metadata.getCreatedDate());
-      assertNull(role2Metadata.getModifiedBy());
-      assertNull(role2Metadata.getModifiedDate());
+      assertNotNull(role2Metadata.getModifiedBy());
+      assertNotNull(role2Metadata.getModifiedDate());
     });
   }
 
