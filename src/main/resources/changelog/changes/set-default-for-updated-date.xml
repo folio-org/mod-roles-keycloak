@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  
+  <changeSet id="MODROLESKC-8@@update-date-with-default-in-user-role" author="dmtkachenko">
+    <addDefaultValue tableName="user_role" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+    <update tableName="user_role">
+      <column name="updated_date" valueComputed="created_date"/>
+      <where>updated_date is NULL</where>
+    </update>
+
+    <addNotNullConstraint tableName="user_role" columnName="updated_date"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-8@@update-date-with-default-in-capability" author="dmtkachenko">
+    <addDefaultValue tableName="capability" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+    <update tableName="capability">
+      <column name="updated_date" valueComputed="created_date"/>
+      <where>updated_date is NULL</where>
+    </update>
+
+    <addNotNullConstraint tableName="capability" columnName="updated_date"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-8@@update-date-with-default-in-capability-set" author="dmtkachenko">
+    <addDefaultValue tableName="capability_set" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+    <update tableName="capability_set">
+      <column name="updated_date" valueComputed="created_date"/>
+      <where>updated_date is NULL</where>
+    </update>
+
+    <addNotNullConstraint tableName="capability_set" columnName="updated_date"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-8@@update-date-with-default-in-policy" author="dmtkachenko">
+    <addDefaultValue tableName="policy" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+    <update tableName="policy">
+      <column name="updated_date" valueComputed="created_date"/>
+      <where>updated_date is NULL</where>
+    </update>
+
+    <addNotNullConstraint tableName="policy" columnName="updated_date"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-8@@update-date-with-default-in-role" author="dmtkachenko">
+    <addDefaultValue tableName="role" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+    <update tableName="role">
+      <column name="updated_date" valueComputed="created_date"/>
+      <where>updated_date is NULL</where>
+    </update>
+
+    <addNotNullConstraint tableName="role" columnName="updated_date"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-8@@update-date-with-default-in-role-capability" author="dmtkachenko">
+    <addDefaultValue tableName="role_capability" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+    <update tableName="role_capability">
+      <column name="updated_date" valueComputed="created_date"/>
+      <where>updated_date is NULL</where>
+    </update>
+
+    <addNotNullConstraint tableName="role_capability" columnName="updated_date"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-8@@update-date-with-default-in-role-capability-set" author="dmtkachenko">
+    <addDefaultValue tableName="role_capability_set" columnName="updated_date"
+        defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+    <update tableName="role_capability_set">
+      <column name="updated_date" valueComputed="created_date"/>
+      <where>updated_date is NULL</where>
+    </update>
+
+    <addNotNullConstraint tableName="role_capability_set" columnName="updated_date"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-8@@update-date-with-default-in-user-capability" author="dmtkachenko">
+    <addDefaultValue tableName="user_capability" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+    <update tableName="user_capability">
+      <column name="updated_date" valueComputed="created_date"/>
+      <where>updated_date is NULL</where>
+    </update>
+
+    <addNotNullConstraint tableName="user_capability" columnName="updated_date"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-8@@update-date-with-default-in-user-capability-set" author="dmtkachenko">
+    <addDefaultValue tableName="user_capability_set" columnName="updated_date"
+        defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+    <update tableName="user_capability_set">
+      <column name="updated_date" valueComputed="created_date"/>
+      <where>updated_date is NULL</where>
+    </update>
+
+    <addNotNullConstraint tableName="user_capability_set" columnName="updated_date"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-8@@role-loadable-permission-date-columns-as-timestamptz" author="dmtkachenko">
+    <modifyDataType tableName="role_loadable_permission" columnName="created_date" newDataType="timestamptz"/>
+    <modifyDataType tableName="role_loadable_permission" columnName="updated_date" newDataType="timestamptz"/>
+  </changeSet>
+
+  <changeSet id="MODROLESKC-8@@update-date-with-default-in-role-loadable-permission" author="dmtkachenko">
+    <addDefaultValue tableName="role_loadable_permission" columnName="updated_date"
+      defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+    <update tableName="role_loadable_permission">
+      <column name="updated_date" valueComputed="created_date"/>
+      <where>updated_date is NULL</where>
+    </update>
+
+    <addNotNullConstraint tableName="role_loadable_permission" columnName="updated_date"/>
+  </changeSet>
+
+</databaseChangeLog>
