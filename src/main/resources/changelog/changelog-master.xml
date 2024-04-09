@@ -26,5 +26,5 @@
   <include file="changes/update-role-deletion-constraints.xml" relativeToChangelogFile="true"/>
   <include file="changes/create-loadable-role-tables.xml" relativeToChangelogFile="true"/>
   <include file="changes/add_permission_to_capability_set_table.xml" relativeToChangelogFile="true"/>
-  <include file="changes/set-default-for-updated-date.xml" relativeToChangelogFile="true"/>
+  <include file="changes/adjust-update-fields-of-auditable-info.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -28,7 +28,7 @@ class UserRoleRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void create_positive_updateDateAndCreatedDateNotNull() {
+  void create_positive_updatedAndCreatedFieldsNotNull() {
     var entity = Instancio.of(UserRoleEntity.class)
       .ignore(field(Auditable::getCreatedDate))
       .ignore(field(Auditable::getUpdatedDate))
@@ -40,6 +40,8 @@ class UserRoleRepositoryIT extends BaseRepositoryTest {
     var stored = entityManager.find(UserRoleEntity.class,
       UserRoleKey.of(entity.getUserId(), entity.getRoleId()));
     assertThat(stored.getCreatedDate()).isCloseTo(now, within(1, MINUTES));
+    assertThat(stored.getCreatedBy()).isEqualTo(USER_ID);
     assertThat(stored.getUpdatedDate()).isCloseTo(now, within(1, MINUTES));
+    assertThat(stored.getUpdatedBy()).isEqualTo(USER_ID);
   }
 }
