@@ -2,6 +2,7 @@ package org.folio.roles.controller;
 
 import static java.lang.Boolean.TRUE;
 
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.folio.roles.domain.dto.PermissionsUser;
@@ -17,8 +18,9 @@ public class PermissionsUsersController implements PermissionsUsersApi {
   private final CapabilityService capabilityService;
 
   @Override
-  public ResponseEntity<PermissionsUser> getPermissionsUser(UUID userId, Boolean onlyVisible) {
-    var userPermissions = capabilityService.getUserPermissions(userId, TRUE.equals(onlyVisible));
+  public ResponseEntity<PermissionsUser> getPermissionsUser(UUID userId, Boolean onlyVisible,
+    List<String> desiredPermissions) {
+    var userPermissions = capabilityService.getUserPermissions(userId, TRUE.equals(onlyVisible), desiredPermissions);
     return ResponseEntity.ok(new PermissionsUser().userId(userId).permissions(userPermissions));
   }
 }

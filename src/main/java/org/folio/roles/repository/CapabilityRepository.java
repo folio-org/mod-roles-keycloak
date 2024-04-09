@@ -136,7 +136,7 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     INNER JOIN capability c ON uc.capability_id = c.id
     INNER JOIN prefixes p ON c.folio_permission LIKE p.prefix
     WHERE uc.user_id = :user_id""")
-  List<String> findVisibleFolioPermissions(@Param("user_id") UUID userId, @Param("prefixes") String prefixes);
+  List<String> findPermissionsByPrefixes(@Param("user_id") UUID userId, @Param("prefixes") String prefixes);
 
   @Query(nativeQuery = true, value = """
     SELECT DISTINCT c.folio_permission FROM (

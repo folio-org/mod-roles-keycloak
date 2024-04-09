@@ -2,6 +2,7 @@ package org.folio.roles.service.capability;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
+import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.entity.CapabilityEntity.DEFAULT_CAPABILITY_SORT;
@@ -14,6 +15,7 @@ import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.CapabilityUtils.capabilityEntity;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.TestConstants.USER_ID;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -22,6 +24,7 @@ import static org.mockito.Mockito.when;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.CapabilityRepository;
@@ -33,6 +36,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -345,20 +351,41 @@ class CapabilityServiceTest {
     @Test
     void positive() {
       when(capabilityRepository.findAllFolioPermissions(USER_ID)).thenReturn(List.of(PERMISSION_NAME));
-      var result = capabilityService.getUserPermissions(USER_ID, false);
+      var result = capabilityService.getUserPermissions(USER_ID, false, emptyList());
 
       assertThat(result).containsExactly(PERMISSION_NAME);
     }
 
     @Test
-    void positiveOnlyVisiblePermissions() {
+    void positive_onlyVisiblePermissions() {
       var prefixes = ArgumentCaptor.forClass(String.class);
       var permissions = List.of(PERMISSION_NAME);
-      when(capabilityRepository.findVisibleFolioPermissions(eq(USER_ID), prefixes.capture())).thenReturn(permissions);
-      var result = capabilityService.getUserPermissions(USER_ID, true);
+      when(capabilityRepository.findPermissionsByPrefixes(eq(USER_ID), prefixes.capture())).thenReturn(permissions);
+      var result = capabilityService.getUserPermissions(USER_ID, true, emptyList());
 
       assertThat(result).containsExactly(PERMISSION_NAME);
       assertThat(prefixes.getValue()).isEqualTo("{ui-, module, plugin}");
+    }
+
+    @ParameterizedTest(name = "{index} request: {0}, user's perms: {1}, resolved perms: {2}")
+    @MethodSource("permissionsProvider")
+    void positive_desiredPermissions(List<String> desiredPerms, List<String> userPerms, List<String> resolvedPerms) {
+      when(capabilityRepository.findPermissionsByPrefixes(eq(USER_ID), anyString())).thenReturn(userPerms);
+
+      var result = capabilityService.getUserPermissions(USER_ID, false, desiredPerms);
+
+      assertThat(result).containsExactlyInAnyOrderElementsOf(resolvedPerms);
+    }
+
+    //permissionsToResolve : userPermissions : resolvedPermissions
+    static Stream<Arguments> permissionsProvider() {
+      return Stream.of(
+        Arguments.of(of("ui.all", "be.all"), of("ui.all", "users.all"), of("ui.all")),
+        Arguments.of(of("be.*"), of("ui.all", "be.get", "be.post"), of("be.get", "be.post")),
+        Arguments.of(of("be.it.*", "ui.all"), of("be.all", "be.it.get", "be.it.post"), of("be.it.get", "be.it.post")),
+        Arguments.of(of("be.it.*", "ui.all"), of(), of()),
+        Arguments.of(of("be.it.*", "ui.all"), of("be.all", "users.item.all"), of())
+      );
     }
   }
 }
