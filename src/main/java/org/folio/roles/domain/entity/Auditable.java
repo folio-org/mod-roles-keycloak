@@ -39,7 +39,7 @@ public class Auditable {
    * Indicates the date the entity was last modified.
    */
   @LastModifiedDate
-  @Column(name = "updated_date")
+  @Column(name = "updated_date", nullable = false)
   private OffsetDateTime updatedDate;
 
   /**
