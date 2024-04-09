@@ -248,16 +248,6 @@ public class CapabilityService {
     return capabilityRepository.findAllFolioPermissions(userId);
   }
 
-  private static String trimWildcard(String param) {
-    return param.endsWith("*") ? param.substring(0, param.length() - 1) : param;
-  }
-
-  private static boolean match(String s1, String s2) {
-    return s2.endsWith(".*")
-      ? s1.startsWith(s2.substring(0, s2.length() - 1))
-      : s1.equals(s2);
-  }
-
   private List<CapabilityEntity> saveCapabilities(List<Capability> capabilities,
     Map<String, CapabilityEntity> capabilitiesByName) {
     var capabilityEntities = new ArrayList<CapabilityEntity>();
@@ -275,6 +265,16 @@ public class CapabilityService {
     }
 
     return isNotEmpty(capabilityEntities) ? capabilityRepository.saveAll(capabilityEntities) : emptyList();
+  }
+
+  private static String trimWildcard(String param) {
+    return param.endsWith("*") ? param.substring(0, param.length() - 1) : param;
+  }
+
+  private static boolean match(String s1, String s2) {
+    return s2.endsWith(".*")
+      ? s1.startsWith(s2.substring(0, s2.length() - 1))
+      : s1.equals(s2);
   }
 
   private static String buildPrefixesParam(List<String> prefixes) {
