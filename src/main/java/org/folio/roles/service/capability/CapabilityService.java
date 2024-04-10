@@ -238,11 +238,11 @@ public class CapabilityService {
     }
 
     if (isNotEmpty(desiredPermissions)) {
-      var preparedPrefixes = desiredPermissions.stream().map(CapabilityService::trimWildcard).collect(toList());
+      var preparedPrefixes = desiredPermissions.stream().map(CapabilityService::trimWildcard).toList();
       var filteredPerms = capabilityRepository.findPermissionsByPrefixes(userId, buildPrefixesParam(preparedPrefixes));
       return toStream(filteredPerms)
         .filter(s1 -> toStream(desiredPermissions).anyMatch(s2 -> match(s1, s2)))
-        .collect(toList());
+        .toList();
     }
 
     return capabilityRepository.findAllFolioPermissions(userId);
