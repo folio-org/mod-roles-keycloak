@@ -27,7 +27,7 @@ class BasePolicyEntityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void create_positive_updateDateAndCreatedDateNotNull() {
+  void create_positive_updatedAndCreatedFieldsNotNull() {
     var entity = Instancio.of(BasePolicyEntity.class)
       .ignore(field(Auditable::getCreatedDate))
       .ignore(field(Auditable::getUpdatedDate))
@@ -39,6 +39,8 @@ class BasePolicyEntityRepositoryIT extends BaseRepositoryTest {
 
     var stored = entityManager.find(BasePolicyEntity.class, saved.getId());
     assertThat(stored.getCreatedDate()).isCloseTo(now, within(1, MINUTES));
+    assertThat(stored.getCreatedBy()).isEqualTo(USER_ID);
     assertThat(stored.getUpdatedDate()).isCloseTo(now, within(1, MINUTES));
+    assertThat(stored.getUpdatedBy()).isEqualTo(USER_ID);
   }
 }
