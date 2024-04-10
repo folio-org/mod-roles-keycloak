@@ -87,31 +87,31 @@ class PermissionsUserIT extends BaseIntegrationTest {
         List.of("ui-foo.item.*", "module.foo.item.post")),
       arguments(userId1, false, List.of(
         "foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put",
-        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), List.of()),
+        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
 
       arguments(userId2, true, List.of(
-        "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), List.of()),
+        "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
       arguments(userId2, false, List.of(
         "foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put",
-        "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), List.of()),
+        "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
 
       arguments(userId3, true, List.of(
-        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), List.of()),
+        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
       arguments(userId3, false, List.of(
-        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), List.of()),
+        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
 
-      arguments(userId4, true, List.of("ui-foo.item.delete"), List.of()),
+      arguments(userId4, true, List.of("ui-foo.item.delete"), emptyList()),
       arguments(userId4, false, List.of(
         "foo.item.delete", "foo.item.get", "foo.item.post",
-        "foo.item.put", "ui-foo.item.delete"), List.of()),
+        "foo.item.put", "ui-foo.item.delete"), emptyList()),
 
-      arguments(userId5, true, List.of("plugin.foo.item.get", "ui-foo.item.put"), List.of()),
+      arguments(userId5, true, List.of("plugin.foo.item.get", "ui-foo.item.put"), emptyList()),
       arguments(userId5, false, List.of(
         "foo.item.delete", "foo.item.get", "foo.item.post",
-        "foo.item.put", "plugin.foo.item.get", "ui-foo.item.put"), List.of()),
+        "foo.item.put", "plugin.foo.item.get", "ui-foo.item.put"), emptyList()),
 
-      arguments(userId6, true, emptyList(), List.of()),
-      arguments(userId6, false, emptyList(), List.of()),
+      arguments(userId6, true, emptyList(), emptyList()),
+      arguments(userId6, false, emptyList(), emptyList()),
       arguments(userId1, false, List.of(
           "foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put", "ui-foo.item.delete"),
         List.of("foo.item.*", "ui-foo.item.delete"))

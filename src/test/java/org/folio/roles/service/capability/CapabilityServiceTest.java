@@ -383,8 +383,8 @@ class CapabilityServiceTest {
         Arguments.of(of("ui.all", "be.all"), of("ui.all", "users.all"), of("ui.all")),
         Arguments.of(of("be.*"), of("ui.all", "be.get", "be.post"), of("be.get", "be.post")),
         Arguments.of(of("be.it.*", "ui.all"), of("be.all", "be.it.get", "be.it.post"), of("be.it.get", "be.it.post")),
-        Arguments.of(of("be.it.*", "ui.all"), of(), of()),
-        Arguments.of(of("be.it.*", "ui.all"), of("be.all", "users.item.all"), of())
+        Arguments.of(of("be.it.*", "ui.all"), emptyList(), emptyList()),
+        Arguments.of(of("be.it.*", "ui.all"), of("be.all", "users.item.all"), emptyList())
       );
     }
   }
