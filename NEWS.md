@@ -1,4 +1,6 @@
 ## Version `v1.3.0` (in progress)
+### Changes:
+* Adjusted `permissions/user/{userid}` endpoint with desiredPermission parameter (MODUSERSKC-29).
 
 ## Version `v1.2.0` (26.03.2024)
 * Update capabilities instead of skipping (MODROLESKC-171)

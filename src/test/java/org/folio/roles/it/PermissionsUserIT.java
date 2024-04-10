@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.folio.roles.base.BaseIntegrationTest;
@@ -27,6 +28,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
+import org.springframework.util.LinkedMultiValueMap;
 
 @IntegrationTest
 @SqlMergeMode(MERGE)
@@ -56,13 +58,17 @@ class PermissionsUserIT extends BaseIntegrationTest {
 
   @MethodSource("getPermissionsUserDataProvider")
   @DisplayName("getPermissionsUser_parameterized")
-  @ParameterizedTest(name = "[{index}] userId={0}, onlyVisible={1}, expectedPermissions={2}")
-  void getPermissionsUser_parameterized(UUID userId, boolean onlyVisible, List<String> permissions) throws Exception {
-    var expectedPermissionsUser = new PermissionsUser().userId(userId).permissions(permissions);
+  @ParameterizedTest(name = "[{index}] userId={0}, onlyVisible={1}, expectedPermissions={2}, desiredPermissions={3}")
+  void getPermissionsUser_parameterized(UUID userId, boolean onlyVisible, List<String> expected, List<String> desired)
+    throws Exception {
+    var expectedPermissionsUser = new PermissionsUser().userId(userId).permissions(expected);
+    var desiredPermissionsParam = new LinkedMultiValueMap<>(Map.of("desiredPermissions", desired));
+
     mockMvc.perform(get("/permissions/users/{id}", userId)
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER)
-        .queryParam("onlyVisible", String.valueOf(onlyVisible)))
+        .queryParam("onlyVisible", String.valueOf(onlyVisible))
+        .queryParams(desiredPermissionsParam))
       .andExpect(status().isOk())
       .andExpect(content().json(asJsonString(expectedPermissionsUser)));
   }
@@ -77,34 +83,38 @@ class PermissionsUserIT extends BaseIntegrationTest {
 
     return Stream.of(
       arguments(userId1, true, List.of(
-        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put")),
+          "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"),
+        List.of("ui-foo.item.*", "module.foo.item.post")),
       arguments(userId1, false, List.of(
         "foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put",
-        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put")),
+        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
 
       arguments(userId2, true, List.of(
-        "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put")),
+        "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
       arguments(userId2, false, List.of(
         "foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put",
-        "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put")),
+        "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
 
       arguments(userId3, true, List.of(
-        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put")),
+        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
       arguments(userId3, false, List.of(
-        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put")),
+        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
 
-      arguments(userId4, true, List.of("ui-foo.item.delete")),
+      arguments(userId4, true, List.of("ui-foo.item.delete"), emptyList()),
       arguments(userId4, false, List.of(
         "foo.item.delete", "foo.item.get", "foo.item.post",
-        "foo.item.put", "ui-foo.item.delete")),
+        "foo.item.put", "ui-foo.item.delete"), emptyList()),
 
-      arguments(userId5, true, List.of("plugin.foo.item.get", "ui-foo.item.put")),
+      arguments(userId5, true, List.of("plugin.foo.item.get", "ui-foo.item.put"), emptyList()),
       arguments(userId5, false, List.of(
         "foo.item.delete", "foo.item.get", "foo.item.post",
-        "foo.item.put", "plugin.foo.item.get", "ui-foo.item.put")),
+        "foo.item.put", "plugin.foo.item.get", "ui-foo.item.put"), emptyList()),
 
-      arguments(userId6, true, emptyList()),
-      arguments(userId6, false, emptyList())
+      arguments(userId6, true, emptyList(), emptyList()),
+      arguments(userId6, false, emptyList(), emptyList()),
+      arguments(userId1, false, List.of(
+          "foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put", "ui-foo.item.delete"),
+        List.of("foo.item.*", "ui-foo.item.delete"))
     );
   }
 }

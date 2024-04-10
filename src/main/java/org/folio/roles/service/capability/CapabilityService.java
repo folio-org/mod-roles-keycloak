@@ -1,12 +1,12 @@
 package org.folio.roles.service.capability;
 
-import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -38,7 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CapabilityService {
 
-  private final String[] visiblePermissionPrefixes = new String[] {"ui-", "module", "plugin"};
+  private final List<String> visiblePermissionPrefixes = List.of("ui-", "module", "plugin");
   private final CapabilityRepository capabilityRepository;
   private final CapabilityEntityMapper capabilityEntityMapper;
   @Lazy private final CapabilitySetService capabilitySetService;
@@ -219,20 +219,32 @@ public class CapabilityService {
   }
 
   /**
-   * Retrieves user permissions by userId and onlyVisible flag.
+   * Retrieves user permissions by userId and onlyVisible flag. If desiredPermissions list is not empty, then all
+   * permissions matching the desired ones will be returned. Wildcard (*) is supported for desired permissions.
+   * Example: user has permission ["users.item.get", "users.item.post", "users.collection.put"] and requested
+   * permissions are ["users.item.*"] then resolved permissions will be ["users.item.get", "users.item.post"].
    *
    * @param userId - user identifier as {@link UUID} value
    * @param onlyVisible - defines if UI or all permissions must be returned
+   * @param desiredPermissions - list of desired permissions to find
    * @return a {@link List} with folio permission names
    */
   @Transactional(readOnly = true)
-  public List<String> getUserPermissions(UUID userId, boolean onlyVisible) {
-    if (!onlyVisible) {
-      return capabilityRepository.findAllFolioPermissions(userId);
+  public List<String> getUserPermissions(UUID userId, boolean onlyVisible, List<String> desiredPermissions) {
+    if (onlyVisible) {
+      var permissionPrefixesParam = buildPrefixesParam(visiblePermissionPrefixes);
+      return capabilityRepository.findPermissionsByPrefixes(userId, permissionPrefixesParam);
     }
 
-    var permissionPrefixesParam = stream(visiblePermissionPrefixes).collect(joining(", ", "{", "}"));
-    return capabilityRepository.findVisibleFolioPermissions(userId, permissionPrefixesParam);
+    if (isNotEmpty(desiredPermissions)) {
+      var preparedPrefixes = desiredPermissions.stream().map(CapabilityService::trimWildcard).toList();
+      var filteredPerms = capabilityRepository.findPermissionsByPrefixes(userId, buildPrefixesParam(preparedPrefixes));
+      return toStream(filteredPerms)
+        .filter(s1 -> toStream(desiredPermissions).anyMatch(s2 -> match(s1, s2)))
+        .toList();
+    }
+
+    return capabilityRepository.findAllFolioPermissions(userId);
   }
 
   private List<CapabilityEntity> saveCapabilities(List<Capability> capabilities,
@@ -252,5 +264,19 @@ public class CapabilityService {
     }
 
     return isNotEmpty(capabilityEntities) ? capabilityRepository.saveAll(capabilityEntities) : emptyList();
+  }
+
+  private static String trimWildcard(String param) {
+    return param.endsWith("*") ? param.substring(0, param.length() - 1) : param;
+  }
+
+  private static boolean match(String s1, String s2) {
+    return s2.endsWith(".*")
+      ? s1.startsWith(s2.substring(0, s2.length() - 1))
+      : s1.equals(s2);
+  }
+
+  private static String buildPrefixesParam(List<String> prefixes) {
+    return toStream(prefixes).collect(joining(", ", "{", "}"));
   }
 }

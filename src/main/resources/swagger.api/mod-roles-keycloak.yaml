@@ -952,13 +952,14 @@ paths:
 
   /permissions/users/{id}:
     get:
-      description: Get permissions by user ID
+      description: Get permissions by user ID. If there is onlyVisible=true, then desiredPermissions are ignored.
       operationId: getPermissionsUser
       tags:
         - permissions-users
       parameters:
         - $ref: '#/components/parameters/pathEntityId'
         - $ref: '#/components/parameters/onlyVisible'
+        - $ref: '#/components/parameters/desiredPermissions'
       responses:
         '200':
           description: Retrieve permissions by user id
@@ -1183,6 +1184,16 @@ components:
       schema:
         type: boolean
         default: false
+    desiredPermissions:
+      in: query
+      name: desiredPermissions
+      description: A list of permissions to filter by
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      example: [ "users.item.get", "users.collection.*" ]
 
 #  examples:
 #    # roles

@@ -32,7 +32,7 @@ class PermissionsUsersControllerTest {
   @Test
   void getPermissionsUser_positive() throws Exception {
     var foundPermissions = List.of(PERMISSION_NAME);
-    when(capabilityService.getUserPermissions(USER_ID, false)).thenReturn(foundPermissions);
+    when(capabilityService.getUserPermissions(USER_ID, false, null)).thenReturn(foundPermissions);
 
     mockMvc.perform(get("/permissions/users/{id}", USER_ID)
         .contentType(APPLICATION_JSON)
@@ -46,7 +46,7 @@ class PermissionsUsersControllerTest {
   @Test
   void getPermissionsUser_positive_onlyVisibleIsTrue() throws Exception {
     var foundPermissions = List.of(PERMISSION_NAME);
-    when(capabilityService.getUserPermissions(USER_ID, true)).thenReturn(foundPermissions);
+    when(capabilityService.getUserPermissions(USER_ID, true, null)).thenReturn(foundPermissions);
 
     mockMvc.perform(get("/permissions/users/{id}", USER_ID)
       .param("onlyVisible", "true")
