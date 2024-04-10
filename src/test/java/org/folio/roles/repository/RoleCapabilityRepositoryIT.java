@@ -26,7 +26,7 @@ class RoleCapabilityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void create_positive_updateDateAndCreatedDateNotNull() {
+  void create_positive_updatedAndCreatedFieldsNotNull() {
     var entity = roleCapabilityEntity();
     var now = OffsetDateTime.now();
 
@@ -35,6 +35,8 @@ class RoleCapabilityRepositoryIT extends BaseRepositoryTest {
     var stored = entityManager.find(RoleCapabilityEntity.class,
       RoleCapabilityKey.of(entity.getRoleId(), entity.getCapabilityId()));
     assertThat(stored.getCreatedDate()).isCloseTo(now, within(1, MINUTES));
+    assertThat(stored.getCreatedBy()).isEqualTo(USER_ID);
     assertThat(stored.getUpdatedDate()).isCloseTo(now, within(1, MINUTES));
+    assertThat(stored.getUpdatedBy()).isEqualTo(USER_ID);
   }
 }

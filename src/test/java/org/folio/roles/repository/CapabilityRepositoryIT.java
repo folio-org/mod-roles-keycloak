@@ -25,7 +25,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void create_positive_updateDateAndCreatedDateNotNull() {
+  void create_positive_updatedAndCreatedFieldsNotNull() {
     var entity = capabilityEntity();
     entity.setId(null);
     var now = OffsetDateTime.now();
@@ -34,6 +34,8 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
 
     var stored = entityManager.find(CapabilityEntity.class, saved.getId());
     assertThat(stored.getCreatedDate()).isCloseTo(now, within(1, MINUTES));
+    assertThat(stored.getCreatedBy()).isEqualTo(USER_ID);
     assertThat(stored.getUpdatedDate()).isCloseTo(now, within(1, MINUTES));
+    assertThat(stored.getUpdatedBy()).isEqualTo(USER_ID);
   }
 }
