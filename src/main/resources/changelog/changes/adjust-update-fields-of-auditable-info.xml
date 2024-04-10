@@ -4,7 +4,7 @@
   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
   
-  <changeSet id="MODROLESKC-8@@update-date-with-default-in-user-role" author="dmtkachenko">
+  <changeSet id="MODROLESKC-8@@adjust-update-fields-in-user-role" author="dmtkachenko">
     <addDefaultValue tableName="user_role" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
 
     <update tableName="user_role">
@@ -13,9 +13,14 @@
     </update>
 
     <addNotNullConstraint tableName="user_role" columnName="updated_date"/>
+
+    <update tableName="user_role">
+      <column name="updated_by" valueComputed="created_by"/>
+      <where>updated_by is NULL</where>
+    </update>
   </changeSet>
 
-  <changeSet id="MODROLESKC-8@@update-date-with-default-in-capability" author="dmtkachenko">
+  <changeSet id="MODROLESKC-8@@adjust-update-fields-in-capability" author="dmtkachenko">
     <addDefaultValue tableName="capability" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
 
     <update tableName="capability">
@@ -24,9 +29,14 @@
     </update>
 
     <addNotNullConstraint tableName="capability" columnName="updated_date"/>
+
+    <update tableName="capability">
+      <column name="updated_by" valueComputed="created_by"/>
+      <where>updated_by is NULL</where>
+    </update>
   </changeSet>
 
-  <changeSet id="MODROLESKC-8@@update-date-with-default-in-capability-set" author="dmtkachenko">
+  <changeSet id="MODROLESKC-8@@adjust-update-fields-in-capability-set" author="dmtkachenko">
     <addDefaultValue tableName="capability_set" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
 
     <update tableName="capability_set">
@@ -35,9 +45,14 @@
     </update>
 
     <addNotNullConstraint tableName="capability_set" columnName="updated_date"/>
+
+    <update tableName="capability_set">
+      <column name="updated_by" valueComputed="created_by"/>
+      <where>updated_by is NULL</where>
+    </update>
   </changeSet>
 
-  <changeSet id="MODROLESKC-8@@update-date-with-default-in-policy" author="dmtkachenko">
+  <changeSet id="MODROLESKC-8@@adjust-update-fields-in-policy" author="dmtkachenko">
     <addDefaultValue tableName="policy" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
 
     <update tableName="policy">
@@ -46,9 +61,14 @@
     </update>
 
     <addNotNullConstraint tableName="policy" columnName="updated_date"/>
+
+    <update tableName="policy">
+      <column name="updated_by" valueComputed="created_by"/>
+      <where>updated_by is NULL</where>
+    </update>
   </changeSet>
 
-  <changeSet id="MODROLESKC-8@@update-date-with-default-in-role" author="dmtkachenko">
+  <changeSet id="MODROLESKC-8@@adjust-update-fields-in-role" author="dmtkachenko">
     <addDefaultValue tableName="role" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
 
     <update tableName="role">
@@ -57,9 +77,14 @@
     </update>
 
     <addNotNullConstraint tableName="role" columnName="updated_date"/>
+
+    <update tableName="role">
+      <column name="updated_by" valueComputed="created_by"/>
+      <where>updated_by is NULL</where>
+    </update>
   </changeSet>
 
-  <changeSet id="MODROLESKC-8@@update-date-with-default-in-role-capability" author="dmtkachenko">
+  <changeSet id="MODROLESKC-8@@adjust-update-fields-in-role-capability" author="dmtkachenko">
     <addDefaultValue tableName="role_capability" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
 
     <update tableName="role_capability">
@@ -68,9 +93,14 @@
     </update>
 
     <addNotNullConstraint tableName="role_capability" columnName="updated_date"/>
+
+    <update tableName="role_capability">
+      <column name="updated_by" valueComputed="created_by"/>
+      <where>updated_by is NULL</where>
+    </update>
   </changeSet>
 
-  <changeSet id="MODROLESKC-8@@update-date-with-default-in-role-capability-set" author="dmtkachenko">
+  <changeSet id="MODROLESKC-8@@adjust-update-fields-in-role-capability-set" author="dmtkachenko">
     <addDefaultValue tableName="role_capability_set" columnName="updated_date"
         defaultValueComputed="CURRENT_TIMESTAMP"/>
 
@@ -80,9 +110,14 @@
     </update>
 
     <addNotNullConstraint tableName="role_capability_set" columnName="updated_date"/>
+
+    <update tableName="role_capability_set">
+      <column name="updated_by" valueComputed="created_by"/>
+      <where>updated_by is NULL</where>
+    </update>
   </changeSet>
 
-  <changeSet id="MODROLESKC-8@@update-date-with-default-in-user-capability" author="dmtkachenko">
+  <changeSet id="MODROLESKC-8@@adjust-update-fields-in-user-capability" author="dmtkachenko">
     <addDefaultValue tableName="user_capability" columnName="updated_date" defaultValueComputed="CURRENT_TIMESTAMP"/>
 
     <update tableName="user_capability">
@@ -91,9 +126,14 @@
     </update>
 
     <addNotNullConstraint tableName="user_capability" columnName="updated_date"/>
+
+    <update tableName="user_capability">
+      <column name="updated_by" valueComputed="created_by"/>
+      <where>updated_by is NULL</where>
+    </update>
   </changeSet>
 
-  <changeSet id="MODROLESKC-8@@update-date-with-default-in-user-capability-set" author="dmtkachenko">
+  <changeSet id="MODROLESKC-8@@adjust-update-fields-in-user-capability-set" author="dmtkachenko">
     <addDefaultValue tableName="user_capability_set" columnName="updated_date"
         defaultValueComputed="CURRENT_TIMESTAMP"/>
 
@@ -103,6 +143,11 @@
     </update>
 
     <addNotNullConstraint tableName="user_capability_set" columnName="updated_date"/>
+
+    <update tableName="user_capability_set">
+      <column name="updated_by" valueComputed="created_by"/>
+      <where>updated_by is NULL</where>
+    </update>
   </changeSet>
 
   <changeSet id="MODROLESKC-8@@role-loadable-permission-date-columns-as-timestamptz" author="dmtkachenko">
@@ -110,7 +155,7 @@
     <modifyDataType tableName="role_loadable_permission" columnName="updated_date" newDataType="timestamptz"/>
   </changeSet>
 
-  <changeSet id="MODROLESKC-8@@update-date-with-default-in-role-loadable-permission" author="dmtkachenko">
+  <changeSet id="MODROLESKC-8@@adjust-update-fields-in-role-loadable-permission" author="dmtkachenko">
     <addDefaultValue tableName="role_loadable_permission" columnName="updated_date"
       defaultValueComputed="CURRENT_TIMESTAMP"/>
 
@@ -120,6 +165,11 @@
     </update>
 
     <addNotNullConstraint tableName="role_loadable_permission" columnName="updated_date"/>
+
+    <update tableName="role_loadable_permission">
+      <column name="updated_by" valueComputed="created_by"/>
+      <where>updated_by is NULL</where>
+    </update>
   </changeSet>
 
 </databaseChangeLog>
