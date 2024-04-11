@@ -3,13 +3,14 @@ package org.folio.roles.it;
 import static java.time.ZoneId.systemDefault;
 import static java.util.UUID.fromString;
 import static org.apache.commons.collections4.IterableUtils.find;
+import static org.folio.roles.support.RoleCapabilitySetUtils.roleCapabilitySets;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
+import static org.folio.roles.support.UserRoleTestUtils.userRoles;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.USER_ID;
 import static org.folio.test.TestUtils.asJsonString;
 import static org.folio.test.TestUtils.parseResponse;
-import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
@@ -159,7 +160,7 @@ class RoleKeycloakIT extends BaseIntegrationTest {
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-roles.json")
   @Sql(scripts = {
-    "classpath:/sql/populate-role-capability-for-deletion.sql",
+    "classpath:/sql/populate-role-capability-and-capability-set-for-deletion.sql",
     "classpath:/sql/populate-user-role-for-deletion.sql",
     "classpath:/sql/populate-role-policy.sql"
   })
@@ -180,8 +181,10 @@ class RoleKeycloakIT extends BaseIntegrationTest {
 
     doGet("/roles/users/{userId}", fromString("8c6d12fa-33a7-48c9-8769-71168d441345"))
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(jsonPath("$.userRoles", emptyIterable()))
-      .andExpect(jsonPath("$.totalRecords", is(0)));
+      .andExpect(content().json(asJsonString(userRoles())));
+
+    doGet("/roles/capability-sets")
+      .andExpect(content().json(asJsonString(roleCapabilitySets())));
   }
 
   @Test
