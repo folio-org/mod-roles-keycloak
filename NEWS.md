@@ -1,5 +1,10 @@
-## Version `v1.3.0` (in progress)
+## Version `v1.4.0` (in progress)
+
+## Version `v1.3.0` (16.04.2024)
 ### Changes:
+* Added onDelete cascade constraint to role_capability_set with role association (MODROLESKC-157)
+* Set updatedBy to the same value as createdBy in migration script (MODROLESKC-8)
+* Supported TLS for Keycloak clients (MODROLESKC-160)
 * Adjusted `permissions/user/{userid}` endpoint with desiredPermission parameter (MODUSERSKC-29).
 
 ## Version `v1.2.0` (26.03.2024)
