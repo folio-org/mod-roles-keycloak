@@ -44,7 +44,7 @@
 
     <!-- Test dependencies versions -->
     <testcontainer.version>1.19.7</testcontainer.version>
-    <folio-backend-testing.version>1.4.0-SNAPSHOT</folio-backend-testing.version>
+    <folio-backend-testing.version>1.4.0</folio-backend-testing.version>
     <instancio.version>4.5.0</instancio.version>
     <kryo.version>5.6.0</kryo.version>
 
