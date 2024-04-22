@@ -44,7 +44,6 @@
 
     <!-- Test dependencies versions -->
     <testcontainer.version>1.19.7</testcontainer.version>
-    <folio-backend-testing.version>1.4.0</folio-backend-testing.version>
     <instancio.version>4.5.1</instancio.version>
     <kryo.version>5.6.0</kryo.version>
 
@@ -218,7 +217,7 @@
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>folio-backend-testing</artifactId>
-      <version>${folio-backend-testing.version}</version>
+      <version>${applications-poc-tools.version}</version>
       <scope>test</scope>
     </dependency>
 
