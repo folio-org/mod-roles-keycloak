@@ -804,5 +804,10 @@
     "resource": "UI-Users Loans Add Staff-Info",
     "action": "edit",
     "type": "data"
+  },
+  "invoices.bypass-acquisition-units": {
+    "resource": "Bypass acquisition units checks",
+    "action": "manage",
+    "type": "data"
   }
 }
