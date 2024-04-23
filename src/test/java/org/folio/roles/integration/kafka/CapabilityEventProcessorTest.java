@@ -41,7 +41,6 @@ import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -75,22 +74,6 @@ class CapabilityEventProcessorTest {
     var result = capabilityEventProcessor.process(event);
 
     assertThat(result).isEqualTo(expectedResult);
-  }
-
-  @Test
-  void process_parameterizeda() {
-
-    var event = new CapabilityEvent()
-      .moduleId("test-module-0.0.1")
-      .moduleType(MODULE)
-      .applicationId(APPLICATION_ID)
-      .resources(asList(
-        new FolioResource().permission(new Permission().permissionName("invoices.bypass-acquisition-units"))
-      ));
-
-    var result = capabilityEventProcessor.process(event);
-
-    assertThat(result).isNotNull();
   }
 
   private static Stream<Arguments> capabilityEventDataProvider() {
