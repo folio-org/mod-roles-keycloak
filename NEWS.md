@@ -1,4 +1,6 @@
 ## Version `v1.4.0` (in progress)
+### Changes:
+* Added permission mapping for `invoices.bypass-acquisition-units` (EUREKA-96)
 
 ## Version `v1.3.0` (16.04.2024)
 ### Changes:
