@@ -314,7 +314,6 @@
     "action": "view",
     "type": "settings"
   },
-
   "orders.item.approve": {
     "resource": "Orders Item Approve",
     "action": "execute",
@@ -809,5 +808,150 @@
     "resource": "Bypass acquisition units checks",
     "action": "manage",
     "type": "data"
+  },
+  "ui-tenant-settings.settings.locale": {
+    "resource": "UI-Tenant-Settings Settings Locale",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-tenant-settings.settings.addresses": {
+    "resource": "UI-Tenant-Settings Settings Addresses",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-tenant-settings.settings.plugins": {
+    "resource": "UI-Tenant-Settings Settings Plugins",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-tenant-settings.settings.sso": {
+    "resource": "UI-Tenant-Settings Settings SSO",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-tenant-settings.settings.location": {
+    "resource": "UI-Tenant-Settings Settings Location",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-tenant-settings.settings.servicepoints": {
+    "resource": "UI-Tenant-Settings Settings Service Points",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-acquisition-units.settings.userAssignments": {
+    "resource": "Acquisition Units Settings User Assignment",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-organizations.acqUnits.assign": {
+    "resource": "Organizations Acquisition Units Assignment",
+    "action": "create",
+    "type": "data"
+  },
+  "ui-organizations.settings": {
+    "resource": "Organizations Settings",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-circulation.settings.cancellation-reasons": {
+    "resource": "UI-Circulation Settings Cancellation-Reasons",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.loan-history": {
+    "resource": "UI-Circulation Settings Loan-History",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.edit-loan-history": {
+    "resource": "UI-Circulation Settings Loan-History",
+    "action": "edit",
+    "type": "settings"
+  },
+  "ui-circulation.settings.view-loan-policies": {
+    "resource": "UI-Circulation Settings Loan-Policies",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.loan-policies": {
+    "resource": "UI-Circulation Settings Loan-Policies",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.notice-policies": {
+    "resource": "UI-Circulation Settings Notice-Policies",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.view-circulation-rules": {
+    "resource": "UI-Circulation Settings Circulation-Rules",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.edit-circulation-rules": {
+    "resource": "UI-Circulation Settings Circulation-Rules",
+    "action": "edit",
+    "type": "settings"
+  },
+  "ui-circulation.settings.fixed-due-date-schedules": {
+    "resource": "UI-Circulation Settings Fixed-Due-Date-Schedules",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.view-staff-slips": {
+    "resource": "UI-Circulation Settings Staff-Slips",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.edit-staff-slips": {
+    "resource": "UI-Circulation Settings Staff-Slips",
+    "action": "edit",
+    "type": "settings"
+  },
+  "ui-circulation.settings.staff-slips": {
+    "resource": "UI-Circulation Settings Staff-Slips",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.request-policies": {
+    "resource": "UI-Circulation Settings Request-Policies",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.other-settings": {
+    "resource": "UI-Circulation Settings Other-Settings",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.notice-templates": {
+    "resource": "UI-Circulation Settings Notice-Templates",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.view-overdue-fines-policies": {
+    "resource": "UI-Circulation Settings Overdue-Fines-Policies",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.overdue-fines-policies": {
+    "resource": "UI-Circulation Settings Overdue-Fines-Policies",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.view-lost-item-fees-policies": {
+    "resource": "UI-Circulation Settings Lost-Item-Fees-Policies",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.lost-item-fees-policies": {
+    "resource": "UI-Circulation Settings Lost-Item-Fees-Policies",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.titleLevelRequests": {
+    "resource": "UI-Circulation Settings Title Level Requests",
+    "action": "manage",
+    "type": "settings"
   }
 }
