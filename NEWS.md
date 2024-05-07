@@ -1,6 +1,9 @@
 ## Version `v1.4.0` (in progress)
+
+## Version `v1.3.1` (07.05.2024)
 ### Changes:
 * Added permission mapping for `invoices.bypass-acquisition-units` (EUREKA-96)
+* Capability mapping overrides (MODROLESKC-186)
 
 ## Version `v1.3.0` (16.04.2024)
 ### Changes:
