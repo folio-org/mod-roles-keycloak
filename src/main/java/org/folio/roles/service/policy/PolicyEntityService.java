@@ -2,6 +2,7 @@ package org.folio.roles.service.policy;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.common.utils.CollectionUtils.mapItems;
 
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -74,6 +75,26 @@ public class PolicyEntityService {
       : repository.findAll(offsetRequest);
     log.debug("Policies have been found: count = {}", policyEntities.getTotalElements());
     return mapper.toPolicy(policyEntities.getContent());
+  }
+
+  @Transactional(readOnly = true)
+  public List<Policy> findRolePoliciesByCapabilityId(UUID capabilityId) {
+    return mapItems(repository.findRolePoliciesByCapabilityId(capabilityId), mapper::toRolePolicy);
+  }
+
+  @Transactional(readOnly = true)
+  public List<Policy> findRolePoliciesByCapabilitySetId(UUID capabilitySetId) {
+    return mapItems(repository.findRolePoliciesByCapabilitySetId(capabilitySetId), mapper::toRolePolicy);
+  }
+
+  @Transactional(readOnly = true)
+  public List<Policy> findUserPoliciesByCapabilityId(UUID capabilityId) {
+    return mapItems(repository.findUserPoliciesByCapabilityId(capabilityId), mapper::toUserPolicy);
+  }
+
+  @Transactional(readOnly = true)
+  public List<Policy> findUserPoliciesByCapabilitySetId(UUID capabilitySetId) {
+    return mapItems(repository.findUserPoliciesByCapabilitySetId(capabilitySetId), mapper::toUserPolicy);
   }
 
   @Transactional(readOnly = true)

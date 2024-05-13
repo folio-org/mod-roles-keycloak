@@ -42,7 +42,21 @@ public interface RoleCapabilityService {
    * @param roleId - role identifier as {@link UUID}
    * @throws EntityNotFoundException if role is not found by id or there is no assigned values
    */
+  void delete(UUID roleId, UUID capabilityId);
+
+  /**
+   * Removes role-capability relations by role identifier.
+   *
+   * @param roleId - role identifier as {@link UUID}
+   * @throws EntityNotFoundException if role is not found by id or there is no assigned values
+   */
   void deleteAll(UUID roleId);
 
+  /**
+   * Provides capability ids associated with role through capability sets.
+   *
+   * @param roleId - role identifier
+   * @return {@link List} with capability {@link UUID} identifiers
+   */
   List<UUID> getCapabilitySetCapabilityIds(UUID roleId);
 }

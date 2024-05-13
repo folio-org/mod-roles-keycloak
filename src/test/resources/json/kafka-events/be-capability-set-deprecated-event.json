@@ -1,0 +1,20 @@
+{
+  "type": "DELETE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "old": {
+    "moduleId": "foo-module-1.1.0",
+    "moduleType": "module",
+    "applicationId": "test-application-0.0.1",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "foo.item.create",
+          "displayName": "foo_item.create - display name",
+          "description": "Capability set to create a foo item",
+          "subPermissions": [ "foo.item.view", "foo.item.edit" ]
+        }
+      }
+    ]
+  }
+}

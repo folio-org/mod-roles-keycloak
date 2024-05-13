@@ -18,6 +18,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.UserCapabilitySet;
 import org.folio.roles.domain.entity.UserCapabilitySetEntity;
+import org.folio.roles.domain.entity.key.UserCapabilitySetKey;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.roles.mapper.entity.UserCapabilitySetEntityMapper;
@@ -97,6 +98,25 @@ public class UserCapabilitySetService {
     UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "user-capability set")
       .consumeAndCacheNewEntities(newIds -> getSetIds(assignCapabilities(userId, newIds, assignedCapabilityIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
+  }
+
+  /**
+   * Removes user assigned capability set using user identifier and capability set id.
+   *
+   * @param userId  - role identifier as {@link UUID}
+   * @param capabilitySetId  - capability set identifier as {@link UUID}
+   */
+  @Transactional
+  public void delete(UUID userId, UUID capabilitySetId) {
+    var assignedUserCapabilitySetEntities = userCapabilitySetRepository.findAllByUserId(userId);
+    var assignedCapabilitySetIds = getSetIds(assignedUserCapabilitySetEntities);
+    if (!assignedCapabilitySetIds.contains(capabilitySetId)) {
+      return;
+    }
+
+    assignedCapabilitySetIds.remove(capabilitySetId);
+    userCapabilitySetRepository.findById(UserCapabilitySetKey.of(userId, capabilitySetId))
+      .ifPresent(entity -> removeCapabilities(userId, List.of(entity.getCapabilitySetId()), assignedCapabilitySetIds));
   }
 
   /**

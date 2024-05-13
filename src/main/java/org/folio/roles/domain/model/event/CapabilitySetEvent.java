@@ -1,4 +1,4 @@
-package org.folio.roles.service.event;
+package org.folio.roles.domain.model.event;
 
 import org.folio.roles.domain.dto.CapabilitySet;
 

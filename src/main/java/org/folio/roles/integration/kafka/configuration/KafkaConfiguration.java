@@ -63,6 +63,7 @@ public class KafkaConfiguration {
   }
 
   private BackOff getBackOff(Exception exception) {
+    log.warn("backoff applied");
     var relationDoesNotExistsMessage = findRelationDoesNotExistsMessage(exception);
     if (relationDoesNotExistsMessage.isPresent()) {
       log.warn("Tenant table is not found, retrying until created [message: {}]", relationDoesNotExistsMessage.get());

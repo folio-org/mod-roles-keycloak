@@ -1,7 +1,6 @@
 package org.folio.roles.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.folio.roles.domain.dto.CapabilityAction.CREATE;
 import static org.folio.roles.domain.dto.CapabilityAction.DELETE;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.dto.CapabilityAction.MANAGE;
@@ -22,7 +21,6 @@ import static org.folio.roles.utils.TestValues.readValue;
 import static org.folio.test.TestUtils.asJsonString;
 import static org.folio.test.TestUtils.parseResponse;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
@@ -53,6 +51,7 @@ import org.folio.roles.domain.dto.CapabilitySets;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.integration.kafka.CapabilitySetDescriptorService;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.roles.integration.kafka.model.ResourceEventType;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.test.types.IntegrationTest;
 import org.hibernate.exception.SQLGrammarException;
@@ -75,8 +74,8 @@ import org.testcontainers.shaded.org.awaitility.core.ConditionFactory;
 @Log4j2
 @IntegrationTest
 @Sql(executionPhase = AFTER_TEST_METHOD, scripts = {
+  "classpath:/sql/truncate-permission-table.sql",
   "classpath:/sql/truncate-capability-tables.sql",
-  "classpath:/sql/truncate-permission-table.sql"
 })
 class KafkaMessageListenerIT extends BaseIntegrationTest {
 
@@ -113,23 +112,6 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   }
 
   @Test
-  @Sql("classpath:/sql/kafka-message-listener-it/all-permissions.sql")
-  @Sql("classpath:/sql/kafka-message-listener-it/all-capabilities.sql")
-  void handleCapabilityEvent_positive_upgradeEvent() {
-    var capabilityEvent = readValue("json/kafka-events/be-capability-event-v2.json", ResourceEvent.class);
-    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
-
-    await().untilAsserted(() ->
-      doGet("/capabilities/366240cd-fb38-42c1-9e72-1694532ecf06")
-        .andExpect(jsonPath("$.applicationId", is("test-application-0.0.2"))));
-
-    await().untilAsserted(() ->
-      doGet("/capability-sets/12277da3-d05d-41de-ae74-0e8ec59f1dcc")
-        .andExpect(jsonPath("$.applicationId", is("test-application-0.0.2")))
-        .andExpect(jsonPath("$.capabilities", hasSize(3))));
-  }
-
-  @Test
   void handleCapabilityEvent_positive_uiPermissions() throws Exception {
     var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
@@ -159,7 +141,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
 
     var expectedCapabilitiesJson = asJsonString(capabilities(
-      fooItemCapability(CREATE, "foo.item.post", fooItemPostEndpoint()),
+      fooItemCapability(CapabilityAction.CREATE, "foo.item.post", fooItemPostEndpoint()),
       fooItemCapability(DELETE, "foo.item.delete", fooItemDeleteEndpoint()),
       fooItemCapability(EDIT, "foo.item.put", fooItemPutEndpoint(), fooItemPatchEndpoint()),
       fooItemCapability(VIEW, "foo.item.get", fooItemGetEndpoint())));
@@ -172,7 +154,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.capabilities[3].metadata.createdDate", notNullValue())));
 
     var expectedCapabilitySets = asJsonString(capabilitySets(
-      fooItemCapabilitySet(CREATE),
+      fooItemCapabilitySet(CapabilityAction.CREATE),
       fooItemCapabilitySet(EDIT),
       fooItemCapabilitySet(MANAGE),
       fooItemCapabilitySet(VIEW)));
@@ -216,7 +198,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   void handleCapabilityEvent_negative_parameterized(@SuppressWarnings("unused") String name, Throwable throwable) {
     var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
-    doThrow(throwable).when(capabilityService).createSafe(eq(APPLICATION_ID), anyList());
+    doThrow(throwable).when(capabilityService).update(eq(ResourceEventType.CREATE), anyList(), anyList());
 
     awaitFor(FIVE_HUNDRED_MILLISECONDS);
 

@@ -1,0 +1,35 @@
+{
+  "type": "UPDATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "foo-module-1.2.0",
+    "moduleType": "module",
+    "applicationId": "test-application-0.0.2",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "foo.item.create",
+          "displayName": "foo_item.view - display name",
+          "description": "Capability set to create a foo item",
+          "subPermissions": [ "foo.item.view", "foo.item.delete" ]
+        }
+      }
+    ]
+  },
+  "old": {
+    "moduleId": "foo-module-1.1.0",
+    "moduleType": "module",
+    "applicationId": "test-application-0.0.1",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "foo.item.create",
+          "displayName": "foo_item.edit - display name",
+          "description": "Capability set to create a foo item",
+          "subPermissions": [ "foo.item.edit", "foo.item.post" ]
+        }
+      }
+    ]
+  }
+}

@@ -23,11 +23,13 @@ public interface PermissionService {
    */
   void deletePermissions(UUID id, List<Endpoint> endpoints);
 
+  List<Endpoint> getAssignedEndpoints(UUID id, List<UUID> excludedCapabilityIds, List<UUID> excludedCapabilitySetIds);
+
   /**
    * Represents a list with {@link Endpoint} values in human-readable format.
    *
    * @param endpoints - list with endpoints to process
-   * @return list of endpoins as human-readable {@link String} representation
+   * @return list of endpoints as human-readable {@link String} representation
    */
   static String convertToString(List<Endpoint> endpoints) {
     return endpoints.stream()

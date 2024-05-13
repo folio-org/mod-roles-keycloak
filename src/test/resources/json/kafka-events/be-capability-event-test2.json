@@ -1,11 +1,11 @@
 {
   "type": "CREATE",
-  "tenant": "test",
+  "tenant": "test2",
   "resourceName": "Capability",
   "new": {
-    "moduleId": "foo-module-1.2.0",
+    "moduleId": "foo-module-1.0.0",
     "moduleType": "module",
-    "applicationId": "test-application-0.0.2",
+    "applicationId": "test-application-0.0.1",
     "resources": [
       {
         "permission": {
@@ -22,12 +22,13 @@
       },
       {
         "permission": {
-          "permissionName": "foo.item.create",
-          "displayName": "foo_item.create - display name",
-          "description": "foo_item.create - description",
-          "subPermissions": [ "foo.item.edit", "foo.item.post" ]
+          "permissionName": "foo.item.view",
+          "displayName": "foo_item.view - display name",
+          "description": "foo_item.view - description",
+          "subPermissions": [ "foo.item.get" ]
         }
       }
-    ]
+    ],
+    "capabilities": [ ]
   }
 }

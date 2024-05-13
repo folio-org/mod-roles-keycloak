@@ -32,7 +32,8 @@
             "name": "/foo/items",
             "displayName": "/foo/items",
             "scopes": [
-              { "name": "POST" }
+              { "name": "POST" },
+              { "name": "GET" }
             ]
           },
           {

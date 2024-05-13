@@ -1,4 +1,4 @@
-package org.folio.roles.service.event;
+package org.folio.roles.domain.model.event;
 
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.collections4.MapUtils.emptyIfNull;

@@ -11,6 +11,7 @@ import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
 import static org.folio.roles.integration.kafka.model.ModuleType.UI_MODULE;
 import static org.folio.roles.support.AuthResourceUtils.permission;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
+import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemGetEndpoint;
@@ -208,6 +209,6 @@ class CapabilityEventProcessorTest {
   }
 
   private static Capability fooCapability(CapabilityAction action, String permissionSuffix, Endpoint... endpoints) {
-    return capability(null, "Foo Item", action, "foo.item." + permissionSuffix, endpoints).description(null);
+    return capability(null, FOO_RESOURCE, action, "foo.item." + permissionSuffix, endpoints).description(null);
   }
 }

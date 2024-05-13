@@ -97,9 +97,6 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
       ) capability""")
   Page<CapabilityEntity> findAllByRoleId(@Param("roleId") UUID roleId, Pageable pageable);
 
-  @Query("select distinct entity.name from CapabilityEntity entity where entity.name in :capabilityNames")
-  Set<String> findCapabilityNames(@Param("capabilityNames") Collection<String> names);
-
   @Query("select entity from CapabilityEntity entity where entity.name in :names order by entity.name")
   List<CapabilityEntity> findAllByNames(@Param("names") Collection<String> names);
 

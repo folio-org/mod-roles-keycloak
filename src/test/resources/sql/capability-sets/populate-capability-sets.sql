@@ -11,6 +11,23 @@ VALUES ('a1002e06-a2bc-4ce4-9d71-e25db1250e09', 'e2628d7d-059a-46a1-a5ea-10a5a37
        ('a1002e06-a2bc-4ce4-9d71-e25db1250e09', '78d6a59f-90ab-46a1-a349-4d25d0798763'),
        ('a1002e06-a2bc-4ce4-9d71-e25db1250e09', 'ff2c8ad0-2b82-4b87-bafe-43a55ae7f4db');
 
+-- Foo Item | Manage (2)
+INSERT INTO capability_set(id, name, description, resource, action, type, folio_permission, application_id, created_by)
+VALUES ('a8ec43cc-f38d-4d34-9e5c-39815ffd099c', 'foo_item_v2.manage', 'Capability set to manage a foo item v2',
+        'Foo Item V2', 'MANAGE', 'DATA', 'foo.item.v2.all', 'test-application-0.0.1',
+        '11111111-1111-4011-1111-0d121a11111e');
+
+INSERT INTO capability_set_capability(capability_set_id, capability_id)
+VALUES ('a8ec43cc-f38d-4d34-9e5c-39815ffd099c', 'e1a5683a-fece-43fb-bbaa-52a438af9807');
+
+-- Foo Item | View
+INSERT INTO capability_set(id, name, description, resource, action, type, folio_permission, application_id)
+VALUES ('8812fa56-1e07-4bea-87a8-16b548f7e4fc', 'foo_item.view', 'Capability set to view a foo item',
+        'Foo Item', 'VIEW', 'DATA', 'foo.item.view', 'test-application-0.0.1');
+
+INSERT INTO capability_set_capability(capability_set_id, capability_id)
+VALUES ('8812fa56-1e07-4bea-87a8-16b548f7e4fc', 'e2628d7d-059a-46a1-a5ea-10a5a37b1af2');
+
 -- Foo Item | Edit
 INSERT INTO capability_set(id, name, description, resource, action, type, folio_permission, application_id)
 VALUES ('6532d4f8-3e97-4d8b-886f-4ec2a2adc4a3', 'foo_item.edit', 'Capability set to edit a foo item',

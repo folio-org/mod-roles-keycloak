@@ -26,6 +26,10 @@ public class EndpointUtils {
     return endpoint("/foo/items/{id}", GET);
   }
 
+  public static Endpoint fooItemGetCollectionEndpoint() {
+    return endpoint("/foo/items", GET);
+  }
+
   public static Endpoint fooItemPutEndpoint() {
     return endpoint("/foo/items/{id}", PUT);
   }

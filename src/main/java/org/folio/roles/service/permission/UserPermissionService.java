@@ -1,6 +1,7 @@
 package org.folio.roles.service.permission;
 
 import static java.lang.String.format;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.roles.domain.dto.PolicyType.USER;
 import static org.folio.roles.service.permission.PermissionService.convertToString;
 
@@ -14,6 +15,7 @@ import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.domain.dto.UserPolicy;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationService;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
+import org.folio.roles.service.capability.CapabilityEndpointService;
 import org.folio.roles.service.policy.PolicyService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +27,16 @@ public class UserPermissionService implements PermissionService {
 
   private final PolicyService policyService;
   private final KeycloakUserService keycloakUserService;
+  private final CapabilityEndpointService capabilityEndpointService;
   private final KeycloakAuthorizationService keycloakAuthService;
 
   @Override
   @Transactional
   public void createPermissions(UUID userId, List<Endpoint> endpoints) {
+    if (isEmpty(endpoints)) {
+      return;
+    }
+
     log.info("Creating permissions for user: id = {}, endpoints = {}", () -> userId, () -> convertToString(endpoints));
     var kcUser = keycloakUserService.getKeycloakUserByUserId(userId);
     var policyName = getPolicyName(kcUser.getUserId());
@@ -40,12 +47,21 @@ public class UserPermissionService implements PermissionService {
   @Override
   @Transactional
   public void deletePermissions(UUID userId, List<Endpoint> endpoints) {
+    if (isEmpty(endpoints)) {
+      return;
+    }
+
     log.debug("Removing permissions for user: id = {}, endpoints = {}", () -> userId, () -> convertToString(endpoints));
     var kcUser = keycloakUserService.getKeycloakUserByUserId(userId);
     var folioUserId = kcUser.getUserId();
     var policyName = getPolicyName(kcUser.getUserId());
     var policy = policyService.getByNameAndType(policyName, USER);
     keycloakAuthService.deletePermissions(policy, endpoints, getPermissionNameGenerator(folioUserId));
+  }
+
+  @Override
+  public List<Endpoint> getAssignedEndpoints(UUID userId, List<UUID> excludedCapabilityIds, List<UUID> excludedSetIds) {
+    return capabilityEndpointService.getUserAssignedEndpoints(userId, excludedCapabilityIds, excludedSetIds);
   }
 
   private static Function<Endpoint, String> getPermissionNameGenerator(UUID userId) {

@@ -1,5 +1,7 @@
 package org.folio.roles.service.capability;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityEndpoints;
 
 import java.util.ArrayList;
@@ -10,7 +12,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.roles.domain.dto.Endpoint;
+import org.folio.roles.domain.entity.CapabilityEndpointEntity;
+import org.folio.roles.repository.CapabilityEndpointRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CapabilityEndpointService {
 
   private final CapabilityService capabilityService;
+  private final CapabilityEndpointRepository capabilityEndpointRepository;
 
   /**
    * Provides a list of changed endpoints using changed and assigned capability identifiers.
@@ -56,5 +62,34 @@ public class CapabilityEndpointService {
     excludeList.forEach(resultEndpoints::remove);
 
     return new ArrayList<>(resultEndpoints);
+  }
+
+  @Transactional(readOnly = true)
+  public List<Endpoint> getRoleAssignedEndpoints(UUID roleId, List<UUID> exclCapabilityIds, List<UUID> exclSetIds) {
+    var capabilityIdsString = StringUtils.join(nullIfEmpty(exclCapabilityIds), ",");
+    var setIdsString = StringUtils.join(nullIfEmpty(exclSetIds), ",");
+    var capabilityEndpoints = capabilityEndpointRepository.getByRoleId(roleId, capabilityIdsString);
+    var capabilitySetEndpoints = capabilityEndpointRepository.getByRoleId(roleId, capabilityIdsString, setIdsString);
+    return getEndpoints(ListUtils.union(capabilityEndpoints, capabilitySetEndpoints));
+  }
+
+  @Transactional(readOnly = true)
+  public List<Endpoint> getUserAssignedEndpoints(UUID userId, List<UUID> exclCapabilityIds, List<UUID> exclSetIds) {
+    var capabilityIdsString = StringUtils.join(nullIfEmpty(exclCapabilityIds), ",");
+    var setIdsString = StringUtils.join(nullIfEmpty(exclSetIds), ",");
+    var capabilityEndpoints = capabilityEndpointRepository.getByUserId(userId, capabilityIdsString);
+    var capabilitySetEndpoints = capabilityEndpointRepository.getByUserId(userId, capabilityIdsString, setIdsString);
+    return getEndpoints(ListUtils.union(capabilityEndpoints, capabilitySetEndpoints));
+  }
+
+  private static List<Endpoint> getEndpoints(List<CapabilityEndpointEntity> endpointEntities) {
+    return toStream(endpointEntities)
+      .map(entity -> new Endpoint().path(entity.getPath()).method(entity.getMethod()))
+      .distinct()
+      .toList();
+  }
+
+  private static <T> List<T> nullIfEmpty(List<T> list) {
+    return isEmpty(list) ? null : list;
   }
 }
