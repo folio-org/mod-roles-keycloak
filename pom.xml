@@ -33,7 +33,7 @@
     <apache-commons-collections4.version>4.4</apache-commons-collections4.version>
     <openapi-tools.jackson-databind-nullable.version>0.2.6</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
-    <hypersistence-utils-hibernate-63.version>3.7.4</hypersistence-utils-hibernate-63.version>
+    <hypersistence-utils-hibernate-63.version>3.7.5</hypersistence-utils-hibernate-63.version>
     <folio-spring-support.version>8.1.0</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
@@ -43,13 +43,13 @@
     </mod-roles-keycloak.yaml-file>
 
     <!-- Test dependencies versions -->
-    <testcontainer.version>1.19.7</testcontainer.version>
+    <testcontainer.version>1.19.8</testcontainer.version>
     <instancio.version>4.5.1</instancio.version>
     <kryo.version>5.6.0</kryo.version>
 
     <!-- Plugins versions -->
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    <maven-checkstyle.version>10.15.0</maven-checkstyle.version>
+    <maven-checkstyle.version>10.16.0</maven-checkstyle.version>
     <maven-checkstyle-plugin.version>3.3.1</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.0.1</maven-release-plugin.version>
