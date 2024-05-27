@@ -1,4 +1,8 @@
-## Version `v1.4.0` (in progress)
+## Version `v1.5.0` (in progress)
+
+## Version `v1.4.0` (25.05.2024)
+### Changes:
+* Update dependencies
 
 ## Version `v1.3.1` (07.05.2024)
 ### Changes:
