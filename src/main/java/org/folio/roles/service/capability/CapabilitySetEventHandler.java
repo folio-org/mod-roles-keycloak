@@ -43,8 +43,8 @@ public class CapabilitySetEventHandler extends AbstractCapabilityEventHandler {
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).UPDATE")
   public void handleCapabilitySetUpdatedEvent(CapabilitySetEvent event) {
-    var newCapabilitySet = (ExtendedCapabilitySet) event.getNewObject();
-    var oldCapabilitySet = (ExtendedCapabilitySet) event.getOldObject();
+    var newCapabilitySet = event.getNewObject();
+    var oldCapabilitySet = event.getOldObject();
     var id = newCapabilitySet.getId();
 
     var newCapabilityIds = newCapabilitySet.getCapabilities();

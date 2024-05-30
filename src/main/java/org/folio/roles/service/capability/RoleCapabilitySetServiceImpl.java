@@ -60,7 +60,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
 
     roleService.getById(roleId);
     var existingEntities = roleCapabilitySetRepository.findRoleCapabilitySets(roleId, capabilitySetIds);
-    var existingCapabilitySetIds = getSetIds(existingEntities);
+    var existingCapabilitySetIds = getCapabilitySetIds(existingEntities);
     if (isNotEmpty(existingCapabilitySetIds)) {
       throw new EntityExistsException(String.format(
         "Relation already exists for role='%s' and capabilitySets=%s", roleId, existingCapabilitySetIds));
@@ -96,11 +96,11 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   @Transactional
   public void update(UUID roleId, List<UUID> capabilitySetIds) {
     roleService.getById(roleId);
-    var assignedRoleCapabilityEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
+    var assignedRoleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
 
-    var assignedCapabilitySetIds = getSetIds(assignedRoleCapabilityEntities);
-    UpdateOperationHelper.create(assignedCapabilitySetIds, capabilitySetIds, "role-capability set")
-      .consumeAndCacheNewEntities(newIds -> getSetIds(assignCapabilities(roleId, newIds, assignedCapabilitySetIds)))
+    var assignedSetIds = getCapabilitySetIds(assignedRoleCapabilitySetEntities);
+    UpdateOperationHelper.create(assignedSetIds, capabilitySetIds, "role-capability set")
+      .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(roleId, newIds, assignedSetIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
   }
 
@@ -114,7 +114,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   @Transactional
   public void delete(UUID roleId, UUID capabilitySetId) {
     var assignedRoleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
-    var assignedCapabilitySetIds = getSetIds(assignedRoleCapabilitySetEntities);
+    var assignedCapabilitySetIds = getCapabilitySetIds(assignedRoleCapabilitySetEntities);
     if (!assignedCapabilitySetIds.contains(capabilitySetId)) {
       return;
     }
@@ -134,12 +134,12 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   @Transactional
   public void deleteAll(UUID roleId) {
     roleService.getById(roleId);
-    var roleCapabilityEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
-    if (isEmpty(roleCapabilityEntities)) {
+    var roleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
+    if (isEmpty(roleCapabilitySetEntities)) {
       throw new EntityNotFoundException("Relations between role and capability sets are not found for role: " + roleId);
     }
 
-    var capabilitySetIds = getSetIds(roleCapabilityEntities);
+    var capabilitySetIds = getCapabilitySetIds(roleCapabilitySetEntities);
     removeCapabilities(roleId, capabilitySetIds, emptyList());
   }
 
@@ -173,11 +173,11 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     return capabilityEndpointService.getByCapabilitySetIds(deprecatedIds, assignedIds, excludedEndpoints);
   }
 
-  private static List<UUID> getSetIds(PageResult<RoleCapabilitySet> roleCapabilitySets) {
+  private static List<UUID> getCapabilitySetIds(PageResult<RoleCapabilitySet> roleCapabilitySets) {
     return mapItems(roleCapabilitySets.getRecords(), RoleCapabilitySet::getCapabilitySetId);
   }
 
-  private static List<UUID> getSetIds(List<RoleCapabilitySetEntity> existingEntities) {
+  private static List<UUID> getCapabilitySetIds(List<RoleCapabilitySetEntity> existingEntities) {
     return mapItems(existingEntities, RoleCapabilitySetEntity::getCapabilitySetId);
   }
 }

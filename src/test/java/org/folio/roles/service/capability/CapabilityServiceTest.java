@@ -167,6 +167,17 @@ class CapabilityServiceTest {
     }
 
     @Test
+    void positive_deprecatedCapabilityNotFoundByNames() {
+      var capability = capability().id(null);
+      var capabilityNames = Set.of("test_resource.create");
+      when(capabilityRepository.findAllByNames(capabilityNames)).thenReturn(emptyList());
+
+      capabilityService.update(ResourceEventType.UPDATE, emptyList(), List.of(capability));
+
+      verifyNoInteractions(applicationEventPublisher);
+    }
+
+    @Test
     void positive_emptyNewAndOldCapabilities() {
       capabilityService.update(CREATE, emptyList(), emptyList());
       Mockito.verifyNoInteractions(capabilityRepository, capabilityEntityMapper);

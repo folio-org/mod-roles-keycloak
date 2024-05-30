@@ -2,12 +2,10 @@ package org.folio.roles.service.capability;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.SetUtils.difference;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.common.utils.CollectionUtils.mapItems;
-import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.domain.entity.CapabilitySetEntity.DEFAULT_CAPABILITY_SET_SORT;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
@@ -126,25 +124,6 @@ public class CapabilitySetService {
       .orElseThrow(() -> new EntityNotFoundException("Capability set is not found: id = " + id));
 
     repository.delete(capabilitySetEntity);
-  }
-
-  /**
-   * Removes capability sets by ids.
-   *
-   * @param capabilitySets - capability sets to be deleted
-   */
-  @Transactional
-  public void deleteAll(List<CapabilitySet> capabilitySets) {
-    var capabilitySetIds = toStream(capabilitySets)
-      .map(CapabilitySet::getId)
-      .filter(Objects::nonNull)
-      .collect(toSet());
-
-    if (isEmpty(capabilitySetIds)) {
-      return;
-    }
-
-    repository.deleteAllById(capabilitySetIds);
   }
 
   @Transactional(readOnly = true)

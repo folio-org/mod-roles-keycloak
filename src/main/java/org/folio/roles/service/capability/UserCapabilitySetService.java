@@ -58,7 +58,7 @@ public class UserCapabilitySetService {
 
     keycloakUserService.getKeycloakUserByUserId(userId);
     var existingEntities = userCapabilitySetRepository.findUserCapabilitySets(userId, capabilitySetIds);
-    var existingCapabilitySetIds = getSetIds(existingEntities);
+    var existingCapabilitySetIds = getCapabilitySetIds(existingEntities);
     if (isNotEmpty(existingCapabilitySetIds)) {
       throw new EntityExistsException(String.format(
         "Relation already exists for user='%s' and capabilitySets=%s", userId, existingCapabilitySetIds));
@@ -92,11 +92,11 @@ public class UserCapabilitySetService {
   @Transactional
   public void update(UUID userId, List<UUID> capabilityIds) {
     keycloakUserService.getKeycloakUserByUserId(userId);
-    var assignedUserCapabilityEntities = userCapabilitySetRepository.findAllByUserId(userId);
+    var assignedUserCapabilitySetEntities = userCapabilitySetRepository.findAllByUserId(userId);
 
-    var assignedCapabilityIds = getSetIds(assignedUserCapabilityEntities);
-    UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "user-capability set")
-      .consumeAndCacheNewEntities(newIds -> getSetIds(assignCapabilities(userId, newIds, assignedCapabilityIds)))
+    var assignedSetIds = getCapabilitySetIds(assignedUserCapabilitySetEntities);
+    UpdateOperationHelper.create(assignedSetIds, capabilityIds, "user-capability set")
+      .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(userId, newIds, assignedSetIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
   }
 
@@ -109,7 +109,7 @@ public class UserCapabilitySetService {
   @Transactional
   public void delete(UUID userId, UUID capabilitySetId) {
     var assignedUserCapabilitySetEntities = userCapabilitySetRepository.findAllByUserId(userId);
-    var assignedCapabilitySetIds = getSetIds(assignedUserCapabilitySetEntities);
+    var assignedCapabilitySetIds = getCapabilitySetIds(assignedUserCapabilitySetEntities);
     if (!assignedCapabilitySetIds.contains(capabilitySetId)) {
       return;
     }
@@ -128,12 +128,12 @@ public class UserCapabilitySetService {
   @Transactional
   public void deleteAll(UUID userId) {
     keycloakUserService.getKeycloakUserByUserId(userId);
-    var userCapabilityEntities = userCapabilitySetRepository.findAllByUserId(userId);
-    if (isEmpty(userCapabilityEntities)) {
+    var userCapabilitySetEntities = userCapabilitySetRepository.findAllByUserId(userId);
+    if (isEmpty(userCapabilitySetEntities)) {
       throw new EntityNotFoundException("Relations between user and capability sets are not found for user: " + userId);
     }
 
-    var capabilitySetIds = getSetIds(userCapabilityEntities);
+    var capabilitySetIds = getCapabilitySetIds(userCapabilitySetEntities);
     removeCapabilities(userId, capabilitySetIds, emptyList());
   }
 
@@ -167,11 +167,11 @@ public class UserCapabilitySetService {
     return capabilityEndpointService.getByCapabilitySetIds(deprecatedIds, assignedIds, excludedEndpoints);
   }
 
-  private static List<UUID> getSetIds(PageResult<UserCapabilitySet> userCapabilitySets) {
+  private static List<UUID> getCapabilitySetIds(PageResult<UserCapabilitySet> userCapabilitySets) {
     return mapItems(userCapabilitySets.getRecords(), UserCapabilitySet::getCapabilitySetId);
   }
 
-  private static List<UUID> getSetIds(List<UserCapabilitySetEntity> existingEntities) {
+  private static List<UUID> getCapabilitySetIds(List<UserCapabilitySetEntity> existingEntities) {
     return mapItems(existingEntities, UserCapabilitySetEntity::getCapabilitySetId);
   }
 }
