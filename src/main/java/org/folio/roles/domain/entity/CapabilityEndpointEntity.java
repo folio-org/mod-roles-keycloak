@@ -20,13 +20,22 @@ import org.hibernate.type.SqlTypes;
 @IdClass(CapabilityEndpointPrimaryKey.class)
 public class CapabilityEndpointEntity {
 
+  /**
+   * Capability identifier.
+   */
   @Id
   @Column(name = "capability_id")
   private UUID capabilityId;
 
+  /**
+   * URL static path or path pattern.
+   */
   @Id
   private String path;
 
+  /**
+   * HTTP method.
+   */
   @Id
   @Enumerated(EnumType.STRING)
   @JdbcTypeCode(SqlTypes.NAMED_ENUM)
@@ -35,8 +44,19 @@ public class CapabilityEndpointEntity {
   @Data
   public static class CapabilityEndpointPrimaryKey {
 
+    /**
+     * Capability identifier.
+     */
     private UUID capabilityId;
+
+    /**
+     * URL static path or path pattern.
+     */
     private String path;
+
+    /**
+     * HTTP method.
+     */
     private HttpMethod method;
   }
 }

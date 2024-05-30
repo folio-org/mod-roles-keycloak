@@ -12,5 +12,12 @@ import org.folio.roles.domain.dto.CapabilitySet;
 @EqualsAndHashCode(callSuper = true)
 public class ExtendedCapabilitySet extends CapabilitySet {
 
+  /**
+   * List with related full capability objects.
+   *
+   * <p>
+   * This object is required because after update - all capabilities won't have valid value before upgrade
+   * </p>
+   */
   private List<Capability> capabilityList;
 }

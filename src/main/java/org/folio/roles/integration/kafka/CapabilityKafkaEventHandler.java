@@ -28,6 +28,11 @@ public class CapabilityKafkaEventHandler {
   private final CapabilityEventProcessor capabilityEventProcessor;
   private final CapabilitySetDescriptorService capabilitySetDescriptorService;
 
+  /**
+   * Handles resource event containing created, updated, or deprecated capabilities and capability sets.
+   *
+   * @param resourceEvent - resource event from message bus
+   */
   @Transactional
   public void handleEvent(ResourceEvent resourceEvent) {
     var eventType = resourceEvent.getType();
