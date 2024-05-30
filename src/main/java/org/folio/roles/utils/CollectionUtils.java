@@ -33,12 +33,29 @@ public class CollectionUtils {
       .collect(toList());
   }
 
+  /**
+   * Transforms given collection to set using provided mapper function.
+   *
+   * @param collection - collection value to process
+   * @param mapper - collection element modifier function
+   * @param <T> - generic type for source collection elements
+   * @param <R> - generic type for result set elements
+   * @return a new set containing modified values
+   */
   public static <T, R> Set<R> toSet(Collection<T> collection, Function<T, R> mapper) {
     return toStream(collection)
       .map(mapper)
       .collect(Collectors.toSet());
   }
 
+  /**
+   * Returns a difference between list1 and list2 as new list ({@code list1 - list2}.
+   *
+   * @param list1 - first list value to process
+   * @param list2 - second list value to process
+   * @param <T> - generic type for list elements
+   * @return a new list containing difference between list1 and list2
+   */
   public static <T> List<T> difference(List<T> list1, List<T> list2) {
     var set = new LinkedHashSet<>(list1);
     emptyIfNull(list2).forEach(set::remove);

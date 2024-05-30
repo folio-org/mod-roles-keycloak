@@ -15,7 +15,14 @@ import org.folio.roles.domain.dto.UserPolicy;
 
 public abstract class AbstractCapabilityEventHandler {
 
-  public void performActionForPolicies(List<Policy> policies,
+  /**
+   * Applies an action for each role or user in found policies
+   *
+   * @param policies list of found policies per role or user
+   * @param entityIdExtractor - extractor function for identifiers in policy
+   * @param idConsumer - consumer function to perform action upon user or role id
+   */
+  protected void performActionForPolicies(List<Policy> policies,
     Function<Policy, List<UUID>> entityIdExtractor, Consumer<UUID> idConsumer) {
     if (isEmpty(policies)) {
       return;
@@ -26,6 +33,12 @@ public abstract class AbstractCapabilityEventHandler {
     }
   }
 
+  /**
+   * Extracts role identifiers from role policy.
+   *
+   * @param rolePolicy - role policy object
+   * @return extracted role identifiers
+   */
   protected static List<UUID> extractRoleIds(Policy rolePolicy) {
     return Optional.ofNullable(rolePolicy)
       .map(Policy::getRolePolicy)
@@ -37,6 +50,12 @@ public abstract class AbstractCapabilityEventHandler {
       .toList();
   }
 
+  /**
+   * Extracts user identifiers from user policy.
+   *
+   * @param userPolicy - role policy object
+   * @return extracted user identifiers
+   */
   protected static List<UUID> extractUserIds(Policy userPolicy) {
     return Optional.ofNullable(userPolicy)
       .map(Policy::getUserPolicy)

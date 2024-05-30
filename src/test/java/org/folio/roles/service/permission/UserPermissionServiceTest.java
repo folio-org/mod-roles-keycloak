@@ -1,5 +1,6 @@
 package org.folio.roles.service.permission;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.domain.dto.PolicyType.USER;
@@ -9,6 +10,7 @@ import static org.folio.roles.support.PolicyUtils.userPolicy;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -73,6 +75,12 @@ class UserPermissionServiceTest {
         .description("System generated policy for user: " + USER_ID)
         .userPolicy(new UserPolicy().users(List.of(USER_ID))));
     }
+
+    @Test
+    void positive_emptyEndpoints() {
+      userPermissionService.createPermissions(USER_ID, emptyList());
+      verifyNoInteractions(keycloakAuthService, policyService, keycloakAuthService);
+    }
   }
 
   @Nested
@@ -94,6 +102,12 @@ class UserPermissionServiceTest {
 
       var policyNameGenerator = nameGeneratorCaptor.getValue();
       assertThat(policyNameGenerator.apply(endpoint)).isEqualTo("GET access for user '%s' to '/foo/entities'", USER_ID);
+    }
+
+    @Test
+    void positive_emptyEndpoints() {
+      userPermissionService.deletePermissions(USER_ID, emptyList());
+      verifyNoInteractions(keycloakAuthService, policyService, keycloakAuthService);
     }
   }
 }

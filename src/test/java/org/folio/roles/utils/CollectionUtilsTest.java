@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.stream.Stream;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -25,6 +26,20 @@ class CollectionUtilsTest {
     assertThat(result).containsExactlyElementsOf(expected);
   }
 
+  @ParameterizedTest
+  @MethodSource("differenceDataProvider")
+  @DisplayName("difference_parameterized")
+  void difference_parameterized(List<Object> c1, List<Object> c2, List<Object> expected) {
+    var result = CollectionUtils.difference(c1, c2);
+    assertThat(result).containsExactlyElementsOf(expected);
+  }
+
+  @Test
+  void toSet_positive() {
+    var result = CollectionUtils.toSet(List.of(1, 2, 3), v -> Integer.toString(v));
+    assertThat(result).containsExactly("1", "2", "3");
+  }
+
   private static Stream<Arguments> unionDataProvider() {
     return Stream.of(
       arguments(emptyList(), emptyList(), emptyList()),
@@ -33,6 +48,15 @@ class CollectionUtilsTest {
       arguments(List.of(1, 2), null, List.of(1, 2)),
       arguments(null, List.of(1, 2), List.of(1, 2)),
       arguments(List.of(1, 2), List.of(2, 3), List.of(1, 2, 3))
+    );
+  }
+
+  private static Stream<Arguments> differenceDataProvider() {
+    return Stream.of(
+      arguments(emptyList(), emptyList(), emptyList()),
+      arguments(List.of(1), emptyList(), List.of(1)),
+      arguments(emptyList(), List.of(1), emptyList()),
+      arguments(List.of(1, 2), List.of(1), List.of(2))
     );
   }
 }
