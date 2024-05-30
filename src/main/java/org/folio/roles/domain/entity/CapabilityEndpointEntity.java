@@ -8,7 +8,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.folio.roles.domain.dto.HttpMethod;
 import org.folio.roles.domain.entity.CapabilityEndpointEntity.CapabilityEndpointPrimaryKey;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -16,6 +18,8 @@ import org.hibernate.type.SqlTypes;
 
 @Data
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor(staticName = "of")
 @Table(name = "capability_endpoint")
 @IdClass(CapabilityEndpointPrimaryKey.class)
 public class CapabilityEndpointEntity {

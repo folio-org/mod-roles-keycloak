@@ -3,6 +3,8 @@ package org.folio.roles.service.policy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.model.LogicType.POSITIVE;
+import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
+import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.PolicyUtils.POLICY_DESCRIPTION;
 import static org.folio.roles.support.PolicyUtils.POLICY_ID;
 import static org.folio.roles.support.PolicyUtils.POLICY_NAME;
@@ -24,8 +26,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.folio.roles.domain.dto.Metadata;
+import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.domain.dto.PolicyType;
 import org.folio.roles.domain.entity.BasePolicyEntity;
+import org.folio.roles.domain.entity.RolePolicyEntity;
 import org.folio.roles.domain.entity.TimePolicyEntity;
 import org.folio.roles.domain.entity.UserPolicyEntity;
 import org.folio.roles.mapper.entity.DateConvertHelper;
@@ -248,7 +252,75 @@ class PolicyEntityServiceTest {
     void positive() {
       when(repository.findByName(POLICY_NAME)).thenReturn(Optional.of(userPolicyEntity()));
       var result = service.findByName(POLICY_NAME);
-      assertThat(result).isPresent().get().isEqualTo(userPolicy().metadata(new Metadata()));
+      assertThat(result).isPresent().contains(userPolicy().metadata(new Metadata()));
+    }
+  }
+
+  @Nested
+  @DisplayName("findRolePoliciesByCapabilityId")
+  class FindRolePoliciesByCapabilityId {
+
+    @Test
+    void positive() {
+      var entity = new RolePolicyEntity();
+      var expectedPolicy = new Policy();
+      when(repository.findRolePoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(List.of(entity));
+      when(mapper.toRolePolicy(entity)).thenReturn(expectedPolicy);
+
+      var result = service.findRolePoliciesByCapabilityId(CAPABILITY_ID);
+
+      assertThat(result).containsExactly(expectedPolicy);
+    }
+  }
+
+  @Nested
+  @DisplayName("findRolePoliciesByCapabilitySetId")
+  class FindRolePoliciesByCapabilitySetId {
+
+    @Test
+    void positive() {
+      var entity = new RolePolicyEntity();
+      var expectedPolicy = new Policy();
+      when(repository.findRolePoliciesByCapabilitySetId(CAPABILITY_SET_ID)).thenReturn(List.of(entity));
+      when(mapper.toRolePolicy(entity)).thenReturn(expectedPolicy);
+
+      var result = service.findRolePoliciesByCapabilitySetId(CAPABILITY_SET_ID);
+
+      assertThat(result).containsExactly(expectedPolicy);
+    }
+  }
+
+  @Nested
+  @DisplayName("findUserPoliciesByCapabilityId")
+  class FindUserPoliciesByCapabilityId {
+
+    @Test
+    void positive() {
+      var entity = new UserPolicyEntity();
+      var expectedPolicy = new Policy();
+      when(repository.findUserPoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(List.of(entity));
+      when(mapper.toUserPolicy(entity)).thenReturn(expectedPolicy);
+
+      var result = service.findUserPoliciesByCapabilityId(CAPABILITY_ID);
+
+      assertThat(result).containsExactly(expectedPolicy);
+    }
+  }
+
+  @Nested
+  @DisplayName("findUserPoliciesByCapabilitySetId")
+  class FindUserPoliciesByCapabilitySetId {
+
+    @Test
+    void positive() {
+      var entity = new UserPolicyEntity();
+      var expectedPolicy = new Policy();
+      when(repository.findUserPoliciesByCapabilitySetId(CAPABILITY_SET_ID)).thenReturn(List.of(entity));
+      when(mapper.toUserPolicy(entity)).thenReturn(expectedPolicy);
+
+      var result = service.findUserPoliciesByCapabilitySetId(CAPABILITY_SET_ID);
+
+      assertThat(result).containsExactly(expectedPolicy);
     }
   }
 }

@@ -64,6 +64,14 @@ public class CapabilityEndpointService {
     return new ArrayList<>(resultEndpoints);
   }
 
+  /**
+   * Retrieves endpoints that was assigned to the role excluding assignment through capability and capability set ids.
+   *
+   * @param roleId - role identifier
+   * @param exclCapabilityIds - excluded capability identifiers for search request
+   * @param exclSetIds - excluded capability set identifiers for search request
+   * @return list with endpoints that was assigned to the role
+   */
   @Transactional(readOnly = true)
   public List<Endpoint> getRoleAssignedEndpoints(UUID roleId, List<UUID> exclCapabilityIds, List<UUID> exclSetIds) {
     var capabilityIdsString = StringUtils.join(nullIfEmpty(exclCapabilityIds), ",");
@@ -73,6 +81,14 @@ public class CapabilityEndpointService {
     return getEndpoints(ListUtils.union(capabilityEndpoints, capabilitySetEndpoints));
   }
 
+  /**
+   * Retrieves endpoints that was assigned to the user excluding assignment through capability and capability set ids.
+   *
+   * @param userId - user identifier
+   * @param exclCapabilityIds - excluded capability identifiers for search request
+   * @param exclSetIds - excluded capability set identifiers for search request
+   * @return list with endpoints that was assigned to the role
+   */
   @Transactional(readOnly = true)
   public List<Endpoint> getUserAssignedEndpoints(UUID userId, List<UUID> exclCapabilityIds, List<UUID> exclSetIds) {
     var capabilityIdsString = StringUtils.join(nullIfEmpty(exclCapabilityIds), ",");

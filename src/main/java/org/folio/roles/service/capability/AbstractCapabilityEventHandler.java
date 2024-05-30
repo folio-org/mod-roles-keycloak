@@ -16,7 +16,7 @@ import org.folio.roles.domain.dto.UserPolicy;
 public abstract class AbstractCapabilityEventHandler {
 
   /**
-   * Applies an action for each role or user in found policies
+   * Applies an action for each role or user in found policies.
    *
    * @param policies list of found policies per role or user
    * @param entityIdExtractor - extractor function for identifiers in policy
