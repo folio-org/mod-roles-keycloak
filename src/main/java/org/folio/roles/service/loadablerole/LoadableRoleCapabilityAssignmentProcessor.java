@@ -45,25 +45,20 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).CREATE")
   public void handleCapabilitiesCreatedEvent(CapabilityEvent event) {
-    try {
-      log.debug("\"Capabilities Created\" event received: {}", event);
-      var capability = event.getNewObject();
+    log.debug("\"Capabilities Created\" event received: {}", event);
+    var capability = event.getNewObject();
 
-      log.info("Handling created capability: {}", capability.getName());
+    log.info("Handling created capability: {}", capability.getName());
 
-      if (isEmpty(capability.getEndpoints())) {
-        log.debug("Technical capability found: {}. Skipping...", capability);
-        return;
-      }
-
-      var permission = capability.getPermission();
-
-      applyActionToRoles(() -> findRoleWithPermissionsByPermissionNames(List.of(permission)),
-        assignCapabilitiesToRole(Map.of(permission, capability)), event.getContext());
-    } catch (Exception e) {
-      log.warn("exception occurred while handling capabilities created", e);
-      throw new RuntimeException(e);
+    if (isEmpty(capability.getEndpoints())) {
+      log.debug("Technical capability found: {}. Skipping...", capability);
+      return;
     }
+
+    var permission = capability.getPermission();
+
+    applyActionToRoles(() -> findRoleWithPermissionsByPermissionNames(List.of(permission)),
+      assignCapabilitiesToRole(Map.of(permission, capability)), event.getContext());
   }
 
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).CREATE")
@@ -103,7 +98,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
       if (relatedCapability == null) {
         log.warn("Capability related to capability set is not found by capability set name: {}. "
-            + "Capability set will be skipped", capabilitySet.getName());
+          + "Capability set will be skipped", capabilitySet.getName());
         return Collections.emptyMap();
       }
 

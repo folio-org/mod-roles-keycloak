@@ -67,7 +67,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
   "classpath:/sql/truncate-capability-tables.sql",
   "classpath:/sql/truncate-user-capability-tables.sql",
 })
-public class UserCapabilityUpdateIT extends BaseIntegrationTest {
+class UserCapabilityUpdateIT extends BaseIntegrationTest {
 
   private static final UUID USER_ID = fromString("3e8647ee-2a23-4ca4-896b-95476559c567");
 

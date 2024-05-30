@@ -68,7 +68,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
   "classpath:/sql/truncate-capability-tables.sql",
   "classpath:/sql/truncate-role-capability-tables.sql",
 })
-public class RoleCapabilityUpdateIT extends BaseIntegrationTest {
+class RoleCapabilityUpdateIT extends BaseIntegrationTest {
 
   private static final UUID ROLE_ID = fromString("1e985e76-e9ca-401c-ad8e-0d121a11111e");
 

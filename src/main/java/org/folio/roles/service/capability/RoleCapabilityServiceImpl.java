@@ -146,8 +146,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Override
   @Transactional(readOnly = true)
   public List<UUID> getCapabilitySetCapabilityIds(UUID roleId) {
-    var capabilitySets = capabilitySetService.findByRoleId(roleId, MAX_VALUE, 0);
-    return CapabilityUtils.getCapabilityIds(capabilitySets);
+    return getAssignedCapabilityIds(roleId);
   }
 
   private PageResult<RoleCapability> assignCapabilities(UUID roleId, List<UUID> newIds, Collection<UUID> assignedIds) {
@@ -155,7 +154,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     capabilityService.checkIds(newIds);
 
     var entities = mapItems(newIds, id -> new RoleCapabilityEntity(roleId, id));
-    var assignedCapabilityIds = CollectionUtils.union(assignedIds, getCapabilitySetCapabilityIds(roleId));
+    var assignedCapabilityIds = CollectionUtils.union(assignedIds, getAssignedCapabilityIds(roleId));
     var endpoints = capabilityEndpointService.getByCapabilityIds(newIds, assignedCapabilityIds);
     rolePermissionService.createPermissions(roleId, endpoints);
 
@@ -168,7 +167,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
   private void removeCapabilities(UUID roleId, List<UUID> deprecatedIds, Collection<UUID> assignedIds) {
     log.debug("Revoking capabilities from role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
-    var assignedCapabilityIds = CollectionUtils.union(assignedIds, getCapabilitySetCapabilityIds(roleId));
+    var assignedCapabilityIds = CollectionUtils.union(assignedIds, getAssignedCapabilityIds(roleId));
     var endpoints = capabilityEndpointService.getByCapabilityIds(deprecatedIds, assignedCapabilityIds);
     rolePermissionService.deletePermissions(roleId, endpoints);
     roleCapabilityRepository.deleteRoleCapabilities(roleId, deprecatedIds);
@@ -181,5 +180,10 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
   private static List<UUID> getCapabilityIds(PageResult<RoleCapability> roleCapabilities) {
     return mapItems(roleCapabilities.getRecords(), RoleCapability::getCapabilityId);
+  }
+
+  private List<UUID> getAssignedCapabilityIds(UUID roleId) {
+    var capabilitySets = capabilitySetService.findByRoleId(roleId, MAX_VALUE, 0);
+    return CapabilityUtils.getCapabilityIds(capabilitySets);
   }
 }

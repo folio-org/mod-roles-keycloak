@@ -6,6 +6,7 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
+import static org.folio.roles.support.CapabilitySetUtils.extendedCapabilitySet;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissions;
 import static org.folio.roles.support.TestUtils.copy;
@@ -117,7 +118,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
       when(service.save(permWithCapabilitySetId)).thenReturn(permWithCapabilitySetId);
     });
 
-    var event = (CapabilitySetEvent) CapabilitySetEvent.created(capabilitySet).withContext(context);
+    var extendedCapabilitySet = extendedCapabilitySet(capabilitySet, emptyList());
+    var event = (CapabilitySetEvent) CapabilitySetEvent.created(extendedCapabilitySet).withContext(context);
     processor.handleCapabilitySetCreatedEvent(event);
 
     var firstLoadablePermission = perms.get(0);
@@ -128,7 +130,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Test
   void handleCapabilitySetCreatedEvent_positive_loadablePermissionsNotFound() {
     var capabilitySet = capabilitySet();
-    var event = (CapabilitySetEvent) CapabilitySetEvent.created(capabilitySet).withContext(context);
+    var extendedCapabilitySet = extendedCapabilitySet(capabilitySet, emptyList());
+    var event = (CapabilitySetEvent) CapabilitySetEvent.created(extendedCapabilitySet).withContext(context);
     var capability = capability();
 
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
@@ -142,7 +145,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Test
   void handleCapabilitySetCreatedEvent_positive_capabilityNotFound() {
     var capabilitySet = capabilitySet();
-    var event = (CapabilitySetEvent) CapabilitySetEvent.created(capabilitySet).withContext(context);
+    var extendedCapabilitySet = extendedCapabilitySet(capabilitySet, emptyList());
+    var event = (CapabilitySetEvent) CapabilitySetEvent.created(extendedCapabilitySet).withContext(context);
 
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(emptyList());
 
@@ -153,8 +157,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
 
   @Test
   void handleCapabilitySetUpdatedEvent_positive() {
-    var oldCapabilitySet = capabilitySet();
-    var newCapabilitySet = capabilitySet(List.of(randomUUID()));
+    var oldCapabilitySet = extendedCapabilitySet(capabilitySet(), emptyList());
+    var newCapabilitySet = extendedCapabilitySet(capabilitySet(List.of(randomUUID())), emptyList());
     var event = (CapabilitySetEvent) CapabilitySetEvent.updated(newCapabilitySet, oldCapabilitySet)
       .withContext(context);
 
@@ -165,8 +169,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
 
   @Test
   void handleCapabilitySetUpdatedEvent_negative_capabilitySetIdMismatch() {
-    var oldCapabilitySet = capabilitySet();
-    var newCapabilitySet = capabilitySet(randomUUID(), List.of(randomUUID()));
+    var oldCapabilitySet = extendedCapabilitySet(capabilitySet(), emptyList());
+    var newCapabilitySet = extendedCapabilitySet(capabilitySet(randomUUID(), List.of(randomUUID())), emptyList());
     var event = (CapabilitySetEvent) CapabilitySetEvent.updated(newCapabilitySet, oldCapabilitySet)
       .withContext(context);
 
