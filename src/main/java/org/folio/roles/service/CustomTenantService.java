@@ -27,7 +27,7 @@ public class CustomTenantService extends TenantService {
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
     FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
     List<ReferenceDataLoader> referenceDataLoaders,
-    @Value("${application.tenant-service.force-purge:false}") boolean forcePurge) {
+    @Value("${application.tenant-service.force-purge}") boolean forcePurge) {
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.kafkaAdminService = kafkaAdminService;
     this.referenceDataLoaders = referenceDataLoaders;
