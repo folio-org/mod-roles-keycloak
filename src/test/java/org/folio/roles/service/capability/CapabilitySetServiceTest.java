@@ -7,8 +7,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.entity.CapabilitySetEntity.DEFAULT_CAPABILITY_SET_SORT;
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
-import static org.folio.roles.service.event.DomainEventType.CREATE;
-import static org.folio.roles.service.event.DomainEventType.UPDATE;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySetEntity;
@@ -16,7 +14,6 @@ import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.CapabilityUtils.RESOURCE_NAME;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.TestConstants.USER_ID;
-import static org.mockito.ArgumentMatchers.assertArg;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -29,16 +26,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
-import org.folio.roles.domain.dto.CapabilitySet;
+import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.CapabilitySetEntityMapper;
 import org.folio.roles.repository.CapabilitySetRepository;
-import org.folio.roles.service.event.DomainEvent;
-import org.folio.roles.service.event.DomainEventType;
 import org.folio.roles.support.TestUtils;
-import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
@@ -49,7 +42,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 
 @UnitTest
@@ -60,32 +52,10 @@ class CapabilitySetServiceTest {
   @Mock private CapabilityService capabilityService;
   @Mock private CapabilitySetRepository capabilitySetRepository;
   @Mock private CapabilitySetEntityMapper mapper;
-  @Mock private FolioExecutionContext folioExecutionContext;
-  @Mock private ApplicationEventPublisher eventPublisher;
 
   @AfterEach
   void tearDown() {
     TestUtils.verifyNoMoreInteractions(this);
-  }
-
-  private void mockFolioExecutionContextCalls() {
-    when(folioExecutionContext.getTenantId()).thenReturn(null);
-    when(folioExecutionContext.getUserId()).thenReturn(null);
-    when(folioExecutionContext.getToken()).thenReturn(null);
-    when(folioExecutionContext.getOkapiUrl()).thenReturn(null);
-    when(folioExecutionContext.getRequestId()).thenReturn(null);
-    when(folioExecutionContext.getFolioModuleMetadata()).thenReturn(null);
-    when(folioExecutionContext.getAllHeaders()).thenReturn(null);
-    when(folioExecutionContext.getOkapiHeaders()).thenReturn(null);
-  }
-
-  private static Consumer<DomainEvent<CapabilitySet>> isDomainEventOf(DomainEventType type, CapabilitySet newValue,
-    CapabilitySet oldValue) {
-    return event -> {
-      assertThat(event.getType()).isEqualTo(type);
-      assertThat(event.getNewObject()).isEqualTo(newValue);
-      assertThat(event.getOldObject()).isEqualTo(oldValue);
-    };
   }
 
   @Nested
@@ -102,9 +72,6 @@ class CapabilitySetServiceTest {
       when(mapper.convert(capabilitySet)).thenReturn(capabilitySetEntity);
       when(capabilitySetRepository.save(capabilitySetEntity)).thenReturn(capabilitySetEntity);
       when(mapper.convert(capabilitySetEntity)).thenReturn(capabilitySet);
-
-      mockFolioExecutionContextCalls();
-      doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(CREATE, capabilitySet, null)));
 
       var actual = capabilitySetService.create(capabilitySet);
 
@@ -150,9 +117,6 @@ class CapabilitySetServiceTest {
       when(mapper.convert(capabilitySetEntity)).thenReturn(capabilitySet);
       doNothing().when(capabilityService).checkIds(List.of(CAPABILITY_ID));
 
-      mockFolioExecutionContextCalls();
-      doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(CREATE, capabilitySet, null)));
-
       var actual = capabilitySetService.create(capabilitySet);
 
       assertThat(actual).isEqualTo(capabilitySet);
@@ -169,18 +133,15 @@ class CapabilitySetServiceTest {
       when(capabilitySetRepository.save(capabilitySetEntity)).thenReturn(capabilitySetEntity);
       when(mapper.convert(capabilitySetEntity)).thenReturn(capabilitySet);
 
-      mockFolioExecutionContextCalls();
-      doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(CREATE, capabilitySet, null)));
-
       var capabilitySets = List.of(capabilitySet);
-      var actual = capabilitySetService.create(capabilitySets);
+      var actual = capabilitySetService.createAll(capabilitySets);
 
       assertThat(actual).isEqualTo(capabilitySets);
     }
 
     @Test
     void positive_batchRequest_emptySets() {
-      var actual = capabilitySetService.create(emptyList());
+      var actual = capabilitySetService.createAll(emptyList());
       assertThat(actual).isEmpty();
     }
 
@@ -191,7 +152,7 @@ class CapabilitySetServiceTest {
       when(capabilitySetRepository.existsByName("test_resource.create")).thenReturn(true);
       when(capabilitySetRepository.existsById(CAPABILITY_SET_ID)).thenReturn(false);
 
-      var actual = capabilitySetService.create(capabilitySets);
+      var actual = capabilitySetService.createAll(capabilitySets);
 
       assertThat(actual).isEmpty();
     }
@@ -241,65 +202,47 @@ class CapabilitySetServiceTest {
     @Test
     void positive() {
       var foundEntity = capabilitySetEntity();
-      var foundCapabilitySet = capabilitySet();
       var updatedEntity = capabilitySetEntity(updatedCapabilityIds);
       var updatedCapabilitySet = capabilitySet(updatedCapabilityIds);
 
-      doNothing().when(capabilityService).checkIds(updatedCapabilityIds);
       when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenReturn(foundEntity);
       when(mapper.convert(updatedCapabilitySet)).thenReturn(updatedEntity);
-      when(mapper.convert(updatedEntity)).thenReturn(updatedCapabilitySet);
-      when(mapper.convert(foundEntity)).thenReturn(foundCapabilitySet);
       when(capabilitySetRepository.saveAndFlush(updatedEntity)).thenReturn(updatedEntity);
 
-      mockFolioExecutionContextCalls();
-      doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(UPDATE, updatedCapabilitySet,
-        foundCapabilitySet)));
-
       capabilitySetService.update(CAPABILITY_SET_ID, updatedCapabilitySet);
+
+      verify(capabilityService).checkIds(updatedCapabilityIds);
     }
 
     @Test
     void positive_setNameIfNull() {
       var foundEntity = capabilitySetEntity(updatedCapabilityIds);
-      var foundCapabilitySet = capabilitySet(updatedCapabilityIds);
       var updatedEntity = capabilitySetEntity(updatedCapabilityIds);
       var updatedCapabilitySet = capabilitySet(updatedCapabilityIds).name(null);
 
-      doNothing().when(capabilityService).checkIds(updatedCapabilityIds);
       when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenReturn(foundEntity);
       when(mapper.convert(updatedCapabilitySet)).thenReturn(updatedEntity);
-      when(mapper.convert(updatedEntity)).thenReturn(foundCapabilitySet);
-      when(mapper.convert(foundEntity)).thenReturn(foundCapabilitySet);
       when(capabilitySetRepository.saveAndFlush(updatedEntity)).thenReturn(updatedEntity);
 
-      mockFolioExecutionContextCalls();
-      doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(UPDATE, updatedCapabilitySet,
-        foundCapabilitySet)));
-
       capabilitySetService.update(CAPABILITY_SET_ID, updatedCapabilitySet);
+
+      verify(capabilityService).checkIds(updatedCapabilityIds);
     }
 
     @Test
     void positive_actionIsChanged() {
-      var foundEntity = capabilitySetEntity(RESOURCE_NAME, org.folio.roles.domain.dto.CapabilityAction.CREATE);
-      var foundCapabilitySet = capabilitySet(RESOURCE_NAME, org.folio.roles.domain.dto.CapabilityAction.CREATE);
-      var updatedEntity = capabilitySetEntity(RESOURCE_NAME, EDIT);
-      var updatedCapabilitySet = capabilitySet(RESOURCE_NAME, EDIT);
+      var foundEntity = capabilitySetEntity(RESOURCE_NAME, CapabilityAction.CREATE);
+      var updatedEntity = capabilitySetEntity(RESOURCE_NAME, CapabilityAction.EDIT);
+      var updatedCapabilitySet = capabilitySet(RESOURCE_NAME, CapabilityAction.EDIT);
 
-      doNothing().when(capabilityService).checkIds(List.of(CAPABILITY_ID));
       when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenReturn(foundEntity);
       when(capabilitySetRepository.existsByName("test_resource.edit")).thenReturn(false);
       when(mapper.convert(updatedCapabilitySet)).thenReturn(updatedEntity);
-      when(mapper.convert(updatedEntity)).thenReturn(updatedCapabilitySet);
-      when(mapper.convert(foundEntity)).thenReturn(foundCapabilitySet);
       when(capabilitySetRepository.saveAndFlush(updatedEntity)).thenReturn(updatedEntity);
 
-      mockFolioExecutionContextCalls();
-      doNothing().when(eventPublisher).publishEvent(assertArg(isDomainEventOf(UPDATE, updatedCapabilitySet,
-        foundCapabilitySet)));
-
       capabilitySetService.update(CAPABILITY_SET_ID, updatedCapabilitySet);
+
+      verify(capabilityService).checkIds(List.of(CAPABILITY_ID));
     }
 
     @Test

@@ -36,10 +36,7 @@ public class CapabilityUtils {
    * @return generated capability name
    */
   public static String getCapabilityName(Capability capability) {
-    var resource = capability.getResource();
-    var action = capability.getAction();
-    var newResourceName = resource.toLowerCase().replaceAll("\\s+", "_");
-    return newResourceName + "." + action.getValue();
+    return getCapabilityName(capability.getResource(), capability.getAction());
   }
 
   /**

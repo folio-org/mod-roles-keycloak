@@ -36,6 +36,12 @@ public class ApiRoleCapabilityService implements RoleCapabilityService {
   }
 
   @Override
+  public void delete(UUID roleId, UUID capabilityId) {
+    checkRoleIsNotDefault(roleId);
+    delegate.delete(roleId, capabilityId);
+  }
+
+  @Override
   public void deleteAll(UUID roleId) {
     checkRoleIsNotDefault(roleId);
     delegate.deleteAll(roleId);

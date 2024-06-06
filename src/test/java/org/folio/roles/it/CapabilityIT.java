@@ -3,11 +3,13 @@ package org.folio.roles.it;
 import static org.folio.roles.domain.dto.CapabilityAction.CREATE;
 import static org.folio.roles.domain.dto.CapabilityAction.DELETE;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
+import static org.folio.roles.domain.dto.CapabilityAction.MANAGE;
 import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_EDIT_CAPABILITY_SET;
 import static org.folio.roles.support.CapabilityUtils.FOO_CREATE_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_DELETE_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.FOO_MANAGE_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.FOO_VIEW_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.UI_FOO_CREATE_CAPABILITY;
@@ -71,6 +73,8 @@ class CapabilityIT extends BaseIntegrationTest {
         capability(FOO_DELETE_CAPABILITY, FOO_RESOURCE, DELETE, "foo.item.delete", fooItemDeleteEndpoint()),
         capability(FOO_EDIT_CAPABILITY, FOO_RESOURCE, EDIT, "foo.item.put", fooItemPutEndpoint()),
         capability(FOO_VIEW_CAPABILITY, FOO_RESOURCE, VIEW, "foo.item.get", fooItemGetEndpoint()),
+        capability(FOO_MANAGE_CAPABILITY, FOO_RESOURCE, MANAGE, "foo.item.all",
+          fooItemGetEndpoint(), fooItemPostEndpoint(), fooItemPutEndpoint(), fooItemDeleteEndpoint()),
 
         capability(UI_FOO_CREATE_CAPABILITY, UI_FOO_RESOURCE, CREATE, "module.foo.item.post"),
         capability(UI_FOO_DELETE_CAPABILITY, UI_FOO_RESOURCE, DELETE, "ui-foo.item.delete"),
@@ -88,10 +92,11 @@ class CapabilityIT extends BaseIntegrationTest {
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER))
       .andExpect(status().isOk())
-      .andExpect(content().json(asJsonString(capabilities(8L,
+      .andExpect(content().json(asJsonString(capabilities(9L,
         capability(FOO_EDIT_CAPABILITY, FOO_RESOURCE, EDIT, "foo.item.put", fooItemPutEndpoint()),
-        capability(FOO_VIEW_CAPABILITY, FOO_RESOURCE, VIEW, "foo.item.get", fooItemGetEndpoint()),
-        capability(UI_FOO_CREATE_CAPABILITY, UI_FOO_RESOURCE, CREATE, "module.foo.item.post")
+        capability(FOO_MANAGE_CAPABILITY, FOO_RESOURCE, MANAGE, "foo.item.all",
+          fooItemGetEndpoint(), fooItemPostEndpoint(), fooItemPutEndpoint(), fooItemDeleteEndpoint()),
+        capability(FOO_VIEW_CAPABILITY, FOO_RESOURCE, VIEW, "foo.item.get", fooItemGetEndpoint())
       ))));
   }
 

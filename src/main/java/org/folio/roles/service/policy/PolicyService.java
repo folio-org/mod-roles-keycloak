@@ -161,6 +161,26 @@ public class PolicyService {
     return policyByName;
   }
 
+  @Transactional(readOnly = true)
+  public List<Policy> findRolePoliciesByCapabilityId(UUID capabilityId) {
+    return entityService.findRolePoliciesByCapabilityId(capabilityId);
+  }
+
+  @Transactional(readOnly = true)
+  public List<Policy> findRolePoliciesByCapabilitySetId(UUID capabilityId) {
+    return entityService.findRolePoliciesByCapabilitySetId(capabilityId);
+  }
+
+  @Transactional(readOnly = true)
+  public List<Policy> findUserPoliciesByCapabilityId(UUID capabilityId) {
+    return entityService.findUserPoliciesByCapabilityId(capabilityId);
+  }
+
+  @Transactional(readOnly = true)
+  public List<Policy> findUserPoliciesByCapabilitySetId(UUID capabilityId) {
+    return entityService.findUserPoliciesByCapabilitySetId(capabilityId);
+  }
+
   private Optional<Policy> createSafe(Policy policy) {
     try {
       var createdPolicy = transactionTemplate.execute(context -> {

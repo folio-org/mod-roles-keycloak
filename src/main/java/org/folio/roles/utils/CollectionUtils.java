@@ -4,9 +4,14 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -26,6 +31,35 @@ public class CollectionUtils {
     return Stream.concat(toStream(collection1), toStream(collection2))
       .distinct()
       .collect(toList());
+  }
+
+  /**
+   * Transforms given collection to set using provided mapper function.
+   *
+   * @param collection - collection value to process
+   * @param mapper - collection element modifier function
+   * @param <T> - generic type for source collection elements
+   * @param <R> - generic type for result set elements
+   * @return a new set containing modified values
+   */
+  public static <T, R> Set<R> toSet(Collection<T> collection, Function<T, R> mapper) {
+    return toStream(collection)
+      .map(mapper)
+      .collect(Collectors.toSet());
+  }
+
+  /**
+   * Returns a difference between list1 and list2 as new list ({@code list1 - list2}.
+   *
+   * @param list1 - first list value to process
+   * @param list2 - second list value to process
+   * @param <T> - generic type for list elements
+   * @return a new list containing difference between list1 and list2
+   */
+  public static <T> List<T> difference(List<T> list1, List<T> list2) {
+    var set = new LinkedHashSet<>(list1);
+    emptyIfNull(list2).forEach(set::remove);
+    return new ArrayList<>(set);
   }
 
   public static <T> Optional<T> findOne(Collection<T> source) {

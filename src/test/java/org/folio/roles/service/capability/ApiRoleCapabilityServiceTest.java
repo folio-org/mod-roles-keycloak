@@ -2,7 +2,7 @@ package org.folio.roles.service.capability;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -65,9 +65,8 @@ class ApiRoleCapabilityServiceTest {
     @InstancioSource
     void update_positive(UUID roleId, List<UUID> capabilityIds) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
-      doNothing().when(delegate).update(roleId, capabilityIds);
-
       service.update(roleId, capabilityIds);
+      verify(delegate).update(roleId, capabilityIds);
     }
 
     @ParameterizedTest
@@ -84,9 +83,16 @@ class ApiRoleCapabilityServiceTest {
     @InstancioSource
     void deleteAll_positive(UUID roleId) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
-      doNothing().when(delegate).deleteAll(roleId);
-
       service.deleteAll(roleId);
+      verify(delegate).deleteAll(roleId);
+    }
+
+    @ParameterizedTest
+    @InstancioSource
+    void delete_positive(UUID roleId, UUID capabilityId) {
+      when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
+      service.delete(roleId, capabilityId);
+      verify(delegate).delete(roleId, capabilityId);
     }
 
     @ParameterizedTest

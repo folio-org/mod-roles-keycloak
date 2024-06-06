@@ -19,7 +19,7 @@ public interface RoleCapabilityRepository extends BaseCqlJpaRepository<RoleCapab
   Page<RoleCapabilityEntity> findByRoleId(UUID roleId, Pageable pageable);
 
   @Query("select rce from RoleCapabilityEntity rce where rce.roleId = :roleId and rce.capabilityId in :ids")
-  List<RoleCapabilityEntity> findRoleCapabilities(@Param("roleId") UUID userId, @Param("ids") List<UUID> ids);
+  List<RoleCapabilityEntity> findRoleCapabilities(@Param("roleId") UUID roleId, @Param("ids") List<UUID> ids);
 
   @Modifying
   @Query("delete from RoleCapabilityEntity rce where rce.roleId = :roleId and rce.capabilityId in :ids")

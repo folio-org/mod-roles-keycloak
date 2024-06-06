@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.dto.PolicyType.ROLE;
 import static org.folio.roles.domain.dto.PolicyType.TIME;
 import static org.folio.roles.domain.dto.PolicyType.USER;
+import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
+import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.PolicyUtils.POLICY_ID;
 import static org.folio.roles.support.PolicyUtils.POLICY_NAME;
 import static org.folio.roles.support.PolicyUtils.createTimePolicy;
@@ -240,6 +242,58 @@ class PolicyServiceTest {
       doThrow(EntityNotFoundException.class).when(keycloakService).deleteById(POLICY_ID);
       service.deleteById(POLICY_ID);
       verify(entityService).deleteById(POLICY_ID);
+    }
+  }
+
+  @Nested
+  @DisplayName("findRolePoliciesByCapabilityId")
+  class FindRolePoliciesByCapabilityId {
+
+    @Test
+    void positive() {
+      var expectedPolicy = new Policy();
+      when(entityService.findRolePoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(List.of(expectedPolicy));
+      var result = service.findRolePoliciesByCapabilityId(CAPABILITY_ID);
+      assertThat(result).containsExactly(expectedPolicy);
+    }
+  }
+
+  @Nested
+  @DisplayName("findRolePoliciesByCapabilitySetId")
+  class FindRolePoliciesByCapabilitySetId {
+
+    @Test
+    void positive() {
+      var expectedPolicy = new Policy();
+      when(entityService.findRolePoliciesByCapabilitySetId(CAPABILITY_SET_ID)).thenReturn(List.of(expectedPolicy));
+      var result = service.findRolePoliciesByCapabilitySetId(CAPABILITY_SET_ID);
+      assertThat(result).containsExactly(expectedPolicy);
+    }
+  }
+
+  @Nested
+  @DisplayName("findUserPoliciesByCapabilityId")
+  class FindUserPoliciesByCapabilityId {
+
+    @Test
+    void positive() {
+      var expectedPolicy = new Policy();
+      when(entityService.findUserPoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(List.of(expectedPolicy));
+      var result = service.findUserPoliciesByCapabilityId(CAPABILITY_ID);
+      assertThat(result).containsExactly(expectedPolicy);
+    }
+  }
+
+  @Nested
+  @DisplayName("findUserPoliciesByCapabilitySetId")
+  class FindUserPoliciesByCapabilitySetId {
+
+    @Test
+    void positive() {
+      var expectedPolicy = new Policy();
+      when(entityService.findUserPoliciesByCapabilitySetId(CAPABILITY_SET_ID)).thenReturn(List.of(expectedPolicy));
+      var result = service.findUserPoliciesByCapabilitySetId(CAPABILITY_SET_ID);
+      assertThat(result).containsExactly(expectedPolicy);
     }
   }
 }

@@ -16,6 +16,7 @@ import static org.folio.roles.support.CapabilitySetUtils.capabilitySetsUpdateReq
 import static org.folio.roles.support.CapabilityUtils.FOO_CREATE_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_DELETE_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.FOO_VIEW_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.capabilitiesUpdateRequest;
 import static org.folio.roles.support.EndpointUtils.fooItemDeleteEndpoint;
@@ -75,7 +76,6 @@ import org.springframework.test.web.servlet.ResultActions;
 })
 class RoleCapabilitySetIT extends BaseIntegrationTest {
 
-  private static final String FOO_RESOURCE = "Foo Item";
   private static final UUID ROLE_ID = fromString("1e985e76-e9ca-401c-ad8e-0d121a11111e");
 
   @Autowired private KeycloakTestClient kcTestClient;

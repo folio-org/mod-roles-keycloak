@@ -16,6 +16,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.UserCapabilities;
 import org.folio.roles.domain.dto.UserCapability;
 import org.folio.roles.domain.entity.UserCapabilityEntity;
+import org.folio.roles.domain.entity.key.UserCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.roles.mapper.entity.UserCapabilityEntityMapper;
@@ -99,7 +100,26 @@ public class UserCapabilityService {
   }
 
   /**
-   * Removes user-capability relations by role identifier.
+   * Removes user-capability relations by user and capability identifiers.
+   *
+   * @param userId - user identifier as {@link UUID}
+   * @param capabilityId - capability identifier as {@link UUID}
+   */
+  @Transactional
+  public void delete(UUID userId, UUID capabilityId) {
+    var assignedUserCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
+    var assignedCapabilityIds = getCapabilityIds(assignedUserCapabilityEntities);
+    if (!assignedCapabilityIds.contains(capabilityId)) {
+      return;
+    }
+
+    assignedCapabilityIds.remove(capabilityId);
+    userCapabilityRepository.findById(UserCapabilityKey.of(userId, capabilityId))
+      .ifPresent(entity -> removeCapabilities(userId, List.of(entity.getCapabilityId()), assignedCapabilityIds));
+  }
+
+  /**
+   * Removes all user-capability relations by user identifier.
    *
    * @param userId - user identifier as {@link UUID}
    * @throws EntityNotFoundException if user is not found by id or there is no assigned values

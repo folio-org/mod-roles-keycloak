@@ -1,31 +1,37 @@
 package org.folio.roles.service.capability;
 
-import static java.util.Collections.emptyList;
-import static java.util.function.Function.identity;
+import static java.util.Collections.emptyMap;
+import static java.util.function.Predicate.not;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
-import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
+import static org.folio.common.utils.Collectors.toLinkedHashMap;
+import static org.folio.roles.integration.kafka.model.ResourceEventType.CREATE;
+import static org.folio.roles.utils.CollectionUtils.toSet;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.entity.CapabilityEntity;
 import org.folio.roles.domain.model.PageResult;
+import org.folio.roles.domain.model.event.CapabilityEvent;
+import org.folio.roles.integration.kafka.model.ResourceEventType;
 import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.CapabilityRepository;
-import org.folio.roles.service.event.CapabilityCollectionEvent;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,41 +45,33 @@ import org.springframework.transaction.annotation.Transactional;
 public class CapabilityService {
 
   private final List<String> visiblePermissionPrefixes = List.of("ui-", "module", "plugin");
+
   private final CapabilityRepository capabilityRepository;
-  private final CapabilityEntityMapper capabilityEntityMapper;
-  @Lazy private final CapabilitySetService capabilitySetService;
-  private final ApplicationEventPublisher eventPublisher;
   private final FolioExecutionContext folioExecutionContext;
+  private final CapabilityEntityMapper capabilityEntityMapper;
+  private final ApplicationEventPublisher applicationEventPublisher;
+
+  @Lazy private final CapabilitySetService capabilitySetService;
 
   /**
    * Creates folio resources from incoming resource event.
    *
-   * @param applicationId - application identifier as {@link String}
-   * @param capabilities - list of {@link Capability} records
+   * @param eventType - {@link ResourceEventType} value
+   * @param newCapabilities - list of {@link Capability} records
+   * @param oldCapabilities - list of old {@link Capability} records
    */
   @Transactional
-  public void createSafe(String applicationId, List<Capability> capabilities) {
-    if (isEmpty(capabilities)) {
-      return;
-    }
+  public void update(ResourceEventType eventType, List<Capability> newCapabilities, List<Capability> oldCapabilities) {
+    log.info("Capabilities received: new = {}, old = {}", newCapabilities.size(), oldCapabilities.size());
 
-    log.info("{} capabilities received", capabilities.size());
-    var capabilityNames = new HashSet<String>();
-    for (var capability : capabilities) {
-      var capabilityName = getCapabilityName(capability.getResource(), capability.getAction());
-      capability.setName(capabilityName);
-      capability.setApplicationId(applicationId);
-      capabilityNames.add(capabilityName);
-    }
+    var capabilityNames = toSet(newCapabilities, Capability::getName);
+    var foundCapabilitiesByName = findExistingCapabilitiesByNames(capabilityNames);
+    var groupedCapabilities = newCapabilities.stream()
+      .collect(groupingBy(capability -> foundCapabilitiesByName.containsKey(capability.getName())));
 
-    var foundCapabilityNames = capabilityRepository.findAllByNames(capabilityNames).stream()
-      .collect(toMap(CapabilityEntity::getName, identity(), (o1, o2) -> o2));
-    var savedEntities = saveCapabilities(capabilities, foundCapabilityNames);
-
-    if (isNotEmpty(savedEntities)) {
-      var saved = capabilityEntityMapper.convert(savedEntities);
-      eventPublisher.publishEvent(CapabilityCollectionEvent.created(saved).withContext(folioExecutionContext));
-    }
+    handleNewCapabilities(groupedCapabilities.get(Boolean.FALSE));
+    handleUpdatedCapabilities(eventType, groupedCapabilities.get(Boolean.TRUE), foundCapabilitiesByName);
+    handleDeprecatedCapabilities(oldCapabilities, capabilityNames);
   }
 
   /**
@@ -220,9 +218,9 @@ public class CapabilityService {
 
   /**
    * Retrieves user permissions by userId and onlyVisible flag. If desiredPermissions list is not empty, then all
-   * permissions matching the desired ones will be returned. Wildcard (*) is supported for desired permissions.
-   * Example: user has permission ["users.item.get", "users.item.post", "users.collection.put"] and requested
-   * permissions are ["users.item.*"] then resolved permissions will be ["users.item.get", "users.item.post"].
+   * permissions matching the desired ones will be returned. Wildcard (*) is supported for desired permissions. Example:
+   * user has permission ["users.item.get", "users.item.post", "users.collection.put"] and requested permissions are
+   * ["users.item.*"] then resolved permissions will be ["users.item.get", "users.item.post"].
    *
    * @param userId - user identifier as {@link UUID} value
    * @param onlyVisible - defines if UI or all permissions must be returned
@@ -247,23 +245,9 @@ public class CapabilityService {
     return capabilityRepository.findAllFolioPermissions(userId);
   }
 
-  private List<CapabilityEntity> saveCapabilities(List<Capability> capabilities,
-    Map<String, CapabilityEntity> capabilitiesByName) {
-    var capabilityEntities = new ArrayList<CapabilityEntity>();
-    for (var capability : capabilities) {
-      var capabilityName = capability.getName();
-
-      var capabilityByName = capabilitiesByName.get(capabilityName);
-      if (capabilityByName != null) {
-        log.warn("Capability by name already exists: name = {}", capabilityName);
-        capability.setId(capabilityByName.getId());
-      }
-
-      var convert = capabilityEntityMapper.convert(capability);
-      capabilityEntities.add(convert);
-    }
-
-    return isNotEmpty(capabilityEntities) ? capabilityRepository.saveAll(capabilityEntities) : emptyList();
+  @Transactional
+  public void deleteById(UUID capabilityId) {
+    capabilityRepository.deleteById(capabilityId);
   }
 
   private static String trimWildcard(String param) {
@@ -278,5 +262,81 @@ public class CapabilityService {
 
   private static String buildPrefixesParam(List<String> prefixes) {
     return toStream(prefixes).collect(joining(", ", "{", "}"));
+  }
+
+  private Map<String, CapabilityEntity> findExistingCapabilitiesByNames(Set<String> capabilityNames) {
+    if (isEmpty(capabilityNames)) {
+      return emptyMap();
+    }
+
+    return capabilityRepository.findAllByNames(capabilityNames).stream()
+      .collect(toLinkedHashMap(CapabilityEntity::getName));
+  }
+
+  private void handleNewCapabilities(List<Capability> capabilities) {
+    if (isEmpty(capabilities)) {
+      return;
+    }
+
+    var capabilityEntities = mapItems(capabilities, capabilityEntityMapper::convert);
+    var savedCapabilityEntities = capabilityRepository.saveAll(capabilityEntities);
+    for (var savedCapabilityEntity : savedCapabilityEntities) {
+      var capability = capabilityEntityMapper.convert(savedCapabilityEntity);
+      var event = CapabilityEvent.created(capability).withContext(folioExecutionContext);
+      applicationEventPublisher.publishEvent(event);
+    }
+  }
+
+  private void handleUpdatedCapabilities(ResourceEventType type,
+    List<Capability> capabilities, Map<String, CapabilityEntity> capabilitiesByName) {
+    if (isEmpty(capabilities)) {
+      return;
+    }
+
+    var capabilityEntities = new ArrayList<CapabilityEntity>();
+    var oldCapabilitiesById = new LinkedHashMap<UUID, Capability>();
+
+    for (var updatedCapability : capabilities) {
+      var capabilityEntity = capabilitiesByName.get(updatedCapability.getName());
+      var capabilityId = capabilityEntity.getId();
+      updatedCapability.setId(capabilityId);
+      capabilityEntities.add(capabilityEntityMapper.convert(updatedCapability));
+      oldCapabilitiesById.put(capabilityId, capabilityEntityMapper.convert(capabilityEntity));
+    }
+
+    var updatedCapabilityEntities = capabilityRepository.saveAll(capabilityEntities);
+    if (type == CREATE) {
+      log.warn("Duplicated capabilities has been updated: {}", () ->
+        mapItems(oldCapabilitiesById.values(), Capability::getName));
+    }
+
+    for (var updatedCapabilityEntity : updatedCapabilityEntities) {
+      var newCapability = capabilityEntityMapper.convert(updatedCapabilityEntity);
+      var oldCapability = oldCapabilitiesById.get(newCapability.getId());
+      var event = CapabilityEvent.updated(newCapability, oldCapability).withContext(folioExecutionContext);
+      applicationEventPublisher.publishEvent(event);
+    }
+  }
+
+  private void handleDeprecatedCapabilities(List<Capability> oldCapabilities, Set<String> capabilityNames) {
+    var deprecatedCapabilityNames = toStream(oldCapabilities)
+      .map(Capability::getName)
+      .filter(not(capabilityNames::contains))
+      .collect(Collectors.toSet());
+
+    if (isEmpty(deprecatedCapabilityNames)) {
+      return;
+    }
+
+    var deprecatedCapabilityEntities = capabilityRepository.findAllByNames(deprecatedCapabilityNames);
+    if (isEmpty(deprecatedCapabilityEntities)) {
+      return;
+    }
+
+    for (var deprecatedCapabilityEntity : deprecatedCapabilityEntities) {
+      var deprecatedCapability = capabilityEntityMapper.convert(deprecatedCapabilityEntity);
+      var event = CapabilityEvent.deleted(deprecatedCapability).withContext(folioExecutionContext);
+      applicationEventPublisher.publishEvent(event);
+    }
   }
 }

@@ -7,23 +7,30 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.domain.entity.UserCapabilityEntity.DEFAULT_USER_CAPABILITY_SORT;
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
+import static org.folio.roles.domain.model.PageResult.empty;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
+import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.KeycloakUtils.keycloakUser;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.folio.roles.support.UserCapabilityUtils.userCapability;
 import static org.folio.roles.support.UserCapabilityUtils.userCapabilityEntity;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import org.folio.roles.domain.entity.key.UserCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
@@ -248,6 +255,53 @@ class UserCapabilityServiceTest {
       assertThatThrownBy(() -> userCapabilityService.deleteAll(USER_ID))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Relations between user and capabilities are not found for user: %s", USER_ID);
+    }
+  }
+
+  @Nested
+  @DisplayName("delete")
+  class Delete {
+
+    @Test
+    void positive() {
+      var existingEntity = userCapabilityEntity();
+      var existingEntities = List.of(existingEntity);
+      var capabilitySetIds = List.of(CAPABILITY_ID);
+      var endpoints = List.of(endpoint());
+      var entityKey = UserCapabilityKey.of(USER_ID, CAPABILITY_ID);
+
+      when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
+      when(userCapabilityRepository.findById(entityKey)).thenReturn(Optional.of(existingEntity));
+      when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityEndpointService.getByCapabilityIds(capabilitySetIds, emptyList())).thenReturn(endpoints);
+
+      userCapabilityService.delete(USER_ID, CAPABILITY_ID);
+
+      verify(userPermissionService).deletePermissions(USER_ID, endpoints);
+      verify(userCapabilityRepository).deleteUserCapabilities(USER_ID, capabilitySetIds);
+    }
+
+    @Test
+    void positive_entityNotFound() {
+      when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(emptyList());
+      userCapabilityService.delete(USER_ID, CAPABILITY_ID);
+      verifyNoInteractions(userPermissionService);
+      verify(userCapabilityRepository, never()).deleteUserCapabilities(any(), anyList());
+    }
+
+    @Test
+    void positive_entityNotFoundById() {
+      var existingEntity = userCapabilityEntity();
+      var existingEntities = List.of(existingEntity);
+      var entityKey = UserCapabilityKey.of(USER_ID, CAPABILITY_ID);
+
+      when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
+      when(userCapabilityRepository.findById(entityKey)).thenReturn(Optional.empty());
+
+      userCapabilityService.delete(USER_ID, CAPABILITY_ID);
+
+      verifyNoInteractions(userPermissionService);
+      verify(userCapabilityRepository, never()).deleteUserCapabilities(any(), anyList());
     }
   }
 

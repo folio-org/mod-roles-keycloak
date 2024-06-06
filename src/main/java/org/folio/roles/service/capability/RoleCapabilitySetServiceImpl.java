@@ -60,7 +60,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
 
     roleService.getById(roleId);
     var existingEntities = roleCapabilitySetRepository.findRoleCapabilitySets(roleId, capabilitySetIds);
-    var existingCapabilitySetIds = getSetIds(existingEntities);
+    var existingCapabilitySetIds = getCapabilitySetIds(existingEntities);
     if (isNotEmpty(existingCapabilitySetIds)) {
       throw new EntityExistsException(String.format(
         "Relation already exists for role='%s' and capabilitySets=%s", roleId, existingCapabilitySetIds));
@@ -90,17 +90,38 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
    * Updates a list of assigned to a role capabilitySets.
    *
    * @param roleId - role identifier
-   * @param capabilityIds - list with new capabilitySets, that should be assigned to a role
+   * @param capabilitySetIds - list with new capabilitySets, that should be assigned to a role
    */
   @Override
-  public void update(UUID roleId, List<UUID> capabilityIds) {
+  @Transactional
+  public void update(UUID roleId, List<UUID> capabilitySetIds) {
     roleService.getById(roleId);
-    var assignedRoleCapabilityEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
+    var assignedRoleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
 
-    var assignedCapabilityIds = getSetIds(assignedRoleCapabilityEntities);
-    UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "role-capability set")
-      .consumeAndCacheNewEntities(newIds -> getSetIds(assignCapabilities(roleId, newIds, assignedCapabilityIds)))
+    var assignedSetIds = getCapabilitySetIds(assignedRoleCapabilitySetEntities);
+    UpdateOperationHelper.create(assignedSetIds, capabilitySetIds, "role-capability set")
+      .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(roleId, newIds, assignedSetIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+  }
+
+  /**
+   * Removes role assigned capability set using role identifier and capability set id.
+   *
+   * @param roleId  - role identifier as {@link UUID}
+   * @param capabilitySetId  - capability set identifier as {@link UUID}
+   */
+  @Override
+  @Transactional
+  public void delete(UUID roleId, UUID capabilitySetId) {
+    var assignedRoleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
+    var assignedCapabilitySetIds = getCapabilitySetIds(assignedRoleCapabilitySetEntities);
+    if (!assignedCapabilitySetIds.contains(capabilitySetId)) {
+      return;
+    }
+
+    assignedCapabilitySetIds.remove(capabilitySetId);
+    roleCapabilitySetRepository.findById(RoleCapabilitySetKey.of(roleId, capabilitySetId))
+      .ifPresent(entity -> removeCapabilities(roleId, List.of(entity.getCapabilitySetId()), assignedCapabilitySetIds));
   }
 
   /**
@@ -110,33 +131,16 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
    * @throws jakarta.persistence.EntityNotFoundException if role is not found by id or there is no assigned values
    */
   @Override
+  @Transactional
   public void deleteAll(UUID roleId) {
     roleService.getById(roleId);
-    var roleCapabilityEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
-    if (isEmpty(roleCapabilityEntities)) {
+    var roleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
+    if (isEmpty(roleCapabilitySetEntities)) {
       throw new EntityNotFoundException("Relations between role and capability sets are not found for role: " + roleId);
     }
 
-    var capabilitySetIds = getSetIds(roleCapabilityEntities);
+    var capabilitySetIds = getCapabilitySetIds(roleCapabilitySetEntities);
     removeCapabilities(roleId, capabilitySetIds, emptyList());
-  }
-
-  /**
-   * Removes role assigned capability set using role identifier and capability set id.
-   *
-   * @param roleId  - role identifier as {@link UUID}
-   * @param capabilitySetId  - capability set identifier as {@link UUID}
-   * @throws jakarta.persistence.EntityNotFoundException if assignment is not found by role id and capability set id
-   */
-  @Override
-  public void delete(UUID roleId, UUID capabilitySetId) {
-    var entity = roleCapabilitySetRepository.findById(RoleCapabilitySetKey.of(roleId, capabilitySetId));
-    if (entity.isEmpty()) {
-      throw new EntityNotFoundException("Relations between role and capability set is not found: roleId = " + roleId
-        + ", capabilitySetId = " + capabilitySetId);
-    }
-
-    removeCapabilities(roleId, List.of(capabilitySetId), emptyList());
   }
 
   private PageResult<RoleCapabilitySet> assignCapabilities(
@@ -169,11 +173,11 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     return capabilityEndpointService.getByCapabilitySetIds(deprecatedIds, assignedIds, excludedEndpoints);
   }
 
-  private static List<UUID> getSetIds(PageResult<RoleCapabilitySet> roleCapabilitySets) {
+  private static List<UUID> getCapabilitySetIds(PageResult<RoleCapabilitySet> roleCapabilitySets) {
     return mapItems(roleCapabilitySets.getRecords(), RoleCapabilitySet::getCapabilitySetId);
   }
 
-  private static List<UUID> getSetIds(List<RoleCapabilitySetEntity> existingEntities) {
+  private static List<UUID> getCapabilitySetIds(List<RoleCapabilitySetEntity> existingEntities) {
     return mapItems(existingEntities, RoleCapabilitySetEntity::getCapabilitySetId);
   }
 }

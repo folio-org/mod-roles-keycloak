@@ -1,0 +1,25 @@
+{
+  "type": "DELETE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "old": {
+    "moduleId": "foo-module-1.1.0",
+    "moduleType": "module",
+    "applicationId": "test-application-0.0.1",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "foo.item.get",
+          "displayName": "foo.item.get - display name",
+          "description": "foo.item.get - description"
+        },
+        "endpoints": [
+          {
+            "path": "/foo/items/{id}",
+            "method": "GET"
+          }
+        ]
+      }
+    ]
+  }
+}

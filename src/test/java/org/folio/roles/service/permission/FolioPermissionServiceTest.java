@@ -4,8 +4,11 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.roles.support.AuthResourceUtils.fooPermission;
 import static org.folio.roles.support.AuthResourceUtils.fooPermissionEntity;
+import static org.folio.roles.support.AuthResourceUtils.fooPermissionEntityV2;
+import static org.folio.roles.support.AuthResourceUtils.fooPermissionV2;
 import static org.folio.roles.support.AuthResourceUtils.permission;
 import static org.folio.roles.support.AuthResourceUtils.permissionEntity;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
@@ -13,7 +16,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.mapper.entity.PermissionEntityMapper;
 import org.folio.roles.repository.PermissionRepository;
 import org.folio.test.types.UnitTest;
@@ -42,8 +44,8 @@ class FolioPermissionServiceTest {
   }
 
   @Nested
-  @DisplayName("createIgnoringConflicts")
-  class CreateIgnoringConflicts {
+  @DisplayName("update")
+  class Update {
 
     @Test
     void positive_cleanInstallation() {
@@ -51,39 +53,62 @@ class FolioPermissionServiceTest {
       var permission = fooPermission(null);
       var entity = fooPermissionEntity(null);
       var savedEntity = fooPermissionEntity(entityId);
-      var savedPermission = fooPermission(entityId);
 
-      when(repository.findByPermissionNameIn(Set.of(permission.getPermissionName()))).thenReturn(emptyList());
+      when(repository.findByPermissionNameIn(List.of(permission.getPermissionName()))).thenReturn(emptyList());
       when(mapper.toEntity(permission)).thenReturn(entity);
       when(repository.saveAll(List.of(entity))).thenReturn(List.of(savedEntity));
-      when(mapper.toDto(emptyList())).thenReturn(emptyList());
-      when(mapper.toDto(List.of(savedEntity))).thenReturn(List.of(savedPermission));
 
-      var result = service.createIgnoringConflicts(List.of(permission));
+      service.update(List.of(permission), emptyList());
 
-      assertThat(result).isEqualTo(PageResult.asSinglePage(savedPermission));
+      verify(repository).saveAll(List.of(entity));
     }
 
     @Test
     void positive_entityExists() {
       var entityId = UUID.randomUUID();
       var permission = fooPermission(null);
-      var foundEntity = fooPermissionEntity(entityId);
+      var entity = fooPermissionEntity(null);
+      var permissionEntity = fooPermissionEntity(entityId);
+      var permissionNames = List.of(permission.getPermissionName());
 
-      when(repository.findByPermissionNameIn(Set.of(permission.getPermissionName()))).thenReturn(List.of(foundEntity));
-      when(repository.saveAll(emptyList())).thenReturn(emptyList());
-      when(mapper.toDto(List.of(foundEntity))).thenReturn(List.of(fooPermission(entityId)));
-      when(mapper.toDto(emptyList())).thenReturn(emptyList());
+      when(repository.findByPermissionNameIn(permissionNames)).thenReturn(List.of(permissionEntity));
+      when(mapper.toEntity(permission)).thenReturn(entity);
+      when(repository.saveAll(List.of(permissionEntity))).thenReturn(List.of(permissionEntity));
 
-      var result = service.createIgnoringConflicts(List.of(permission));
+      service.update(List.of(permission), emptyList());
 
-      assertThat(result).isEqualTo(PageResult.asSinglePage(fooPermission(entityId)));
+      verify(repository).saveAll(List.of(permissionEntity));
+    }
+
+    @Test
+    void positive_entityUpdated() {
+      var entityId = UUID.randomUUID();
+      var permission = fooPermission(null);
+      var permissionV2 = fooPermissionV2(null);
+      var permissionEntity = fooPermissionEntity(entityId);
+      var permissionEntityV2 = fooPermissionEntityV2(null);
+      var permissionNames = List.of(permission.getPermissionName());
+
+      when(repository.findByPermissionNameIn(permissionNames)).thenReturn(List.of(permissionEntity));
+      when(mapper.toEntity(permissionV2)).thenReturn(permissionEntityV2);
+      when(repository.saveAll(List.of(permissionEntityV2))).thenReturn(List.of(fooPermissionEntityV2(entityId)));
+
+      service.update(List.of(permissionV2), List.of(permission));
+
+      verify(repository).saveAll(List.of(permissionEntityV2));
+    }
+
+    @Test
+    void positive_entityDeprecated() {
+      var permission = fooPermission(null);
+      service.update(emptyList(), List.of(permission));
+      verify(repository).deleteAllByPermissionNameIn(List.of(permission.getPermissionName()));
     }
 
     @Test
     void positive_emptyInput() {
-      var result = service.createIgnoringConflicts(emptyList());
-      assertThat(result).isEqualTo(PageResult.empty());
+      service.update(emptyList(), emptyList());
+      verifyNoMoreInteractions(repository);
     }
   }
 

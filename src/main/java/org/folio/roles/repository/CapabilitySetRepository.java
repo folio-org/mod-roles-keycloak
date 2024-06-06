@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.folio.roles.domain.entity.CapabilitySetEntity;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -62,4 +63,10 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
   Set<UUID> findCapabilitySetIdsByIdIn(@Param("ids") Collection<UUID> capabilitySetIds);
 
   Optional<CapabilitySetEntity> findByName(String capabilitySetName);
+
+  List<CapabilitySetEntity> findByNameIn(Collection<String> capabilitySetNames);
+
+  @Modifying
+  @Query(nativeQuery = true, value = "DELETE FROM capability_set_capability WHERE capability_id = :capabilityId")
+  void deleteCapabilityCapabilitySetLinks(@Param("capabilityId") UUID capabilityId);
 }

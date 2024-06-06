@@ -26,6 +26,7 @@ public class CapabilityUtils {
   public static final String UI_FOO_RESOURCE = "UI Foo Item";
   public static final String RESOURCE_NAME = "Test Resource";
   public static final String APPLICATION_ID = "test-application-0.0.1";
+  public static final String APPLICATION_ID_V2 = "test-application-0.0.2";
   public static final String PERMISSION_NAME = "test-resource.item.create";
 
   public static final UUID CAPABILITY_ID = UUID.randomUUID();
@@ -34,6 +35,7 @@ public class CapabilityUtils {
   public static final UUID FOO_VIEW_CAPABILITY = fromString("e2628d7d-059a-46a1-a5ea-10a5a37b1af2");
   public static final UUID FOO_EDIT_CAPABILITY = fromString("78d6a59f-90ab-46a1-a349-4d25d0798763");
   public static final UUID FOO_DELETE_CAPABILITY = fromString("ff2c8ad0-2b82-4b87-bafe-43a55ae7f4db");
+  public static final UUID FOO_MANAGE_CAPABILITY = fromString("e1a5683a-fece-43fb-bbaa-52a438af9807");
 
   public static final UUID UI_FOO_VIEW_CAPABILITY = fromString("48e57f3b-3622-43db-b437-5d30ebe8f867");
   public static final UUID UI_FOO_CREATE_CAPABILITY = fromString("f491047c-32eb-4736-815c-ebb8e94dffac");
@@ -114,7 +116,7 @@ public class CapabilityUtils {
     return new Capability()
       .id(id)
       .name(capabilityName)
-      .resource("Foo Item")
+      .resource(FOO_RESOURCE)
       .description(String.format("Capability to %s a foo item", action.getValue()))
       .applicationId(APPLICATION_ID)
       .type(DATA)
@@ -126,7 +128,7 @@ public class CapabilityUtils {
     return new Capability()
       .id(id)
       .name(capabilityName)
-      .resource("Foo Item")
+      .resource(FOO_RESOURCE)
       .permission(perm)
       .endpoints(Arrays.asList(endpoints))
       .description(String.format("Capability to %s a foo item", action.getValue()))

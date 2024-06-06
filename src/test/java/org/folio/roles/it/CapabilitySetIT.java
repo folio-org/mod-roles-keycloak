@@ -3,12 +3,17 @@ package org.folio.roles.it;
 import static org.folio.roles.domain.dto.CapabilityAction.CREATE;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.dto.CapabilityAction.MANAGE;
+import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_CREATE_CAPABILITIES;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_CREATE_CAPABILITY_SET;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_EDIT_CAPABILITIES;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_EDIT_CAPABILITY_SET;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_MANAGE_CAPABILITIES;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_MANAGE_CAPABILITY_SET;
+import static org.folio.roles.support.CapabilitySetUtils.FOO_MANAGE_V2_CAPABILITIES;
+import static org.folio.roles.support.CapabilitySetUtils.FOO_MANAGE_V2_CAPABILITY_SET;
+import static org.folio.roles.support.CapabilitySetUtils.FOO_VIEW_CAPABILITIES;
+import static org.folio.roles.support.CapabilitySetUtils.FOO_VIEW_CAPABILITY_SET;
 import static org.folio.roles.support.CapabilitySetUtils.UI_FOO_CREATE_CAPABILITIES;
 import static org.folio.roles.support.CapabilitySetUtils.UI_FOO_CREATE_CAPABILITY_SET;
 import static org.folio.roles.support.CapabilitySetUtils.UI_FOO_EDIT_CAPABILITIES;
@@ -69,6 +74,8 @@ class CapabilitySetIT extends BaseIntegrationTest {
         capabilitySet(FOO_CREATE_CAPABILITY_SET, FOO_RESOURCE, CREATE, FOO_CREATE_CAPABILITIES),
         capabilitySet(FOO_EDIT_CAPABILITY_SET, FOO_RESOURCE, EDIT, FOO_EDIT_CAPABILITIES),
         capabilitySet(FOO_MANAGE_CAPABILITY_SET, FOO_RESOURCE, MANAGE, FOO_MANAGE_CAPABILITIES),
+        capabilitySet(FOO_MANAGE_V2_CAPABILITY_SET, "Foo Item V2", MANAGE, FOO_MANAGE_V2_CAPABILITIES),
+        capabilitySet(FOO_VIEW_CAPABILITY_SET, FOO_RESOURCE, VIEW, FOO_VIEW_CAPABILITIES),
         capabilitySet(UI_FOO_CREATE_CAPABILITY_SET, UI_FOO_RESOURCE, CREATE, UI_FOO_CREATE_CAPABILITIES),
         capabilitySet(UI_FOO_EDIT_CAPABILITY_SET, UI_FOO_RESOURCE, EDIT, UI_FOO_EDIT_CAPABILITIES)
       ))));
@@ -81,13 +88,13 @@ class CapabilitySetIT extends BaseIntegrationTest {
   })
   void findCapabilitySets_positive_offsetAndLimit() throws Exception {
     mockMvc.perform(get("/capability-sets")
-        .queryParam("offset", "2")
+        .queryParam("offset", "4")
         .queryParam("limit", "2")
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER))
       .andExpect(status().isOk())
-      .andExpect(content().json(asJsonString(capabilitySets(5L,
-        capabilitySet(FOO_MANAGE_CAPABILITY_SET, FOO_RESOURCE, MANAGE, FOO_MANAGE_CAPABILITIES),
+      .andExpect(content().json(asJsonString(capabilitySets(7L,
+        capabilitySet(FOO_MANAGE_V2_CAPABILITY_SET, "Foo Item V2", MANAGE, FOO_MANAGE_V2_CAPABILITIES),
         capabilitySet(UI_FOO_CREATE_CAPABILITY_SET, UI_FOO_RESOURCE, CREATE, UI_FOO_CREATE_CAPABILITIES)
       ))));
   }

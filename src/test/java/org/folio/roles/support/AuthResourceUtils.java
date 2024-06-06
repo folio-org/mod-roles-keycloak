@@ -36,6 +36,16 @@ public class AuthResourceUtils {
       .visible(false);
   }
 
+  public static Permission fooPermissionV2(UUID id) {
+    return new Permission()
+      .id(id)
+      .permissionName("foo.entities.collection.get")
+      .displayName("Foo - get entities collection by query")
+      .description("Retrieve foo entities by query")
+      .subPermissions(List.of("foo.entities.item.get", "foo.entities.item.v2.get"))
+      .visible(false);
+  }
+
   public static PermissionEntity fooPermissionEntity(UUID id) {
     var entity = new PermissionEntity();
     entity.setId(id);
@@ -43,6 +53,17 @@ public class AuthResourceUtils {
     entity.setDisplayName("Foo - get entities collection by query");
     entity.setDescription("Retrieve foo entities by query");
     entity.setSubPermissions(List.of("foo.entities.item.get"));
+    entity.setVisible(false);
+    return entity;
+  }
+
+  public static PermissionEntity fooPermissionEntityV2(UUID id) {
+    var entity = new PermissionEntity();
+    entity.setId(id);
+    entity.setPermissionName("foo.entities.collection.get");
+    entity.setDisplayName("Foo - get entities collection by query (v2)");
+    entity.setDescription("Retrieve foo entities by query (v2)");
+    entity.setSubPermissions(List.of("foo.entities.item.get", "foo.entities.item.v2.get"));
     entity.setVisible(false);
     return entity;
   }

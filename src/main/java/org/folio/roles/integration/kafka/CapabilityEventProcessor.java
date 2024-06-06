@@ -53,11 +53,11 @@ public class CapabilityEventProcessor {
    * @return {@link CapabilityResultHolder} with created {@link Capability} and {@link CapabilitySetDescriptor} objects
    */
   public CapabilityResultHolder process(CapabilityEvent event) {
-    var folioResources = event.getResources();
-    if (isEmpty(folioResources)) {
+    if (event == null || isEmpty(event.getResources())) {
       return new CapabilityResultHolder(emptyList(), emptyList());
     }
 
+    var folioResources = event.getResources();
     return event.getModuleType() == ModuleType.MODULE
       ? processModuleResources(event, folioResources)
       : processUiModuleResources(event, folioResources);
@@ -157,7 +157,7 @@ public class CapabilityEventProcessor {
     var resultList = new ArrayList<T>();
     var visitedIdentifiers = new HashMap<V, Pair<T, Integer>>();
     for (int i = 0; i < collection.size(); i++) {
-      T element = collection.get(i);
+      var element = collection.get(i);
       var identifier = identifiersMapper.apply(element);
       var foundElementPair = visitedIdentifiers.get(identifier);
       if (foundElementPair != null) {

@@ -1,9 +1,6 @@
 package org.folio.roles.service.loadablerole;
 
-import static java.util.function.Function.identity;
-import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.utils.CollectionUtils.findOne;
@@ -15,7 +12,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +20,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.dto.LoadablePermission;
+import org.folio.roles.domain.model.event.CapabilityEvent;
+import org.folio.roles.domain.model.event.CapabilitySetEvent;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
-import org.folio.roles.service.event.CapabilityCollectionEvent;
-import org.folio.roles.service.event.CapabilitySetEvent;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.stereotype.Service;
@@ -47,27 +43,25 @@ public class LoadableRoleCapabilityAssignmentProcessor {
   private final RoleCapabilityService roleCapabilityService;
   private final RoleCapabilitySetService roleCapabilitySetService;
 
-  @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).CREATE")
-  public void handleCapabilitiesCreatedEvent(CapabilityCollectionEvent<? extends Collection<Capability>> event) {
+  @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).CREATE")
+  public void handleCapabilitiesCreatedEvent(CapabilityEvent event) {
     log.debug("\"Capabilities Created\" event received: {}", event);
+    var capability = event.getNewObject();
 
-    var capabilities = event.getNewObject();
-    if (isEmpty(capabilities)) {
-      throw new IllegalArgumentException("Capabilities Created event contains no data");
+    log.info("Handling created capability: {}", capability.getName());
+
+    if (isEmpty(capability.getEndpoints())) {
+      log.debug("Technical capability found: {}. Skipping...", capability);
+      return;
     }
 
-    log.info("Handling created capabilities: {}", () -> toNames(capabilities));
+    var permission = capability.getPermission();
 
-    var capabilityByPerm = capabilities.stream()
-      .filter(not(isTechnicalCapability()))
-      .collect(toMap(Capability::getPermission, identity()));
-
-    applyActionToRoles(() -> findRoleWithPermissionsByPermissionNames(capabilityByPerm.keySet()),
-      assignCapabilitiesToRole(capabilityByPerm),
-      event.getContext());
+    applyActionToRoles(() -> findRoleWithPermissionsByPermissionNames(List.of(permission)),
+      assignCapabilitiesToRole(Map.of(permission, capability)), event.getContext());
   }
 
-  @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).CREATE")
+  @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).CREATE")
   public void handleCapabilitySetCreatedEvent(CapabilitySetEvent event) {
     log.debug("\"Capability Set Created\" event received: {}", event);
 
@@ -79,13 +73,13 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       event.getContext());
   }
 
-  @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.service.event.DomainEventType).UPDATE")
+  @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).UPDATE")
   public void handleCapabilitySetUpdatedEvent(CapabilitySetEvent event) {
     log.debug("\"Capability Set Updated\" event received: {}", event);
 
     var capabilitySet = event.getNewObject();
     var oldCapabilitySet = event.getOldObject();
-    
+
     if (capabilitySet.getId() != oldCapabilitySet.getId()) {
       throw new IllegalArgumentException("Ids of old and new version of capability set don't match: oldId = "
         + oldCapabilitySet.getId() + ", newId = " + capabilitySet.getId());
@@ -104,7 +98,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
       if (relatedCapability == null) {
         log.warn("Capability related to capability set is not found by capability set name: {}. "
-            + "Capability set will be skipped", capabilitySet.getName());
+          + "Capability set will be skipped", capabilitySet.getName());
         return Collections.emptyMap();
       }
 
@@ -159,18 +153,6 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     return findOne(capabilityService.findByNames(List.of(capabilitySetName))).orElse(null);
   }
 
-  private static Predicate<Capability> isTechnicalCapability() {
-    return capability -> {
-      var technical = isEmpty(capability.getEndpoints());
-
-      if (technical) {
-        log.debug("Technical capability found: {}. Skipping...", capability);
-      }
-
-      return technical;
-    };
-  }
-
   private static void applyActionToRoles(Supplier<Map<UUID, List<LoadablePermission>>> rolesWithPermissionsSupplier,
     BiConsumer<UUID, List<LoadablePermission>> action, FolioExecutionContext context) {
     try (var ignored = new FolioExecutionContextSetter(context)) {
@@ -188,10 +170,6 @@ public class LoadableRoleCapabilityAssignmentProcessor {
         + "roleId = " + roleId + ", rolePermissions = " + rolePermissions);
     }
     return rolePermissions.get(0);
-  }
-
-  private static Collection<String> toNames(Collection<Capability> capabilities) {
-    return mapItems(capabilities, Capability::getName);
   }
 
   private static Collection<String> toPermissionNames(Collection<LoadablePermission> rolePermissions) {

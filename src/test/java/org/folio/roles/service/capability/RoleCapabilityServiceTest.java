@@ -7,23 +7,30 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
+import static org.folio.roles.domain.model.PageResult.empty;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
+import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.RoleCapabilityUtils.roleCapability;
 import static org.folio.roles.support.RoleCapabilityUtils.roleCapabilityEntity;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.RoleUtils.role;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import org.folio.roles.domain.entity.key.RoleCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.RoleCapabilityEntityMapper;
@@ -248,6 +255,53 @@ class RoleCapabilityServiceTest {
       assertThatThrownBy(() -> roleCapabilityService.deleteAll(ROLE_ID))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Relations between role and capabilities are not found for role: %s", ROLE_ID);
+    }
+  }
+
+  @Nested
+  @DisplayName("delete")
+  class Delete {
+
+    @Test
+    void positive() {
+      var existingEntity = roleCapabilityEntity();
+      var existingEntities = List.of(existingEntity);
+      var capabilitySetIds = List.of(CAPABILITY_ID);
+      var endpoints = List.of(endpoint());
+      var entityKey = RoleCapabilityKey.of(ROLE_ID, CAPABILITY_ID);
+
+      when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
+      when(roleCapabilityRepository.findById(entityKey)).thenReturn(Optional.of(existingEntity));
+      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityEndpointService.getByCapabilityIds(capabilitySetIds, emptyList())).thenReturn(endpoints);
+
+      roleCapabilityService.delete(ROLE_ID, CAPABILITY_ID);
+
+      verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
+      verify(roleCapabilityRepository).deleteRoleCapabilities(ROLE_ID, capabilitySetIds);
+    }
+
+    @Test
+    void positive_entityNotFound() {
+      when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(emptyList());
+      roleCapabilityService.delete(ROLE_ID, CAPABILITY_ID);
+      verifyNoInteractions(rolePermissionService);
+      verify(roleCapabilityRepository, never()).deleteRoleCapabilities(any(), anyList());
+    }
+
+    @Test
+    void positive_entityNotFoundById() {
+      var existingEntity = roleCapabilityEntity();
+      var existingEntities = List.of(existingEntity);
+      var entityKey = RoleCapabilityKey.of(ROLE_ID, CAPABILITY_ID);
+
+      when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
+      when(roleCapabilityRepository.findById(entityKey)).thenReturn(Optional.empty());
+
+      roleCapabilityService.delete(ROLE_ID, CAPABILITY_ID);
+
+      verifyNoInteractions(rolePermissionService);
+      verify(roleCapabilityRepository, never()).deleteRoleCapabilities(any(), anyList());
     }
   }
 
