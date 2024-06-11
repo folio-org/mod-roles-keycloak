@@ -5,9 +5,9 @@ import org.jenkinsci.plugins.workflow.libs.Library
 
 node('jenkins-agent-java17-bigmem') {
   stage('Build Docker Image') {
-    dir('mgr-tenant-entitlements') {
+    dir('mod-roles-keycloak') {
       EurekaImage image = new EurekaImage(this)
-      image.setModuleName('mgr-tenant-entitlements')
+      image.setModuleName('mod-roles-keycloak')
       image.makeImage()
     }
   }
