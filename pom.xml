@@ -53,7 +53,7 @@
     <maven-checkstyle-plugin.version>3.4.0</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.1.0</maven-release-plugin.version>
-    <openapi-generator.version>7.6.0</openapi-generator.version>
+    <openapi-generator.version>7.4.0</openapi-generator.version>
     <keycloak-admin-client.version>23.0.7</keycloak-admin-client.version>
 
     <sonar.exclusions>
