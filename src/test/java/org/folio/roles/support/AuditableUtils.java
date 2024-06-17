@@ -15,10 +15,10 @@ public class AuditableUtils {
     if (md == null) {
       return;
     }
-    entity.setCreatedBy(md.getCreatedBy());
+    entity.setCreatedByUserId(md.getCreatedByUserId());
     entity.setCreatedDate(dateAsOffsetDateTime(md.getCreatedDate()));
-    entity.setUpdatedBy(md.getModifiedBy());
-    entity.setUpdatedDate(dateAsOffsetDateTime(md.getModifiedDate()));
+    entity.setUpdatedByUserId(md.getUpdatedByUserId());
+    entity.setUpdatedDate(dateAsOffsetDateTime(md.getUpdatedDate()));
   }
 
   private static OffsetDateTime dateAsOffsetDateTime(Date date) {

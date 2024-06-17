@@ -108,10 +108,10 @@ class PolicyIT extends BaseIntegrationTest {
         .contentType(APPLICATION_JSON))
       .andExpect(status().isCreated())
       .andExpect(content().json(policyToCreateAsJson))
-      .andExpect(jsonPath("$.metadata.createdBy").value(equalTo(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.metadata.createdByUserId").value(equalTo(USER_ID_HEADER)))
       .andExpect(jsonPath("$.metadata.createdDate").value(notNullValue()))
-      .andExpect(jsonPath("$.metadata.modifiedBy").value(equalTo(USER_ID_HEADER)))
-      .andExpect(jsonPath("$.metadata.modifiedDate").value(notNullValue()));
+      .andExpect(jsonPath("$.metadata.updatedByUserId").value(equalTo(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.metadata.updatedDate").value(notNullValue()));
   }
 
   @Test
@@ -136,10 +136,10 @@ class PolicyIT extends BaseIntegrationTest {
     var policies = parseResponse(response, Policies.class);
     policies.getPolicies().forEach(policy -> {
       var metadata = policy.getMetadata();
-      assertNotNull(metadata.getCreatedBy());
+      assertNotNull(metadata.getCreatedByUserId());
       assertNotNull(metadata.getCreatedDate());
-      assertNotNull(metadata.getModifiedBy());
-      assertNotNull(metadata.getModifiedDate());
+      assertNotNull(metadata.getUpdatedByUserId());
+      assertNotNull(metadata.getUpdatedDate());
     });
   }
 
@@ -196,14 +196,14 @@ class PolicyIT extends BaseIntegrationTest {
     var updatedPolicy = parseResponse(mvcResult, Policy.class);
     var updatedPolicyMetadata = updatedPolicy.getMetadata();
 
-    assertEquals(USER_ID_HEADER, updatedPolicyMetadata.getModifiedBy().toString());
+    assertEquals(USER_ID_HEADER, updatedPolicyMetadata.getUpdatedByUserId().toString());
     assertEquals(newName, updatedPolicy.getName());
     assertEquals(newDescription, updatedPolicy.getDescription());
     assertEquals(newUserId, updatedPolicy.getUserPolicy().getUsers().get(0).toString());
-    assertEquals("11111111-1111-4011-1111-0d121a11111e", updatedPolicyMetadata.getCreatedBy().toString());
+    assertEquals("11111111-1111-4011-1111-0d121a11111e", updatedPolicyMetadata.getCreatedByUserId().toString());
     assertAll(() -> {
       assertNotNull(updatedPolicyMetadata.getCreatedDate());
-      assertNotNull(updatedPolicyMetadata.getModifiedDate());
+      assertNotNull(updatedPolicyMetadata.getUpdatedDate());
     });
   }
 
