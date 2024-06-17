@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.3.0</version>
+    <version>3.2.5</version>
     <relativePath />
   </parent>
 
@@ -54,7 +54,7 @@
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.1.0</maven-release-plugin.version>
     <openapi-generator.version>7.6.0</openapi-generator.version>
-    <keycloak-admin-client.version>25.0.0</keycloak-admin-client.version>
+    <keycloak-admin-client.version>23.0.7</keycloak-admin-client.version>
 
     <sonar.exclusions>
       <!--
