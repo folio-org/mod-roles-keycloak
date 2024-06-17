@@ -39,8 +39,8 @@ class LoadableRoleRepositoryIT extends BaseRepositoryTest {
 
     var stored = entityManager.find(LoadableRoleEntity.class, saved.getId());
     assertThat(stored.getCreatedDate()).isCloseTo(now, within(1, MINUTES));
-    assertThat(stored.getCreatedBy()).isEqualTo(USER_ID);
+    assertThat(stored.getCreatedByUserId()).isEqualTo(USER_ID);
     assertThat(stored.getUpdatedDate()).isCloseTo(now, within(1, MINUTES));
-    assertThat(stored.getUpdatedBy()).isEqualTo(USER_ID);
+    assertThat(stored.getUpdatedByUserId()).isEqualTo(USER_ID);
   }
 }

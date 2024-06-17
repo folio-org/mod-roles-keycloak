@@ -89,18 +89,18 @@ class UserRolesIT extends BaseIntegrationTest {
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(expectedUserRolesJson))
-      .andExpect(jsonPath("$.userRoles[0].metadata.createdBy").value(USER_ID_HEADER))
+      .andExpect(jsonPath("$.userRoles[0].metadata.createdByUserId").value(USER_ID_HEADER))
       .andExpect(jsonPath("$.userRoles[0].metadata.createdDate").exists())
-      .andExpect(jsonPath("$.userRoles[0].metadata.updatedBy").doesNotExist())
-      .andExpect(jsonPath("$.userRoles[0].metadata.updatedDate").doesNotExist());
+      .andExpect(jsonPath("$.userRoles[0].metadata.updatedByUserId").exists())
+      .andExpect(jsonPath("$.userRoles[0].metadata.updatedDate").exists());
 
     doGet("/roles/users/{id}", USER_UUID)
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(expectedUserRolesJson))
-      .andExpect(jsonPath("$.userRoles[0].metadata.createdBy").value(USER_ID_HEADER))
+      .andExpect(jsonPath("$.userRoles[0].metadata.createdByUserId").value(USER_ID_HEADER))
       .andExpect(jsonPath("$.userRoles[0].metadata.createdDate").exists())
-      .andExpect(jsonPath("$.userRoles[0].metadata.updatedBy").doesNotExist())
-      .andExpect(jsonPath("$.userRoles[0].metadata.updatedDate").doesNotExist());
+      .andExpect(jsonPath("$.userRoles[0].metadata.updatedByUserId").exists())
+      .andExpect(jsonPath("$.userRoles[0].metadata.updatedDate").exists());
   }
 
   @Test
@@ -153,8 +153,9 @@ class UserRolesIT extends BaseIntegrationTest {
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(readTemplate("[userRole] update-response.json")))
       .andExpect(jsonPath("$.userRoles[0].metadata.createdDate").exists())
-      .andExpect(jsonPath("$.userRoles[0].metadata.updatedBy").doesNotExist())
-      .andExpect(jsonPath("$.userRoles[0].metadata.updatedDate").doesNotExist());
+      .andExpect(jsonPath("$.userRoles[0].metadata.createdByUserId").exists())
+      .andExpect(jsonPath("$.userRoles[0].metadata.updatedDate").exists())
+      .andExpect(jsonPath("$.userRoles[0].metadata.updatedByUserId").exists());
   }
 
   @Test

@@ -6,7 +6,7 @@ import org.mapstruct.Mapping;
 
 @Retention(RetentionPolicy.CLASS)
 @Mapping(target = "createdDate", ignore = true)
-@Mapping(target = "createdBy", ignore = true)
+@Mapping(target = "createdByUserId", ignore = true)
 @Mapping(target = "updatedDate", ignore = true)
-@Mapping(target = "updatedBy", ignore = true)
+@Mapping(target = "updatedByUserId", ignore = true)
 public @interface AuditableEntityMapping {}

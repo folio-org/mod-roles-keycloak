@@ -153,9 +153,9 @@ class RoleCapabilityIT extends BaseIntegrationTest {
 
     postRoleCapabilities(request)
       .andExpect(content().json(asJsonString(roleCapabilities(fooItemDeleteRoleCapability, fooItemEditRoleCapability))))
-      .andExpect(jsonPath("$.roleCapabilities[0].metadata.createdBy", is(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.roleCapabilities[0].metadata.createdByUserId", is(USER_ID_HEADER)))
       .andExpect(jsonPath("$.roleCapabilities[0].metadata.createdDate", notNullValue()))
-      .andExpect(jsonPath("$.roleCapabilities[1].metadata.createdBy", is(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.roleCapabilities[1].metadata.createdByUserId", is(USER_ID_HEADER)))
       .andExpect(jsonPath("$.roleCapabilities[1].metadata.createdDate", notNullValue()));
 
     assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
@@ -179,9 +179,9 @@ class RoleCapabilityIT extends BaseIntegrationTest {
 
     postRoleCapabilities(request)
       .andExpect(content().json(asJsonString(roleCapabilities(fooItemViewRoleCapability, fooItemEditRoleCapability))))
-      .andExpect(jsonPath("$.roleCapabilities[0].metadata.createdBy", is(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.roleCapabilities[0].metadata.createdByUserId", is(USER_ID_HEADER)))
       .andExpect(jsonPath("$.roleCapabilities[0].metadata.createdDate", notNullValue()))
-      .andExpect(jsonPath("$.roleCapabilities[1].metadata.createdBy", is(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.roleCapabilities[1].metadata.createdByUserId", is(USER_ID_HEADER)))
       .andExpect(jsonPath("$.roleCapabilities[1].metadata.createdDate", notNullValue()));
 
     assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
