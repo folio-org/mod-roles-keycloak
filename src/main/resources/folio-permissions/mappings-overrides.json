@@ -99,6 +99,11 @@
     "action": "execute",
     "type": "procedural"
   },
+  "invoice.item.cancel": {
+    "resource": "Invoice Item Cancel",
+    "action": "execute",
+    "type": "procedural"
+  },
   "licenses.licenses.item.clone": {
     "resource": "Licenses Clone Item",
     "action": "execute",
