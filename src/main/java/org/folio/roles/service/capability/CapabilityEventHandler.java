@@ -20,6 +20,7 @@ import org.folio.roles.service.permission.PermissionService;
 import org.folio.roles.service.permission.RolePermissionService;
 import org.folio.roles.service.permission.UserPermissionService;
 import org.folio.roles.service.policy.PolicyService;
+import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,11 @@ public class CapabilityEventHandler extends AbstractCapabilityEventHandler {
   private final UserPermissionService userPermissionService;
   private final UserCapabilityService userCapabilityService;
 
+  /**
+   * Handles update event for capability.
+   *
+   * @param event - {@link CapabilityEvent} object
+   */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).UPDATE")
   public void handleCapabilityUpdatedEvent(CapabilityEvent event) {
@@ -57,17 +63,24 @@ public class CapabilityEventHandler extends AbstractCapabilityEventHandler {
     var newEndpoints = difference(newCapabilityEndpoints, oldCapabilityEndpoints);
     var oldEndpoints = difference(oldCapabilityEndpoints, newCapabilityEndpoints);
 
-    performActionForPolicies(
-      policyService.findRolePoliciesByCapabilityId(capabilityId),
-      AbstractCapabilityEventHandler::extractRoleIds,
-      roleId -> updatePermissions(roleId, capabilityId, rolePermissionService, newEndpoints, oldEndpoints));
+    try (var ignored = new FolioExecutionContextSetter(event.getContext())) {
+      performActionForPolicies(
+        policyService.findRolePoliciesByCapabilityId(capabilityId),
+        AbstractCapabilityEventHandler::extractRoleIds,
+        roleId -> updatePermissions(roleId, capabilityId, rolePermissionService, newEndpoints, oldEndpoints));
 
-    performActionForPolicies(
-      policyService.findUserPoliciesByCapabilityId(capabilityId),
-      AbstractCapabilityEventHandler::extractUserIds,
-      userId -> updatePermissions(userId, capabilityId, userPermissionService, newEndpoints, oldEndpoints));
+      performActionForPolicies(
+        policyService.findUserPoliciesByCapabilityId(capabilityId),
+        AbstractCapabilityEventHandler::extractUserIds,
+        userId -> updatePermissions(userId, capabilityId, userPermissionService, newEndpoints, oldEndpoints));
+    }
   }
 
+  /**
+   * Handles delete event for capability.
+   *
+   * @param event - {@link CapabilityEvent} object
+   */
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).DELETE")
   public void handleCapabilityDeletedEvent(CapabilityEvent event) {
@@ -75,20 +88,22 @@ public class CapabilityEventHandler extends AbstractCapabilityEventHandler {
     var capabilityId = deprecatedCapability.getId();
     var deprecatedEndpoints = getCapabilityEndpoints(deprecatedCapability);
 
-    performActionForPolicies(
-      policyService.findRolePoliciesByCapabilityId(capabilityId),
-      AbstractCapabilityEventHandler::extractRoleIds,
-      roleId -> deleteDeprecatedPermissions(roleId, capabilityId, rolePermissionService,
-        roleCapabilityService::delete, deprecatedEndpoints));
+    try (var ignored = new FolioExecutionContextSetter(event.getContext())) {
+      performActionForPolicies(
+        policyService.findRolePoliciesByCapabilityId(capabilityId),
+        AbstractCapabilityEventHandler::extractRoleIds,
+        roleId -> deleteDeprecatedPermissions(roleId, capabilityId, rolePermissionService,
+          roleCapabilityService::delete, deprecatedEndpoints));
 
-    performActionForPolicies(
-      policyService.findUserPoliciesByCapabilityId(capabilityId),
-      AbstractCapabilityEventHandler::extractUserIds,
-      userId -> deleteDeprecatedPermissions(userId, capabilityId, userPermissionService,
-        userCapabilityService::delete, deprecatedEndpoints));
+      performActionForPolicies(
+        policyService.findUserPoliciesByCapabilityId(capabilityId),
+        AbstractCapabilityEventHandler::extractUserIds,
+        userId -> deleteDeprecatedPermissions(userId, capabilityId, userPermissionService,
+          userCapabilityService::delete, deprecatedEndpoints));
 
-    capabilitySetService.deleteAllLinksToCapability(capabilityId);
-    capabilityService.deleteById(capabilityId);
+      capabilitySetService.deleteAllLinksToCapability(capabilityId);
+      capabilityService.deleteById(capabilityId);
+    }
   }
 
   private void deleteDeprecatedPermissions(UUID identifier, UUID capabilityId, PermissionService permissionService,
@@ -101,12 +116,13 @@ public class CapabilityEventHandler extends AbstractCapabilityEventHandler {
 
   private void updatePermissions(UUID identifier, UUID capabilityId, PermissionService permissionService,
     List<Endpoint> newEndpoints, List<Endpoint> deprecatedEndpoints) {
+    var assignedEndpoints = permissionService.getAssignedEndpoints(identifier, List.of(capabilityId), emptyList());
     if (isNotEmpty(newEndpoints)) {
-      permissionService.createPermissions(identifier, newEndpoints);
+      var endpointsToCreate = difference(newEndpoints, assignedEndpoints);
+      permissionService.createPermissions(identifier, endpointsToCreate);
     }
 
     if (isNotEmpty(deprecatedEndpoints)) {
-      var assignedEndpoints = permissionService.getAssignedEndpoints(identifier, List.of(capabilityId), emptyList());
       var endpointsToDelete = difference(deprecatedEndpoints, assignedEndpoints);
       permissionService.deletePermissions(identifier, endpointsToDelete);
     }
