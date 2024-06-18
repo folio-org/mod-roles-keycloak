@@ -134,7 +134,6 @@ class CapabilityEventHandlerTest {
   @Test
   void handleCapabilityUpdatedEvent_positive_userPolicy() {
     var existingEndpoints = List.of(fooItemGetEndpoint());
-    var capabilityIds = List.of(CAPABILITY_ID);
     when(policyService.findRolePoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(emptyList());
     when(policyService.findUserPoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(List.of(userPolicy()));
     when(userPermissionService.getAssignedEndpoints(USER_ID, capabilityIds, emptyList())).thenReturn(existingEndpoints);
@@ -186,7 +185,6 @@ class CapabilityEventHandlerTest {
 
   @Test
   void handleCapabilityDeletedEvent_positive_rolePolicy() {
-    var capabilityIds = List.of(CAPABILITY_ID);
     var existingEndpoints = List.of(fooItemGetEndpoint());
     when(policyService.findRolePoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(List.of(rolePolicy()));
     when(policyService.findUserPoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(emptyList());
@@ -206,7 +204,6 @@ class CapabilityEventHandlerTest {
 
   @Test
   void handleCapabilityDeletedEvent_positive_userPolicy() {
-    var capabilityIds = List.of(CAPABILITY_ID);
     var existingEndpoints = List.of(fooItemGetEndpoint());
     when(policyService.findRolePoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(emptyList());
     when(policyService.findUserPoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(List.of(userPolicy()));
