@@ -779,6 +779,11 @@
     "action": "execute",
     "type": "procedural"
   },
+  "lists.item.export.post": {
+    "resource": "Lists Item Export Post",
+    "action": "execute",
+    "type": "procedural"
+  },
   "source-storage.records.fetch": {
     "resource": "Source-Storage Records Fetch",
     "action": "view",
