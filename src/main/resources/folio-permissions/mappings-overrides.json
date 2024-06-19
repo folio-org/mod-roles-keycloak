@@ -958,5 +958,15 @@
     "resource": "UI-Circulation Settings Title Level Requests",
     "action": "manage",
     "type": "settings"
+  },
+  "ui-finance.fund-budget.recalculateTotals": {
+    "resource": "UI-Finance fund budget recalculate totals",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-finance.encumbrance.unrelease": {
+    "resource": "UI-Finance encumbrance unrelease",
+    "action": "execute",
+    "type": "procedural"
   }
 }
