@@ -161,24 +161,48 @@ public class PolicyService {
     return policyByName;
   }
 
+  /**
+   * Retrieves role policies by capability id.
+   *
+   * @param capabilityId - capability identifier
+   * @return {@link List} with found role {@link Policy} by capability id
+   */
   @Transactional(readOnly = true)
   public List<Policy> findRolePoliciesByCapabilityId(UUID capabilityId) {
     return entityService.findRolePoliciesByCapabilityId(capabilityId);
   }
 
+  /**
+   * Retrieves role policies by capability set id.
+   *
+   * @param capabilitySetId - capability set identifier
+   * @return {@link List} with found role {@link Policy} by capability set id
+   */
   @Transactional(readOnly = true)
-  public List<Policy> findRolePoliciesByCapabilitySetId(UUID capabilityId) {
-    return entityService.findRolePoliciesByCapabilitySetId(capabilityId);
+  public List<Policy> findRolePoliciesByCapabilitySetId(UUID capabilitySetId) {
+    return entityService.findRolePoliciesByCapabilitySetId(capabilitySetId);
   }
 
+  /**
+   * Retrieves user policies by capability id.
+   *
+   * @param capabilityId - capability identifier
+   * @return {@link List} with found user {@link Policy} by capability id
+   */
   @Transactional(readOnly = true)
   public List<Policy> findUserPoliciesByCapabilityId(UUID capabilityId) {
     return entityService.findUserPoliciesByCapabilityId(capabilityId);
   }
 
+  /**
+   * Retrieves user policies by capability set id.
+   *
+   * @param capabilitySetId - capability set identifier
+   * @return {@link List} with found user {@link Policy} by capability set id
+   */
   @Transactional(readOnly = true)
-  public List<Policy> findUserPoliciesByCapabilitySetId(UUID capabilityId) {
-    return entityService.findUserPoliciesByCapabilitySetId(capabilityId);
+  public List<Policy> findUserPoliciesByCapabilitySetId(UUID capabilitySetId) {
+    return entityService.findUserPoliciesByCapabilitySetId(capabilitySetId);
   }
 
   private Optional<Policy> createSafe(Policy policy) {

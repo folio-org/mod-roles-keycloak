@@ -3,7 +3,7 @@ package org.folio.roles.integration.keyclock.configuration;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.folio.roles.integration.keyclock.configuration.properties.KeycloakTlsProperties;
+import org.folio.common.configuration.properties.TlsProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -39,7 +39,7 @@ public class KeycloakConfigurationProperties {
   /**
    * Properties object with an information about TLS configuration for Keycloak communication.
    */
-  private KeycloakTlsProperties tls;
+  private TlsProperties tls;
 
   @Data
   public static class Login {

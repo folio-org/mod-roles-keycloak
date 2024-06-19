@@ -35,8 +35,8 @@ class RoleCapabilitySetRepositoryIT extends BaseRepositoryTest {
     var stored = entityManager.find(RoleCapabilitySetEntity.class,
       RoleCapabilitySetKey.of(entity.getRoleId(), entity.getCapabilitySetId()));
     assertThat(stored.getCreatedDate()).isCloseTo(now, within(1, MINUTES));
-    assertThat(stored.getCreatedBy()).isEqualTo(USER_ID);
+    assertThat(stored.getCreatedByUserId()).isEqualTo(USER_ID);
     assertThat(stored.getUpdatedDate()).isCloseTo(now, within(1, MINUTES));
-    assertThat(stored.getUpdatedBy()).isEqualTo(USER_ID);
+    assertThat(stored.getUpdatedByUserId()).isEqualTo(USER_ID);
   }
 }

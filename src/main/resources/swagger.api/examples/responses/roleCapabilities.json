@@ -5,16 +5,20 @@
       "roleId": "03db8142-c79f-4f38-8662-ee0f7ca05a36",
       "capabilityId": "c11e07f4-8bb0-45d1-a396-aaa72ae3121b",
       "metadata": {
-        "createdBy": "a7189e80-0d88-4b65-9ad6-fceb4318107e",
-        "createdDate": "2023-09-04T12:00:00.000+00:00"
+        "createdByUserId": "a7189e80-0d88-4b65-9ad6-fceb4318107e",
+        "createdDate": "2023-09-04T12:00:00.000+00:00",
+        "updatedByUserId": "a7189e80-0d88-4b65-9ad6-fceb4318107e",
+        "updatedDate": "2023-09-04T12:00:00.000+00:00"
       }
     },
     {
       "roleId": "03db8142-c79f-4f38-8662-ee0f7ca05a36",
       "capabilityId": "d928eab1-1d3a-4d67-949e-a0305ced5b6a",
       "metadata": {
-        "createdBy": "a7189e80-0d88-4b65-9ad6-fceb4318107e",
-        "createdDate": "2023-09-04T12:00:00.000+00:00"
+        "createdByUserId": "a7189e80-0d88-4b65-9ad6-fceb4318107e",
+        "createdDate": "2023-09-04T12:00:00.000+00:00",
+        "updatedByUserId": "a7189e80-0d88-4b65-9ad6-fceb4318107e",
+        "updatedDate": "2023-09-04T12:00:00.000+00:00"
       }
     }
   ]

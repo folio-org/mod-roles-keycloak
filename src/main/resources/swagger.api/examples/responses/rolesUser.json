@@ -13,8 +13,9 @@
       "roleId": "3b122a1e-8fce-4360-b36d-c880950fa0b9",
       "metadata": {
         "createdDate": "2024-01-08T17:30:27.690+00:00",
-        "createdBy": "9eb67301-6f6e-468f-9b1a-6134dc39a684"
-      }
+        "createdByUserId": "9eb67301-6f6e-468f-9b1a-6134dc39a684",
+        "updatedDate": "2024-01-08T17:30:27.690+00:00",
+        "updatedByUserId": "9eb67301-6f6e-468f-9b1a-6134dc39a684"}
     }
   ],
   "totalRecords": 2

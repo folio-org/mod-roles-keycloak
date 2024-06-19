@@ -4,6 +4,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -46,6 +47,7 @@ public abstract class AbstractCapabilityEventHandler {
       .stream()
       .flatMap(Collection::stream)
       .map(RolePolicyRole::getId)
+      .filter(Objects::nonNull)
       .distinct()
       .toList();
   }
@@ -62,6 +64,7 @@ public abstract class AbstractCapabilityEventHandler {
       .map(UserPolicy::getUsers)
       .stream()
       .flatMap(Collection::stream)
+      .filter(Objects::nonNull)
       .distinct()
       .toList();
   }

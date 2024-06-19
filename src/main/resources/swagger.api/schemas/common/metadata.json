@@ -9,17 +9,17 @@
       "type": "string",
       "format": "date-time"
     },
-    "createdBy": {
+    "createdByUserId": {
       "description": "ID of the user who created the record (when available)",
       "type": "string",
       "format": "uuid"
     },
-    "modifiedDate": {
+    "updatedDate": {
       "description": "Date and time when the record was last updated",
       "type": "string",
       "format": "date-time"
     },
-    "modifiedBy": {
+    "updatedByUserId": {
       "description": "ID of the user who last updated the record (when available)",
       "type": "string",
       "format": "uuid"

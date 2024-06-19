@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+  <changeSet id="update-metadata-fields-in-capability-table" author="Pavel Filippov">
+    <renameColumn tableName="capability" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    <renameColumn tableName="capability" oldColumnName="updated_by" newColumnName="updated_by_user_id"/>
+  </changeSet>
+
+  <changeSet id="update-metadata-fields-in-capability-set-table" author="Pavel Filippov">
+    <renameColumn tableName="capability_set" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    <renameColumn tableName="capability_set" oldColumnName="updated_by" newColumnName="updated_by_user_id"/>
+  </changeSet>
+
+  <changeSet id="update-metadata-fields-in-policy-table" author="Pavel Filippov">
+    <renameColumn tableName="policy" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    <renameColumn tableName="policy" oldColumnName="updated_by" newColumnName="updated_by_user_id"/>
+  </changeSet>
+
+  <changeSet id="update-metadata-fields-in-role-table" author="Pavel Filippov">
+    <renameColumn tableName="role" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    <renameColumn tableName="role" oldColumnName="updated_by" newColumnName="updated_by_user_id"/>
+  </changeSet>
+
+  <changeSet id="update-metadata-fields-in-role-capability-table" author="Pavel Filippov">
+    <renameColumn tableName="role_capability" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    <renameColumn tableName="role_capability" oldColumnName="updated_by" newColumnName="updated_by_user_id"/>
+  </changeSet>
+
+  <changeSet id="update-metadata-fields-in-role-capability-set-table" author="Pavel Filippov">
+    <renameColumn tableName="role_capability_set" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    <renameColumn tableName="role_capability_set" oldColumnName="updated_by" newColumnName="updated_by_user_id"/>
+  </changeSet>
+
+  <changeSet id="update-metadata-fields-in-role-loadable-permission-table" author="Pavel Filippov">
+    <renameColumn tableName="role_loadable_permission" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    <renameColumn tableName="role_loadable_permission" oldColumnName="updated_by" newColumnName="updated_by_user_id"/>
+  </changeSet>
+
+  <changeSet id="update-metadata-fields-in-user-capability-table" author="Pavel Filippov">
+    <renameColumn tableName="user_capability" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    <renameColumn tableName="user_capability" oldColumnName="updated_by" newColumnName="updated_by_user_id"/>
+  </changeSet>
+
+  <changeSet id="update-metadata-fields-in-user-capability-set-table" author="Pavel Filippov">
+    <renameColumn tableName="user_capability_set" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    <renameColumn tableName="user_capability_set" oldColumnName="updated_by" newColumnName="updated_by_user_id"/>
+  </changeSet>
+
+  <changeSet id="update-metadata-fields-in-user-role-table" author="Pavel Filippov">
+    <renameColumn tableName="user_role" oldColumnName="created_by" newColumnName="created_by_user_id"/>
+    <renameColumn tableName="user_role" oldColumnName="updated_by" newColumnName="updated_by_user_id"/>
+  </changeSet>
+
+</databaseChangeLog>
