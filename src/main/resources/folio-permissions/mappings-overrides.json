@@ -963,5 +963,10 @@
     "resource": "UI-Finance fund budget recalculate totals",
     "action": "execute",
     "type": "procedural"
+  },
+  "ui-finance.encumbrance.unrelease": {
+    "resource": "UI-Finance encumbrance unrelease",
+    "action": "execute",
+    "type": "procedural"
   }
 }
