@@ -790,7 +790,7 @@
     "type": "procedural"
   },
   "lists.item.refresh.cancel": {
-    "resource": "Lists Item Cancel Refresh",
+    "resource": "Lists Item Refresh Cancel ",
     "action": "execute",
     "type": "procedural"
   },
