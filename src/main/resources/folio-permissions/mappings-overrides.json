@@ -958,5 +958,10 @@
     "resource": "UI-Circulation Settings Title Level Requests",
     "action": "manage",
     "type": "settings"
+  },
+  "ui-finance.fund-budget.recalculateTotals": {
+    "resource": "UI-Finance fund budget recalculate totals",
+    "action": "execute",
+    "type": "procedural"
   }
 }
