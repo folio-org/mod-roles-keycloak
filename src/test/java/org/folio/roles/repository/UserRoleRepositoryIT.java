@@ -40,8 +40,8 @@ class UserRoleRepositoryIT extends BaseRepositoryTest {
     var stored = entityManager.find(UserRoleEntity.class,
       UserRoleKey.of(entity.getUserId(), entity.getRoleId()));
     assertThat(stored.getCreatedDate()).isCloseTo(now, within(1, MINUTES));
-    assertThat(stored.getCreatedBy()).isEqualTo(USER_ID);
+    assertThat(stored.getCreatedByUserId()).isEqualTo(USER_ID);
     assertThat(stored.getUpdatedDate()).isCloseTo(now, within(1, MINUTES));
-    assertThat(stored.getUpdatedBy()).isEqualTo(USER_ID);
+    assertThat(stored.getUpdatedByUserId()).isEqualTo(USER_ID);
   }
 }

@@ -32,8 +32,8 @@ public class Auditable {
    * Indicates the user who created the entity.
    */
   @CreatedBy
-  @Column(name = "created_by", updatable = false)
-  private UUID createdBy;
+  @Column(name = "created_by_user_id", updatable = false)
+  private UUID createdByUserId;
 
   /**
    * Indicates the date the entity was last modified.
@@ -46,6 +46,6 @@ public class Auditable {
    * Indicates the user who last modified the entity.
    */
   @LastModifiedBy
-  @Column(name = "updated_by")
-  private UUID updatedBy;
+  @Column(name = "updated_by_user_id")
+  private UUID updatedByUserId;
 }

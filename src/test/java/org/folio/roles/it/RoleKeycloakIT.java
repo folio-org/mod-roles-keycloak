@@ -83,9 +83,9 @@ class RoleKeycloakIT extends BaseIntegrationTest {
     var role = parseResponse(response, Role.class);
     var metadata = role.getMetadata();
     assertEquals(timestampFrom("2023-01-01T12:01:01"), metadata.getCreatedDate());
-    assertEquals(timestampFrom("2023-01-02T12:01:01"), metadata.getModifiedDate());
-    assertEquals("11111111-2222-1111-2222-111111111111", metadata.getCreatedBy().toString());
-    assertEquals("11111111-1111-2222-1111-111111111111", metadata.getModifiedBy().toString());
+    assertEquals(timestampFrom("2023-01-02T12:01:01"), metadata.getUpdatedDate());
+    assertEquals("11111111-2222-1111-2222-111111111111", metadata.getCreatedByUserId().toString());
+    assertEquals("11111111-1111-2222-1111-111111111111", metadata.getUpdatedByUserId().toString());
   }
 
   @Test
@@ -111,10 +111,10 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       .andExpect(status().isCreated())
       .andExpect(content().json(roleToCreateAsJson))
       .andExpect(jsonPath("$.id").value(notNullValue()))
-      .andExpect(jsonPath("$.metadata.createdBy").value(equalTo(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.metadata.createdByUserId").value(equalTo(USER_ID_HEADER)))
       .andExpect(jsonPath("$.metadata.createdDate").value(notNullValue()))
-      .andExpect(jsonPath("$.metadata.modifiedBy").value(equalTo(USER_ID_HEADER)))
-      .andExpect(jsonPath("$.metadata.modifiedDate").value(notNullValue()));
+      .andExpect(jsonPath("$.metadata.updatedByUserId").value(equalTo(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.metadata.updatedDate").value(notNullValue()));
   }
 
   @Test
@@ -136,16 +136,16 @@ class RoleKeycloakIT extends BaseIntegrationTest {
         role -> ROLE_2.getName().equals(role.getName()) && ROLE_2.getDescription().equals(role.getDescription())));
 
       var role1Metadata = roles.getRoles().get(0).getMetadata();
-      assertNotNull(role1Metadata.getCreatedBy());
+      assertNotNull(role1Metadata.getCreatedByUserId());
       assertNotNull(role1Metadata.getCreatedDate());
-      assertNotNull(role1Metadata.getModifiedBy());
-      assertNotNull(role1Metadata.getModifiedDate());
+      assertNotNull(role1Metadata.getUpdatedByUserId());
+      assertNotNull(role1Metadata.getUpdatedDate());
 
       var role2Metadata = roles.getRoles().get(1).getMetadata();
-      assertNotNull(role2Metadata.getCreatedBy());
+      assertNotNull(role2Metadata.getCreatedByUserId());
       assertNotNull(role2Metadata.getCreatedDate());
-      assertNotNull(role2Metadata.getModifiedBy());
-      assertNotNull(role2Metadata.getModifiedDate());
+      assertNotNull(role2Metadata.getUpdatedByUserId());
+      assertNotNull(role2Metadata.getUpdatedDate());
     });
   }
 
@@ -222,9 +222,9 @@ class RoleKeycloakIT extends BaseIntegrationTest {
     var updatedRoleMetadata = updatedRole.getMetadata();
     assertEquals(updatedName, updatedRole.getName());
     assertEquals(updatedDescription, updatedRole.getDescription());
-    assertEquals(USER_ID_HEADER, updatedRoleMetadata.getModifiedBy().toString());
-    assertEquals("11111111-2222-1111-2222-111111111111", updatedRoleMetadata.getCreatedBy().toString());
-    assertNotNull(updatedRoleMetadata.getModifiedDate());
+    assertEquals(USER_ID_HEADER, updatedRoleMetadata.getUpdatedByUserId().toString());
+    assertEquals("11111111-2222-1111-2222-111111111111", updatedRoleMetadata.getCreatedByUserId().toString());
+    assertNotNull(updatedRoleMetadata.getUpdatedDate());
     assertNotNull(updatedRoleMetadata.getCreatedDate());
   }
 

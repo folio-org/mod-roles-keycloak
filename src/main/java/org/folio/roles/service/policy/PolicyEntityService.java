@@ -77,21 +77,45 @@ public class PolicyEntityService {
     return mapper.toPolicy(policyEntities.getContent());
   }
 
+  /**
+   * Retrieves role policies by capability id.
+   *
+   * @param capabilityId - capability identifier
+   * @return {@link List} with found role {@link Policy} by capability id
+   */
   @Transactional(readOnly = true)
   public List<Policy> findRolePoliciesByCapabilityId(UUID capabilityId) {
     return mapItems(repository.findRolePoliciesByCapabilityId(capabilityId), mapper::toRolePolicy);
   }
 
+  /**
+   * Retrieves role policies by capability set id.
+   *
+   * @param capabilitySetId - capability set identifier
+   * @return {@link List} with found role {@link Policy} by capability set id
+   */
   @Transactional(readOnly = true)
   public List<Policy> findRolePoliciesByCapabilitySetId(UUID capabilitySetId) {
     return mapItems(repository.findRolePoliciesByCapabilitySetId(capabilitySetId), mapper::toRolePolicy);
   }
 
+  /**
+   * Retrieves user policies by capability id.
+   *
+   * @param capabilityId - capability identifier
+   * @return {@link List} with found user {@link Policy} by capability id
+   */
   @Transactional(readOnly = true)
   public List<Policy> findUserPoliciesByCapabilityId(UUID capabilityId) {
     return mapItems(repository.findUserPoliciesByCapabilityId(capabilityId), mapper::toUserPolicy);
   }
 
+  /**
+   * Retrieves user policies by capability set id.
+   *
+   * @param capabilitySetId - capability set identifier
+   * @return {@link List} with found user {@link Policy} by capability set id
+   */
   @Transactional(readOnly = true)
   public List<Policy> findUserPoliciesByCapabilitySetId(UUID capabilitySetId) {
     return mapItems(repository.findUserPoliciesByCapabilitySetId(capabilitySetId), mapper::toUserPolicy);
