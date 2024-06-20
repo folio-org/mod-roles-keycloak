@@ -25,8 +25,9 @@ public class CustomTenantService extends TenantService {
   private final LoadableRoleService loadableRoleService;
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
-                             FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
-                             List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService) {
+    FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
+    List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService) {
+
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.kafkaAdminService = kafkaAdminService;
     this.referenceDataLoaders = referenceDataLoaders;
@@ -53,7 +54,7 @@ public class CustomTenantService extends TenantService {
 
   @Override
   public void deleteTenant(TenantAttributes tenantAttributes) {
-    if (tenantExists() && tenantAttributes.getPurge()) {
+    if (tenantExists() && tenantAttributes.getPurge().equals(Boolean.TRUE)) {
       try {
         loadableRoleService.cleanupDefaultRolesFromKeycloak();
       } catch (Exception e) {
