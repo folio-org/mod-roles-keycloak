@@ -784,13 +784,18 @@
     "action": "execute",
     "type": "procedural"
   },
+  "lists.item.refresh.cancel": {
+    "resource": "Lists Item Refresh Cancel ",
+    "action": "execute",
+    "type": "procedural"
+  },
   "lists.item.export.post": {
     "resource": "Lists Item Export Post",
     "action": "execute",
     "type": "procedural"
   },
-  "lists.item.refresh.cancel": {
-    "resource": "Lists Item Refresh Cancel ",
+  "lists.item.export.cancel": {
+    "resource": "Lists Item Export Cancel",
     "action": "execute",
     "type": "procedural"
   },
