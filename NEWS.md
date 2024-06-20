@@ -1,4 +1,12 @@
-## Version `v1.4.1` (in progress)
+## Version `v1.4.1` (20.06.2024)
+* Clean default roles in Keycloak during the tenant disable with purge=true (MODROLESKC-196)
+* Implement upgrade operation for capabilities (MODROLESKC-138)
+* Pack application to Docker Image and upload it to ECR (RANCHER-1515)
+* Add mapping for invoice.item.cancel (EUREKA-96)
+* Fix metadata field names (MODROLESKC-189)
+* Raise unit test code coverage (MODROLESKC-138)
+* Add mapping for ui-finance.fund-budget.recalculateTotals (EUREKA-174)
+* Add mapping for lists.item.export.post (EUREKA-143)
 * Clean default roles in Keycloak during the tenant disable with purge=true (MODROLESKC-196)
 
 ## Version `v1.4.0` (25.05.2024)
