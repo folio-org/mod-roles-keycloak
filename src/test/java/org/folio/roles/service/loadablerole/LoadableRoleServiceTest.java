@@ -7,11 +7,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.LoadableRoleUtils.loadableRole;
 import static org.folio.roles.support.LoadableRoleUtils.loadableRoleEntity;
 import static org.folio.roles.support.LoadableRoleUtils.regularRole;
+import static org.folio.roles.support.RoleUtils.role;
 import static org.folio.roles.support.TestUtils.copy;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
+import java.util.stream.Stream;
+import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
@@ -20,6 +25,8 @@ import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
 import org.instancio.junit.InstancioExtension;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -132,5 +139,35 @@ class LoadableRoleServiceTest {
         assertThat(se.getKey()).isEqualTo("cause");
         assertThat(se.getValue()).isEqualTo("Save failed");
       });
+  }
+
+  @Nested
+  @DisplayName("cleanupDefaultRolesFromKeycloak")
+  class CleanupDefaultRolesFromKeycloak {
+
+    @Test
+    void positive() {
+      var role = role();
+      var loadableRole = loadableRoleEntity(loadableRole());
+
+      when(repository.findAllByType(EntityLoadableRoleType.DEFAULT))
+        .thenReturn(Stream.of(loadableRole));
+      when(keycloakService.findByName(loadableRole.getName()))
+        .thenReturn(Optional.of(role));
+
+      service.cleanupDefaultRolesFromKeycloak();
+
+      verify(keycloakService).deleteByIdSafe(role.getId());
+    }
+
+    @Test
+    void positive_when_noRoles() {
+      when(repository.findAllByType(EntityLoadableRoleType.DEFAULT))
+        .thenReturn(Stream.empty());
+
+      service.cleanupDefaultRolesFromKeycloak();
+
+      verifyNoInteractions(keycloakService);
+    }
   }
 }

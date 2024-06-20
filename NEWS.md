@@ -1,4 +1,5 @@
-## Version `v1.5.0` (in progress)
+## Version `v1.4.1` (in progress)
+* Clean default roles in Keycloak during the tenant disable with purge=true (MODROLESKC-196)
 
 ## Version `v1.4.0` (25.05.2024)
 ### Changes:

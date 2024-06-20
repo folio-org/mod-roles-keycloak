@@ -5,12 +5,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
+import java.util.List;
 import org.folio.roles.integration.kafka.KafkaAdminService;
+import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.service.reference.PoliciesDataLoader;
+import org.folio.roles.service.reference.ReferenceDataLoader;
 import org.folio.roles.service.reference.RolesDataLoader;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
+import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,13 +40,15 @@ class CustomTenantServiceTest {
   private KafkaAdminService kafkaAdminService;
   @Mock
   private FolioExecutionContext context;
+  @Mock
+  private LoadableRoleService loadableRoleService;
   private CustomTenantService customTenantService;
 
   @BeforeEach
   void setUp() {
     var referenceDataLoader = of(rolesDataLoader, policiesDataLoader);
-    customTenantService = new CustomTenantService(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService,
-      referenceDataLoader, false);
+    customTenantService = new TestCustomTenantService(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService,
+      referenceDataLoader, loadableRoleService);
   }
 
   @Test
@@ -65,5 +72,57 @@ class CustomTenantServiceTest {
 
     verify(rolesDataLoader).loadReferenceData();
     verify(policiesDataLoader).loadReferenceData();
+  }
+
+  @Test
+  void deleteTenant_positive() {
+    var attributes = new TenantAttributes();
+    attributes.setPurge(true);
+    doNothing().when(loadableRoleService).cleanupDefaultRolesFromKeycloak();
+
+    customTenantService.deleteTenant(attributes);
+
+    verify(loadableRoleService).cleanupDefaultRolesFromKeycloak();
+  }
+
+  @Test
+  void deleteTenant_positive_notPurge() {
+    var attributes = new TenantAttributes();
+    attributes.setPurge(false);
+
+    customTenantService.deleteTenant(attributes);
+
+    verifyNoInteractions(loadableRoleService);
+  }
+
+  @Test
+  void deleteTenant_positive_whenError() {
+    var attributes = new TenantAttributes();
+    attributes.setPurge(true);
+
+    doThrow(new RuntimeException()).when(loadableRoleService).cleanupDefaultRolesFromKeycloak();
+
+    customTenantService.deleteTenant(attributes);
+
+    verify(loadableRoleService).cleanupDefaultRolesFromKeycloak();
+  }
+
+  public static class TestCustomTenantService extends CustomTenantService {
+    TestCustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
+      FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
+      List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService) {
+
+      super(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService, referenceDataLoaders, loadableRoleService);
+    }
+
+    @Override
+    public boolean tenantExists() {
+      return true;
+    }
+
+    @Override
+    public String getSchemaName() {
+      return "test";
+    }
   }
 }

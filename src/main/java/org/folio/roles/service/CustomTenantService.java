@@ -5,12 +5,12 @@ import static org.folio.common.utils.CollectionUtils.toStream;
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.integration.kafka.KafkaAdminService;
+import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.service.reference.ReferenceDataLoader;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
 import org.folio.spring.service.TenantService;
 import org.folio.tenant.domain.dto.TenantAttributes;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -22,16 +22,16 @@ public class CustomTenantService extends TenantService {
 
   private final KafkaAdminService kafkaAdminService;
   private final List<ReferenceDataLoader> referenceDataLoaders;
-  private final boolean forcePurge;
+  private final LoadableRoleService loadableRoleService;
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
     FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
-    List<ReferenceDataLoader> referenceDataLoaders,
-    @Value("${application.tenant-service.force-purge}") boolean forcePurge) {
+    List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService) {
+
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.kafkaAdminService = kafkaAdminService;
     this.referenceDataLoaders = referenceDataLoaders;
-    this.forcePurge = forcePurge;
+    this.loadableRoleService = loadableRoleService;
   }
 
   @Override
@@ -54,12 +54,15 @@ public class CustomTenantService extends TenantService {
 
   @Override
   public void deleteTenant(TenantAttributes tenantAttributes) {
-    if (tenantExists()) {
-      if (forcePurge) {
+    if (tenantExists() && tenantAttributes.getPurge().equals(Boolean.TRUE)) {
+      try {
+        loadableRoleService.cleanupDefaultRolesFromKeycloak();
+      } catch (Exception e) {
+        log.warn("Unable to delete all Default Roles in Keycloak. "
+          + "Tenant data will be purged from the DB anyway. "
+          + "Data consistency should be checked manually.", e);
+      } finally {
         super.deleteTenant(tenantAttributes);
-      } else {
-        log.warn("Tenant's data cannot be deleted to avoid inconsistency between the module and Keycloak. "
-          + "Please manually drop the schema if it's really necessary: schema = {}", getSchemaName());
       }
     }
   }
