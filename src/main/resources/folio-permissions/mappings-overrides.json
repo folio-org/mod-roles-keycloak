@@ -789,6 +789,11 @@
     "action": "execute",
     "type": "procedural"
   },
+  "lists.item.refresh.cancel": {
+    "resource": "Lists Item Refresh Cancel ",
+    "action": "execute",
+    "type": "procedural"
+  },
   "source-storage.records.fetch": {
     "resource": "Source-Storage Records Fetch",
     "action": "view",
