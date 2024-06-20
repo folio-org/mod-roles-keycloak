@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.dto.LoadableRoles;
+import org.folio.roles.domain.entity.LoadableRoleEntity;
+import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
@@ -49,6 +51,18 @@ public class LoadableRoleService {
   @Transactional(readOnly = true)
   public int defaultRoleCount() {
     return repository.countAllByType(DEFAULT);
+  }
+
+  /**
+   * Delete all default roles in Keycloak. Deletes only data in Keycloak.
+   */
+  @Transactional(readOnly = true)
+  public void cleanupDefaultRolesFromKeycloak() {
+    try (var loadableRoles = repository.findAllByType(EntityLoadableRoleType.DEFAULT)) {
+      loadableRoles.map(LoadableRoleEntity::getName)
+        .map(keycloakService::findByName)
+        .forEach(optRole -> optRole.ifPresent(kcRole -> keycloakService.deleteByIdSafe(kcRole.getId())));
+    }
   }
 
   public LoadableRole save(LoadableRole role) {

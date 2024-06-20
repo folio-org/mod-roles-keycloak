@@ -217,6 +217,29 @@ class KeycloakRoleServiceTest {
   }
 
   @Nested
+  @DisplayName("deleteByIdSafe")
+  class DeleteByIdSafe {
+
+    @Test
+    void positive() {
+      roleService.deleteByIdSafe(ROLE_ID);
+
+      var token = tokenService.getToken();
+      verify(roleClient).deleteById(anyString(), eq(token), eq(ROLE_ID));
+    }
+
+    @Test
+    void positive_throws_api_exception() {
+      var token = tokenService.getToken();
+
+      doThrow(FeignException.class).when(roleClient).deleteById(anyString(), eq(token), eq(ROLE_ID));
+
+      roleService.deleteByIdSafe(ROLE_ID);
+      verify(roleClient).deleteById(anyString(), any(), any());
+    }
+  }
+
+  @Nested
   @DisplayName("updateById")
   class UpdateById {
 

@@ -34,7 +34,6 @@ metadata about who and when created a record.
 | KAFKA_CAPABILITIES_TOPIC_PATTERN | `(${application.environment}\.)(.*\.)mgr-tenant-entitlements.capability` |  false   | Topic pattern for `capability` topic filled by mgr-tenants-entitlement                                                                 |
 | CAPABILITY_TOPIC_RETRY_DELAY     | 1s                                                                       |  false   | `capability` topic retry delay if tenant is not initialized                                                                            |
 | CAPABILITY_TOPIC_RETRY_ATTEMPTS  | 9223372036854775807                                                      |  false   | `capability` topic retry attempts if tenant is not initialized (default value is Long.MAX_VALUE ~= infinite amount of retries)         |
-| TENANT_SERVICE_FORCE_PURGE       | false                                                                    |  false   | Forcing removal of tenant data from DB during tenant disabling. By default the data is retained in DB, ignoring `purge=true` parameter |
 
 ### Secure storage environment variables
 

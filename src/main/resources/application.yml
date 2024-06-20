@@ -95,5 +95,3 @@ application:
     capability-event:
       retry-attempts: ${CAPABILITY_TOPIC_RETRY_ATTEMPTS:9223372036854775807}
       retry-delay: ${CAPABILITY_TOPIC_RETRY_DELAY:1s}
-  tenant-service:
-    force-purge: ${TENANT_SERVICE_FORCE_PURGE:false}
