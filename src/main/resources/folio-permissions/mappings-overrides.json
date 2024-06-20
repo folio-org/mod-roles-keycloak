@@ -114,6 +114,11 @@
     "action": "execute",
     "type": "procedural"
   },
+  "licenses.files.item.download": {
+    "resource": "Licenses Download Files",
+    "action": "execute",
+    "type": "procedural"
+  },
   "licenses.admin.action": {
     "resource": "Licenses Admin Action",
     "action": "view",
