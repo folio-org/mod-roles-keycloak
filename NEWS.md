@@ -1,3 +1,7 @@
+## Version `v1.4.2` (07.10.2024)
+* Upgrade keycloak client to v25.0.1 (KEYCLOAK-11)
+
+---
 ## Version `v1.4.1` (20.06.2024)
 * Clean default roles in Keycloak during the tenant disable with purge=true (MODROLESKC-196)
 * Implement upgrade operation for capabilities (MODROLESKC-138)
