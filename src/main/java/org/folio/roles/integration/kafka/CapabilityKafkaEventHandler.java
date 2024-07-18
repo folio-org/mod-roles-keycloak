@@ -1,5 +1,6 @@
 package org.folio.roles.integration.kafka;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +13,7 @@ import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.roles.integration.kafka.model.ResourceEventType;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.permission.FolioPermissionService;
 import org.springframework.stereotype.Component;
@@ -40,6 +42,15 @@ public class CapabilityKafkaEventHandler {
     var oldValue = objectMapper.convertValue(resourceEvent.getOldValue(), CapabilityEvent.class);
     var moduleId = newValue != null ? newValue.getModuleId() : oldValue.getModuleId();
     log.info("Capability event received: moduleId = {}, type = {}", moduleId, eventType);
+
+    if (newValue != null && oldValue != null && isApplicationVersionUpgradeEvent(eventType, newValue, oldValue)) {
+      var newApplicationId = newValue.getApplicationId();
+      var oldApplicationId = oldValue.getApplicationId();
+      capabilityService.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
+      capabilitySetDescriptorService.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
+      return;
+    }
+
     var orh = capabilityEventProcessor.process(oldValue);
 
     folioPermissionService.update(getPermissions(newValue), getPermissions(oldValue));
@@ -58,5 +69,14 @@ public class CapabilityKafkaEventHandler {
       .map(FolioResource::getPermission)
       .filter(Objects::nonNull)
       .toList();
+  }
+
+  private static boolean isApplicationVersionUpgradeEvent(ResourceEventType type,
+    CapabilityEvent newValue, CapabilityEvent oldValue) {
+    return type == ResourceEventType.UPDATE
+      && newValue.getModuleId() != null
+      && Objects.equals(newValue.getModuleId(), oldValue.getModuleId())
+      && isEmpty(newValue.getResources())
+      && isEmpty(oldValue.getResources());
   }
 }

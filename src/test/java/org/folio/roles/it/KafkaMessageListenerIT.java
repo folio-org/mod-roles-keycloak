@@ -1,6 +1,7 @@
 package org.folio.roles.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.folio.roles.domain.dto.CapabilityAction.CREATE;
 import static org.folio.roles.domain.dto.CapabilityAction.DELETE;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.dto.CapabilityAction.MANAGE;
@@ -8,6 +9,7 @@ import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.domain.dto.CapabilityType.DATA;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySets;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
+import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
 import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.capabilities;
 import static org.folio.roles.support.EndpointUtils.fooItemDeleteEndpoint;
@@ -106,9 +108,40 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   }
 
   @Test
-  @Sql("classpath:/sql/kafka-message-listener-it/partial-capabilities.sql")
-  void handleCapabilityEvent_positive_partiallyPopulatedCapabilities() throws Exception {
+  @Sql("classpath:/sql/kafka-message-listener-it/all-capabilities.sql")
+  void handleCapabilityEvent_positive_applicationVersionUpgradeEvent() throws Exception {
     sendCapabilityEventAndCheckResult();
+  }
+
+  @Test
+  @Sql("classpath:/sql/kafka-message-listener-it/all-capabilities.sql")
+  void handleCapabilityEvent_positive_partiallyPopulatedCapabilities() throws Exception {
+    var capabilityEvent = readValue("json/kafka-events/be-app-upgrade-capability-event.json", ResourceEvent.class);
+    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
+
+    var expectedCapabilitiesJson = asJsonString(capabilities(
+      fooItemCapability(CREATE, "foo.item.post", APPLICATION_ID_V2, fooItemPostEndpoint()),
+      fooItemCapability(DELETE, "foo.item.delete", APPLICATION_ID_V2, fooItemDeleteEndpoint()),
+      fooItemCapability(EDIT, "foo.item.put", APPLICATION_ID_V2, fooItemPutEndpoint(), fooItemPatchEndpoint()),
+      fooItemCapability(VIEW, "foo.item.get", APPLICATION_ID_V2, fooItemGetEndpoint())));
+
+    var expectedCapabilitySets = asJsonString(capabilitySets(
+      fooItemCapabilitySet(CREATE, APPLICATION_ID_V2),
+      fooItemCapabilitySet(EDIT, APPLICATION_ID_V2),
+      fooItemCapabilitySet(MANAGE, APPLICATION_ID_V2),
+      fooItemCapabilitySet(VIEW, APPLICATION_ID_V2)));
+
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(content().json(expectedCapabilitiesJson)));
+    await().untilAsserted(() -> doGet("/capability-sets").andExpect(content().json(expectedCapabilitySets)));
+
+    var capabilitiesResponse = parseResponse(doGet("/capability-sets").andReturn(), CapabilitySets.class);
+    var capabilitySets = capabilitiesResponse.getCapabilitySets();
+
+    assertCapabilityNamesBySetId(capabilitySets.get(0).getId(), "foo_item.create", "foo_item.edit", "foo_item.view");
+    assertCapabilityNamesBySetId(capabilitySets.get(1).getId(), "foo_item.edit", "foo_item.view");
+    assertCapabilityNamesBySetId(capabilitySets.get(2).getId(),
+      "foo_item.create", "foo_item.delete", "foo_item.edit", "foo_item.view");
+    assertCapabilityNamesBySetId(capabilitySets.get(3).getId(), "foo_item.view");
   }
 
   @Test
@@ -141,7 +174,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
 
     var expectedCapabilitiesJson = asJsonString(capabilities(
-      fooItemCapability(CapabilityAction.CREATE, "foo.item.post", fooItemPostEndpoint()),
+      fooItemCapability(CREATE, "foo.item.post", fooItemPostEndpoint()),
       fooItemCapability(DELETE, "foo.item.delete", fooItemDeleteEndpoint()),
       fooItemCapability(EDIT, "foo.item.put", fooItemPutEndpoint(), fooItemPatchEndpoint()),
       fooItemCapability(VIEW, "foo.item.get", fooItemGetEndpoint())));
@@ -154,7 +187,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.capabilities[3].metadata.createdDate", notNullValue())));
 
     var expectedCapabilitySets = asJsonString(capabilitySets(
-      fooItemCapabilitySet(CapabilityAction.CREATE),
+      fooItemCapabilitySet(CREATE),
       fooItemCapabilitySet(EDIT),
       fooItemCapabilitySet(MANAGE),
       fooItemCapabilitySet(VIEW)));
@@ -262,6 +295,11 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   }
 
   private static Capability fooItemCapability(CapabilityAction action, String permission, Endpoint... endpoints) {
+    return fooItemCapability(action, permission, APPLICATION_ID, endpoints);
+  }
+
+  private static Capability fooItemCapability(CapabilityAction action, String permission,
+    String applicationId, Endpoint... endpoints) {
     var capabilityName = getCapabilityName(FOO_RESOURCE, action);
     return new Capability()
       .id(null)
@@ -269,17 +307,22 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .resource(FOO_RESOURCE)
       .action(action)
       .type(DATA)
-      .applicationId(APPLICATION_ID)
+      .applicationId(applicationId)
       .permission(permission)
       .endpoints(Arrays.asList(endpoints))
       .description(permission + " - description");
   }
 
   private static CapabilitySet fooItemCapabilitySet(CapabilityAction action) {
+    return fooItemCapabilitySet(action, APPLICATION_ID);
+  }
+
+  private static CapabilitySet fooItemCapabilitySet(CapabilityAction action, String applicationId) {
     var capabilityName = getCapabilityName(FOO_RESOURCE, action);
     return new CapabilitySet()
       .name(capabilityName)
       .action(action)
+      .applicationId(applicationId)
       .resource(FOO_RESOURCE)
       .type(DATA)
       .description(capabilityName + " - description");

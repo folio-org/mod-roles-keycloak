@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.folio.roles.domain.entity.CapabilityEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -159,4 +160,10 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     WHERE uc.user_id = :user_id
     ORDER BY c.folio_permission""")
   List<String> findAllFolioPermissions(@Param("user_id") UUID userId);
+
+  @Modifying
+  @Query("update CapabilityEntity ce set ce.applicationId = :applicationId "
+    + "where ce.moduleId = :moduleId and ce.applicationId = :oldApplicationId")
+  void updateApplicationVersion(@Param("moduleId") String moduleId,
+    @Param("applicationId") String applicationId, @Param("oldApplicationId") String oldApplicationId);
 }

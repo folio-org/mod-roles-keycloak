@@ -6,7 +6,9 @@ import static org.folio.roles.domain.dto.CapabilityType.DATA;
 import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
 import static org.folio.roles.integration.kafka.model.ResourceEventType.CREATE;
 import static org.folio.roles.integration.kafka.model.ResourceEventType.DELETE;
+import static org.folio.roles.integration.kafka.model.ResourceEventType.UPDATE;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
+import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
 import static org.mockito.Mockito.verify;
@@ -85,6 +87,21 @@ class CapabilityKafkaEventHandlerTest {
     verify(capabilityService).update(DELETE, emptyList(), List.of(capability()));
     verify(capabilitySetDescriptorService).update(DELETE, emptyList(), emptyList());
     verify(objectMapper).convertValue(oldValueMap, CapabilityEvent.class);
+  }
+
+  @Test
+  void handleEvent_positive_applicationVersionUpgradeEvent() {
+    var resourceEvent = ResourceEvent.builder()
+      .tenant(TENANT_ID)
+      .type(UPDATE)
+      .oldValue(Map.of("moduleId", MODULE_ID, "moduleType", "module", "applicationId", APPLICATION_ID))
+      .newValue(Map.of("moduleId", MODULE_ID, "moduleType", "module", "applicationId", APPLICATION_ID_V2))
+      .build();
+
+    eventHandler.handleEvent(resourceEvent);
+
+    verify(capabilityService).updateApplicationVersion(MODULE_ID, APPLICATION_ID_V2, APPLICATION_ID);
+    verify(capabilitySetDescriptorService).updateApplicationVersion(MODULE_ID, APPLICATION_ID_V2, APPLICATION_ID);
   }
 
   private static Endpoint endpoint() {
