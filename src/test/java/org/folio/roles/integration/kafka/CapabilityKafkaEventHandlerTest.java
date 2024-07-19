@@ -11,6 +11,9 @@ import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class CapabilityKafkaEventHandlerTest {
 
   private static final String MODULE_ID = "test-module-1.0.0";
+  private static final String MODULE_ID_V2 = "test-module-1.1.0";
 
   @InjectMocks private CapabilityKafkaEventHandler eventHandler;
   @Spy private final ObjectMapper objectMapper = OBJECT_MAPPER;
@@ -90,6 +94,116 @@ class CapabilityKafkaEventHandlerTest {
   }
 
   @Test
+  void handleEvent_positive_capabilityUpdatedEvent() {
+    var oldEvent = capabilityEvent(MODULE_ID, folioResource());
+    var newEvent = capabilityEvent(MODULE_ID_V2, folioResource());
+    when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
+    when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
+
+    var resourceEvent = ResourceEvent.builder()
+      .tenant(TENANT_ID)
+      .type(UPDATE)
+      .oldValue(capabilityEventBodyAsMap(MODULE_ID, List.of(sampleResources())))
+      .newValue(capabilityEventBodyAsMap(MODULE_ID_V2, List.of(sampleResources())))
+      .build();
+
+    eventHandler.handleEvent(resourceEvent);
+
+    verify(folioPermissionService).update(List.of(permission()), List.of(permission()));
+    verify(capabilityService).update(UPDATE, List.of(capability()), List.of(capability()));
+    verify(capabilitySetDescriptorService).update(UPDATE, emptyList(), emptyList());
+    verify(objectMapper, times(2)).convertValue(anyMap(), eq(CapabilityEvent.class));
+  }
+
+  @Test
+  void handleEvent_positive_resourcesAddedWithSameModuleId() {
+    var oldEvent = capabilityEvent(MODULE_ID);
+    var newEvent = capabilityEvent(MODULE_ID, folioResource());
+    when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
+    when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
+
+    var resourceEvent = ResourceEvent.builder()
+      .tenant(TENANT_ID)
+      .type(UPDATE)
+      .oldValue(capabilityEventBodyAsMap(MODULE_ID, emptyList()))
+      .newValue(capabilityEventBodyAsMap(MODULE_ID, List.of(sampleResources())))
+      .build();
+
+    eventHandler.handleEvent(resourceEvent);
+
+    verify(folioPermissionService).update(List.of(permission()), emptyList());
+    verify(capabilityService).update(UPDATE, List.of(capability()), emptyList());
+    verify(capabilitySetDescriptorService).update(UPDATE, emptyList(), emptyList());
+    verify(objectMapper, times(2)).convertValue(anyMap(), eq(CapabilityEvent.class));
+  }
+
+  @Test
+  void handleEvent_positive_resourcesDeletedWithSameModuleId() {
+    var oldEvent = capabilityEvent(MODULE_ID, folioResource());
+    var newEvent = capabilityEvent(MODULE_ID);
+    when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
+    when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
+
+    var resourceEvent = ResourceEvent.builder()
+      .tenant(TENANT_ID)
+      .type(UPDATE)
+      .oldValue(capabilityEventBodyAsMap(MODULE_ID, List.of(sampleResources())))
+      .newValue(capabilityEventBodyAsMap(MODULE_ID, emptyList()))
+      .build();
+
+    eventHandler.handleEvent(resourceEvent);
+
+    verify(folioPermissionService).update(emptyList(), List.of(permission()));
+    verify(capabilityService).update(UPDATE, emptyList(), List.of(capability()));
+    verify(capabilitySetDescriptorService).update(UPDATE, emptyList(), emptyList());
+    verify(objectMapper, times(2)).convertValue(anyMap(), eq(CapabilityEvent.class));
+  }
+
+  @Test
+  void handleEvent_positive_capabilityUpdatedEventResourcesCreated() {
+    var oldEvent = capabilityEvent(MODULE_ID);
+    var newEvent = capabilityEvent(MODULE_ID_V2, folioResource());
+    when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
+    when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
+
+    var resourceEvent = ResourceEvent.builder()
+      .tenant(TENANT_ID)
+      .type(UPDATE)
+      .oldValue(capabilityEventBodyAsMap(MODULE_ID, emptyList()))
+      .newValue(capabilityEventBodyAsMap(MODULE_ID_V2, List.of(sampleResources())))
+      .build();
+
+    eventHandler.handleEvent(resourceEvent);
+
+    verify(folioPermissionService).update(List.of(permission()), emptyList());
+    verify(capabilityService).update(UPDATE, List.of(capability()), emptyList());
+    verify(capabilitySetDescriptorService).update(UPDATE, emptyList(), emptyList());
+    verify(objectMapper, times(2)).convertValue(anyMap(), eq(CapabilityEvent.class));
+  }
+
+  @Test
+  void handleEvent_positive_capabilityUpdatedEventResourcesDeleted() {
+    var newEvent = capabilityEvent(MODULE_ID_V2);
+    var oldEvent = capabilityEvent(MODULE_ID, folioResource());
+    when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
+    when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
+
+    var resourceEvent = ResourceEvent.builder()
+      .tenant(TENANT_ID)
+      .type(UPDATE)
+      .oldValue(capabilityEventBodyAsMap(MODULE_ID, List.of(sampleResources())))
+      .newValue(capabilityEventBodyAsMap(MODULE_ID_V2, emptyList()))
+      .build();
+
+    eventHandler.handleEvent(resourceEvent);
+
+    verify(folioPermissionService).update(emptyList(), List.of(permission()));
+    verify(capabilityService).update(UPDATE, emptyList(), List.of(capability()));
+    verify(capabilitySetDescriptorService).update(UPDATE, emptyList(), emptyList());
+    verify(objectMapper, times(2)).convertValue(anyMap(), eq(CapabilityEvent.class));
+  }
+
+  @Test
   void handleEvent_positive_applicationVersionUpgradeEvent() {
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -116,11 +230,19 @@ class CapabilityKafkaEventHandlerTest {
   }
 
   private static CapabilityEvent capabilityEvent() {
+    return capabilityEvent(MODULE_ID, folioResource());
+  }
+
+  private static CapabilityEvent capabilityEvent(String moduleId, FolioResource ... folioResources) {
     return new CapabilityEvent()
       .moduleType(MODULE)
-      .moduleId(MODULE_ID)
+      .moduleId(moduleId)
       .applicationId(APPLICATION_ID)
-      .resources(List.of(new FolioResource().endpoints(List.of(endpoint())).permission(permission())));
+      .resources(List.of(folioResources));
+  }
+
+  private static FolioResource folioResource() {
+    return new FolioResource().endpoints(List.of(endpoint())).permission(permission());
   }
 
   private static CapabilityResultHolder capabilityResultHolder() {
@@ -141,15 +263,23 @@ class CapabilityKafkaEventHandlerTest {
   }
 
   private static Map<String, Object> capabilityEventBodyAsMap() {
+    return capabilityEventBodyAsMap(MODULE_ID, List.of(sampleResources()));
+  }
+
+  private static Map<String, Object> capabilityEventBodyAsMap(String moduleId, List<Map<String, Object>> resources) {
     return Map.of(
-      "moduleId", MODULE_ID,
+      "moduleId", moduleId,
       "moduleType", "module",
       "applicationId", APPLICATION_ID,
-      "resources", List.of(Map.of(
-        "permission", Map.of(
-          "permissionName", "test-resource.item.get",
-          "displayName", "Test-Resource Item - Get by ID",
-          "description", "Get test-resource item by id"),
-        "endpoints", List.of(Map.of("path", "/test-items/{id}", "method", "GET")))));
+      "resources", resources);
+  }
+
+  private static Map<String, Object> sampleResources() {
+    return Map.of(
+      "permission", Map.of(
+        "permissionName", "test-resource.item.get",
+        "displayName", "Test-Resource Item - Get by ID",
+        "description", "Get test-resource item by id"),
+      "endpoints", List.of(Map.of("path", "/test-items/{id}", "method", "GET")));
   }
 }

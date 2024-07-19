@@ -13,7 +13,6 @@ import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
-import org.folio.roles.integration.kafka.model.ResourceEventType;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.permission.FolioPermissionService;
 import org.springframework.stereotype.Component;
@@ -43,7 +42,7 @@ public class CapabilityKafkaEventHandler {
     var moduleId = newValue != null ? newValue.getModuleId() : oldValue.getModuleId();
     log.info("Capability event received: moduleId = {}, type = {}", moduleId, eventType);
 
-    if (newValue != null && oldValue != null && isApplicationVersionUpgradeEvent(eventType, newValue, oldValue)) {
+    if (newValue != null && oldValue != null && isApplicationVersionUpgradeEvent(newValue, oldValue)) {
       var newApplicationId = newValue.getApplicationId();
       var oldApplicationId = oldValue.getApplicationId();
       capabilityService.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
@@ -71,11 +70,8 @@ public class CapabilityKafkaEventHandler {
       .toList();
   }
 
-  private static boolean isApplicationVersionUpgradeEvent(ResourceEventType type,
-    CapabilityEvent newValue, CapabilityEvent oldValue) {
-    return type == ResourceEventType.UPDATE
-      && newValue.getModuleId() != null
-      && Objects.equals(newValue.getModuleId(), oldValue.getModuleId())
+  private static boolean isApplicationVersionUpgradeEvent(CapabilityEvent newValue, CapabilityEvent oldValue) {
+    return Objects.equals(newValue.getModuleId(), oldValue.getModuleId())
       && isEmpty(newValue.getResources())
       && isEmpty(oldValue.getResources());
   }
