@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.2.5</version>
+    <version>3.3.2</version>
     <relativePath />
   </parent>
 
@@ -27,13 +27,13 @@
 
   <properties>
     <java.version>17</java.version>
-    <lombok.version>1.18.32</lombok.version>
+    <lombok.version>1.18.34</lombok.version>
     <swagger-annotations.version>2.2.22</swagger-annotations.version>
     <apache-commons-lang3.version>3.14.0</apache-commons-lang3.version>
     <apache-commons-collections4.version>4.4</apache-commons-collections4.version>
     <openapi-tools.jackson-databind-nullable.version>0.2.6</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
-    <hypersistence-utils-hibernate-63.version>3.7.6</hypersistence-utils-hibernate-63.version>
+    <hypersistence-utils-hibernate-63.version>3.8.1</hypersistence-utils-hibernate-63.version>
     <folio-spring-support.version>8.1.2</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
@@ -43,7 +43,7 @@
     </mod-roles-keycloak.yaml-file>
 
     <!-- Test dependencies versions -->
-    <testcontainer.version>1.19.8</testcontainer.version>
+    <testcontainer.version>1.20.0</testcontainer.version>
     <instancio.version>4.8.1</instancio.version>
     <kryo.version>5.6.0</kryo.version>
 
@@ -52,9 +52,9 @@
     <maven-checkstyle.version>10.17.0</maven-checkstyle.version>
     <maven-checkstyle-plugin.version>3.4.0</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
-    <maven-release-plugin.version>3.1.0</maven-release-plugin.version>
-    <openapi-generator.version>7.4.0</openapi-generator.version>
-    <keycloak-admin-client.version>25.0.1</keycloak-admin-client.version>
+    <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
+    <openapi-generator.version>7.7.0</openapi-generator.version>
+    <keycloak-admin-client.version>25.0.2</keycloak-admin-client.version>
 
     <sonar.exclusions>
       <!--
