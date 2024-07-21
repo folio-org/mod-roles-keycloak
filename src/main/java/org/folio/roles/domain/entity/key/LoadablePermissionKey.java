@@ -1,5 +1,8 @@
 package org.folio.roles.domain.entity.key;
 
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.nullsFirst;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
@@ -10,11 +13,18 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor(staticName = "of")
-public class LoadablePermissionKey implements Serializable {
+public class LoadablePermissionKey implements Comparable<LoadablePermissionKey>, Serializable {
 
   @Serial private static final long serialVersionUID = 5181693955891076504L;
 
   private UUID roleId;
 
   private String permissionName;
+
+  @Override
+  public int compareTo(LoadablePermissionKey other) {
+    return nullsFirst(comparing(LoadablePermissionKey::getRoleId))
+      .thenComparing(nullsFirst(comparing(LoadablePermissionKey::getPermissionName)))
+      .compare(this, other);
+  }
 }

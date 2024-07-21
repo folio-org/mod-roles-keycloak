@@ -36,17 +36,13 @@ public class RolesDataLoader implements ReferenceDataLoader {
   }
 
   private void loadDefaultRoles() {
-    var roleCount = service.defaultRoleCount();
-
-    if (roleCount > 0) {
-      log.info("Default loadable roles already present in DB. Subsequent updates are not supported");
-      return;
-    }
-
-    toStream(resourceHelper.readObjectsFromDirectory(DEFAULT_ROLES_DATA_DIR, PlainLoadableRoles.class))
+    var incoming = toStream(resourceHelper.readObjectsFromDirectory(DEFAULT_ROLES_DATA_DIR, PlainLoadableRoles.class))
       .flatMap(roles -> toStream(roles.getRoles()))
       .map(role -> role.type(LoadableRoleType.DEFAULT))
-      .forEach(updateOrCreateRole());
+      .map(this::convertToLoadableRole)
+      .toList();
+
+    service.saveAll(incoming);
   }
 
   private Consumer<PlainLoadableRole> updateOrCreateRole() {
@@ -57,6 +53,12 @@ public class RolesDataLoader implements ReferenceDataLoader {
 
       service.save(toSave);
     };
+  }
+
+  private LoadableRole convertToLoadableRole(PlainLoadableRole plainRole) {
+    return service.findByIdOrName(plainRole.getId(), plainRole.getName())
+      .map(copyDataFrom(plainRole))
+      .orElseGet(toLoadableRole(plainRole));
   }
 
   private static Function<LoadableRole, LoadableRole> copyDataFrom(PlainLoadableRole source) {

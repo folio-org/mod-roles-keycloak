@@ -22,7 +22,7 @@ import org.springframework.data.domain.Sort;
 @Table(name = "role_loadable_permission")
 @IdClass(LoadablePermissionKey.class)
 @EqualsAndHashCode(callSuper = true)
-public class LoadablePermissionEntity extends Auditable {
+public class LoadablePermissionEntity extends Auditable implements Identifiable<LoadablePermissionKey> {
 
   public static final Sort DEFAULT_LOADABLE_PERMISSION_SORT = Sort.by(ASC, "roleId", "permissionName");
 
@@ -45,4 +45,20 @@ public class LoadablePermissionEntity extends Auditable {
   @EqualsAndHashCode.Exclude
   @ToString.Exclude
   private LoadableRoleEntity role;
+
+  @Override
+  public LoadablePermissionKey getId() {
+    return LoadablePermissionKey.of(roleId, permissionName);
+  }
+
+  @Override
+  public void setId(LoadablePermissionKey id) {
+    if (id == null) {
+      roleId = null;
+      permissionName = null;
+    } else {
+      roleId = id.getRoleId();
+      permissionName = id.getPermissionName();
+    }
+  }
 }
