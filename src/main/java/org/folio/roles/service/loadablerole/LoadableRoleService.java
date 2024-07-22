@@ -2,8 +2,8 @@ package org.folio.roles.service.loadablerole;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
 import static org.folio.roles.domain.entity.LoadableRoleEntity.DEFAULT_LOADABLE_ROLE_SORT;
@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.util.Supplier;
@@ -25,6 +27,7 @@ import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
+import org.folio.roles.service.ServiceUtils.UpdatePair;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -33,34 +36,30 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @Log4j2
-@Transactional
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class LoadableRoleService {
 
   private final LoadableRoleRepository repository;
   private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
-  private final TransactionTemplate transactionTemplate;
+  private final TransactionTemplate trx;
 
-  @Transactional(readOnly = true)
   public LoadableRoles find(String query, Integer limit, Integer offset) {
     var rolePage = findByQuery(query, limit, offset).map(mapper::toRole);
 
     return mapper.toLoadableRoles(rolePage);
   }
 
-  @Transactional(readOnly = true)
   public Optional<LoadableRole> findByIdOrName(UUID id, String name) {
     return repository.findByIdOrName(id, name)
       .map(mapper::toRole);
   }
 
-  @Transactional(readOnly = true)
   public boolean isDefaultRole(UUID id) {
     return repository.existsByIdAndType(id, EntityLoadableRoleType.DEFAULT);
   }
 
-  @Transactional(readOnly = true)
   public int defaultRoleCount() {
     return repository.countAllByType(EntityLoadableRoleType.DEFAULT);
   }
@@ -68,7 +67,6 @@ public class LoadableRoleService {
   /**
    * Delete all default roles in Keycloak. Deletes only data in Keycloak.
    */
-  @Transactional(readOnly = true)
   public void cleanupDefaultRolesFromKeycloak() {
     try (var loadableRoles = repository.findAllByType(EntityLoadableRoleType.DEFAULT)) {
       loadableRoles.map(LoadableRoleEntity::getName)
@@ -77,6 +75,7 @@ public class LoadableRoleService {
     }
   }
 
+  @Transactional
   public LoadableRole save(LoadableRole role) {
     var entity = mapper.toRoleEntity(role);
 
@@ -92,9 +91,7 @@ public class LoadableRoleService {
     var updated = new ArrayList<UpdatePair<LoadableRoleEntity>>();
     var deleted = new ArrayList<LoadableRoleEntity>();
     merge(incoming, existing, comparatorById(),
-      created::add,
-      (newRole, existingRole) -> updated.add(new UpdatePair<>(existingRole, newRole)),
-      deleted::add);
+      created::add, updated::add, deleted::add);
 
     deleteAll(deleted);
     createAll(created);
@@ -153,7 +150,7 @@ public class LoadableRoleService {
         createdInKeycloakRoleIds.add(roleId);
       });
 
-      var result = transactionTemplate.execute(status -> repository.saveAll(entities));
+      var result = trx.execute(status -> repository.saveAll(entities));
       log.info("Loadable roles created: {}", toIdNames(result));
 
       return result;
@@ -170,6 +167,28 @@ public class LoadableRoleService {
       return;
     }
 
+    updateNameAndDescription(updatePairs);
+    updatePermissions(updatePairs);
+  }
+
+  private void updateNameAndDescription(List<UpdatePair<LoadableRoleEntity>> updatePairs) {
+    var changedRoles = updatePairs.stream()
+      .filter(isRoleDataChanged())
+      .map(copyNameAndDescription()).toList();
+
+    if (isNotEmpty(changedRoles)) {
+      trx.executeWithoutResult(status -> {
+        repository.saveAllAndFlush(changedRoles);
+
+        changedRoles.forEach(changed -> keycloakService.update(mapper.toRegularRole(changed)));
+      });
+
+      log.info("Loadable role name(s)/description(s) updated: {}", toIdNames(changedRoles));
+    }
+  }
+
+  private void updatePermissions(List<UpdatePair<LoadableRoleEntity>> updatePairs) {
+
   }
 
   private void deleteAll(List<LoadableRoleEntity> entities) {
@@ -178,7 +197,7 @@ public class LoadableRoleService {
       return;
     }
 
-    transactionTemplate.executeWithoutResult(transactionStatus -> {
+    trx.executeWithoutResult(status -> {
       repository.flush();
       repository.deleteAllInBatch(entities);
 
@@ -193,15 +212,28 @@ public class LoadableRoleService {
     return repository.save(entity);
   }
 
-  private static Supplier<List<String>> toIdNames(List<LoadableRoleEntity> result) {
-    return () -> mapItems(result, entity -> format("[roleId = %s, roleName = %s]", entity.getId(), entity.getName()));
+  private static Predicate<UpdatePair<LoadableRoleEntity>> isRoleDataChanged() {
+    return pair -> {
+      var newItem = pair.newItem();
+      var oldItem = pair.oldItem();
+
+      return !oldItem.equalsLogically(newItem);
+    };
   }
 
-  private record UpdatePair<E>(E oldEntity, E newEntity) {
+  private static Function<UpdatePair<LoadableRoleEntity>, LoadableRoleEntity> copyNameAndDescription() {
+    return pair -> {
+      var newItem = pair.newItem();
+      var oldItem = pair.oldItem();
 
-    private UpdatePair {
-      requireNonNull(oldEntity, "Old entity is null");
-      requireNonNull(newEntity, "New entity is null");
-    }
+      oldItem.setName(newItem.getName());
+      oldItem.setDescription(newItem.getDescription());
+
+      return oldItem;
+    };
+  }
+
+  private static Supplier<List<String>> toIdNames(List<LoadableRoleEntity> result) {
+    return () -> mapItems(result, entity -> format("[roleId = %s, roleName = %s]", entity.getId(), entity.getName()));
   }
 }

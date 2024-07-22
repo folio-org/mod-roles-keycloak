@@ -12,6 +12,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -61,5 +62,16 @@ public class LoadableRoleEntity extends RoleEntity {
       perm.setRole(null);
       itr.remove();
     }
+  }
+
+  public boolean equalsLogically(LoadableRoleEntity other) {
+    if (this == other) {
+      return true;
+    }
+
+    return Objects.equals(getId(), other.getId())
+      && Objects.equals(getName(), other.getName())
+      && Objects.equals(getDescription(), other.getDescription())
+      && Objects.equals(getType(), other.getType());
   }
 }

@@ -1,6 +1,7 @@
 package org.folio.roles.service;
 
 import static java.util.Objects.nonNull;
+import static java.util.Objects.requireNonNull;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
 import java.util.ArrayList;
@@ -51,12 +52,12 @@ public class ServiceUtils {
   }*/
 
   public static <E extends Comparable<E>> void merge(Collection<E> incoming, Collection<E> stored,
-    Consumer<E> addMethod, BiConsumer<E, E> updateMethod, Consumer<E> deleteMethod) {
+    Consumer<E> addMethod, Consumer<UpdatePair<E>> updateMethod, Consumer<E> deleteMethod) {
     merge(incoming, stored, Comparable::compareTo, addMethod, updateMethod, deleteMethod);
   }
 
   public static <E> void merge(Collection<E> incoming, Collection<E> stored, Comparator<E> comparator,
-    Consumer<E> addMethod, BiConsumer<E, E> updateMethod, Consumer<E> deleteMethod) {
+    Consumer<E> addMethod, Consumer<UpdatePair<E>> updateMethod, Consumer<E> deleteMethod) {
 
     var storedList = new ArrayList<>(emptyIfNull(stored));
 
@@ -67,7 +68,7 @@ public class ServiceUtils {
       int idx = Collections.binarySearch(incomingList, s, comparator);
 
       if (idx >= 0) { // updating
-        updateMethod.accept(incomingList.get(idx), s);
+        updateMethod.accept(new UpdatePair<>(incomingList.get(idx), s));
 
         incomingList.remove(idx);
       } else { // removing
@@ -76,5 +77,13 @@ public class ServiceUtils {
     });
 
     incomingList.forEach(addMethod); // what is left in the incoming has to be inserted
+  }
+
+  public record UpdatePair<E>(E newItem, E oldItem) {
+
+    public UpdatePair {
+      requireNonNull(newItem, "New entity is null");
+      requireNonNull(oldItem, "Old entity is null");
+    }
   }
 }
