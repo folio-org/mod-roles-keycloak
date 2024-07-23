@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import lombok.experimental.UtilityClass;
 import org.folio.roles.domain.entity.Identifiable;
@@ -17,8 +16,8 @@ import org.folio.roles.domain.entity.Identifiable;
 @UtilityClass
 public class ServiceUtils {
 
-  public static <T, U> BiConsumer<T, U> nothing() {
-    return (t, u) -> {};
+  public static <E> Consumer<E> nothing() {
+    return (e) -> {};
   }
 
   public static <K extends Comparable<? super K>, E extends Identifiable<? extends K>> Comparator<E> comparatorById() {
