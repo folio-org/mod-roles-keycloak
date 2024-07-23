@@ -6,6 +6,7 @@
   "action": "create",
   "type": "data",
   "applicationId": "foo-application-1.0.0",
+  "moduleId": "mod-foo-1.0.0",
   "capabilities": [
     "8d2da27c-1d56-48b6-958d-2bfae6d79dc8"
   ],

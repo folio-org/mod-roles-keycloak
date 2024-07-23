@@ -1,5 +1,6 @@
 package org.folio.roles.integration.kafka;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,6 +41,15 @@ public class CapabilityKafkaEventHandler {
     var oldValue = objectMapper.convertValue(resourceEvent.getOldValue(), CapabilityEvent.class);
     var moduleId = newValue != null ? newValue.getModuleId() : oldValue.getModuleId();
     log.info("Capability event received: moduleId = {}, type = {}", moduleId, eventType);
+
+    if (newValue != null && oldValue != null && isApplicationVersionUpgradeEvent(newValue, oldValue)) {
+      var newApplicationId = newValue.getApplicationId();
+      var oldApplicationId = oldValue.getApplicationId();
+      capabilityService.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
+      capabilitySetDescriptorService.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
+      return;
+    }
+
     var orh = capabilityEventProcessor.process(oldValue);
 
     folioPermissionService.update(getPermissions(newValue), getPermissions(oldValue));
@@ -58,5 +68,11 @@ public class CapabilityKafkaEventHandler {
       .map(FolioResource::getPermission)
       .filter(Objects::nonNull)
       .toList();
+  }
+
+  private static boolean isApplicationVersionUpgradeEvent(CapabilityEvent newValue, CapabilityEvent oldValue) {
+    return Objects.equals(newValue.getModuleId(), oldValue.getModuleId())
+      && isEmpty(newValue.getResources())
+      && isEmpty(oldValue.getResources());
   }
 }

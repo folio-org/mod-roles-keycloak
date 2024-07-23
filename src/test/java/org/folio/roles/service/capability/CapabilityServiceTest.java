@@ -10,6 +10,8 @@ import static org.folio.roles.domain.entity.CapabilityEntity.DEFAULT_CAPABILITY_
 import static org.folio.roles.integration.kafka.model.ResourceEventType.CREATE;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
+import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
+import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.CapabilityUtils.PERMISSION_NAME;
 import static org.folio.roles.support.CapabilityUtils.capability;
@@ -480,6 +482,18 @@ class CapabilityServiceTest {
         Arguments.of(of("be.it.*", "ui.all"), emptyList(), emptyList()),
         Arguments.of(of("be.it.*", "ui.all"), of("be.all", "users.item.all"), emptyList())
       );
+    }
+  }
+
+  @Nested
+  @DisplayName("updateApplicationVersion")
+  class UpdateApplicationVersion {
+
+    @Test
+    void positive() {
+      var moduleId = "mod-test-1.0.0";
+      capabilityService.updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
+      verify(capabilityRepository).updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
     }
   }
 }

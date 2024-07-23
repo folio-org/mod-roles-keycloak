@@ -101,6 +101,7 @@ public class CapabilityEventProcessor {
       .action(rawCapability.getAction())
       .resource(rawCapability.getResource())
       .type(rawCapability.getType())
+      .moduleId(event.getModuleId())
       .description(permission.getDescription())
       .permission(permission.getPermissionName())
       .applicationId(event.getApplicationId())
@@ -133,6 +134,7 @@ public class CapabilityEventProcessor {
       .action(rawCapability.getAction())
       .resource(rawCapability.getResource())
       .description(permission.getDescription())
+      .moduleId(event.getModuleId())
       .applicationId(event.getApplicationId())
       .permission(permission.getPermissionName())
       .capabilities(capabilities);

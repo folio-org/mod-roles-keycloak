@@ -8,11 +8,14 @@ import static org.folio.roles.domain.dto.CapabilityType.DATA;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilitySetUtils.extendedCapabilitySet;
+import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
+import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.CapabilityUtils.RESOURCE_NAME;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -225,6 +228,13 @@ class CapabilitySetDescriptorServiceTest {
     capabilitySetDescriptorService.update(ResourceEventType.DELETE, emptyList(), List.of(capabilitySetDescriptor));
 
     verifyCapturedEvents(CapabilitySetEvent.deleted(extendedCapabilitySet));
+  }
+
+  @Test
+  void updateApplicationVersion_positive() {
+    var moduleId = "mod-test-1.0.0";
+    capabilitySetDescriptorService.updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
+    verify(capabilitySetService).updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
   }
 
   private static CapabilitySetDescriptor capabilitySetDescriptor(Map<String, List<CapabilityAction>> capabilities) {

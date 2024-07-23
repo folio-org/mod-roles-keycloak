@@ -1224,14 +1224,6 @@ components:
 #    policiesResponse:
 #      $ref: examples/responses/policies.json
 #
-#    # auth-resources
-#    endpointsResponse:
-#      $ref: examples/responses/endpoints.json
-#    permissionsResponse:
-#      $ref: examples/responses/permissions.json
-#    permissionsUserResponse:
-#      $ref: examples/responses/permissionsUser.json
-#
 #    # capabilities
 #    capabilitySetRequest:
 #      $ref: examples/requests/capabilitySet.json

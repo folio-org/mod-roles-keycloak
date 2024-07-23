@@ -1,0 +1,17 @@
+{
+  "type": "UPDATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "foo-module-1.0.0",
+    "moduleType": "module",
+    "applicationId": "test-application-0.0.2",
+    "capabilities": [ ]
+  },
+  "old": {
+    "moduleId": "foo-module-1.0.0",
+    "moduleType": "module",
+    "applicationId": "test-application-0.0.1",
+    "capabilities": [ ]
+  }
+}

@@ -79,6 +79,18 @@ public class CapabilitySetDescriptorService {
     handleDeprecatedCapabilitySets(oldCapabilitySetDescriptors, newCapabilityNames);
   }
 
+  /**
+   * Raises version for existing capability sets by module id + application id.
+   *
+   * @param moduleId - module identifier
+   * @param newApplicationId - new application identifier
+   * @param oldApplicationId - old application identifier
+   */
+  @Transactional
+  public void updateApplicationVersion(String moduleId, String newApplicationId, String oldApplicationId) {
+    capabilitySetService.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
+  }
+
   private void handleNewCapabilitySets(List<CapabilitySetDescriptor> capabilitySetDescriptors) {
     if (isEmpty(capabilitySetDescriptors)) {
       return;

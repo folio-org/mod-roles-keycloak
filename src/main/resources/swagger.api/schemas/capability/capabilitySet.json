@@ -31,6 +31,10 @@
       "description": "The id of the application which defines the capability",
       "type": "string"
     },
+    "moduleId": {
+      "description": "The id of the module which defines the capability",
+      "type": "string"
+    },
     "type": {
       "description": "The type of capability",
       "$ref": "capabilityType.json"

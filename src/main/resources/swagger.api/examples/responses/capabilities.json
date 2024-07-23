@@ -9,6 +9,7 @@
       "type": "data",
       "permissions": "foo.item.post",
       "applicationId": "foo-application-1.0.0",
+      "moduleId": "mod-foo-1.0.0",
       "endpoints": [
         {
           "path": "/foo/items",

@@ -54,6 +54,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class CapabilityEventProcessorTest {
 
+  public static final String MODULE_ID = "test-module-0.0.1";
   @InjectMocks private CapabilityEventProcessor capabilityEventProcessor;
   @Mock private FolioPermissionService folioPermissionService;
 
@@ -79,16 +80,17 @@ class CapabilityEventProcessorTest {
 
   private static Stream<Arguments> capabilityEventDataProvider() {
     var itemGetPermName = "test-resource.item.get";
-    var itemViewPermName = "test-resource.view";
+    var itemViewPerm = "test-resource.view";
     var resource = "Test-Resource Item";
     var csResource = "Test-Resource";
     var description = resource + " - permission description";
     var csDescription = csResource + " - permission set description";
-    var capability = capability(null, resource, VIEW, itemGetPermName).description(description);
-    var uiCapability = capability(null, csResource, VIEW, itemViewPermName).description(csDescription);
-    var capabilitySetDesc = capabilitySetDescriptor(csResource, itemViewPermName, Map.of(resource, List.of(VIEW)));
+    var capability = capability(null, resource, VIEW, itemGetPermName).description(description).moduleId(MODULE_ID);
+    var uiCapability = capability(null, csResource, VIEW, itemViewPerm).description(csDescription).moduleId(MODULE_ID);
+    var setResources = Map.of(resource, List.of(VIEW));
+    var capabilitySetDesc = capabilitySetDescriptor(csResource, itemViewPerm, setResources).moduleId(MODULE_ID);
     var permission = permission(itemGetPermName).description(description);
-    var permissionSet = permission(itemViewPermName, itemGetPermName).description(csDescription);
+    var permissionSet = permission(itemViewPerm, itemGetPermName).description(csDescription);
 
     return Stream.of(
       arguments("module event (permission)",
@@ -181,7 +183,7 @@ class CapabilityEventProcessorTest {
 
   private static CapabilityEvent event(ModuleType type, FolioResource... resources) {
     return new CapabilityEvent()
-      .moduleId("test-module-0.0.1")
+      .moduleId(MODULE_ID)
       .moduleType(type)
       .applicationId(APPLICATION_ID)
       .resources(asList(resources));
@@ -209,6 +211,7 @@ class CapabilityEventProcessorTest {
   }
 
   private static Capability fooCapability(CapabilityAction action, String permissionSuffix, Endpoint... endpoints) {
-    return capability(null, FOO_RESOURCE, action, "foo.item." + permissionSuffix, endpoints).description(null);
+    return capability(null, FOO_RESOURCE, action, "foo.item." + permissionSuffix, endpoints)
+      .moduleId(MODULE_ID).description(null);
   }
 }

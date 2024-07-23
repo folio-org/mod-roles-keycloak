@@ -69,4 +69,10 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
   @Modifying
   @Query(nativeQuery = true, value = "DELETE FROM capability_set_capability WHERE capability_id = :capabilityId")
   void deleteCapabilityCapabilitySetLinks(@Param("capabilityId") UUID capabilityId);
+
+  @Modifying
+  @Query("update CapabilitySetEntity cse set cse.applicationId = :applicationId "
+    + "where cse.moduleId = :moduleId and cse.applicationId = :oldApplicationId")
+  void updateApplicationVersion(@Param("moduleId") String moduleId,
+    @Param("applicationId") String applicationId, @Param("oldApplicationId") String oldApplicationId);
 }

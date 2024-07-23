@@ -35,6 +35,11 @@ public class CapabilitySetDescriptor {
   private CapabilityAction action;
 
   /**
+   * Capability set descriptor module identifier, nullable.
+   */
+  private String moduleId;
+
+  /**
    * Capability set descriptor application identifier, nullable.
    */
   private String applicationId;
@@ -106,6 +111,16 @@ public class CapabilitySetDescriptor {
    */
   public CapabilitySetDescriptor applicationId(String applicationId) {
     this.applicationId = applicationId;
+    return this;
+  }
+
+  /**
+   * Sets moduleId for {@link CapabilitySetDescriptor} and returns {@link CapabilitySetDescriptor}.
+   *
+   * @return this {@link CapabilitySetDescriptor} with new moduleId value
+   */
+  public CapabilitySetDescriptor moduleId(String moduleId) {
+    this.moduleId = moduleId;
     return this;
   }
 
