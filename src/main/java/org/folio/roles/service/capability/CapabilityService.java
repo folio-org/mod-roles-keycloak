@@ -155,6 +155,12 @@ public class CapabilityService {
     return capabilityEntityMapper.convert(capabilityEntities);
   }
 
+  /**
+   * Retrieves capabilities by permission names.
+   *
+   * @param permissionNames - list of {@link String} permission names
+   * @return list with {@link Capability} objects
+   */
   @Transactional(readOnly = true)
   public List<Capability> findByPermissionNames(Collection<String> permissionNames) {
     if (isEmpty(permissionNames)) {

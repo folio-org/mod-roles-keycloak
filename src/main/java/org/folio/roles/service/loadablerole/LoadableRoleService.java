@@ -306,17 +306,25 @@ public class LoadableRoleService {
       assignCapabilities(permsByName);
       permissionRepository.saveAllAndFlush(createdPermissions);
 
-      revokeCapabilitySets(permsByName);
-      revokeCapabilities(permsByName);
+      removeCapabilitySets(permsByName);
+      removeCapabilities(permsByName);
       permissionRepository.flush();
       permissionRepository.deleteAllInBatch(deletedPermissions);
     }
 
-    private void revokeCapabilitySets(Map<String, LoadablePermissionEntity> permsByName) {
+    private void removeCapabilitySets(Map<String, LoadablePermissionEntity> permsByName) {
       var capabilitySets = capabilitySetService.findByPermissionNames(permsByName.keySet());
 
       if (isNotEmpty(capabilitySets)) {
-        roleCapabilitySetService.create(roleId, mapItems(capabilitySets, CapabilitySet::getId));
+        roleCapabilitySetService.delete(roleId, mapItems(capabilitySets, CapabilitySet::getId));
+      }
+    }
+
+    private void removeCapabilities(Map<String, LoadablePermissionEntity> permsByName) {
+      var capabilities = capabilityService.findByPermissionNames(permsByName.keySet());
+
+      if (isNotEmpty(capabilities)) {
+        roleCapabilityService.delete(roleId, mapItems(capabilities, Capability::getId));
       }
     }
 

@@ -50,4 +50,12 @@ public interface RoleCapabilitySetService {
    * @throws jakarta.persistence.EntityNotFoundException if assignment is not found by role id and capability set id
    */
   void delete(UUID roleId, UUID capabilitySetId);
+
+  /**
+   * Removes role assigned capability sets using role identifier and capability set ids.
+   *
+   * @param roleId - role identifier as {@link UUID}
+   * @param capabilitySetIds - list with capabilitySet ids, that should be removed from a role
+   */
+  void delete(UUID roleId, List<UUID> capabilitySetIds);
 }
