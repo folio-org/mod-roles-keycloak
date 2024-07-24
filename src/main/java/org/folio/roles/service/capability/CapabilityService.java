@@ -267,6 +267,17 @@ public class CapabilityService {
     capabilityRepository.deleteById(capabilityId);
   }
 
+  /**
+   * Raises version for existing capability sets by module id + application id.
+   *
+   * @param moduleId - module identifier
+   * @param newApplicationId - new application identifier
+   * @param oldApplicationId - old application identifier
+   */
+  public void updateApplicationVersion(String moduleId, String newApplicationId, String oldApplicationId) {
+    capabilityRepository.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
+  }
+
   private static String trimWildcard(String param) {
     return param.endsWith("*") ? param.substring(0, param.length() - 1) : param;
   }

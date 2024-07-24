@@ -10,6 +10,8 @@ import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySetEntity;
+import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
+import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.CapabilityUtils.RESOURCE_NAME;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
@@ -537,6 +539,18 @@ class CapabilitySetServiceTest {
       assertThatThrownBy(() -> capabilitySetService.checkIds(capabilityIds))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Capability sets not found by ids: %s", List.of(CAPABILITY_SET_ID));
+    }
+  }
+
+  @Nested
+  @DisplayName("updateApplicationVersion")
+  class UpdateApplicationVersion {
+
+    @Test
+    void positive() {
+      var moduleId = "mod-test-1.0.0";
+      capabilitySetService.updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
+      verify(capabilitySetRepository).updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
     }
   }
 }

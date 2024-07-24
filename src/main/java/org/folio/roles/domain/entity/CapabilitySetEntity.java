@@ -46,6 +46,9 @@ public class CapabilitySetEntity extends Auditable {
   @Column(name = "resource", nullable = false)
   private String resource;
 
+  @Column(name = "module_id")
+  private String moduleId;
+
   @Column(name = "application_id", nullable = false)
   private String applicationId;
 

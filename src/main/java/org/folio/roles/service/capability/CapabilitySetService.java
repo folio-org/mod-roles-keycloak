@@ -289,4 +289,15 @@ public class CapabilitySetService {
     log.debug("Removing capability_set-capability links for capability: capabilityId = {}", capabilityId);
     repository.deleteCapabilityCapabilitySetLinks(capabilityId);
   }
+
+  /**
+   * Raises version for existing capability sets by module id + application id.
+   *
+   * @param moduleId - module identifier
+   * @param newApplicationId - new application identifier
+   * @param oldApplicationId - old application identifier
+   */
+  public void updateApplicationVersion(String moduleId, String newApplicationId, String oldApplicationId) {
+    repository.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
+  }
 }
