@@ -2,8 +2,6 @@ package org.folio.roles.service.loadablerole;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
@@ -16,7 +14,7 @@ import static org.folio.roles.service.ServiceUtils.nothing;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -24,8 +22,6 @@ import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.util.Supplier;
-import org.folio.roles.domain.dto.Capability;
-import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.dto.LoadableRoles;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
@@ -37,10 +33,6 @@ import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.service.ServiceUtils.UpdatePair;
-import org.folio.roles.service.capability.CapabilityService;
-import org.folio.roles.service.capability.CapabilitySetService;
-import org.folio.roles.service.capability.RoleCapabilityService;
-import org.folio.roles.service.capability.RoleCapabilitySetService;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -58,10 +50,7 @@ public class LoadableRoleService {
   private final LoadablePermissionRepository permissionRepository;
   private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
-  private final CapabilitySetService capabilitySetService;
-  private final CapabilityService capabilityService;
-  private final RoleCapabilityService roleCapabilityService;
-  private final RoleCapabilitySetService roleCapabilitySetService;
+  private final LoadablePermissionService permissionService;
   private final TransactionTemplate trx;
 
   public LoadableRoles find(String query, Integer limit, Integer offset) {
@@ -169,7 +158,10 @@ public class LoadableRoleService {
         createdInKeycloakRoleIds.add(roleId);
       });
 
-      var result = trx.execute(status -> repository.saveAll(entities));
+      var result = trx.execute(status -> {
+
+        return repository.saveAll(entities);
+      });
       log.info("Loadable roles created: {}", toIdNames(result));
 
       return result;
@@ -276,6 +268,14 @@ public class LoadableRoleService {
 
     void call();
 
+    default Action andThen(Action after) {
+      Objects.requireNonNull(after);
+      return () -> {
+        call();
+        after.call();
+      };
+    }
+
     default Action transactional(TransactionOperations trx) {
       return () -> trx.executeWithoutResult(transactionStatus -> this.call());
     }
@@ -285,73 +285,46 @@ public class LoadableRoleService {
 
     T call();
 
+    default <U> ActionWithResult<U> andThen(Function<? super T, ActionWithResult<U>> after) {
+      Objects.requireNonNull(after);
+      return () -> {
+        T result = call();
+        return after.apply(result).call();
+      };
+    }
+
     default ActionWithResult<T> transactional(TransactionOperations trx) {
       return () -> trx.execute(status -> this.call());
     }
   }
 
   @RequiredArgsConstructor
-  private final class UpdateRolePermissionAction implements Action {
+  private final class CreateLoadablePermissionsAction implements Action {
 
-    private final UUID roleId;
-    private final List<LoadablePermissionEntity> createdPermissions;
-    private final List<LoadablePermissionEntity> deletedPermissions;
+    private final List<LoadablePermissionEntity> permissions;
 
     @Override
     public void call() {
-      var permsByName = toStream(createdPermissions).collect(toMap(LoadablePermissionEntity::getPermissionName,
-        identity()));
+      var perms = mapper.toPermission(permissions);
+      permissionService.assignRoleCapabilitiesAndSetsForPermissions(perms);
+      permissionService.saveAll()
+    }
+  }
 
-      assignCapabilitySets(permsByName);
-      assignCapabilities(permsByName);
-      permissionRepository.saveAllAndFlush(createdPermissions);
+  @RequiredArgsConstructor
+  private final class RemoveLoadablePermissionsAction implements Action {
 
-      removeCapabilitySets(permsByName);
-      removeCapabilities(permsByName);
+    private final List<LoadablePermissionEntity> permissions;
+
+    @Override
+    public void call() {
+      var perms = mapper.toPermission(permissions);
+      permissionService.removeRoleCapabilitiesAndSetsForPermissions(perms);
+
+
+
       permissionRepository.flush();
       permissionRepository.deleteAllInBatch(deletedPermissions);
-    }
-
-    private void removeCapabilitySets(Map<String, LoadablePermissionEntity> permsByName) {
-      var capabilitySets = capabilitySetService.findByPermissionNames(permsByName.keySet());
-
-      if (isNotEmpty(capabilitySets)) {
-        roleCapabilitySetService.delete(roleId, mapItems(capabilitySets, CapabilitySet::getId));
-      }
-    }
-
-    private void removeCapabilities(Map<String, LoadablePermissionEntity> permsByName) {
-      var capabilities = capabilityService.findByPermissionNames(permsByName.keySet());
-
-      if (isNotEmpty(capabilities)) {
-        roleCapabilityService.delete(roleId, mapItems(capabilities, Capability::getId));
-      }
-    }
-
-    private void assignCapabilitySets(Map<String, LoadablePermissionEntity> permsByName) {
-      var capabilitySets = capabilitySetService.findByPermissionNames(permsByName.keySet());
-      if (isEmpty(capabilitySets)) {
-        return;
-      }
-
-      for (CapabilitySet set : capabilitySets) {
-        var perm = permsByName.get(set.getPermission());
-        perm.setCapabilitySetId(set.getId());
-      }
-      roleCapabilitySetService.create(roleId, mapItems(capabilitySets, CapabilitySet::getId));
-    }
-
-    private void assignCapabilities(Map<String, LoadablePermissionEntity> permsByName) {
-      var capabilities = capabilityService.findByPermissionNames(permsByName.keySet());
-      if (isEmpty(capabilities)) {
-        return;
-      }
-
-      for (Capability cap : capabilities) {
-        var perm = permsByName.get(cap.getPermission());
-        perm.setCapabilityId(cap.getId());
-      }
-      roleCapabilityService.create(roleId, mapItems(capabilities, Capability::getId));
     }
   }
 }

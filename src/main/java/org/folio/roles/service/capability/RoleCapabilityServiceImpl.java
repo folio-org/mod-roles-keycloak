@@ -136,6 +136,10 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Override
   @Transactional
   public void delete(UUID roleId, List<UUID> capabilityIds) {
+    if (isEmpty(capabilityIds)) {
+      return;
+    }
+
     var assignedRoleCapabilityEntities = roleCapabilityRepository.findAllByRoleId(roleId);
     var assignedCapabilityIds = getCapabilityIds(assignedRoleCapabilityEntities);
 
