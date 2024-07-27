@@ -54,6 +54,13 @@ public class LoadableRoleEntity extends RoleEntity {
     permissions.add(permission);
   }
 
+  public void removePermission(LoadablePermissionEntity permission) {
+    permission.setRoleId(null);
+    permission.setRole(null);
+
+    permissions.remove(permission);
+  }
+
   private void removeExistingPermissions() {
     for (var itr = permissions.iterator(); itr.hasNext(); ) {
       var perm = itr.next();

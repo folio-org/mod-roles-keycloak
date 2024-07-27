@@ -2,6 +2,8 @@ package org.folio.roles.service.loadablerole;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.groupingBy;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
@@ -13,16 +15,16 @@ import static org.folio.roles.service.ServiceUtils.merge;
 import static org.folio.roles.service.ServiceUtils.nothing;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.util.Supplier;
 import org.folio.roles.domain.dto.LoadableRole;
+import org.folio.roles.domain.dto.LoadableRoleType;
 import org.folio.roles.domain.dto.LoadableRoles;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.LoadableRoleEntity;
@@ -30,14 +32,12 @@ import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
-import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.service.ServiceUtils.UpdatePair;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionOperations;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
@@ -47,10 +47,9 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class LoadableRoleService {
 
   private final LoadableRoleRepository repository;
-  private final LoadablePermissionRepository permissionRepository;
   private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
-  private final LoadablePermissionService permissionService;
+  private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
   private final TransactionTemplate trx;
 
   public LoadableRoles find(String query, Integer limit, Integer offset) {
@@ -92,18 +91,8 @@ public class LoadableRoleService {
   }
 
   public void saveAll(List<LoadableRole> roles) {
-    var existing = findByQuery("type==" + DEFAULT.getValue(), MAX_VALUE, 0).getContent();
-    var incoming = mapper.toRoleEntity(roles);
-
-    var created = new ArrayList<LoadableRoleEntity>();
-    var updated = new ArrayList<UpdatePair<LoadableRoleEntity>>();
-    var deleted = new ArrayList<LoadableRoleEntity>();
-    merge(incoming, existing, comparatorById(),
-      created::add, updated::add, deleted::add);
-
-    deleteAll(deleted);
-    createAll(created);
-    updateAll(updated);
+    toStream(roles).collect(groupingBy(LoadableRole::getType))
+      .forEach(this::saveAllByType);
   }
 
   private Page<LoadableRoleEntity> findByQuery(String query, Integer limit, Integer offset) {
@@ -137,8 +126,37 @@ public class LoadableRoleService {
     keycloakService.update(mapper.toRegularRole(saved));
 
     log.info("Loadable role has been updated: id = {}, name = {}", saved.getId(), saved.getName());
-
     return saved;
+  }
+
+  private void saveAllByType(LoadableRoleType type, List<LoadableRole> roles) {
+    requireNonNull(type);
+
+    if (type == DEFAULT) {
+      saveDefaultRoles(roles);
+    } else {
+      for (var role : roles) {
+        trx.executeWithoutResult(status -> save(role));
+      }
+    }
+  }
+
+  private void saveDefaultRoles(List<LoadableRole> roles) {
+    var existing = findByQuery("type==" + DEFAULT.getValue(), MAX_VALUE, 0).getContent();
+    var incoming = mapper.toRoleEntity(roles);
+    log.debug("Saving default roles: existing = {}, incoming = {}", toIdNames(existing), toIdNames(incoming));
+
+    var created = new ArrayList<LoadableRoleEntity>();
+    var updated = new ArrayList<UpdatePair<LoadableRoleEntity>>();
+    var deleted = new ArrayList<LoadableRoleEntity>();
+    merge(incoming, existing, comparatorById(),
+      created::add, updated::add, deleted::add);
+    log.debug("Merge result for default roles: created = {}, updated = {}, deleted = {}", toIdNames(created),
+      toIdNamesFromPair(updated), toIdNames(deleted));
+
+    deleteAll(deleted);
+    createAll(created);
+    updateAll(updated);
   }
 
   private List<LoadableRoleEntity> createAll(List<LoadableRoleEntity> entities) {
@@ -149,19 +167,19 @@ public class LoadableRoleService {
 
     var createdInKeycloakRoleIds = new ArrayList<UUID>();
     try {
-      entities.forEach(entity -> {
+      for (var entity : entities) {
         var role = mapper.toRegularRole(entity);
         // role id populate inside the method, as a side effect, and the original object returned
         var roleId = keycloakService.create(role).getId();
         entity.setId(roleId);
+        entity.getPermissions().forEach(perm -> perm.setRoleId(roleId));
 
         createdInKeycloakRoleIds.add(roleId);
-      });
 
-      var result = trx.execute(status -> {
+        assignmentHelper.assignCapabilitiesAndSetsForPermissions(entity.getPermissions());
+      }
 
-        return repository.saveAll(entities);
-      });
+      var result = trx.execute(status -> repository.saveAll(entities));
       log.info("Loadable roles created: {}", toIdNames(result));
 
       return result;
@@ -178,40 +196,54 @@ public class LoadableRoleService {
       return;
     }
 
-    updateNameAndDescription(updatePairs);
-    updatePermissions(updatePairs);
-  }
+    var changedRoles = new ArrayList<LoadableRoleEntity>();
+    for (var pair : updatePairs) {
+      var incoming = pair.newItem();
+      var existing = pair.oldItem();
 
-  private void updateNameAndDescription(List<UpdatePair<LoadableRoleEntity>> updatePairs) {
-    var changedRoles = updatePairs.stream()
-      .filter(isRoleDataChanged())
-      .map(copyNameAndDescription()).toList();
-
-    if (isNotEmpty(changedRoles)) {
-      trx.executeWithoutResult(status -> {
-        repository.saveAllAndFlush(changedRoles);
-
-        changedRoles.forEach(changed -> keycloakService.update(mapper.toRegularRole(changed)));
-      });
-
-      log.info("Loadable role name(s)/description(s) updated: {}", toIdNames(changedRoles));
+      var modified = updateNameAndDescription(incoming, existing) || updatePermissions(incoming, existing);
+      if (modified) {
+        changedRoles.add(existing);
+      }
     }
+
+    trx.executeWithoutResult(transactionStatus -> repository.saveAll(changedRoles));
+    log.info("Loadable roles updated: {}", toIdNames(changedRoles));
   }
 
-  private void updatePermissions(List<UpdatePair<LoadableRoleEntity>> updatePairs) {
-    callActions(updatePairs, pair -> prepareRolePermissionUpdateAction(pair).transactional(trx));
+  private boolean updateNameAndDescription(LoadableRoleEntity source, LoadableRoleEntity target) {
+    var modified = false;
+
+    if (isRoleDataChanged(target, source)) {
+      target.setName(source.getName());
+      target.setDescription(source.getDescription());
+
+      keycloakService.update(mapper.toRegularRole(target));
+      log.debug("Loadable role name/description updated: roleId = {}, name = {}, description = {}",
+        target.getId(), target.getName(), target.getDescription());
+
+      modified = true;
+    }
+    return modified;
   }
 
-  private Action prepareRolePermissionUpdateAction(UpdatePair<LoadableRoleEntity> pair) {
-    var existing = pair.oldItem().getPermissions();
-    var incoming = pair.newItem().getPermissions();
+  private boolean updatePermissions(LoadableRoleEntity source, LoadableRoleEntity target) {
+    var existingPerms = target.getPermissions();
+    var incomingPerms = source.getPermissions();
 
-    var created = new ArrayList<LoadablePermissionEntity>();
-    var deleted = new ArrayList<LoadablePermissionEntity>();
-    merge(incoming, existing, comparatorById(), created::add, nothing(), deleted::add);
+    var created = new LinkedHashSet<LoadablePermissionEntity>();
+    var deleted = new LinkedHashSet<LoadablePermissionEntity>();
+    merge(incomingPerms, existingPerms, comparatorById(), created::add, nothing(), deleted::add);
+    log.debug("Merge result for default role permissions: roleId = {}, created = {}, deleted = {}",
+      target.getId(), toNames(created), toNames(deleted));
 
-    var roleId = pair.oldItem().getId();
-    return new UpdateRolePermissionAction(roleId, created, deleted);
+    assignmentHelper.assignCapabilitiesAndSetsForPermissions(created);
+    created.forEach(target::addPermission);
+
+    assignmentHelper.removeCapabilitiesAndSetsForPermissions(deleted);
+    deleted.forEach(target::removePermission);
+
+    return isNotEmpty(created) || isNotEmpty(deleted);
   }
 
   private void deleteAll(List<LoadableRoleEntity> entities) {
@@ -235,96 +267,20 @@ public class LoadableRoleService {
     return repository.save(entity);
   }
 
-  private static <T> void callActions(List<T> data, Function<T, Action> mapper) {
-    toStream(data).map(mapper).forEach(Action::call);
+  private static boolean isRoleDataChanged(LoadableRoleEntity first, LoadableRoleEntity second) {
+    return !first.equalsLogically(second);
   }
 
-  private static Predicate<UpdatePair<LoadableRoleEntity>> isRoleDataChanged() {
-    return pair -> {
-      var newItem = pair.newItem();
-      var oldItem = pair.oldItem();
-
-      return !oldItem.equalsLogically(newItem);
-    };
+  private static Supplier<List<String>> toIdNames(Collection<LoadableRoleEntity> roles) {
+    return () -> mapItems(roles, entity -> format("[roleId = %s, roleName = %s]", entity.getId(), entity.getName()));
   }
 
-  private static Function<UpdatePair<LoadableRoleEntity>, LoadableRoleEntity> copyNameAndDescription() {
-    return pair -> {
-      var newItem = pair.newItem();
-      var oldItem = pair.oldItem();
-
-      oldItem.setName(newItem.getName());
-      oldItem.setDescription(newItem.getDescription());
-
-      return oldItem;
-    };
+  private static Supplier<List<String>> toIdNamesFromPair(Collection<UpdatePair<LoadableRoleEntity>> pairs) {
+    return () -> mapItems(pairs, pair -> format("[roleId = %s, roleName = %s]", pair.oldItem().getId(),
+      pair.oldItem().getName()));
   }
 
-  private static Supplier<List<String>> toIdNames(List<LoadableRoleEntity> result) {
-    return () -> mapItems(result, entity -> format("[roleId = %s, roleName = %s]", entity.getId(), entity.getName()));
-  }
-
-  private interface Action {
-
-    void call();
-
-    default Action andThen(Action after) {
-      Objects.requireNonNull(after);
-      return () -> {
-        call();
-        after.call();
-      };
-    }
-
-    default Action transactional(TransactionOperations trx) {
-      return () -> trx.executeWithoutResult(transactionStatus -> this.call());
-    }
-  }
-
-  private interface ActionWithResult<T> {
-
-    T call();
-
-    default <U> ActionWithResult<U> andThen(Function<? super T, ActionWithResult<U>> after) {
-      Objects.requireNonNull(after);
-      return () -> {
-        T result = call();
-        return after.apply(result).call();
-      };
-    }
-
-    default ActionWithResult<T> transactional(TransactionOperations trx) {
-      return () -> trx.execute(status -> this.call());
-    }
-  }
-
-  @RequiredArgsConstructor
-  private final class CreateLoadablePermissionsAction implements Action {
-
-    private final List<LoadablePermissionEntity> permissions;
-
-    @Override
-    public void call() {
-      var perms = mapper.toPermission(permissions);
-      permissionService.assignRoleCapabilitiesAndSetsForPermissions(perms);
-      permissionService.saveAll()
-    }
-  }
-
-  @RequiredArgsConstructor
-  private final class RemoveLoadablePermissionsAction implements Action {
-
-    private final List<LoadablePermissionEntity> permissions;
-
-    @Override
-    public void call() {
-      var perms = mapper.toPermission(permissions);
-      permissionService.removeRoleCapabilitiesAndSetsForPermissions(perms);
-
-
-
-      permissionRepository.flush();
-      permissionRepository.deleteAllInBatch(deletedPermissions);
-    }
+  private static Supplier<List<String>> toNames(Collection<LoadablePermissionEntity> perms) {
+    return () -> mapItems(perms, LoadablePermissionEntity::getPermissionName);
   }
 }
