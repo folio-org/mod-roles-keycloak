@@ -11,8 +11,10 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.Consumer;
 import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.entity.Identifiable;
 
+@Log4j2
 @UtilityClass
 public class ServiceUtils {
 
@@ -28,27 +30,6 @@ public class ServiceUtils {
     return nonNull(first) && nonNull(second) &&
       Objects.equals(first.getId(), second.getId());
   }
-
-  /*static <K, E extends Identifiable<K>> List<E> mergeAndSave(List<E> incomingEntities, List<E> storedEntities,
-    JpaRepository<E, K> repository, BiConsumer<E, E> updateDataMethod) {
-
-    List<E> toDelete = new ArrayList<>();
-    List<E> toSave = new ArrayList<>();
-
-    merge(incomingEntities, storedEntities, comparatorById(),
-      toSave::add,
-      (incoming, stored) -> {
-        updateDataMethod.accept(incoming, stored);
-        toSave.add(stored);
-      },
-      toDelete::add);
-
-    repository.flush();
-
-    repository.deleteAllInBatch(toDelete);
-
-    return repository.saveAllAndFlush(toSave);
-  }*/
 
   public static <E extends Comparable<E>> void merge(Collection<E> incoming, Collection<E> stored,
     Consumer<E> addMethod, Consumer<UpdatePair<E>> updateMethod, Consumer<E> deleteMethod) {
@@ -76,6 +57,22 @@ public class ServiceUtils {
     });
 
     incomingList.forEach(addMethod); // what is left in the incoming has to be inserted
+  }
+
+  public static <E> void mergeInBatch(Collection<E> incoming, Collection<E> stored, Comparator<E> comparator,
+    Consumer<Collection<E>> addAllMethod, Consumer<Collection<UpdatePair<E>>> updateAllMethod,
+    Consumer<Collection<E>> deleteAllMethod) {
+
+    var added = new ArrayList<E>();
+    var updated = new ArrayList<UpdatePair<E>>();
+    var deleted = new ArrayList<E>();
+    merge(incoming, stored, comparator,
+      added::add, updated::add, deleted::add);
+    log.debug("Merge result: created = {}, updated = {}, deleted = {}", added, updated, deleted);
+
+    deleteAllMethod.accept(deleted);
+    addAllMethod.accept(added);
+    updateAllMethod.accept(updated);
   }
 
   public record UpdatePair<E>(E newItem, E oldItem) {

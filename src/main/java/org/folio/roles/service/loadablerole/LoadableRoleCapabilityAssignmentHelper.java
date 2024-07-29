@@ -9,6 +9,7 @@ import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -36,13 +37,15 @@ public class LoadableRoleCapabilityAssignmentHelper {
   private final RoleCapabilityService roleCapabilityService;
   private final RoleCapabilitySetService roleCapabilitySetService;
 
-  public Set<LoadablePermissionEntity> assignCapabilitiesAndSetsForPermissions(Set<LoadablePermissionEntity> perms) {
+  public Set<LoadablePermissionEntity> assignCapabilitiesAndSetsForPermissions(
+    Collection<LoadablePermissionEntity> perms) {
     return groupPermissionsByRoleId(perms)
       .flatMap(permsByRoleId -> assignCapabilitiesAndSets(permsByRoleId.getKey(), permsByRoleId.getValue()))
       .collect(toSet());
   }
 
-  public Set<LoadablePermissionEntity> removeCapabilitiesAndSetsForPermissions(Set<LoadablePermissionEntity> perms) {
+  public Set<LoadablePermissionEntity> removeCapabilitiesAndSetsForPermissions(
+    Collection<LoadablePermissionEntity> perms) {
     return groupPermissionsByRoleId(perms)
       .flatMap(permsByRoleId -> removeCapabilitiesAndSets(permsByRoleId.getKey(), permsByRoleId.getValue()))
       .collect(toSet());
@@ -121,7 +124,7 @@ public class LoadableRoleCapabilityAssignmentHelper {
   }
 
   private static Stream<Entry<UUID, List<LoadablePermissionEntity>>> groupPermissionsByRoleId(
-    Set<LoadablePermissionEntity> perms) {
+    Collection<LoadablePermissionEntity> perms) {
     return toStream(perms).collect(groupingBy(LoadablePermissionEntity::getRoleId)).entrySet().stream();
   }
 

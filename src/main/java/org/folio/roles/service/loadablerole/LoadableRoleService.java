@@ -12,6 +12,7 @@ import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
 import static org.folio.roles.domain.entity.LoadableRoleEntity.DEFAULT_LOADABLE_ROLE_SORT;
 import static org.folio.roles.service.ServiceUtils.comparatorById;
 import static org.folio.roles.service.ServiceUtils.merge;
+import static org.folio.roles.service.ServiceUtils.mergeInBatch;
 import static org.folio.roles.service.ServiceUtils.nothing;
 
 import java.util.ArrayList;
@@ -146,20 +147,10 @@ public class LoadableRoleService {
     var incoming = mapper.toRoleEntity(roles);
     log.debug("Saving default roles: existing = {}, incoming = {}", toIdNames(existing), toIdNames(incoming));
 
-    var created = new ArrayList<LoadableRoleEntity>();
-    var updated = new ArrayList<UpdatePair<LoadableRoleEntity>>();
-    var deleted = new ArrayList<LoadableRoleEntity>();
-    merge(incoming, existing, comparatorById(),
-      created::add, updated::add, deleted::add);
-    log.debug("Merge result for default roles: created = {}, updated = {}, deleted = {}", toIdNames(created),
-      toIdNamesFromPair(updated), toIdNames(deleted));
-
-    deleteAll(deleted);
-    createAll(created);
-    updateAll(updated);
+    mergeInBatch(incoming, existing, comparatorById(), this::createAll, this::updateAll, this::deleteAll);
   }
 
-  private List<LoadableRoleEntity> createAll(List<LoadableRoleEntity> entities) {
+  private Collection<LoadableRoleEntity> createAll(Collection<LoadableRoleEntity> entities) {
     if (isEmpty(entities)) {
       log.debug("No loadable roles to create");
       return entities;
@@ -190,7 +181,7 @@ public class LoadableRoleService {
     }
   }
 
-  private void updateAll(List<UpdatePair<LoadableRoleEntity>> updatePairs) {
+  private void updateAll(Collection<UpdatePair<LoadableRoleEntity>> updatePairs) {
     if (isEmpty(updatePairs)) {
       log.debug("No loadable roles to update");
       return;
@@ -246,7 +237,7 @@ public class LoadableRoleService {
     return isNotEmpty(created) || isNotEmpty(deleted);
   }
 
-  private void deleteAll(List<LoadableRoleEntity> entities) {
+  private void deleteAll(Collection<LoadableRoleEntity> entities) {
     if (isEmpty(entities)) {
       log.debug("No loadable roles to delete");
       return;
@@ -273,11 +264,6 @@ public class LoadableRoleService {
 
   private static Supplier<List<String>> toIdNames(Collection<LoadableRoleEntity> roles) {
     return () -> mapItems(roles, entity -> format("[roleId = %s, roleName = %s]", entity.getId(), entity.getName()));
-  }
-
-  private static Supplier<List<String>> toIdNamesFromPair(Collection<UpdatePair<LoadableRoleEntity>> pairs) {
-    return () -> mapItems(pairs, pair -> format("[roleId = %s, roleName = %s]", pair.oldItem().getId(),
-      pair.oldItem().getName()));
   }
 
   private static Supplier<List<String>> toNames(Collection<LoadablePermissionEntity> perms) {
