@@ -14,8 +14,8 @@
     <sql>
       UPDATE policy
       SET source = CASE WHEN description = 'System generated service policy during migration'
-      THEN 'SYSTEM'
-      ELSE 'USER'
+      THEN 'SYSTEM'::source_type
+      ELSE 'USER'::source_type
       END;
     </sql>
   </changeSet>
