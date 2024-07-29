@@ -33,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.roles.domain.dto.Policy;
+import org.folio.roles.domain.dto.PolicySource;
 import org.folio.roles.domain.dto.PolicyType;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.RolePolicy;
@@ -116,6 +117,7 @@ public class PermissionMigrationService {
     var rolePolicies = toStream(keycloakRoles.values())
       .map(role -> new Policy()
         .type(PolicyType.ROLE)
+        .source(PolicySource.SYSTEM)
         .name("Policy for role: " + role.getName())
         .description("System generated service policy during migration")
         .rolePolicy(new RolePolicy().roles(List.of(new RolePolicyRole().id(role.getId())))))

@@ -13,6 +13,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.folio.roles.domain.model.LogicType;
+import org.folio.roles.domain.model.SourceType;
 import org.folio.roles.repository.generators.FolioUuidGenerator;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -55,4 +56,13 @@ public class BasePolicyEntity extends Auditable {
   @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "logic", columnDefinition = "logic_type", insertable = false, updatable = false)
   private LogicType logic;
+
+  /**
+   * The source of the policy.
+   */
+  @Enumerated(EnumType.STRING)
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+  @Column(name = "source", columnDefinition = "source_type", updatable = false)
+  private SourceType source;
+
 }

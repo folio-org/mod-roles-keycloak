@@ -20,6 +20,10 @@
       "description": "The type of policy. Required.",
       "$ref": "policyType.json"
     },
+    "source": {
+      "description": "The source for the policy. Required.",
+      "$ref": "policySource.json"
+    },
     "userPolicy": {
       "description": "Object containing the details of the user-based policy",
       "$ref": "userPolicy.json"
