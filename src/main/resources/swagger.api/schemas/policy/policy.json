@@ -21,7 +21,7 @@
       "$ref": "policyType.json"
     },
     "source": {
-      "description": "The source for the policy. Required.",
+      "description": "The source for the policy.",
       "$ref": "policySource.json"
     },
     "userPolicy": {

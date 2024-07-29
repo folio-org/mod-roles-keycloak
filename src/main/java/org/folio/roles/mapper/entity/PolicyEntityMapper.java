@@ -44,7 +44,6 @@ public interface PolicyEntityMapper {
   @Mapping(target = "minuteStart", source = "timePolicy.minuteStart")
   @Mapping(target = "minuteEnd", source = "timePolicy.minuteEnd")
   @Mapping(target = "logic", source = "timePolicy.logic")
-  @Mapping(target = "source", source = "timePolicy.source")
   @Mapping(target = "repeat", source = "timePolicy.repeat")
   TimePolicyEntity toTimePolicyEntity(Policy policy);
 
@@ -58,7 +57,6 @@ public interface PolicyEntityMapper {
   @AuditableEntityMapping
   @Mapping(target = "users", source = "userPolicy.users")
   @Mapping(target = "logic", source = "userPolicy.logic")
-  @Mapping(target = "source", source = "userPolicy.source")
   UserPolicyEntity toUserPolicyEntity(Policy policy);
 
   @AuditableMapping
@@ -71,7 +69,6 @@ public interface PolicyEntityMapper {
   @AuditableEntityMapping
   @Mapping(target = "logic", source = "rolePolicy.logic")
   @Mapping(target = "roles", source = "rolePolicy.roles")
-  @Mapping(target = "source", source = "rolePolicy.source")
   RolePolicyEntity toRolePolicyEntity(Policy policy);
 
   default BasePolicyEntity toPolicyEntity(Policy source) {

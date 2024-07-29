@@ -64,5 +64,4 @@ public class BasePolicyEntity extends Auditable {
   @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "source", columnDefinition = "source_type", updatable = false)
   private SourceType source;
-
 }

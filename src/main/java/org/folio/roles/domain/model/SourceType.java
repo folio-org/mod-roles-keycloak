@@ -5,5 +5,4 @@ public enum SourceType {
   SYSTEM,
   USER,
   CONSORTIUM
-
 }
