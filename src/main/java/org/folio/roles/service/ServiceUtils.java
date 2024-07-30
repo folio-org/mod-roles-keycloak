@@ -19,7 +19,7 @@ import org.folio.roles.domain.entity.Identifiable;
 public class ServiceUtils {
 
   public static <E> Consumer<E> nothing() {
-    return (e) -> {};
+    return e -> {};
   }
 
   public static <K extends Comparable<? super K>, E extends Identifiable<? extends K>> Comparator<E> comparatorById() {
@@ -27,8 +27,9 @@ public class ServiceUtils {
   }
 
   public static <K, E extends Identifiable<? extends K>> boolean equalIds(E first, E second) {
-    return nonNull(first) && nonNull(second) &&
-      Objects.equals(first.getId(), second.getId());
+    return nonNull(first)
+      && nonNull(second)
+      && Objects.equals(first.getId(), second.getId());
   }
 
   public static <E extends Comparable<E>> void merge(Collection<E> incoming, Collection<E> stored,

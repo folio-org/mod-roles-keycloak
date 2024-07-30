@@ -58,9 +58,9 @@ public class LoadableRoleUtils {
     return loadableRoles(roles.length, roles);
   }
 
-  public static LoadableRoles loadableRoles(long totalRecords, LoadableRole... capabilities) {
+  public static LoadableRoles loadableRoles(long totalRecords, LoadableRole... roles) {
     return new LoadableRoles()
-      .loadableRoles(Arrays.asList(capabilities))
+      .loadableRoles(Arrays.asList(roles))
       .totalRecords(totalRecords);
   }
 

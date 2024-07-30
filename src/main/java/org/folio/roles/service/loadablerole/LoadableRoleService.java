@@ -68,10 +68,6 @@ public class LoadableRoleService {
     return repository.existsByIdAndType(id, EntityLoadableRoleType.DEFAULT);
   }
 
-  public int defaultRoleCount() {
-    return repository.countAllByType(EntityLoadableRoleType.DEFAULT);
-  }
-
   /**
    * Delete all default roles in Keycloak. Deletes only data in Keycloak.
    */
@@ -110,6 +106,7 @@ public class LoadableRoleService {
     // role id populate inside the method, as a side effect, and the original object returned
     var roleWithId = keycloakService.create(role);
     entity.setId(roleWithId.getId());
+    entity.getPermissions().forEach(perm -> perm.setRoleId(roleWithId.getId()));
 
     try {
       var created = saveToDb(entity);

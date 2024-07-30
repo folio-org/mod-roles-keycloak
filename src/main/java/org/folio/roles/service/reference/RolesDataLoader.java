@@ -5,7 +5,6 @@ import static org.folio.common.utils.CollectionUtils.toStream;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
@@ -43,16 +42,6 @@ public class RolesDataLoader implements ReferenceDataLoader {
       .toList();
 
     service.saveAll(incoming);
-  }
-
-  private Consumer<PlainLoadableRole> updateOrCreateRole() {
-    return plainRole -> {
-      var toSave = service.findByIdOrName(plainRole.getId(), plainRole.getName())
-        .map(copyDataFrom(plainRole))
-        .orElseGet(toLoadableRole(plainRole));
-
-      service.save(toSave);
-    };
   }
 
   private LoadableRole convertToLoadableRole(PlainLoadableRole plainRole) {

@@ -26,11 +26,11 @@ public class KafkaAdminService {
     );
   }
 
-  public void startKafkaListeners(){
+  public void startKafkaListeners() {
     kafkaListenerEndpointRegistry.getAllListenerContainers().forEach(Lifecycle::start);
   }
 
-  public void stopKafkaListeners(){
+  public void stopKafkaListeners() {
     kafkaListenerEndpointRegistry.getAllListenerContainers().forEach(Lifecycle::stop);
   }
 }
