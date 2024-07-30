@@ -55,7 +55,7 @@ class ReferenceDataIT extends BaseIntegrationTest {
 
   @Test
   void loadReference_false_positive() throws Exception {
-    enableTenant(TENANT_ID);
+    enableTenant(TENANT_ID, TENANT_ATTR);
 
     mockMvc.perform(get("/roles")
         .header(TENANT, TENANT_ID)

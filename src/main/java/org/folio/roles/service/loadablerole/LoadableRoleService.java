@@ -23,7 +23,6 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.util.Supplier;
 import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.dto.LoadableRoleType;
 import org.folio.roles.domain.dto.LoadableRoles;
@@ -43,7 +42,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @Log4j2
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class LoadableRoleService {
 
@@ -53,17 +51,20 @@ public class LoadableRoleService {
   private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
   private final TransactionTemplate trx;
 
+  @Transactional(readOnly = true)
   public LoadableRoles find(String query, Integer limit, Integer offset) {
     var rolePage = findByQuery(query, limit, offset).map(mapper::toRole);
 
     return mapper.toLoadableRoles(rolePage);
   }
 
+  @Transactional(readOnly = true)
   public Optional<LoadableRole> findByIdOrName(UUID id, String name) {
     return repository.findByIdOrName(id, name)
       .map(mapper::toRole);
   }
 
+  @Transactional(readOnly = true)
   public boolean isDefaultRole(UUID id) {
     return repository.existsByIdAndType(id, EntityLoadableRoleType.DEFAULT);
   }
@@ -71,6 +72,7 @@ public class LoadableRoleService {
   /**
    * Delete all default roles in Keycloak. Deletes only data in Keycloak.
    */
+  @Transactional(readOnly = true)
   public void cleanupDefaultRolesFromKeycloak() {
     try (var loadableRoles = repository.findAllByType(EntityLoadableRoleType.DEFAULT)) {
       loadableRoles.map(LoadableRoleEntity::getName)
@@ -105,8 +107,7 @@ public class LoadableRoleService {
     var role = mapper.toRegularRole(entity);
     // role id populate inside the method, as a side effect, and the original object returned
     var roleWithId = keycloakService.create(role);
-    entity.setId(roleWithId.getId());
-    entity.getPermissions().forEach(perm -> perm.setRoleId(roleWithId.getId()));
+    updateRoleId(entity, roleWithId.getId());
 
     try {
       var created = saveToDb(entity);
@@ -142,7 +143,8 @@ public class LoadableRoleService {
   private void saveDefaultRoles(List<LoadableRole> roles) {
     var existing = findByQuery("type==" + DEFAULT.getValue(), MAX_VALUE, 0).getContent();
     var incoming = mapper.toRoleEntity(roles);
-    log.debug("Saving default roles: existing = {}, incoming = {}", toIdNames(existing), toIdNames(incoming));
+    log.debug("Saving default roles: existing = {}, incoming = {}", () -> toIdNames(existing),
+      () -> toIdNames(incoming));
 
     mergeInBatch(incoming, existing, comparatorById(), this::createAll, this::updateAll, this::deleteAll);
   }
@@ -159,8 +161,7 @@ public class LoadableRoleService {
         var role = mapper.toRegularRole(entity);
         // role id populate inside the method, as a side effect, and the original object returned
         var roleId = keycloakService.create(role).getId();
-        entity.setId(roleId);
-        entity.getPermissions().forEach(perm -> perm.setRoleId(roleId));
+        updateRoleId(entity, roleId);
 
         createdInKeycloakRoleIds.add(roleId);
 
@@ -168,7 +169,7 @@ public class LoadableRoleService {
       }
 
       var result = trx.execute(status -> repository.saveAll(entities));
-      log.info("Loadable roles created: {}", toIdNames(result));
+      log.info("Loadable roles created: {}", () -> toIdNames(result));
 
       return result;
     } catch (Exception e) {
@@ -196,7 +197,7 @@ public class LoadableRoleService {
     }
 
     trx.executeWithoutResult(transactionStatus -> repository.saveAll(changedRoles));
-    log.info("Loadable roles updated: {}", toIdNames(changedRoles));
+    log.info("Loadable roles updated: {}", () -> toIdNames(changedRoles));
   }
 
   private boolean updateNameAndDescription(LoadableRoleEntity source, LoadableRoleEntity target) {
@@ -223,7 +224,7 @@ public class LoadableRoleService {
     var deleted = new LinkedHashSet<LoadablePermissionEntity>();
     merge(incomingPerms, existingPerms, comparatorById(), created::add, nothing(), deleted::add);
     log.debug("Merge result for default role permissions: roleId = {}, created = {}, deleted = {}",
-      target.getId(), toNames(created), toNames(deleted));
+      target::getId, () -> toNames(created), () -> toNames(deleted));
 
     assignmentHelper.assignCapabilitiesAndSetsForPermissions(created);
     created.forEach(target::addPermission);
@@ -246,7 +247,7 @@ public class LoadableRoleService {
 
       entities.forEach(entity -> keycloakService.deleteById(entity.getId()));
     });
-    log.info("Loadable roles deleted: {}", toIdNames(entities));
+    log.info("Loadable roles deleted: {}", () -> toIdNames(entities));
   }
 
   private LoadableRoleEntity saveToDb(LoadableRoleEntity entity) {
@@ -255,15 +256,20 @@ public class LoadableRoleService {
     return repository.save(entity);
   }
 
+  private static void updateRoleId(LoadableRoleEntity entity, UUID roleId) {
+    entity.setId(roleId);
+    entity.getPermissions().forEach(perm -> perm.setRoleId(roleId));
+  }
+
   private static boolean isRoleDataChanged(LoadableRoleEntity first, LoadableRoleEntity second) {
     return !first.equalsLogically(second);
   }
 
-  private static Supplier<List<String>> toIdNames(Collection<LoadableRoleEntity> roles) {
-    return () -> mapItems(roles, entity -> format("[roleId = %s, roleName = %s]", entity.getId(), entity.getName()));
+  private static List<String> toIdNames(Collection<LoadableRoleEntity> roles) {
+    return mapItems(roles, entity -> format("[roleId = %s, roleName = %s]", entity.getId(), entity.getName()));
   }
 
-  private static Supplier<List<String>> toNames(Collection<LoadablePermissionEntity> perms) {
-    return () -> mapItems(perms, LoadablePermissionEntity::getPermissionName);
+  private static List<String> toNames(Collection<LoadablePermissionEntity> perms) {
+    return mapItems(perms, LoadablePermissionEntity::getPermissionName);
   }
 }

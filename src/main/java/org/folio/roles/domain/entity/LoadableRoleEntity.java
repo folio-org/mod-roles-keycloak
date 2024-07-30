@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -26,6 +27,7 @@ import org.springframework.data.domain.Sort.Direction;
 @Entity
 @Table(name = "role_loadable")
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class LoadableRoleEntity extends RoleEntity {
 
   public static final Sort DEFAULT_LOADABLE_ROLE_SORT = Sort.by(Direction.ASC, "name");
