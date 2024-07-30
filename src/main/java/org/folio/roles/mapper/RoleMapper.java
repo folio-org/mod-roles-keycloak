@@ -10,6 +10,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", injectionStrategy = CONSTRUCTOR)
 public interface RoleMapper {
 
+  @Mapping(target = "source", ignore = true)
   @Mapping(target = "composite", ignore = true)
   @Mapping(target = "clientRole", ignore = true)
   @Mapping(target = "containerId", ignore = true)
