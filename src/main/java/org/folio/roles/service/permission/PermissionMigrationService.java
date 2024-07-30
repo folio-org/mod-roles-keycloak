@@ -33,11 +33,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.roles.domain.dto.Policy;
-import org.folio.roles.domain.dto.PolicySource;
 import org.folio.roles.domain.dto.PolicyType;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.dto.UserRolesRequest;
 import org.folio.roles.exception.MigrationException;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationClientProvider;
@@ -117,7 +117,7 @@ public class PermissionMigrationService {
     var rolePolicies = toStream(keycloakRoles.values())
       .map(role -> new Policy()
         .type(PolicyType.ROLE)
-        .source(PolicySource.SYSTEM)
+        .source(SourceType.SYSTEM)
         .name("Policy for role: " + role.getName())
         .description("System generated service policy during migration")
         .rolePolicy(new RolePolicy().roles(List.of(new RolePolicyRole().id(role.getId())))))
@@ -175,7 +175,8 @@ public class PermissionMigrationService {
   private static Role createRole(Entry<String, List<String>> permissionsEntry) {
     return new Role()
       .name(permissionsEntry.getKey())
-      .description("System generated role during migration");
+      .description("System generated role during migration")
+      .source(SourceType.SYSTEM);
   }
 
   private void createPermissionsForRoles(List<Policy> policies, Map<String, List<String>> roleFolioPermissionMap) {
