@@ -5,6 +5,7 @@
       "name": "policy_name",
       "description": "policy description in free form",
       "type": "USER",
+      "system": "false",
       "userPolicy": {
         "users": [
           "1e555e76-e9ca-401c-ad8e-0d121a11111e",

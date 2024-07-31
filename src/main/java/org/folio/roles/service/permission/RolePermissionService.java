@@ -76,6 +76,7 @@ public class RolePermissionService implements PermissionService {
   private static Policy createNewRolePolicy(UUID roleId) {
     return new Policy()
       .type(ROLE)
+      .system(true)
       .name(getPolicyName(roleId))
       .description("System generated policy for role: " + roleId)
       .rolePolicy(new RolePolicy().addRolesItem(new RolePolicyRole().id(roleId)));
