@@ -72,7 +72,7 @@ class UserPermissionServiceTest {
       var expectedPermissionName = String.format("GET access for user '%s' to '/foo/entities'", USER_ID);
       assertThat(nameGeneratorCaptor.getValue().apply(endpoint)).isEqualTo(expectedPermissionName);
       assertThat(newPolicyCaptor.getValue().get()).isEqualTo(new Policy().type(USER).name(policyName)
-        .description("System generated policy for user: " + USER_ID)
+        .description("System generated policy for user: " + USER_ID).system(true)
         .userPolicy(new UserPolicy().users(List.of(USER_ID))));
     }
 

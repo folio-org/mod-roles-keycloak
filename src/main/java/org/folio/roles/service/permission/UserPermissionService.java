@@ -75,6 +75,7 @@ public class UserPermissionService implements PermissionService {
   private static Policy createNewUserPolicy(UUID userId) {
     return new Policy()
       .type(USER)
+      .system(true)
       .name(getPolicyName(userId))
       .description("System generated policy for user: " + userId)
       .userPolicy(new UserPolicy().users(List.of(userId)));
