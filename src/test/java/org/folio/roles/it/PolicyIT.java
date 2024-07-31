@@ -141,7 +141,7 @@ class PolicyIT extends BaseIntegrationTest {
       assertNotNull(metadata.getCreatedDate());
       assertNotNull(metadata.getUpdatedByUserId());
       assertNotNull(metadata.getUpdatedDate());
-      assertEquals(policy.getSystem(), false);
+      assertEquals(false, policy.getSystem());
     });
   }
 
