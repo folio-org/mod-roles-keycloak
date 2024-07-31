@@ -7,5 +7,17 @@
     <addColumn tableName="policy">
       <column name="is_system" type="BOOLEAN"/>
     </addColumn>
+
+    <sql>
+      UPDATE policy
+      SET is_system = FALSE
+      WHERE 1=1
+    </sql>
+
+    <sql>
+      UPDATE policy
+      SET is_system = TRUE
+      WHERE description like 'System generated policy%'
+    </sql>
   </changeSet>
 </databaseChangeLog>

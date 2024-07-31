@@ -109,6 +109,7 @@ class PolicyIT extends BaseIntegrationTest {
       .andExpect(status().isCreated())
       .andExpect(content().json(policyToCreateAsJson))
       .andExpect(jsonPath("$.metadata.createdByUserId").value(equalTo(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.system").value(equalTo(false)))
       .andExpect(jsonPath("$.metadata.createdDate").value(notNullValue()))
       .andExpect(jsonPath("$.metadata.updatedByUserId").value(equalTo(USER_ID_HEADER)))
       .andExpect(jsonPath("$.metadata.updatedDate").value(notNullValue()));
@@ -140,6 +141,7 @@ class PolicyIT extends BaseIntegrationTest {
       assertNotNull(metadata.getCreatedDate());
       assertNotNull(metadata.getUpdatedByUserId());
       assertNotNull(metadata.getUpdatedDate());
+      assertEquals(policy.getSystem(), false);
     });
   }
 
