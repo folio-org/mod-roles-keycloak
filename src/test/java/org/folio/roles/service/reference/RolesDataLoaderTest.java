@@ -1,6 +1,5 @@
 package org.folio.roles.service.reference;
 
-import static com.google.common.collect.ImmutableList.of;
 import static java.util.Collections.emptyList;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -13,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.model.PlainLoadableRole;
@@ -48,7 +48,7 @@ class RolesDataLoaderTest {
     var loadableRole = new LoadableRole().name(role.getName()).type(DEFAULT).permissions(emptyList());
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
-      .thenReturn(of(roles));
+      .thenReturn(Stream.of(roles));
     when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
     doNothing().when(roleService).saveAll(List.of(loadableRole));
 
@@ -69,7 +69,7 @@ class RolesDataLoaderTest {
       .name(role.getName()).type(DEFAULT).permissions(emptyList());
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
-      .thenReturn(of(roles));
+      .thenReturn(Stream.of(roles));
     when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(existingLoadableRole));
     doNothing().when(roleService).saveAll(List.of(loadableRole));
 
@@ -92,7 +92,7 @@ class RolesDataLoaderTest {
     var loadableRole = new LoadableRole().id(randomUUID()).name(role.getName()).type(SUPPORT);
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
-      .thenReturn(of(roles));
+      .thenReturn(Stream.of(roles));
     when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(loadableRole));
 
     assertThatThrownBy(() -> rolesDataLoader.loadReferenceData())

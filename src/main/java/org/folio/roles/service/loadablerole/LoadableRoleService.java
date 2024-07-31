@@ -1,6 +1,5 @@
 package org.folio.roles.service.loadablerole;
 
-import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
@@ -38,7 +37,6 @@ import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @Log4j2
@@ -49,7 +47,6 @@ public class LoadableRoleService {
   private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
   private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
-  private final TransactionTemplate trx;
 
   @Transactional(readOnly = true)
   public LoadableRoles find(String query, Integer limit, Integer offset) {
@@ -89,6 +86,7 @@ public class LoadableRoleService {
     return mapper.toRole(saved);
   }
 
+  @Transactional
   public void saveAll(List<LoadableRole> roles) {
     toStream(roles).collect(groupingBy(LoadableRole::getType))
       .forEach(this::saveAllByType);
@@ -134,19 +132,23 @@ public class LoadableRoleService {
     if (type == DEFAULT) {
       saveDefaultRoles(roles);
     } else {
-      for (var role : roles) {
-        trx.executeWithoutResult(status -> save(role));
-      }
+      roles.forEach(this::save);
     }
   }
 
   private void saveDefaultRoles(List<LoadableRole> roles) {
-    var existing = findByQuery("type==" + DEFAULT.getValue(), MAX_VALUE, 0).getContent();
+    var existing = findAllDefaultRoles();
     var incoming = mapper.toRoleEntity(roles);
     log.debug("Saving default roles: existing = {}, incoming = {}", () -> toIdNames(existing),
       () -> toIdNames(incoming));
 
     mergeInBatch(incoming, existing, comparatorById(), this::createAll, this::updateAll, this::deleteAll);
+  }
+
+  private List<LoadableRoleEntity> findAllDefaultRoles() {
+    try (var defaultRoles = repository.findAllByType(EntityLoadableRoleType.DEFAULT)) {
+      return defaultRoles.toList();
+    }
   }
 
   private Collection<LoadableRoleEntity> createAll(Collection<LoadableRoleEntity> entities) {
@@ -168,7 +170,7 @@ public class LoadableRoleService {
         assignmentHelper.assignCapabilitiesAndSetsForPermissions(entity.getPermissions());
       }
 
-      var result = trx.execute(status -> repository.saveAll(entities));
+      var result = repository.saveAllAndFlush(entities);
       log.info("Loadable roles created: {}", () -> toIdNames(result));
 
       return result;
@@ -196,7 +198,7 @@ public class LoadableRoleService {
       }
     }
 
-    trx.executeWithoutResult(transactionStatus -> repository.saveAll(changedRoles));
+    repository.saveAllAndFlush(changedRoles);
     log.info("Loadable roles updated: {}", () -> toIdNames(changedRoles));
   }
 
@@ -241,12 +243,10 @@ public class LoadableRoleService {
       return;
     }
 
-    trx.executeWithoutResult(status -> {
-      repository.flush();
-      repository.deleteAllInBatch(entities);
+    repository.flush();
+    repository.deleteAllInBatch(entities);
 
-      entities.forEach(entity -> keycloakService.deleteById(entity.getId()));
-    });
+    entities.forEach(entity -> keycloakService.deleteById(entity.getId()));
     log.info("Loadable roles deleted: {}", () -> toIdNames(entities));
   }
 

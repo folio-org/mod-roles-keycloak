@@ -1,12 +1,13 @@
 package org.folio.roles.service.reference;
 
-import static com.google.common.collect.ImmutableList.of;
+import static java.util.List.of;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.stream.Stream;
 import org.folio.roles.domain.dto.Policies;
 import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.service.policy.PolicyService;
@@ -35,7 +36,7 @@ class PoliciesDataLoaderTest {
     var policies = new Policies().policies(of(policy));
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/policies", Policies.class))
-      .thenReturn(of(policies));
+      .thenReturn(Stream.of(policies));
     when(policyService.create(policy)).thenReturn(policy);
 
     policiesDataLoader.loadReferenceData();
@@ -50,7 +51,7 @@ class PoliciesDataLoaderTest {
     var policies = new Policies().policies(of(policy));
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/policies", Policies.class))
-      .thenReturn(of(policies));
+      .thenReturn(Stream.of(policies));
     when(policyService.update(policy)).thenReturn(policy);
     when(policyService.existsById(policy.getId())).thenReturn(true);
 
@@ -67,7 +68,7 @@ class PoliciesDataLoaderTest {
     var policies = new Policies().policies(of(policy));
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/policies", Policies.class))
-      .thenReturn(of(policies));
+      .thenReturn(Stream.of(policies));
     when(policyService.create(policy)).thenReturn(policy);
     when(policyService.existsById(policy.getId())).thenReturn(false);
 

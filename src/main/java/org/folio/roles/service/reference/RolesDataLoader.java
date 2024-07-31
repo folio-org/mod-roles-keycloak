@@ -35,7 +35,7 @@ public class RolesDataLoader implements ReferenceDataLoader {
   }
 
   private void loadDefaultRoles() {
-    var incoming = toStream(resourceHelper.readObjectsFromDirectory(DEFAULT_ROLES_DATA_DIR, PlainLoadableRoles.class))
+    var incoming = resourceHelper.readObjectsFromDirectory(DEFAULT_ROLES_DATA_DIR, PlainLoadableRoles.class)
       .flatMap(roles -> toStream(roles.getRoles()))
       .map(role -> role.type(LoadableRoleType.DEFAULT))
       .map(this::convertToLoadableRole)
