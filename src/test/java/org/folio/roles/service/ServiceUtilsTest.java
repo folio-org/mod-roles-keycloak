@@ -51,37 +51,44 @@ class ServiceUtilsTest {
     var sharedRecord2 = new IdRecord(UUID.randomUUID(), "value8");
 
     return Stream.of(
-      arguments( // incoming and stored are null
+      // incoming and stored are null
+      arguments(
         null, null,
         emptyList(), emptyList(), emptyList()),
 
-      arguments( // incoming only
+      // incoming only
+      arguments(
         List.of(newRecord1, newRecord2, newRecord3), null,
         List.of(newRecord1, newRecord2, newRecord3), emptyList(), emptyList()),
 
-      arguments( // stored only
+      // stored only
+      arguments(
         null, List.of(storedRecord1, storedRecord2, storedRecord3),
         emptyList(), emptyList(), List.of(storedRecord1, storedRecord2, storedRecord3)),
 
-      arguments( // incoming and stored w/o shared records
+      // incoming and stored w/o shared records
+      arguments(
         List.of(newRecord1, newRecord2, newRecord3), List.of(storedRecord1, storedRecord2, storedRecord3),
         List.of(newRecord1, newRecord2, newRecord3), emptyList(), List.of(storedRecord1, storedRecord2, storedRecord3)),
 
-      arguments( // incoming and stored w/ shared records, but nothing to deleted
+      // incoming and stored w/ shared records, but nothing to delete
+      arguments(
         List.of(newRecord1, newRecord2, newRecord3, sharedRecord1, sharedRecord2),
         List.of(sharedRecord1, sharedRecord2),
         List.of(newRecord1, newRecord2, newRecord3),
         List.of(new UpdatePair<>(sharedRecord1, sharedRecord1), new UpdatePair<>(sharedRecord2, sharedRecord2)),
         emptyList()),
 
-      arguments( // incoming and stored w/ shared records, but nothing to add
+      // incoming and stored w/ shared records, but nothing to add
+      arguments(
         List.of(sharedRecord1, sharedRecord2),
         List.of(storedRecord1, storedRecord2, storedRecord3, sharedRecord1, sharedRecord2),
         emptyList(),
         List.of(new UpdatePair<>(sharedRecord1, sharedRecord1), new UpdatePair<>(sharedRecord2, sharedRecord2)),
         List.of(storedRecord1, storedRecord2, storedRecord3)),
 
-      arguments( // incoming and stored w/ shared records, all actions applied
+      // incoming and stored w/ shared records, all actions applied
+      arguments(
         List.of(newRecord1, newRecord2, newRecord3, sharedRecord1, sharedRecord2),
         List.of(storedRecord1, storedRecord2, storedRecord3, sharedRecord1, sharedRecord2),
         List.of(newRecord1, newRecord2, newRecord3),
@@ -92,7 +99,7 @@ class ServiceUtilsTest {
 
   @Data
   @AllArgsConstructor
-  private static class IdRecord implements Identifiable<UUID> {
+  private static final class IdRecord implements Identifiable<UUID> {
     private UUID id;
     private String value;
   }
