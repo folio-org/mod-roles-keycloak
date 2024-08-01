@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.UUID;
 import lombok.Data;
-import org.folio.roles.domain.dto.SourceType;
 
 @Data
 @JsonTypeInfo(
@@ -24,5 +23,4 @@ public abstract class BasePolicy {
   private String logic;
   private String type;
   private String decisionStrategy;
-  private SourceType source;
 }
