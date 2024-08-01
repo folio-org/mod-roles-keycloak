@@ -1,6 +1,8 @@
 package org.folio.roles.it;
 
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.utils.TestValues.readValue;
@@ -28,6 +30,7 @@ import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -43,10 +46,18 @@ public class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   private PoliciesDataLoader policiesDataLoader;
   @MockBean
   private ResourceHelper resourceHelper;
+  private PlainLoadableRoles circAdminRole;
+  private PlainLoadableRoles circObserverRole;
+  private PlainLoadableRoles circStaffRole;
+  private PlainLoadableRoles circStudentRole;
 
   @BeforeEach
   void setUp() {
     doNothing().when(policiesDataLoader).loadReferenceData(); // disable policy loading
+    circAdminRole = readRole("circ-admin-role.json");
+    circObserverRole = readRole("circ-observer-role.json");
+    circStaffRole = readRole("circ-staff-role.json");
+    circStudentRole = readRole("circ-student-role.json");
   }
 
   @AfterEach
@@ -56,17 +67,31 @@ public class ReferenceRoleLoadingIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
+  void supportRolesInitialized_positive() throws Exception {
+    var supportLibRole = readRole("librarian-support-role.json");
+    var supportUserRole = readRole("user-support-role.json");
+    when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
+      .thenReturn(Stream.of(supportLibRole, supportUserRole));
+
+    enableTenant(TENANT_ID, TENANT_ATTR);
+
+    var roles = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
+
+    assertThat(roles).satisfiesExactly(
+      roleMatches(supportLibRole),
+      roleMatches(supportUserRole)
+    );
+  }
+
+  @Test
+  @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
   void defaultRolesInitialized_positive() throws Exception {
-    var circObserverRole = readRole("circ-observer-role.json");
-    var circStaffRole = readRole("circ-staff-role.json");
-    var circStudentRole = readRole("circ-student-role.json");
     when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
       .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole));
 
     enableTenant(TENANT_ID, TENANT_ATTR);
 
-    var roleResponse = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class);
-    var roles = roleResponse.getLoadableRoles();
+    var roles = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
 
     assertThat(roles).satisfiesExactly(
       roleMatches(circObserverRole),
@@ -78,10 +103,6 @@ public class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
   void defaultRolesUpgraded_positive_rolesAddedAndDeleted() throws Exception {
-    var circAdminRole = readRole("circ-admin-role.json");
-    var circObserverRole = readRole("circ-observer-role.json");
-    var circStaffRole = readRole("circ-staff-role.json");
-    var circStudentRole = readRole("circ-student-role.json");
     when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
       .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole))
       .thenReturn(Stream.of(circAdminRole, circObserverRole, circStaffRole)); // admin added, student removed
@@ -89,8 +110,7 @@ public class ReferenceRoleLoadingIT extends BaseIntegrationTest {
     enableTenant(TENANT_ID, TENANT_ATTR); // initialize
     enableTenant(TENANT_ID, TENANT_ATTR); // upgrade
 
-    var roleResponse = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class);
-    var roles = roleResponse.getLoadableRoles();
+    var roles = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
 
     assertThat(roles).satisfiesExactly(
       roleMatches(circAdminRole),
@@ -99,12 +119,87 @@ public class ReferenceRoleLoadingIT extends BaseIntegrationTest {
     );
   }
 
+  @Test
+  @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
+  void defaultRolesUpgraded_positive_roleNameAndDescriptionChanged() throws Exception {
+    when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
+      .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole))
+      .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole));
+
+    enableTenant(TENANT_ID, TENANT_ATTR); // initialize
+    var roles = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
+
+    changeNameAndDescription(circObserverRole, roles);
+    changeNameAndDescription(circStaffRole, roles);
+    changeNameAndDescription(circStudentRole, roles);
+
+    enableTenant(TENANT_ID, TENANT_ATTR); // upgrade
+
+    roles = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
+
+    assertThat(roles).satisfiesExactly(
+      roleMatches(circObserverRole),
+      roleMatches(circStaffRole),
+      roleMatches(circStudentRole)
+    );
+  }
+
+  @Test
+  @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
+  @Disabled
+  void defaultRolesUpgraded_positive_permissionsChanged() throws Exception {
+    when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
+      .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole))
+      .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole));
+
+    enableTenant(TENANT_ID, TENANT_ATTR); // initialize
+    var roles = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
+
+    changePermissions(circObserverRole, roles);
+    changePermissions(circStaffRole, roles);
+    changePermissions(circStudentRole, roles);
+
+    enableTenant(TENANT_ID, TENANT_ATTR); // upgrade
+
+    roles = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
+
+    assertThat(roles).satisfiesExactly(
+      roleMatches(circObserverRole),
+      roleMatches(circStaffRole),
+      roleMatches(circStudentRole)
+    );
+  }
+
+  private void changeNameAndDescription(PlainLoadableRoles roleToChange, List<LoadableRole> existingRoles) {
+    var role = roleToChange.getRoles().get(0);
+    var roleId = findRoleIdByName(existingRoles, role.getName());
+    role.setId(roleId);
+    role.setName(role.getName() + " updated");
+    role.setDescription(role.getDescription() + " updated");
+  }
+
+  private void changePermissions(PlainLoadableRoles roleToChange, List<LoadableRole> existingRoles) {
+    var role = roleToChange.getRoles().get(0);
+    var roleId = findRoleIdByName(existingRoles, role.getName());
+    role.setId(roleId);
+
+    var permissions = role.getPermissions().toArray(new String[0]);
+    permissions[permissions.length - 1] = "test-permission.new";
+    role.setPermissions(Set.of(permissions));
+  }
+
+  private UUID findRoleIdByName(List<LoadableRole> roles, String roleName) {
+    return toStream(roles)
+      .filter(loadableRole -> loadableRole.getName().equals(roleName))
+      .findFirst().map(LoadableRole::getId).orElse(null);
+  }
+
   private static ThrowingConsumer<LoadableRole> roleMatches(PlainLoadableRoles expectedPlainRole) {
     return role -> {
       var expected = expectedPlainRole.getRoles().get(0);
 
       assertThat(role.getId()).isNotNull();
-      assertThat(role.getType()).isEqualTo(DEFAULT);
+      assertThat(role.getType()).isEqualTo(defaultIfNull(expected.getType(), DEFAULT));
       assertThat(role.getName()).isEqualTo(expected.getName());
       assertThat(role.getDescription()).isEqualTo(expected.getDescription());
       assertThat(role.getMetadata()).isNotNull();

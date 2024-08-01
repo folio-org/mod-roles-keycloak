@@ -6,7 +6,6 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.SetUtils.difference;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.common.utils.CollectionUtils.mapItems;
-import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.domain.entity.CapabilitySetEntity.DEFAULT_CAPABILITY_SET_SORT;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
@@ -18,7 +17,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
@@ -255,8 +253,7 @@ public class CapabilitySetService {
       return emptyList();
     }
 
-    String query = "permission=" + toStream(permissionNames).collect(Collectors.joining(" or ", "(", ")"));
-    return find(query, Integer.MAX_VALUE, 0).getRecords();
+    return mapItems(repository.findByPermissionNames(permissionNames), capabilitySetEntityMapper::convert);
   }
 
   /**

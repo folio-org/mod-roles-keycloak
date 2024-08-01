@@ -1,5 +1,6 @@
 package org.folio.roles.service.reference;
 
+import static java.util.Objects.requireNonNull;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.List;
@@ -11,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.dto.LoadableRole;
-import org.folio.roles.domain.dto.LoadableRoleType;
 import org.folio.roles.domain.model.PlainLoadableRole;
 import org.folio.roles.domain.model.PlainLoadableRoles;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
@@ -31,13 +31,8 @@ public class RolesDataLoader implements ReferenceDataLoader {
 
   @Override
   public void loadReferenceData() {
-    loadDefaultRoles();
-  }
-
-  private void loadDefaultRoles() {
     var incoming = resourceHelper.readObjectsFromDirectory(DEFAULT_ROLES_DATA_DIR, PlainLoadableRoles.class)
       .flatMap(roles -> toStream(roles.getRoles()))
-      .map(role -> role.type(LoadableRoleType.DEFAULT))
       .map(this::convertToLoadableRole)
       .toList();
 
@@ -66,6 +61,8 @@ public class RolesDataLoader implements ReferenceDataLoader {
   }
 
   private static Supplier<LoadableRole> toLoadableRole(PlainLoadableRole source) {
+    requireNonNull(source.getType());
+
     return () -> new LoadableRole()
       .id(source.getId())
       .name(source.getName())

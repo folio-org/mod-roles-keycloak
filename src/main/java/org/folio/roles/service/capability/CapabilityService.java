@@ -167,8 +167,8 @@ public class CapabilityService {
       return emptyList();
     }
 
-    String query = "permission=" + toStream(permissionNames).collect(Collectors.joining(" or ", "(", ")"));
-    return find(query, Integer.MAX_VALUE, 0).getRecords();
+    var capabilityEntities = capabilityRepository.findAllByPermissionNames(permissionNames);
+    return capabilityEntityMapper.convert(capabilityEntities);
   }
 
   /**
