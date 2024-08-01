@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.RoleUtils.ROLE_NAME;
-import static org.folio.roles.support.RoleUtils.ROLE_SOURCE;
 import static org.folio.roles.support.RoleUtils.role;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,6 +19,8 @@ import static org.mockito.Mockito.when;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
+
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.test.types.UnitTest;
@@ -47,13 +48,14 @@ class RoleServiceTest {
     @Test
     void positive() {
       var role = role();
+      role.setSource(SourceType.SYSTEM);
       when(entityService.getById(ROLE_ID)).thenReturn(role);
 
       var result = facade.getById(ROLE_ID);
 
       assertEquals(ROLE_ID, result.getId());
       assertEquals(ROLE_NAME, result.getName());
-      assertEquals(ROLE_SOURCE, result.getSource());
+      assertEquals(SourceType.SYSTEM, result.getSource());
       verifyNoMoreInteractions(entityService);
     }
   }
