@@ -47,7 +47,7 @@ class RolesDataLoaderTest {
     var roles = new PlainLoadableRoles().roles(List.of(role));
     var loadableRole = new LoadableRole().name(role.getName()).type(DEFAULT).permissions(emptyList());
 
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", PlainLoadableRoles.class))
       .thenReturn(Stream.of(roles));
     when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
     doNothing().when(roleService).saveAll(List.of(loadableRole));
@@ -68,7 +68,7 @@ class RolesDataLoaderTest {
     var existingLoadableRole = new LoadableRole().id(role.getId())
       .name(role.getName()).type(DEFAULT).permissions(emptyList());
 
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", PlainLoadableRoles.class))
       .thenReturn(Stream.of(roles));
     when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(existingLoadableRole));
     doNothing().when(roleService).saveAll(List.of(loadableRole));
@@ -78,7 +78,7 @@ class RolesDataLoaderTest {
 
   @Test
   void loadReferenceData_negative_ifReadError() {
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", PlainLoadableRoles.class))
       .thenThrow(new IllegalStateException("Failed to deserialize data"));
 
     assertThatThrownBy(() -> rolesDataLoader.loadReferenceData()).isInstanceOf(IllegalStateException.class)
@@ -91,7 +91,7 @@ class RolesDataLoaderTest {
     var roles = new PlainLoadableRoles().roles(List.of(role));
     var loadableRole = new LoadableRole().id(randomUUID()).name(role.getName()).type(SUPPORT);
 
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", PlainLoadableRoles.class))
       .thenReturn(Stream.of(roles));
     when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(loadableRole));
 

@@ -1,7 +1,9 @@
 package org.folio.roles.service.reference;
 
 import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.folio.common.utils.CollectionUtils.toStream;
+import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
 
 import java.util.List;
 import java.util.Set;
@@ -24,15 +26,15 @@ import org.springframework.stereotype.Component;
 public class RolesDataLoader implements ReferenceDataLoader {
 
   private static final String ROLES_DATA_DIR = BASE_DIR + "roles/";
-  private static final String DEFAULT_ROLES_DATA_DIR = ROLES_DATA_DIR + "default";
 
   private final LoadableRoleService service;
   private final ResourceHelper resourceHelper;
 
   @Override
   public void loadReferenceData() {
-    var incoming = resourceHelper.readObjectsFromDirectory(DEFAULT_ROLES_DATA_DIR, PlainLoadableRoles.class)
+    var incoming = resourceHelper.readObjectsFromDirectory(ROLES_DATA_DIR, PlainLoadableRoles.class)
       .flatMap(roles -> toStream(roles.getRoles()))
+      .map(role -> role.type(defaultIfNull(role.getType(), DEFAULT)))
       .map(this::convertToLoadableRole)
       .toList();
 
