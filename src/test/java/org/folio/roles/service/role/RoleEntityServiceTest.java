@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.roles.domain.dto.Metadata;
 import org.folio.roles.domain.dto.Role;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.entity.RoleEntity;
 import org.folio.roles.mapper.entity.DateConvertHelper;
 import org.folio.roles.mapper.entity.RoleEntityMapper;
@@ -47,6 +48,7 @@ class RoleEntityServiceTest {
   private static final UUID ROLE_ID = fromString("00000000-0000-0000-0000-000000000001");
   private static final String ROLE_NAME = "test-role-name";
   private static final String ROLE_DESCRIPTION = "test-role-description";
+  private static final SourceType ROLE_SOURCE = SourceType.SYSTEM;
 
   @Spy private RoleEntityMapper mapper = new RoleEntityMapperImpl(new DateConvertHelper());
   @Mock private RoleEntityRepository repository;
@@ -59,7 +61,11 @@ class RoleEntityServiceTest {
   }
 
   private static Role createRoleDto() {
-    return new Role().name(ROLE_NAME).id(ROLE_ID).description(ROLE_DESCRIPTION);
+    return new Role()
+      .name(ROLE_NAME)
+      .id(ROLE_ID)
+      .description(ROLE_DESCRIPTION)
+      .source(ROLE_SOURCE);
   }
 
   private static RoleEntity createRoleEntity() {
@@ -67,6 +73,7 @@ class RoleEntityServiceTest {
     entity.setName(ROLE_NAME);
     entity.setId(ROLE_ID);
     entity.setDescription(ROLE_DESCRIPTION);
+    entity.setSource(ROLE_SOURCE);
     return entity;
   }
 
@@ -86,6 +93,7 @@ class RoleEntityServiceTest {
       assertEquals(role.getId(), dto.getId());
       assertEquals(role.getName(), dto.getName());
       assertEquals(role.getDescription(), dto.getDescription());
+      assertEquals(role.getSource(), dto.getSource());
     }
 
     @Test
@@ -117,6 +125,7 @@ class RoleEntityServiceTest {
       assertEquals(ROLE_ID, updated.getId());
       assertEquals(ROLE_NAME, updated.getName());
       assertEquals(updatedDescription, updated.getDescription());
+      assertEquals(ROLE_SOURCE, updated.getSource());
     }
 
     @Test
@@ -167,6 +176,7 @@ class RoleEntityServiceTest {
       assertEquals(ROLE_ID, role.getId());
       assertEquals(ROLE_NAME, role.getName());
       assertEquals(ROLE_DESCRIPTION, role.getDescription());
+      assertEquals(ROLE_SOURCE, role.getSource());
     }
 
     @Test
@@ -215,6 +225,7 @@ class RoleEntityServiceTest {
       assertEquals(ROLE_ID, result.get(0).getId());
       assertEquals(ROLE_NAME, result.get(0).getName());
       assertEquals(ROLE_DESCRIPTION, result.get(0).getDescription());
+      assertEquals(ROLE_SOURCE, result.get(0).getSource());
     }
   }
 

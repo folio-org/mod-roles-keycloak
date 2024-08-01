@@ -17,6 +17,7 @@ import lombok.experimental.UtilityClass;
 import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.dto.TimePolicy;
 import org.folio.roles.domain.dto.TimePolicy.LogicEnum;
 import org.folio.roles.domain.dto.UserPolicy;
@@ -59,6 +60,7 @@ public class PolicyUtils {
     policy.setName(POLICY_NAME);
     policy.setDescription(POLICY_DESCRIPTION);
     policy.setType(TIME);
+    policy.setSource(SourceType.USER);
     var timePolicy = new TimePolicy();
     timePolicy.repeat(true);
     timePolicy.setStart(START);

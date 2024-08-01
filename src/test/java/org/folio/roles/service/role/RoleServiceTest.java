@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.RoleUtils.ROLE_NAME;
+import static org.folio.roles.support.RoleUtils.ROLE_SOURCE;
 import static org.folio.roles.support.RoleUtils.role;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -52,6 +53,7 @@ class RoleServiceTest {
 
       assertEquals(ROLE_ID, result.getId());
       assertEquals(ROLE_NAME, result.getName());
+      assertEquals(ROLE_SOURCE, result.getSource());
       verifyNoMoreInteractions(entityService);
     }
   }

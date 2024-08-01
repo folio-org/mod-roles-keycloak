@@ -28,6 +28,7 @@ import java.util.UUID;
 import org.folio.roles.domain.dto.Metadata;
 import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.domain.dto.PolicyType;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.entity.BasePolicyEntity;
 import org.folio.roles.domain.entity.RolePolicyEntity;
 import org.folio.roles.domain.entity.TimePolicyEntity;
@@ -88,6 +89,7 @@ class PolicyEntityServiceTest {
       assertEquals(timePolicy.getTimePolicy(), policy.getTimePolicy());
       assertEquals(PolicyType.TIME, policy.getType());
       assertEquals(false, policy.getSystem());
+      assertEquals(SourceType.USER, policy.getSource());
     }
 
     @Test
@@ -178,6 +180,7 @@ class PolicyEntityServiceTest {
       assertEquals(policy.getName(), basePolicyEntity.getName());
       assertEquals(policy.getDescription(), basePolicyEntity.getDescription());
       assertEquals(TimePolicyEntity.class, basePolicyEntity.getClass());
+      assertEquals(policy.getSource(), basePolicyEntity.getSource());
     }
 
     @Test
@@ -230,6 +233,7 @@ class PolicyEntityServiceTest {
       assertEquals(timePolicy.getName(), result.get(0).getName());
       assertEquals(timePolicy.getDescription(), result.get(0).getDescription());
       assertEquals(PolicyType.TIME, result.get(0).getType());
+      assertEquals(SourceType.USER, basePolicyEntity.getSource());
     }
   }
 
