@@ -5,12 +5,12 @@
                http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
   <changeSet id="add source field to role and policy schemas" author="Saba Zedginidze">
     <sql>
-      DO $$
+      DO '
       BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'source_type') THEN
-          CREATE TYPE source_type AS ENUM ('SYSTEM', 'USER', 'CONSORTIUM');
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = ''source_type'') THEN
+          CREATE TYPE source_type AS ENUM (''SYSTEM'', ''USER'', ''CONSORTIUM'');
         END IF;
-      END $$;
+      END ' ;
     </sql>
 
     <addColumn tableName="policy">
