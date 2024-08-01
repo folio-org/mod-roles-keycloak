@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RolesDataLoader implements ReferenceDataLoader {
 
-  private static final String ROLES_DATA_DIR = BASE_DIR + "roles/";
+  private static final String ROLES_DATA_DIR = BASE_DIR + "roles";
 
   private final LoadableRoleService service;
   private final ResourceHelper resourceHelper;
