@@ -165,6 +165,7 @@ class KeycloakPolicyServiceTest {
       var userPolicy = userPolicy();
       var responseKeycloakUserPolicy = createResponseKeycloakUserPolicy();
       var timePolicy = createTimePolicy();
+      timePolicy.setSource(null);
       var keycloakTimePolicyWithConfig = createKeycloakTimePolicyWithConfig();
 
       when(client.findAll(anyString(), anyString(), anyString(), anyInt(), anyInt(), anyString())).thenReturn(
