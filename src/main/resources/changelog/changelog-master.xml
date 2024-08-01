@@ -30,5 +30,6 @@
   <include file="changes/update-role-capability-role-constraint.xml" relativeToChangelogFile="true"/>
   <include file="changes/update_metadata_fields.xml" relativeToChangelogFile="true"/>
   <include file="changes/add-module-id-field-to-capability-tables.xml" relativeToChangelogFile="true"/>
+  <include file="changes/update-policy-add-system-column.xml" relativeToChangelogFile="true"/>
   <include file="changes/add-source-to-role-and-policy-schemas.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

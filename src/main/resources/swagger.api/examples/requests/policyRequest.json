@@ -2,6 +2,7 @@
   "name": "user-based-policy",
   "description": "policy description in free form",
   "type": "USER",
+  "system": "false",
   "userPolicy": {
     "users": [
       "07fda6ae-2ba3-49c1-87be-abeb989c545f",

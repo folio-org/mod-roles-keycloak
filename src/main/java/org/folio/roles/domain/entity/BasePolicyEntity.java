@@ -50,6 +50,12 @@ public class BasePolicyEntity extends Auditable {
   private String description;
 
   /**
+   * Flag that shows is it a system created policy.
+   */
+  @Column(name = "is_system", updatable = false)
+  private Boolean system = false;
+
+  /**
    * The logic of the policy.
    */
   @Enumerated(EnumType.STRING)

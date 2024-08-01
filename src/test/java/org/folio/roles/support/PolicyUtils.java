@@ -83,6 +83,7 @@ public class PolicyUtils {
   public static Policy userPolicy(String name) {
     return basePolicy(name)
       .id(POLICY_ID)
+      .system(false)
       .type(USER)
       .userPolicy(new UserPolicy().addUsersItem(USER_ID));
   }
