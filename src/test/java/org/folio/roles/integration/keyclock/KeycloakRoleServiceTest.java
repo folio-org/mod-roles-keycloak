@@ -72,6 +72,7 @@ class KeycloakRoleServiceTest {
     @Test
     void positive_returns_role() {
       var role = role();
+      role.setSource(null);
       var keycloakRole = keycloakRole();
       var token = tokenService.getToken();
 
@@ -99,6 +100,7 @@ class KeycloakRoleServiceTest {
     @Test
     void positive_returnsRole() {
       var role = role();
+      role.setSource(null);
       var keycloakRole = keycloakRole();
 
       when(roleClient.findByName(anyString(), anyString(), eq(role.getName()))).thenReturn(keycloakRole);
@@ -163,6 +165,8 @@ class KeycloakRoleServiceTest {
     void positive_returns_all_if_null_parameters() {
       var role = role();
       var role2 = role2();
+      role.setSource(null);
+      role2.setSource(null);
       var keycloakRole = RoleUtils.keycloakRole(role);
       var keycloakRole2 = RoleUtils.keycloakRole(role2);
       var token = tokenService.getToken();
