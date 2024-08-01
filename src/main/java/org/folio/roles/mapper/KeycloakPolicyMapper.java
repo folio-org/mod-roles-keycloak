@@ -29,7 +29,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 /**
- * KeycloakPolicyMapper is a mapper class that maps between Keycloak's policy model and the application's policy model
+ * KeycloakPolicyMapper is the main mapper class that maps between Keycloak's policy model and the application's policy model.
  */
 @Mapper(componentModel = "spring", injectionStrategy = CONSTRUCTOR, imports = PolicyType.class)
 public abstract class KeycloakPolicyMapper {
