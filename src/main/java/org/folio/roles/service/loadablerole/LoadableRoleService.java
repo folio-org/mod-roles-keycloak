@@ -161,8 +161,10 @@ public class LoadableRoleService {
     try {
       for (var entity : entities) {
         var role = mapper.toRegularRole(entity);
-        // role id populate inside the method, as a side effect, and the original object returned
-        var roleId = keycloakService.create(role).getId();
+
+        var roleId = keycloakService.findByName(role.getName())
+          .orElseGet(() -> keycloakService.create(role))
+          .getId();
         updateRoleId(entity, roleId);
 
         createdInKeycloakRoleIds.add(roleId);

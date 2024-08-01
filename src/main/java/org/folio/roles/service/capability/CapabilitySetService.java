@@ -249,10 +249,6 @@ public class CapabilitySetService {
 
   @Transactional(readOnly = true)
   public List<CapabilitySet> findByPermissionNames(Collection<String> permissionNames) {
-    if (isEmpty(permissionNames)) {
-      return emptyList();
-    }
-
     return mapItems(repository.findByPermissionNames(permissionNames), capabilitySetEntityMapper::convert);
   }
 

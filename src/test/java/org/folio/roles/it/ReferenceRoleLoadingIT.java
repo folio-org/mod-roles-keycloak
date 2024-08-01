@@ -30,7 +30,6 @@ import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -146,7 +145,6 @@ public class ReferenceRoleLoadingIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
-  @Disabled
   void defaultRolesUpgraded_positive_permissionsChanged() throws Exception {
     when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
       .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole))
