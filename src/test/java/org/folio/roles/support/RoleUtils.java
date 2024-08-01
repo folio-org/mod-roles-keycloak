@@ -3,7 +3,6 @@ package org.folio.roles.support;
 import java.util.UUID;
 import lombok.experimental.UtilityClass;
 import org.folio.roles.domain.dto.Role;
-import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.integration.keyclock.model.KeycloakRole;
 
 @UtilityClass
@@ -16,6 +15,7 @@ public class RoleUtils {
   public static final UUID ROLE_ID_2 = UUID.fromString("2e985e76-e9ca-401c-ad8e-0d121a22222e");
   public static final String ROLE_NAME_2 = "role2";
   public static final String ROLE_DESCRIPTION_2 = "role2_description";
+
   public static Role role() {
     var role = new Role();
     role.setId(ROLE_ID);
