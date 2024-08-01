@@ -84,7 +84,6 @@ class PolicyEntityServiceTest {
 
       var policy = service.create(timePolicy);
 
-
       assertEquals(timePolicy.getId(), policy.getId());
       assertEquals(timePolicy.getTimePolicy(), policy.getTimePolicy());
       assertEquals(PolicyType.TIME, policy.getType());
