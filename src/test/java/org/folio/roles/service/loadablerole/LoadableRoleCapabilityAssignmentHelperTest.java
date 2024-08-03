@@ -89,7 +89,8 @@ class LoadableRoleCapabilityAssignmentHelperTest {
   void assignCapabilitiesAndSets_negative_permissionRoleIdIsNull() {
     var perm1 = loadablePermissionEntity(null);
 
-    assertThatThrownBy(() -> helper.assignCapabilitiesAndSetsForPermissions(List.of(perm1)))
+    var perms = List.of(perm1);
+    assertThatThrownBy(() -> helper.assignCapabilitiesAndSetsForPermissions(perms))
       .isInstanceOf(NullPointerException.class)
       .hasMessage("element cannot be mapped to a null key");
   }
@@ -101,8 +102,8 @@ class LoadableRoleCapabilityAssignmentHelperTest {
     var perm3 = loadablePermissionEntity(ROLE2_ID, randomUUID(), null);
     var perm4 = loadablePermissionEntity(ROLE2_ID, null, randomUUID());
 
-    moveRemovalCalls(perm1, perm2);
-    moveRemovalCalls(perm3, perm4);
+    mockRemovalCalls(perm1, perm2);
+    mockRemovalCalls(perm3, perm4);
 
     var removed = helper.removeCapabilitiesAndSetsForPermissions(List.of(perm1, perm2, perm3, perm4));
 
@@ -120,8 +121,8 @@ class LoadableRoleCapabilityAssignmentHelperTest {
     var perm3 = loadablePermissionEntity(ROLE2_ID);
     var perm4 = loadablePermissionEntity(ROLE2_ID);
 
-    moveRemovalCalls(perm1, perm2);
-    moveRemovalCalls(perm3, perm4);
+    mockRemovalCalls(perm1, perm2);
+    mockRemovalCalls(perm3, perm4);
 
     var removed = helper.removeCapabilitiesAndSetsForPermissions(List.of(perm1, perm2, perm3, perm4));
 
@@ -132,7 +133,8 @@ class LoadableRoleCapabilityAssignmentHelperTest {
   void removeCapabilitiesAndSets_negative_permissionRoleIdIsNull() {
     var perm1 = loadablePermissionEntity(null);
 
-    assertThatThrownBy(() -> helper.removeCapabilitiesAndSetsForPermissions(List.of(perm1)))
+    var perms = List.of(perm1);
+    assertThatThrownBy(() -> helper.removeCapabilitiesAndSetsForPermissions(perms))
       .isInstanceOf(NullPointerException.class)
       .hasMessage("element cannot be mapped to a null key");
   }
@@ -147,7 +149,7 @@ class LoadableRoleCapabilityAssignmentHelperTest {
       loadablePermission().capabilityId(capabilityId).capabilitySetId(capabilitySetId));
   }
 
-  private void moveRemovalCalls(LoadablePermissionEntity perm1, LoadablePermissionEntity perm2) {
+  private void mockRemovalCalls(LoadablePermissionEntity perm1, LoadablePermissionEntity perm2) {
     doNothing().when(roleCapabilityService).delete(perm1.getRoleId(),
       perm1.getCapabilityId() != null ? List.of(perm1.getCapabilityId()) : emptyList());
     doNothing().when(roleCapabilitySetService).delete(perm2.getRoleId(),

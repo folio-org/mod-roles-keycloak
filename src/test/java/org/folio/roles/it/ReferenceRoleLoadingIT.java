@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @IntegrationTest
-public class ReferenceRoleLoadingIT extends BaseIntegrationTest {
+class ReferenceRoleLoadingIT extends BaseIntegrationTest {
 
   private static final TenantAttributes TENANT_ATTR = new TenantAttributes()
     .addParametersItem(new Parameter()
@@ -209,7 +209,7 @@ public class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   private static ThrowingConsumer<List<? extends LoadablePermission>> permissionsMatched(
     UUID roleId, Set<String> expectedPerms) {
     return loadablePermissions -> {
-      assertThat(loadablePermissions.size()).isEqualTo(expectedPerms.size());
+      assertThat(loadablePermissions).hasSameSizeAs(expectedPerms);
       assertThat(loadablePermissions).allSatisfy(perm -> {
         assertThat(perm.getRoleId()).isEqualTo(roleId);
         assertThat(perm.getPermissionName()).isIn(expectedPerms);
