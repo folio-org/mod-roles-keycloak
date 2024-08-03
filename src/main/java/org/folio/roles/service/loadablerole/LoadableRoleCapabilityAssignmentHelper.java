@@ -53,9 +53,8 @@ public class LoadableRoleCapabilityAssignmentHelper {
 
   private Stream<LoadablePermissionEntity> assignCapabilitiesAndSets(UUID roleId,
     List<LoadablePermissionEntity> permissions) {
-    if (roleId == null) {
-      throw new IllegalArgumentException("Role id cannot be null");
-    }
+    assert roleId != null;
+
     log.debug("Assigning capabilities/capability sets for role: roleId = {}", roleId);
 
     var changed = new ArrayList<LoadablePermissionEntity>();
@@ -90,9 +89,8 @@ public class LoadableRoleCapabilityAssignmentHelper {
 
   private Stream<LoadablePermissionEntity> removeCapabilitiesAndSets(UUID roleId,
     List<LoadablePermissionEntity> permissions) {
-    if (roleId == null) {
-      throw new IllegalArgumentException("Role id cannot be null");
-    }
+    assert roleId != null;
+
     log.debug("Removing capabilities/capability sets from role: roleId = {}", roleId);
 
     var changed = new ArrayList<LoadablePermissionEntity>();
