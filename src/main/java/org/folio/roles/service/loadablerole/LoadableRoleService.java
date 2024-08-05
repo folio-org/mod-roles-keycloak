@@ -98,7 +98,8 @@ public class LoadableRoleService {
   }
 
   private boolean hasRole(LoadableRoleEntity role) {
-    return role.getId() != null && repository.existsById(role.getId());
+    var id = role.getId();
+    return id != null && repository.existsById(id);
   }
 
   private LoadableRoleEntity createRole(LoadableRoleEntity entity) {
