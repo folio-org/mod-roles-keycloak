@@ -22,7 +22,6 @@
     },
     "source": {
       "description": "The source for the policy.",
-      "default": "USER",
       "$ref": "../common/sourceType.json"
     },
     "userPolicy": {

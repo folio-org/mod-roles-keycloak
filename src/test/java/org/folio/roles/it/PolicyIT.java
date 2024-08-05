@@ -233,6 +233,7 @@ class PolicyIT extends BaseIntegrationTest {
     policy.setName("user-based-policy");
     policy.setDescription("hello work");
     policy.setType(USER);
+    policy.setSource(SourceType.USER);
     var userPolicy = new UserPolicy();
     userPolicy.setUsers(List.of(fromString("61893f40-4739-49fc-bf07-daeff3021f90")));
     policy.setUserPolicy(userPolicy);
@@ -245,6 +246,7 @@ class PolicyIT extends BaseIntegrationTest {
     policy.setName("time-based-policy");
     policy.setDescription("time based policy description");
     policy.setType(TIME);
+    policy.setSource(SourceType.USER);
     var timePolicy = new TimePolicy();
     timePolicy.setRepeat(true);
     timePolicy.setStart(Date.from(of(2023, JANUARY, 25, 0, 0).toInstant(UTC)));
@@ -268,6 +270,7 @@ class PolicyIT extends BaseIntegrationTest {
     policy.setName("test-role-based-policy");
     policy.setDescription("roles based description");
     policy.setType(ROLE);
+    policy.setSource(SourceType.USER);
     var rolePolicy = new RolePolicy();
     rolePolicy.setRoles(List.of(new RolePolicyRole()
       .id(fromString("5eb015a5-7454-4c97-b12c-7fe4162d26a0"))
