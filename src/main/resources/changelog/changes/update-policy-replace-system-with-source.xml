@@ -18,8 +18,11 @@
     <addColumn tableName="policy">
       <column name="source" type="source_type"/>
     </addColumn>
+  </changeSet>
+
+  <changeSet id="drop is_system field from policy schema" author="Saba Zedginidze">
     <dropColumn tableName="policy">
-      <column name="system"/>
+      <column name="is_system"/>
     </dropColumn>
   </changeSet>
 
