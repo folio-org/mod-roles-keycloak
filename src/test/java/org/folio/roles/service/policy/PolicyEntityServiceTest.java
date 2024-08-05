@@ -68,6 +68,7 @@ class PolicyEntityServiceTest {
     userPolicyEntity.setDescription(POLICY_DESCRIPTION);
     userPolicyEntity.setUsers(List.of(USER_ID));
     userPolicyEntity.setLogic(POSITIVE);
+    userPolicyEntity.setSource(SourceType.USER);
     return userPolicyEntity;
   }
 
@@ -88,7 +89,6 @@ class PolicyEntityServiceTest {
       assertEquals(timePolicy.getId(), policy.getId());
       assertEquals(timePolicy.getTimePolicy(), policy.getTimePolicy());
       assertEquals(PolicyType.TIME, policy.getType());
-      assertEquals(false, policy.getSystem());
       assertEquals(SourceType.USER, policy.getSource());
     }
 
@@ -129,7 +129,7 @@ class PolicyEntityServiceTest {
       assertEquals(updatedName, updated.getName());
       assertEquals(timePolicy.getTimePolicy(), updated.getTimePolicy());
       assertEquals(PolicyType.TIME, updated.getType());
-      assertEquals(false, updated.getSystem());
+      assertEquals(SourceType.USER, updated.getSource());
     }
 
     @Test

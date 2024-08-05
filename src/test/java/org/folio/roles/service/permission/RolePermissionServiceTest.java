@@ -20,6 +20,7 @@ import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationService;
 import org.folio.roles.service.policy.PolicyService;
 import org.folio.roles.service.role.RoleService;
@@ -72,7 +73,7 @@ class RolePermissionServiceTest {
 
       var policyNameGenerator = nameGeneratorCaptor.getValue();
       assertThat(policyNameGenerator.apply(endpoint)).isEqualTo("GET access for role '%s' to '/foo/entities'", ROLE_ID);
-      assertThat(newPolicyCaptor.getValue().get()).isEqualTo(new Policy().type(ROLE).name(policyName).system(true)
+      assertThat(newPolicyCaptor.getValue().get()).isEqualTo(new Policy().type(ROLE).name(policyName).source(SourceType.SYSTEM)
         .description("System generated policy for role: " + ROLE_ID)
         .rolePolicy(new RolePolicy().addRolesItem(new RolePolicyRole().id(ROLE_ID))));
     }

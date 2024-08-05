@@ -41,6 +41,7 @@ import org.folio.roles.domain.dto.PoliciesRequest;
 import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.dto.TimePolicy;
 import org.folio.roles.domain.dto.UserPolicy;
 import org.folio.test.extensions.KeycloakRealms;
@@ -109,7 +110,7 @@ class PolicyIT extends BaseIntegrationTest {
       .andExpect(status().isCreated())
       .andExpect(content().json(policyToCreateAsJson))
       .andExpect(jsonPath("$.metadata.createdByUserId").value(equalTo(USER_ID_HEADER)))
-      .andExpect(jsonPath("$.system").value(equalTo(false)))
+      .andExpect(jsonPath("$.source").value(equalTo(SourceType.USER.getValue())))
       .andExpect(jsonPath("$.metadata.createdDate").value(notNullValue()))
       .andExpect(jsonPath("$.metadata.updatedByUserId").value(equalTo(USER_ID_HEADER)))
       .andExpect(jsonPath("$.metadata.updatedDate").value(notNullValue()));
@@ -141,7 +142,7 @@ class PolicyIT extends BaseIntegrationTest {
       assertNotNull(metadata.getCreatedDate());
       assertNotNull(metadata.getUpdatedByUserId());
       assertNotNull(metadata.getUpdatedDate());
-      assertEquals(false, policy.getSystem());
+      assertEquals(SourceType.USER, policy.getSource());
     });
   }
 
