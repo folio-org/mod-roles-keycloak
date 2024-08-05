@@ -175,8 +175,7 @@ public class PermissionMigrationService {
   private static Role createRole(Entry<String, List<String>> permissionsEntry) {
     return new Role()
       .name(permissionsEntry.getKey())
-      .description("System generated role during migration")
-      .source(SourceType.SYSTEM);
+      .description("System generated role during migration");
   }
 
   private void createPermissionsForRoles(List<Policy> policies, Map<String, List<String>> roleFolioPermissionMap) {

@@ -18,10 +18,6 @@
     <addColumn tableName="policy">
       <column name="source" type="source_type"/>
     </addColumn>
-
-    <addColumn tableName="role">
-      <column name="source" type="source_type"/>
-    </addColumn>
   </changeSet>
 
   <changeSet id="update source fields based on description" author="Saba Zedginidze">
@@ -32,18 +28,9 @@
       ELSE 'USER'::source_type
       END;
     </sql>
-
-    <sql>
-      UPDATE role
-      SET source = CASE WHEN description = 'System generated role during migration'
-      THEN 'SYSTEM'::source_type
-      ELSE 'USER'::source_type
-      END;
-    </sql>
   </changeSet>
 
   <changeSet id="set source fields to not nullable" author="Saba Zedginidze">
     <sql>ALTER TABLE policy ALTER COLUMN source SET NOT NULL;</sql>
-    <sql>ALTER TABLE role ALTER COLUMN source SET NOT NULL;</sql>
   </changeSet>
 </databaseChangeLog>

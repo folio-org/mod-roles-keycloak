@@ -17,10 +17,6 @@
       "description": "Free form description of the role",
       "type": "string"
     },
-    "source": {
-      "description": "The source for the role.",
-      "$ref": "../common/sourceType.json"
-    },
     "metadata": {
       "readOnly": true,
       "$ref": "../common/metadata.json"
