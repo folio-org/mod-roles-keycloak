@@ -163,9 +163,10 @@ class KeycloakPolicyServiceTest {
     @Test
     void positive_returns_all_if_null_parameters() {
       var userPolicy = userPolicy();
-      var responseKeycloakUserPolicy = createResponseKeycloakUserPolicy();
       var timePolicy = createTimePolicy();
+      userPolicy.setSource(null);
       timePolicy.setSource(null);
+      var responseKeycloakUserPolicy = createResponseKeycloakUserPolicy();
       var keycloakTimePolicyWithConfig = createKeycloakTimePolicyWithConfig();
 
       when(client.findAll(anyString(), anyString(), anyString(), anyInt(), anyInt(), anyString())).thenReturn(
