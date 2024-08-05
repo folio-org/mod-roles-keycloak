@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
-  <changeSet id="add source field to role and policy schemas" author="Saba Zedginidze">
+  <changeSet id="create source type enum" author="Saba Zedginidze">
     <sql>
       DO '
       BEGIN
@@ -12,7 +12,9 @@
         END IF;
       END ' ;
     </sql>
+  </changeSet>
 
+  <changeSet id="add source field to role and policy schemas" author="Saba Zedginidze">
     <addColumn tableName="policy">
       <column name="source" type="source_type"/>
     </addColumn>
@@ -38,5 +40,10 @@
       ELSE 'USER'::source_type
       END;
     </sql>
+  </changeSet>
+
+  <changeSet id="set source fields to not nullable" author="Saba Zedginidze">
+    <sql>ALTER TABLE policy ALTER COLUMN source SET NOT NULL;</sql>
+    <sql>ALTER TABLE role ALTER COLUMN source SET NOT NULL;</sql>
   </changeSet>
 </databaseChangeLog>
