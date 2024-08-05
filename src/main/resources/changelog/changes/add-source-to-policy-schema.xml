@@ -14,13 +14,16 @@
     </sql>
   </changeSet>
 
-  <changeSet id="add source field to role and policy schemas" author="Saba Zedginidze">
+  <changeSet id="add source field to policy schema" author="Saba Zedginidze">
     <addColumn tableName="policy">
       <column name="source" type="source_type"/>
     </addColumn>
+    <dropColumn tableName="policy">
+      <column name="system"/>
+    </dropColumn>
   </changeSet>
 
-  <changeSet id="update source fields based on description" author="Saba Zedginidze">
+  <changeSet id="update source field based on description" author="Saba Zedginidze">
     <sql>
       UPDATE policy
       SET source = CASE WHEN description = 'System generated service policy during migration'
@@ -30,7 +33,7 @@
     </sql>
   </changeSet>
 
-  <changeSet id="set source fields to not nullable" author="Saba Zedginidze">
+  <changeSet id="set source field to not nullable" author="Saba Zedginidze">
     <sql>ALTER TABLE policy ALTER COLUMN source SET NOT NULL;</sql>
   </changeSet>
 </databaseChangeLog>

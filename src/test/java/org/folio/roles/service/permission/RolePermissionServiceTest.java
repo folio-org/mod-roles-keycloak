@@ -73,7 +73,8 @@ class RolePermissionServiceTest {
 
       var policyNameGenerator = nameGeneratorCaptor.getValue();
       assertThat(policyNameGenerator.apply(endpoint)).isEqualTo("GET access for role '%s' to '/foo/entities'", ROLE_ID);
-      assertThat(newPolicyCaptor.getValue().get()).isEqualTo(new Policy().type(ROLE).name(policyName).source(SourceType.SYSTEM)
+      assertThat(newPolicyCaptor.getValue().get())
+        .isEqualTo(new Policy().type(ROLE).name(policyName).source(SourceType.SYSTEM)
         .description("System generated policy for role: " + ROLE_ID)
         .rolePolicy(new RolePolicy().addRolesItem(new RolePolicyRole().id(ROLE_ID))));
     }
