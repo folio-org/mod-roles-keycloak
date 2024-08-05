@@ -1,0 +1,12 @@
+{
+  "roles": [
+    {
+      "name": "Librarian Support",
+      "description": "Role for Librarian Support",
+      "type": "support",
+      "permissions": [
+        "ui-users.view"
+      ]
+    }
+  ]
+}

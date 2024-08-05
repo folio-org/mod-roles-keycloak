@@ -87,7 +87,7 @@ public class RoleService {
       return savedRole;
     } catch (Exception exception) {
       keycloakService.deleteById(createdRole.getId());
-      throw new ServiceException("Failed to create role", "cause", exception.getMessage());
+      throw new ServiceException("Failed to create role", exception);
     }
   }
 
@@ -141,7 +141,7 @@ public class RoleService {
       log.debug("Role has been updated: id = {}, name = {}", updatedRole.getId(), updatedRole.getName());
       return updatedRole;
     } catch (Exception e) {
-      throw new ServiceException("Failed to update role found by name", "cause", e.getMessage());
+      throw new ServiceException("Failed to update role found by name", e);
     }
   }
 

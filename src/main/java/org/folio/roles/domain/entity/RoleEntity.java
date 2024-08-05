@@ -18,7 +18,7 @@ import lombok.EqualsAndHashCode;
 @Entity
 @Table(name = "role")
 @Inheritance(strategy = InheritanceType.JOINED)
-public class RoleEntity extends Auditable {
+public class RoleEntity extends Auditable implements Identifiable<UUID> {
 
   /**
    * The unique identifier for the role.

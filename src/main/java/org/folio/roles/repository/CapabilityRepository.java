@@ -166,4 +166,7 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     + "where ce.moduleId = :moduleId and ce.applicationId = :oldApplicationId")
   void updateApplicationVersion(@Param("moduleId") String moduleId,
     @Param("applicationId") String applicationId, @Param("oldApplicationId") String oldApplicationId);
+
+  @Query("select entity from CapabilityEntity entity where entity.permission in :names order by entity.name")
+  List<CapabilityEntity> findAllByPermissionNames(@Param("names") Collection<String> names);
 }

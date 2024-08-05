@@ -1,18 +1,19 @@
 package org.folio.roles.service.reference;
 
+import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.folio.common.utils.CollectionUtils.toStream;
+import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
 
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.dto.LoadableRole;
-import org.folio.roles.domain.dto.LoadableRoleType;
 import org.folio.roles.domain.model.PlainLoadableRole;
 import org.folio.roles.domain.model.PlainLoadableRoles;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
@@ -24,39 +25,26 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RolesDataLoader implements ReferenceDataLoader {
 
-  private static final String ROLES_DATA_DIR = BASE_DIR + "roles/";
-  private static final String DEFAULT_ROLES_DATA_DIR = ROLES_DATA_DIR + "default";
+  private static final String ROLES_DATA_DIR = BASE_DIR + "roles";
 
   private final LoadableRoleService service;
   private final ResourceHelper resourceHelper;
 
   @Override
   public void loadReferenceData() {
-    loadDefaultRoles();
-  }
-
-  private void loadDefaultRoles() {
-    var roleCount = service.defaultRoleCount();
-
-    if (roleCount > 0) {
-      log.info("Default loadable roles already present in DB. Subsequent updates are not supported");
-      return;
-    }
-
-    toStream(resourceHelper.readObjectsFromDirectory(DEFAULT_ROLES_DATA_DIR, PlainLoadableRoles.class))
+    var incoming = resourceHelper.readObjectsFromDirectory(ROLES_DATA_DIR, PlainLoadableRoles.class)
       .flatMap(roles -> toStream(roles.getRoles()))
-      .map(role -> role.type(LoadableRoleType.DEFAULT))
-      .forEach(updateOrCreateRole());
+      .map(role -> role.type(defaultIfNull(role.getType(), DEFAULT)))
+      .map(this::convertToLoadableRole)
+      .toList();
+
+    service.saveAll(incoming);
   }
 
-  private Consumer<PlainLoadableRole> updateOrCreateRole() {
-    return plainRole -> {
-      var toSave = service.findByIdOrName(plainRole.getId(), plainRole.getName())
-        .map(copyDataFrom(plainRole))
-        .orElseGet(toLoadableRole(plainRole));
-
-      service.save(toSave);
-    };
+  private LoadableRole convertToLoadableRole(PlainLoadableRole plainRole) {
+    return service.findByIdOrName(plainRole.getId(), plainRole.getName())
+      .map(copyDataFrom(plainRole))
+      .orElseGet(toLoadableRole(plainRole));
   }
 
   private static Function<LoadableRole, LoadableRole> copyDataFrom(PlainLoadableRole source) {
@@ -75,6 +63,8 @@ public class RolesDataLoader implements ReferenceDataLoader {
   }
 
   private static Supplier<LoadableRole> toLoadableRole(PlainLoadableRole source) {
+    requireNonNull(source.getType());
+
     return () -> new LoadableRole()
       .id(source.getId())
       .name(source.getName())

@@ -78,14 +78,16 @@ class LoadableRoleServiceTest {
   void save_positive_whenCreating() {
     var role = loadableRole();
     var newRole = copy(role).id(null);
+
+    var newRoleEntity = loadableRoleEntity(newRole);
     var roleEntity = loadableRoleEntity(role);
     var regularRole = regularRole(role);
     var newRegularRole = copy(regularRole).id(null);
 
-    when(mapper.toRegularRole(newRole)).thenReturn(newRegularRole);
+    when(mapper.toRoleEntity(newRole)).thenReturn(newRoleEntity);
+    when(mapper.toRegularRole(newRoleEntity)).thenReturn(newRegularRole);
     when(keycloakService.create(newRegularRole)).thenReturn(regularRole);
 
-    when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
     when(repository.save(roleEntity)).thenReturn(roleEntity);
     when(mapper.toRole(roleEntity)).thenReturn(role);
 
@@ -106,7 +108,7 @@ class LoadableRoleServiceTest {
     when(repository.save(roleEntity)).thenReturn(roleEntity);
     when(mapper.toRole(roleEntity)).thenReturn(role);
 
-    when(mapper.toRegularRole(role)).thenReturn(regularRole);
+    when(mapper.toRegularRole(roleEntity)).thenReturn(regularRole);
     when(keycloakService.update(regularRole)).thenReturn(regularRole);
 
     var actual = service.save(role);
@@ -118,14 +120,15 @@ class LoadableRoleServiceTest {
   void save_negative_whenCreating_ifRepositorySaveFailed() {
     var role = loadableRole();
     var newRole = copy(role).id(null);
+    var newRoleEntity = loadableRoleEntity(newRole);
     var roleEntity = loadableRoleEntity(role);
     var regularRole = regularRole(role);
     var newRegularRole = copy(regularRole).id(null);
 
-    when(mapper.toRegularRole(newRole)).thenReturn(newRegularRole);
+    when(mapper.toRegularRole(newRoleEntity)).thenReturn(newRegularRole);
     when(keycloakService.create(newRegularRole)).thenReturn(regularRole);
 
-    when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
+    when(mapper.toRoleEntity(newRole)).thenReturn(newRoleEntity);
     when(repository.save(roleEntity)).thenThrow(new DataIntegrityViolationException("Save failed"));
 
     doNothing().when(keycloakService).deleteById(role.getId());

@@ -12,9 +12,11 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -25,6 +27,7 @@ import org.springframework.data.domain.Sort.Direction;
 @Entity
 @Table(name = "role_loadable")
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class LoadableRoleEntity extends RoleEntity {
 
   public static final Sort DEFAULT_LOADABLE_ROLE_SORT = Sort.by(Direction.ASC, "name");
@@ -53,13 +56,29 @@ public class LoadableRoleEntity extends RoleEntity {
     permissions.add(permission);
   }
 
+  public void removePermission(LoadablePermissionEntity permission) {
+    permission.setRole(null);
+
+    permissions.remove(permission);
+  }
+
   private void removeExistingPermissions() {
     for (var itr = permissions.iterator(); itr.hasNext(); ) {
       var perm = itr.next();
 
-      perm.setRoleId(null);
       perm.setRole(null);
       itr.remove();
     }
+  }
+
+  public boolean equalsLogically(LoadableRoleEntity other) {
+    if (this == other) {
+      return true;
+    }
+
+    return Objects.equals(getId(), other.getId())
+      && Objects.equals(getName(), other.getName())
+      && Objects.equals(getDescription(), other.getDescription())
+      && Objects.equals(getType(), other.getType());
   }
 }

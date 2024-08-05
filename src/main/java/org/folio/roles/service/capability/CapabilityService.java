@@ -155,6 +155,18 @@ public class CapabilityService {
   }
 
   /**
+   * Retrieves capabilities by permission names.
+   *
+   * @param permissionNames - list of {@link String} permission names
+   * @return list with {@link Capability} objects
+   */
+  @Transactional(readOnly = true)
+  public List<Capability> findByPermissionNames(Collection<String> permissionNames) {
+    var capabilityEntities = capabilityRepository.findAllByPermissionNames(permissionNames);
+    return capabilityEntityMapper.convert(capabilityEntities);
+  }
+
+  /**
    * Retrieves capabilities by capability set id and pagination parameters.
    *
    * @param capabilitySetId - capability set identifier

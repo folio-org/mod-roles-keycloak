@@ -47,6 +47,12 @@ public class ApiRoleCapabilitySetService implements RoleCapabilitySetService {
     delegate.delete(roleId, capabilitySetId);
   }
 
+  @Override
+  public void delete(UUID roleId, List<UUID> capabilitySetIds) {
+    checkRoleIsNotDefault(roleId);
+    delegate.delete(roleId, capabilitySetIds);
+  }
+
   private void checkRoleIsNotDefault(UUID roleId) {
     if (loadableRoleService.isDefaultRole(roleId)) {
       throw new ServiceException("Changes to default role are prohibited: roleId = " + roleId,

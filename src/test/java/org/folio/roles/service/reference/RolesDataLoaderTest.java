@@ -1,16 +1,19 @@
 package org.folio.roles.service.reference;
 
-import static com.google.common.collect.ImmutableList.of;
 import static java.util.Collections.emptyList;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
 import static org.folio.roles.domain.dto.LoadableRoleType.SUPPORT;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
+import java.util.Set;
+import java.util.stream.Stream;
+import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.model.PlainLoadableRole;
 import org.folio.roles.domain.model.PlainLoadableRoles;
@@ -44,41 +47,38 @@ class RolesDataLoaderTest {
     var roles = new PlainLoadableRoles().roles(List.of(role));
     var loadableRole = new LoadableRole().name(role.getName()).type(DEFAULT).permissions(emptyList());
 
-    when(roleService.defaultRoleCount()).thenReturn(0);
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
-      .thenReturn(of(roles));
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", PlainLoadableRoles.class))
+      .thenReturn(Stream.of(roles));
     when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
-    when(roleService.save(loadableRole)).thenReturn(loadableRole);
+    doNothing().when(roleService).saveAll(List.of(loadableRole));
 
     rolesDataLoader.loadReferenceData();
   }
 
   @Test
   void loadReferenceData_positive_ifUpdate() {
-    when(roleService.defaultRoleCount()).thenReturn(new Random().nextInt(1, 100));
-
-    rolesDataLoader.loadReferenceData();
-  }
-
-  @Test
-  void loadReferenceData_positive_createIfNotExist() {
-    var role = new PlainLoadableRole().name("role1").id(randomUUID());
+    var role = new PlainLoadableRole().id(randomUUID())
+      .name("role1").description("description1")
+      .permissions(Set.of("permission1", "permission2"));
     var roles = new PlainLoadableRoles().roles(List.of(role));
-    var loadableRole = new LoadableRole().id(role.getId()).name(role.getName()).type(DEFAULT).permissions(emptyList());
+    var loadableRole = new LoadableRole().id(role.getId()).type(DEFAULT)
+      .name(role.getName()).description(role.getDescription())
+      .permissions(mapItems(role.getPermissions(), perm -> new LoadablePermission(perm).roleId(role.getId())));
 
-    when(roleService.defaultRoleCount()).thenReturn(0);
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
-      .thenReturn(of(roles));
-    when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
-    when(roleService.save(loadableRole)).thenReturn(loadableRole);
+    var existingLoadableRole = new LoadableRole().id(role.getId())
+      .name(role.getName()).type(DEFAULT).permissions(emptyList());
+
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", PlainLoadableRoles.class))
+      .thenReturn(Stream.of(roles));
+    when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(existingLoadableRole));
+    doNothing().when(roleService).saveAll(List.of(loadableRole));
 
     rolesDataLoader.loadReferenceData();
   }
 
   @Test
   void loadReferenceData_negative_ifReadError() {
-    when(roleService.defaultRoleCount()).thenReturn(0);
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", PlainLoadableRoles.class))
       .thenThrow(new IllegalStateException("Failed to deserialize data"));
 
     assertThatThrownBy(() -> rolesDataLoader.loadReferenceData()).isInstanceOf(IllegalStateException.class)
@@ -91,9 +91,8 @@ class RolesDataLoaderTest {
     var roles = new PlainLoadableRoles().roles(List.of(role));
     var loadableRole = new LoadableRole().id(randomUUID()).name(role.getName()).type(SUPPORT);
 
-    when(roleService.defaultRoleCount()).thenReturn(0);
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles/default", PlainLoadableRoles.class))
-      .thenReturn(of(roles));
+    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", PlainLoadableRoles.class))
+      .thenReturn(Stream.of(roles));
     when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(loadableRole));
 
     assertThatThrownBy(() -> rolesDataLoader.loadReferenceData())

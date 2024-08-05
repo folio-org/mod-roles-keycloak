@@ -4,6 +4,8 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.apache.commons.collections4.ListUtils.intersection;
+import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilitySetEntity.DEFAULT_ROLE_CAPABILITY_SET_SORT;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityEndpoints;
@@ -122,6 +124,30 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     assignedCapabilitySetIds.remove(capabilitySetId);
     roleCapabilitySetRepository.findById(RoleCapabilitySetKey.of(roleId, capabilitySetId))
       .ifPresent(entity -> removeCapabilities(roleId, List.of(entity.getCapabilitySetId()), assignedCapabilitySetIds));
+  }
+
+  /**
+   * Removes role assigned capability sets using role identifier and capability set ids.
+   *
+   * @param roleId - role identifier as {@link UUID}
+   * @param capabilitySetIds - list with capabilitySet ids, that should be removed from a role
+   */
+  @Override
+  @Transactional
+  public void delete(UUID roleId, List<UUID> capabilitySetIds) {
+    if (isEmpty(capabilitySetIds)) {
+      return;
+    }
+
+    var assignedRoleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
+    var assignedCapabilitySetIds = getCapabilitySetIds(assignedRoleCapabilitySetEntities);
+
+    var deprecatedIds = intersection(assignedCapabilitySetIds, capabilitySetIds);
+    if (isEmpty(deprecatedIds)) {
+      return;
+    }
+
+    removeCapabilities(roleId, deprecatedIds, subtract(assignedCapabilitySetIds, deprecatedIds));
   }
 
   /**

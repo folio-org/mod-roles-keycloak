@@ -108,8 +108,12 @@ public class KeycloakRoleService {
       var keycloakRole = roleMapper.toKeycloakRole(role);
       var accessToken = tokenService.getToken();
       roleClient.create(context.getTenantId(), accessToken, keycloakRole);
+
       var foundRole = roleClient.findByName(context.getTenantId(), accessToken, keycloakRole.getName());
-      return role.id(foundRole.getId());
+      role.setId(foundRole.getId());
+
+      log.debug("Role has been created: id = {}, name = {}", role.getId(), role.getName());
+      return role;
     } catch (FeignException exception) {
       throw new KeycloakApiException("Failed to create keycloak role", exception, exception.status());
     }

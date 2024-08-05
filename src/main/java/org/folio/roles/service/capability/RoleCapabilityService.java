@@ -45,6 +45,14 @@ public interface RoleCapabilityService {
   void delete(UUID roleId, UUID capabilityId);
 
   /**
+   * Removes role-capability relations by role identifier and capability ids.
+   *
+   * @param roleId - role identifier as {@link UUID}
+   * @param capabilityIds - list with capabilities, that should be removed from a role
+   */
+  void delete(UUID roleId, List<UUID> capabilityIds);
+
+  /**
    * Removes role-capability relations by role identifier.
    *
    * @param roleId - role identifier as {@link UUID}

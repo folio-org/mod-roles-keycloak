@@ -4,6 +4,8 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.apache.commons.collections4.ListUtils.intersection;
+import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
 
@@ -123,6 +125,30 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     assignedCapabilityIds.remove(capabilityId);
     roleCapabilityRepository.findById(RoleCapabilityKey.of(roleId, capabilityId))
       .ifPresent(entity -> removeCapabilities(roleId, List.of(entity.getCapabilityId()), assignedCapabilityIds));
+  }
+
+  /**
+   * Removes role-capability relations by role identifier and capability ids.
+   *
+   * @param roleId - role identifier as {@link UUID}
+   * @param capabilityIds - list with capabilities, that should be removed from a role
+   */
+  @Override
+  @Transactional
+  public void delete(UUID roleId, List<UUID> capabilityIds) {
+    if (isEmpty(capabilityIds)) {
+      return;
+    }
+
+    var assignedRoleCapabilityEntities = roleCapabilityRepository.findAllByRoleId(roleId);
+    var assignedCapabilityIds = getCapabilityIds(assignedRoleCapabilityEntities);
+
+    var deprecatedIds = intersection(assignedCapabilityIds, capabilityIds);
+    if (isEmpty(deprecatedIds)) {
+      return;
+    }
+
+    removeCapabilities(roleId, deprecatedIds, subtract(assignedCapabilityIds, deprecatedIds));
   }
 
   /**

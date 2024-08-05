@@ -36,12 +36,15 @@ public class CustomTenantService extends TenantService {
 
   @Override
   public void loadReferenceData() {
+    kafkaAdminService.stopKafkaListeners();
     try {
       log.info("Loading reference data");
       toStream(referenceDataLoaders).forEach(ReferenceDataLoader::loadReferenceData);
     } catch (Exception e) {
       log.warn("Unable to load reference data", e);
       throw new IllegalStateException("Unable to load reference data", e);
+    } finally {
+      kafkaAdminService.startKafkaListeners();
     }
     log.info("Finished loading reference data");
   }

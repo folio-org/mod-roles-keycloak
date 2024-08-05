@@ -21,12 +21,16 @@ public interface LoadableRoleMapper {
   @AuditableEntityMapping
   LoadableRoleEntity toRoleEntity(LoadableRole role);
 
+  List<LoadableRoleEntity> toRoleEntity(List<LoadableRole> role);
+
   @AuditableMapping
   LoadableRole toRole(LoadableRoleEntity entity);
 
-  Role toRegularRole(LoadableRole role);
+  @AuditableMapping
+  Role toRegularRole(LoadableRoleEntity entity);
 
   @AuditableEntityMapping
+  @Mapping(target = "id", ignore = true)
   @Mapping(target = "role", ignore = true)
   LoadablePermissionEntity toPermissionEntity(LoadablePermission role);
 

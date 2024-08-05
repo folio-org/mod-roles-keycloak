@@ -6,7 +6,10 @@ spring:
       data-source-properties:
         preparedStatementCacheQueries: 0
   jpa:
-    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
   kafka:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
