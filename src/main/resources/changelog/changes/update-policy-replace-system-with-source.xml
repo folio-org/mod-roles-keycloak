@@ -29,7 +29,10 @@
   <changeSet id="update source field based on description" author="Saba Zedginidze">
     <sql>
       UPDATE policy
-      SET source = CASE WHEN description = 'System generated service policy during migration'
+      SET source = CASE
+        WHEN description = 'System generated service policy during migration'
+          OR description LIKE 'System generated policy for user: %'
+          OR description LIKE 'System generated policy for role: %'
       THEN 'SYSTEM'::source_type
       ELSE 'USER'::source_type
       END;
