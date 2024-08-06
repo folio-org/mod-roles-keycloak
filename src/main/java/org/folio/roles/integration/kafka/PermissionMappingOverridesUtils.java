@@ -12,7 +12,8 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class PermissionMappingOverridesUtils {
 
-  public static final Map<String, PermissionData> PERMISSION_MAPPING_OVERRIDES = getFolioPermissionMappingsOverrides();
+  protected static final Map<String, PermissionData> PERMISSION_MAPPING_OVERRIDES =
+    getFolioPermissionMappingsOverrides();
 
   private static Map<String, PermissionData> getFolioPermissionMappingsOverrides() {
     var mappingOverridesFileLocation = "folio-permissions/mappings-overrides.json";

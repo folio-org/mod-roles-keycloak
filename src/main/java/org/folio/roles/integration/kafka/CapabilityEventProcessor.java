@@ -32,6 +32,7 @@ import org.folio.common.utils.permission.model.PermissionData;
 import org.folio.common.utils.permission.model.PermissionType;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
+import org.folio.roles.domain.dto.CapabilityType;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.HttpMethod;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
@@ -71,7 +72,7 @@ public class CapabilityEventProcessor {
   public static PermissionData extractPermissionData(String permissionName) {
     var permission = PERMISSION_MAPPING_OVERRIDES.get(permissionName);
     if (permission != null) {
-      return org.folio.common.utils.permission.model.PermissionData.builder()
+      return PermissionData.builder()
         .action(PermissionAction.fromValue(permission.action()))
         .type(PermissionType.fromValue(permission.type()))
         .resource(permission.resource())
@@ -128,7 +129,7 @@ public class CapabilityEventProcessor {
 
     return new CapabilitySetDescriptor()
       .name(getCapabilityName(permissionData))
-      .type(org.folio.roles.domain.dto.CapabilityType.fromValue(permissionData.getType().getValue()))
+      .type(CapabilityType.fromValue(permissionData.getType().getValue()))
       .action(CapabilityAction.fromValue(permissionData.getAction().getValue()))
       .resource(permissionData.getResource())
       .description(permission.getDescription())
@@ -150,7 +151,7 @@ public class CapabilityEventProcessor {
     var permission = resource.getPermission();
     return new Capability()
       .name(getCapabilityName(permissionData))
-      .type(org.folio.roles.domain.dto.CapabilityType.fromValue(permissionData.getType().getValue()))
+      .type(CapabilityType.fromValue(permissionData.getType().getValue()))
       .action(CapabilityAction.fromValue(permissionData.getAction().getValue()))
       .resource(permissionData.getResource())
       .moduleId(event.getModuleId())
