@@ -23,7 +23,7 @@ public class PoliciesDataLoader implements ReferenceDataLoader {
 
   @Override
   public void loadReferenceData() {
-    var preparedPolicies = toStream(resourceHelper.readObjectsFromDirectory(POLICIES_DATA_DIR, Policies.class))
+    var preparedPolicies = resourceHelper.readObjectsFromDirectory(POLICIES_DATA_DIR, Policies.class)
       .flatMap(policies -> toStream(policies.getPolicies()))
       .collect(toSet());
 

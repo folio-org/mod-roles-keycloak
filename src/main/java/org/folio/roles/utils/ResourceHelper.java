@@ -1,10 +1,9 @@
 package org.folio.roles.utils;
 
 import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.core.io.Resource;
@@ -28,10 +27,9 @@ public class ResourceHelper {
    * @param <T>          type of data
    * @return list of deserialized data
    */
-  public <T> List<T> readObjectsFromDirectory(String resourceDir, Class<T> resourceType) {
+  public <T> Stream<T> readObjectsFromDirectory(String resourceDir, Class<T> resourceType) {
     return stream(getResources(resourceDir))
-      .map(res -> deserializeResource(res, resourceType))
-      .collect(toList());
+      .map(res -> deserializeResource(res, resourceType));
   }
 
   private <T> T deserializeResource(Resource res, Class<T> resourceType) {

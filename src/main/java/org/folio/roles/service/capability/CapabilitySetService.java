@@ -247,6 +247,11 @@ public class CapabilitySetService {
     return mapItems(repository.findByNameIn(capabilitySetName), capabilitySetEntityMapper::convert);
   }
 
+  @Transactional(readOnly = true)
+  public List<CapabilitySet> findByPermissionNames(Collection<String> permissionNames) {
+    return mapItems(repository.findByPermissionNames(permissionNames), capabilitySetEntityMapper::convert);
+  }
+
   /**
    * Checks existing capability ids.
    *

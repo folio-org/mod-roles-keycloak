@@ -1,0 +1,20 @@
+{
+  "roles": [
+    {
+      "name": "Circulation Observer",
+      "description": "Role for Circulation Observer",
+      "permissions": [
+        "ui-checkin.all",
+        "ui-checkout.circulation",
+        "ui-inventory.instance.view",
+        "ui-notes.item.view",
+        "ui-users.feesfines.view",
+        "ui-users.viewproxies",
+        "ui-users.viewuserservicepoints",
+        "ui-users.view",
+        "ui-users.loans.view",
+        "ui-users.requests.all"
+      ]
+    }
+  ]
+}

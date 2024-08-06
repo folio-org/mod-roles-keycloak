@@ -2,9 +2,8 @@ package org.folio.roles.integration.kafka;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.springframework.context.Lifecycle;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
-import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.stereotype.Service;
 
 @Log4j2
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 public class KafkaAdminService {
 
   private final KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry;
-  private final ConsumerFactory<String, ResourceEvent> jsonNodeConsumerFactory;
 
   /**
    * Restarts kafka event listeners in mod-roles-keycloak application.
@@ -26,5 +24,13 @@ public class KafkaAdminService {
         container.start();
       }
     );
+  }
+
+  public void startKafkaListeners() {
+    kafkaListenerEndpointRegistry.getAllListenerContainers().forEach(Lifecycle::start);
+  }
+
+  public void stopKafkaListeners() {
+    kafkaListenerEndpointRegistry.getAllListenerContainers().forEach(Lifecycle::stop);
   }
 }
