@@ -31,7 +31,7 @@ import org.folio.roles.domain.dto.CapabilitySets;
 import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.dto.LoadableRoles;
-import org.folio.roles.integration.kafka.CapabilityConverterUtils;
+import org.folio.roles.integration.kafka.CapabilityEventProcessor;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.utils.CapabilityUtils;
 import org.folio.test.extensions.KeycloakRealms;
@@ -185,8 +185,8 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       assertThat(p.getCapabilitySetId()).isNotNull();
 
       var name = p.getPermissionName();
-      var rawCap = CapabilityConverterUtils.getRawCapability(name);
-      var capabilitySetName = CapabilityUtils.getCapabilityName(rawCap);
+      var permissionData = CapabilityEventProcessor.extractPermissionData(name);
+      var capabilitySetName = CapabilityUtils.getCapabilityName(permissionData);
 
       var capabilitySet = capSetByName.get(capabilitySetName);
       assertThat(capabilitySet).isNotNull();
@@ -200,8 +200,8 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       assertThat(p.getCapabilityId()).isNotNull();
 
       var name = p.getPermissionName();
-      var rawCap = CapabilityConverterUtils.getRawCapability(name);
-      var capabilityName = CapabilityUtils.getCapabilityName(rawCap);
+      var permissionData = CapabilityEventProcessor.extractPermissionData(name);
+      var capabilityName = CapabilityUtils.getCapabilityName(permissionData);
 
       var capability = capabilityByName.get(capabilityName);
       assertThat(capability).isNotNull();
