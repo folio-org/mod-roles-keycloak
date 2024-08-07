@@ -2,20 +2,19 @@ package org.folio.roles.service.role;
 
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.folio.roles.support.UserRoleTestUtils.userRole;
 import static org.folio.roles.support.UserRoleTestUtils.userRoles;
 import static org.folio.roles.support.UserRoleTestUtils.userRolesRequest;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.UUID;
 import org.folio.roles.domain.dto.Role;
-import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.integration.keyclock.KeycloakRolesUserService;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
@@ -140,10 +139,9 @@ class UserRoleServiceTest {
       var rolesUserRequest = userRolesRequest(USER_ID, ROLE_ID);
 
       when(userRoleEntityService.findByUserId(USER_ID)).thenReturn(List.of(existingUserRole));
+      userRoleService.update(rolesUserRequest);
 
-      assertThatThrownBy(() -> userRoleService.update(rolesUserRequest))
-        .isInstanceOf(RequestValidationException.class)
-        .hasMessage("Nothing to update, user-role relations are not changed");
+      verifyNoInteractions(keycloakRolesUserService);
     }
   }
 
