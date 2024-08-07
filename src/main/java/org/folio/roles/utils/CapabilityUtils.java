@@ -1,5 +1,6 @@
 package org.folio.roles.utils;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.Collection;
@@ -81,5 +82,9 @@ public class CapabilityUtils {
       .flatMap(Collection::stream)
       .distinct()
       .toList();
+  }
+
+  public static boolean isTechnicalCapability(Capability capability) {
+    return isEmpty(capability.getEndpoints());
   }
 }
