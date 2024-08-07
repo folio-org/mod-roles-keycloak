@@ -59,7 +59,10 @@ class RoleEntityServiceTest {
   }
 
   private static Role createRoleDto() {
-    return new Role().name(ROLE_NAME).id(ROLE_ID).description(ROLE_DESCRIPTION);
+    return new Role()
+      .name(ROLE_NAME)
+      .id(ROLE_ID)
+      .description(ROLE_DESCRIPTION);
   }
 
   private static RoleEntity createRoleEntity() {

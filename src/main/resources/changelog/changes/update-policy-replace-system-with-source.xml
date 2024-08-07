@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="create source type enum" author="Saba Zedginidze">
+    <sql>
+      DO '
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = ''source_type'') THEN
+          CREATE TYPE source_type AS ENUM (''SYSTEM'', ''USER'', ''CONSORTIUM'');
+        END IF;
+      END ' ;
+    </sql>
+  </changeSet>
+
+  <changeSet id="add source field to policy schema" author="Saba Zedginidze">
+    <addColumn tableName="policy">
+      <column name="source" type="source_type"/>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="drop is_system field from policy schema" author="Saba Zedginidze">
+    <dropColumn tableName="policy">
+      <column name="is_system"/>
+    </dropColumn>
+  </changeSet>
+
+  <changeSet id="update source field based on description" author="Saba Zedginidze">
+    <sql>
+      UPDATE policy
+      SET source = CASE
+        WHEN description = 'System generated service policy during migration'
+          OR description LIKE 'System generated policy for user: %'
+          OR description LIKE 'System generated policy for role: %'
+      THEN 'SYSTEM'::source_type
+      ELSE 'USER'::source_type
+      END;
+    </sql>
+  </changeSet>
+
+  <changeSet id="set source field to not nullable" author="Saba Zedginidze">
+    <sql>ALTER TABLE policy ALTER COLUMN source SET NOT NULL;</sql>
+  </changeSet>
+</databaseChangeLog>

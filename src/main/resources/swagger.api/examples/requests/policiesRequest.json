@@ -4,7 +4,7 @@
       "name": "time-based-policy",
       "description": "policy description in free form",
       "type": "TIME",
-      "system": "false",
+      "source": "USER",
       "timePolicy": {
         "repeat": false,
         "start": "2022-10-01T12:00:00Z",

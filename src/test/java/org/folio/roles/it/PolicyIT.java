@@ -41,6 +41,7 @@ import org.folio.roles.domain.dto.PoliciesRequest;
 import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.dto.TimePolicy;
 import org.folio.roles.domain.dto.UserPolicy;
 import org.folio.test.extensions.KeycloakRealms;
@@ -109,7 +110,7 @@ class PolicyIT extends BaseIntegrationTest {
       .andExpect(status().isCreated())
       .andExpect(content().json(policyToCreateAsJson))
       .andExpect(jsonPath("$.metadata.createdByUserId").value(equalTo(USER_ID_HEADER)))
-      .andExpect(jsonPath("$.system").value(equalTo(false)))
+      .andExpect(jsonPath("$.source").value(equalTo(SourceType.USER.getValue())))
       .andExpect(jsonPath("$.metadata.createdDate").value(notNullValue()))
       .andExpect(jsonPath("$.metadata.updatedByUserId").value(equalTo(USER_ID_HEADER)))
       .andExpect(jsonPath("$.metadata.updatedDate").value(notNullValue()));
@@ -141,7 +142,7 @@ class PolicyIT extends BaseIntegrationTest {
       assertNotNull(metadata.getCreatedDate());
       assertNotNull(metadata.getUpdatedByUserId());
       assertNotNull(metadata.getUpdatedDate());
-      assertEquals(false, policy.getSystem());
+      assertEquals(SourceType.USER, policy.getSource());
     });
   }
 
@@ -232,6 +233,7 @@ class PolicyIT extends BaseIntegrationTest {
     policy.setName("user-based-policy");
     policy.setDescription("hello work");
     policy.setType(USER);
+    policy.setSource(SourceType.USER);
     var userPolicy = new UserPolicy();
     userPolicy.setUsers(List.of(fromString("61893f40-4739-49fc-bf07-daeff3021f90")));
     policy.setUserPolicy(userPolicy);
@@ -244,6 +246,7 @@ class PolicyIT extends BaseIntegrationTest {
     policy.setName("time-based-policy");
     policy.setDescription("time based policy description");
     policy.setType(TIME);
+    policy.setSource(SourceType.USER);
     var timePolicy = new TimePolicy();
     timePolicy.setRepeat(true);
     timePolicy.setStart(Date.from(of(2023, JANUARY, 25, 0, 0).toInstant(UTC)));
@@ -267,6 +270,7 @@ class PolicyIT extends BaseIntegrationTest {
     policy.setName("test-role-based-policy");
     policy.setDescription("roles based description");
     policy.setType(ROLE);
+    policy.setSource(SourceType.USER);
     var rolePolicy = new RolePolicy();
     rolePolicy.setRoles(List.of(new RolePolicyRole()
       .id(fromString("5eb015a5-7454-4c97-b12c-7fe4162d26a0"))

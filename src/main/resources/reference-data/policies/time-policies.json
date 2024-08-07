@@ -4,7 +4,7 @@
       "id": "15f45670-1edf-441e-a247-51f6c000faa3",
       "name": "Business Hours",
       "type": "TIME",
-      "system": "false",
+      "source": "USER",
       "timePolicy": {
         "start": "2023-07-01T00:00:00",
         "expires": "2033-07-01T00:00:00",

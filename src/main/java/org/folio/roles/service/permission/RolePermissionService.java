@@ -14,6 +14,7 @@ import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationService;
 import org.folio.roles.service.capability.CapabilityEndpointService;
 import org.folio.roles.service.policy.PolicyService;
@@ -76,7 +77,7 @@ public class RolePermissionService implements PermissionService {
   private static Policy createNewRolePolicy(UUID roleId) {
     return new Policy()
       .type(ROLE)
-      .system(true)
+      .source(SourceType.SYSTEM)
       .name(getPolicyName(roleId))
       .description("System generated policy for role: " + roleId)
       .rolePolicy(new RolePolicy().addRolesItem(new RolePolicyRole().id(roleId)));

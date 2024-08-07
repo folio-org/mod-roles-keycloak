@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.Policy;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.dto.UserPolicy;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationService;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
@@ -75,7 +76,7 @@ public class UserPermissionService implements PermissionService {
   private static Policy createNewUserPolicy(UUID userId) {
     return new Policy()
       .type(USER)
-      .system(true)
+      .source(SourceType.SYSTEM)
       .name(getPolicyName(userId))
       .description("System generated policy for user: " + userId)
       .userPolicy(new UserPolicy().users(List.of(userId)));
