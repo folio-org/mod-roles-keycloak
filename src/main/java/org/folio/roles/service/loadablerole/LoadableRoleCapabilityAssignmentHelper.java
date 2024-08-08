@@ -65,7 +65,7 @@ public class LoadableRoleCapabilityAssignmentHelper {
     var permsByName = permissionsByName(permissions);
 
     var capabilities = capabilityService.findByPermissionNames(permsByName.keySet()).stream()
-      .filter(noneTechnical()).toList();
+      .filter(notTechnical()).toList();
 
     if (isNotEmpty(capabilities)) {
       roleCapabilityService.create(roleId, mapItems(capabilities, Capability::getId));
@@ -135,7 +135,7 @@ public class LoadableRoleCapabilityAssignmentHelper {
     return toStream(perms).collect(toMap(LoadablePermissionEntity::getPermissionName, identity()));
   }
 
-  private static Predicate<Capability> noneTechnical() {
+  private static Predicate<Capability> notTechnical() {
     return not(CapabilityUtils::isTechnicalCapability);
   }
 }
