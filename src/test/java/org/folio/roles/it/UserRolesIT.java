@@ -26,7 +26,9 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.UserRolesRequest;
+import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.test.extensions.KeycloakRealms;
+import org.folio.test.extensions.WireMockStub;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -78,12 +80,14 @@ class UserRolesIT extends BaseIntegrationTest {
 
   @Test
   @Sql("classpath:/sql/populate-roles-for-roles-user-tables.sql")
+  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void assignRolesToUser_positive() throws Exception {
     var expectedUserRolesJson = asJsonString(userRoles(userRole(USER_UUID, ROLE_UUID_1)));
     mockMvc.perform(post("/roles/users")
         .content(asJsonString(new UserRolesRequest().userId(USER_UUID).addRoleIdsItem(ROLE_UUID_1)))
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER)
+        .header(XOkapiHeaders.URL, wmAdminClient.getWireMockUrl())
         .contentType(APPLICATION_JSON))
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))

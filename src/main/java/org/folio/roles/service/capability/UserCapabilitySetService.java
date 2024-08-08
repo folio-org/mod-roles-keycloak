@@ -21,6 +21,7 @@ import org.folio.roles.domain.entity.UserCapabilitySetEntity;
 import org.folio.roles.domain.entity.key.UserCapabilitySetKey;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
+import org.folio.roles.integration.userskc.ModUsersKeycloakClient;
 import org.folio.roles.mapper.entity.UserCapabilitySetEntityMapper;
 import org.folio.roles.repository.UserCapabilitySetRepository;
 import org.folio.roles.service.permission.UserPermissionService;
@@ -42,6 +43,7 @@ public class UserCapabilitySetService {
   private final CapabilityEndpointService capabilityEndpointService;
   private final UserCapabilitySetRepository userCapabilitySetRepository;
   private final UserCapabilitySetEntityMapper userCapabilitySetEntityMapper;
+  private final ModUsersKeycloakClient modUsersKeycloakClient;
 
   /**
    * Creates a record(s) associating one or more capabilitySets with a user.
@@ -56,7 +58,7 @@ public class UserCapabilitySetService {
       throw new IllegalArgumentException("List with capability set identifiers is empty");
     }
 
-    keycloakUserService.getKeycloakUserByUserId(userId);
+    modUsersKeycloakClient.ensureKeycloakUserExists(userId.toString());
     var existingEntities = userCapabilitySetRepository.findUserCapabilitySets(userId, capabilitySetIds);
     var existingCapabilitySetIds = getCapabilitySetIds(existingEntities);
     if (isNotEmpty(existingCapabilitySetIds)) {
