@@ -1,6 +1,5 @@
 package org.folio.roles.utils;
 
-import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
@@ -15,7 +14,6 @@ import java.util.function.Function;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.folio.common.utils.CollectionUtils;
-import org.folio.roles.exception.RequestValidationException;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
@@ -32,10 +30,6 @@ public final class UpdateOperationHelper<T> {
     var setOfEntitiesToUpdate = createLinkedHashSet(newEntities);
     var newEntitiesList = subtract(setOfEntitiesToUpdate, foundValuesSet);
     var deprecatedEntitiesList = subtract(foundValuesSet, setOfEntitiesToUpdate);
-
-    if (isEmpty(newEntitiesList) && isEmpty(deprecatedEntitiesList)) {
-      throw new RequestValidationException(format("Nothing to update, %s relations are not changed", entityName));
-    }
 
     this.foundEntities = foundEntities;
     this.newEntities = newEntitiesList;

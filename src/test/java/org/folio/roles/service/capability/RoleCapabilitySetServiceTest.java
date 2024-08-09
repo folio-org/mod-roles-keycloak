@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.entity.key.RoleCapabilitySetKey;
 import org.folio.roles.domain.model.PageResult;
-import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.RoleCapabilitySetEntityMapper;
 import org.folio.roles.repository.RoleCapabilitySetRepository;
 import org.folio.roles.service.permission.RolePermissionService;
@@ -305,9 +304,9 @@ class RoleCapabilitySetServiceTest {
       when(roleService.getById(ROLE_ID)).thenReturn(role());
       when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(List.of(roleCapabilitySetEntity()));
 
-      assertThatThrownBy(() -> roleCapabilitySetService.update(ROLE_ID, capabilityIds))
-        .isInstanceOf(RequestValidationException.class)
-        .hasMessage("Nothing to update, role-capability set relations are not changed");
+      roleCapabilitySetService.update(ROLE_ID, capabilityIds);
+
+      verifyNoInteractions(rolePermissionService);
     }
 
     @Test
