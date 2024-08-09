@@ -160,7 +160,7 @@ public abstract class BaseIntegrationTest extends BaseBackendIntegrationTest {
 
     @DynamicPropertySource
     static void configureFeignClientUrl(DynamicPropertyRegistry registry) {
-      registry.add("application.moduserskc.url", () -> wmAdminClient.getWireMockUrl());
+      registry.add("moduserskc.url", () -> wmAdminClient.getWireMockUrl());
     }
   }
 }
