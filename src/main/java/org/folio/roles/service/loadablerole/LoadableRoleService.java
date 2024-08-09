@@ -140,7 +140,7 @@ public class LoadableRoleService {
   private void saveDefaultRoles(List<LoadableRole> roles) {
     var existing = findAllDefaultRoles();
     var incoming = mapper.toRoleEntity(roles);
-    log.debug("Saving default roles: existing = {}, incoming = {}", () -> toIdNames(existing),
+    log.debug("Saving default roles:\n\texisting = {},\n\tincoming = {}", () -> toIdNames(existing),
       () -> toIdNames(incoming));
 
     mergeInBatch(incoming, existing, comparatorById(), this::createAll, this::updateAll, this::deleteAll);
@@ -169,6 +169,7 @@ public class LoadableRoleService {
         updateRoleId(entity, roleId);
 
         createdInKeycloakRoleIds.add(roleId);
+        repository.saveAndFlush(entity);
 
         assignmentHelper.assignCapabilitiesAndSetsForPermissions(entity.getPermissions());
       }
@@ -195,8 +196,9 @@ public class LoadableRoleService {
       var incoming = pair.newItem();
       var existing = pair.oldItem();
 
-      var modified = updateNameAndDescription(incoming, existing) || updatePermissions(incoming, existing);
-      if (modified) {
+      var nameDescriptionUpdated = updateNameAndDescription(incoming, existing);
+      var permsUpdated = updatePermissions(incoming, existing);
+      if (nameDescriptionUpdated || permsUpdated) {
         changedRoles.add(existing);
       }
     }
@@ -249,7 +251,7 @@ public class LoadableRoleService {
     repository.flush();
     repository.deleteAllInBatch(entities);
 
-    entities.forEach(entity -> keycloakService.deleteById(entity.getId()));
+    entities.forEach(entity -> keycloakService.deleteByIdSafe(entity.getId()));
     log.info("Loadable roles deleted: {}", () -> toIdNames(entities));
   }
 

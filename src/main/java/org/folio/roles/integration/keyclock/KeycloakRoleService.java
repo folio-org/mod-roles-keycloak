@@ -98,6 +98,7 @@ public class KeycloakRoleService {
   public void deleteByIdSafe(UUID id) {
     try {
       roleClient.deleteById(context.getTenantId(), tokenService.getToken(), id);
+      log.debug("Role has been deleted: id = {}", id);
     } catch (Exception e) {
       log.debug("Failed to delete Role in Keycloak: id = {}", id);
     }
