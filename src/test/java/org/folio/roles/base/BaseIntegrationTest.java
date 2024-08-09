@@ -37,6 +37,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -154,6 +156,11 @@ public abstract class BaseIntegrationTest extends BaseBackendIntegrationTest {
     @Bean
     public NewTopic capabilitiesTopic() {
       return new NewTopic(FOLIO_IT_CAPABILITIES_TOPIC, 1, (short) 1);
+    }
+
+    @DynamicPropertySource
+    static void configureFeignClientUrl(DynamicPropertyRegistry registry) {
+      registry.add("application.moduserskc.url", () -> wmAdminClient.getWireMockUrl());
     }
   }
 }

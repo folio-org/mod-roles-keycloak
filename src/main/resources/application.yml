@@ -95,3 +95,5 @@ application:
     capability-event:
       retry-attempts: ${CAPABILITY_TOPIC_RETRY_ATTEMPTS:9223372036854775807}
       retry-delay: ${CAPABILITY_TOPIC_RETRY_DELAY:1s}
+  moduserskc:
+    url: ${MOD_USERS_KEYCLOAK_URL:${moduserskc.url:}}

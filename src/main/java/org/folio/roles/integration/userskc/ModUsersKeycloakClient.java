@@ -1,11 +1,10 @@
 package org.folio.roles.integration.userskc;
 
-import org.folio.spring.config.FeignClientConfiguration;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
-@FeignClient(name = "moduserskc", url = "${application.moduserskc.url}", configuration = FeignClientConfiguration.class)
+@FeignClient(name = "users-keycloak")
 public interface ModUsersKeycloakClient {
 
   /**
@@ -13,6 +12,6 @@ public interface ModUsersKeycloakClient {
    *
    * @param userId folio user ID, UUID.
    */
-  @PostMapping("/users-keycloak/auth-users/{userId}")
+  @PostMapping("/auth-users/{userId}")
   void ensureKeycloakUserExists(@PathVariable("userId") String userId);
 }
