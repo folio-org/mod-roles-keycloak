@@ -37,6 +37,7 @@ import org.folio.roles.domain.dto.PolicyType;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.dto.UserRolesRequest;
 import org.folio.roles.exception.MigrationException;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationClientProvider;
@@ -116,6 +117,7 @@ public class PermissionMigrationService {
     var rolePolicies = toStream(keycloakRoles.values())
       .map(role -> new Policy()
         .type(PolicyType.ROLE)
+        .source(SourceType.SYSTEM)
         .name("Policy for role: " + role.getName())
         .description("System generated service policy during migration")
         .rolePolicy(new RolePolicy().roles(List.of(new RolePolicyRole().id(role.getId())))))

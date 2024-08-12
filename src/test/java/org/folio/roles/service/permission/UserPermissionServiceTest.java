@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.Policy;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.dto.UserPolicy;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationService;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
@@ -72,7 +73,7 @@ class UserPermissionServiceTest {
       var expectedPermissionName = String.format("GET access for user '%s' to '/foo/entities'", USER_ID);
       assertThat(nameGeneratorCaptor.getValue().apply(endpoint)).isEqualTo(expectedPermissionName);
       assertThat(newPolicyCaptor.getValue().get()).isEqualTo(new Policy().type(USER).name(policyName)
-        .description("System generated policy for user: " + USER_ID).system(true)
+        .description("System generated policy for user: " + USER_ID).source(SourceType.SYSTEM)
         .userPolicy(new UserPolicy().users(List.of(USER_ID))));
     }
 

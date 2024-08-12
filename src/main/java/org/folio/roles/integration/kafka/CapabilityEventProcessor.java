@@ -11,7 +11,7 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 import static org.folio.common.utils.CollectionUtils.toStream;
-import static org.folio.roles.integration.kafka.CapabilityConverterUtils.getRawCapability;
+import static org.folio.roles.integration.kafka.PermissionMappingOverridesUtils.PERMISSION_MAPPING_OVERRIDES;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
 import java.util.ArrayList;
@@ -26,7 +26,13 @@ import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.Pair;
+import org.folio.common.utils.permission.PermissionUtils;
+import org.folio.common.utils.permission.model.PermissionAction;
+import org.folio.common.utils.permission.model.PermissionData;
+import org.folio.common.utils.permission.model.PermissionType;
 import org.folio.roles.domain.dto.Capability;
+import org.folio.roles.domain.dto.CapabilityAction;
+import org.folio.roles.domain.dto.CapabilityType;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.HttpMethod;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
@@ -63,6 +69,19 @@ public class CapabilityEventProcessor {
       : processUiModuleResources(event, folioResources);
   }
 
+  public static PermissionData extractPermissionData(String permissionName) {
+    var permission = PERMISSION_MAPPING_OVERRIDES.get(permissionName);
+    if (permission != null) {
+      return PermissionData.builder()
+        .action(PermissionAction.fromValue(permission.action()))
+        .type(PermissionType.fromValue(permission.type()))
+        .resource(permission.resource())
+        .build();
+    }
+
+    return PermissionUtils.extractPermissionData(permissionName);
+  }
+
   private CapabilityResultHolder processModuleResources(CapabilityEvent event, List<FolioResource> resources) {
     var grouped = groupByHavingSubPermissions(resources);
     var capabilities = mapItems(grouped.get(FALSE), res -> createCapability(event, res));
@@ -87,20 +106,54 @@ public class CapabilityEventProcessor {
     return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
   }
 
-  private static Optional<Capability> createCapability(CapabilityEvent event, FolioResource resource) {
+  private Optional<CapabilitySetDescriptor> createCapabilitySetDescriptor(
+    CapabilityEvent event, FolioResource resource) {
     var folioPermission = resource.getPermission().getPermissionName();
-    return Optional.of(getRawCapability(folioPermission))
-      .filter(CapabilityConverterUtils::hasRequiredFields)
-      .map(raw -> createCapability(event, resource, raw));
+    return Optional.of(extractPermissionData(folioPermission))
+      .filter(CapabilityEventProcessor::hasRequiredFields)
+      .map(raw -> createCapabilitySetDescriptor(event, resource, raw));
   }
 
-  private static Capability createCapability(CapabilityEvent event, FolioResource resource, Capability rawCapability) {
+  private CapabilitySetDescriptor createCapabilitySetDescriptor(
+    CapabilityEvent event, FolioResource res, PermissionData permissionData) {
+    var permission = res.getPermission();
+    var subPermissions = permission.getSubPermissions();
+    var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
+
+    var capabilities = subPermissionsExpanded.stream()
+      .map(Permission::getPermissionName)
+      .map(PermissionUtils::extractPermissionData)
+      .filter(CapabilityEventProcessor::hasRequiredFields)
+      .map(data -> createCapability(event, res, data))
+      .collect(groupingBy(Capability::getResource, TreeMap::new, mapping(Capability::getAction, toList())));
+
+    return new CapabilitySetDescriptor()
+      .name(getCapabilityName(permissionData))
+      .type(CapabilityType.fromValue(permissionData.getType().getValue()))
+      .action(CapabilityAction.fromValue(permissionData.getAction().getValue()))
+      .resource(permissionData.getResource())
+      .description(permission.getDescription())
+      .moduleId(event.getModuleId())
+      .applicationId(event.getApplicationId())
+      .permission(permission.getPermissionName())
+      .capabilities(capabilities);
+  }
+
+  private static Optional<Capability> createCapability(CapabilityEvent event, FolioResource resource) {
+    var folioPermission = resource.getPermission().getPermissionName();
+    return Optional.of(extractPermissionData(folioPermission))
+      .filter(CapabilityEventProcessor::hasRequiredFields)
+      .map(data -> createCapability(event, resource, data));
+  }
+
+  private static Capability createCapability(CapabilityEvent event, FolioResource resource,
+    PermissionData permissionData) {
     var permission = resource.getPermission();
     return new Capability()
-      .name(getCapabilityName(rawCapability))
-      .action(rawCapability.getAction())
-      .resource(rawCapability.getResource())
-      .type(rawCapability.getType())
+      .name(getCapabilityName(permissionData))
+      .type(CapabilityType.fromValue(permissionData.getType().getValue()))
+      .action(CapabilityAction.fromValue(permissionData.getAction().getValue()))
+      .resource(permissionData.getResource())
       .moduleId(event.getModuleId())
       .description(permission.getDescription())
       .permission(permission.getPermissionName())
@@ -108,36 +161,13 @@ public class CapabilityEventProcessor {
       .endpoints(emptyIfNull(resource.getEndpoints()));
   }
 
-  private Optional<CapabilitySetDescriptor> createCapabilitySetDescriptor(
-    CapabilityEvent event, FolioResource resource) {
-    var folioPermission = resource.getPermission().getPermissionName();
-    return Optional.of(getRawCapability(folioPermission))
-      .filter(CapabilityConverterUtils::hasRequiredFields)
-      .map(raw -> createCapabilitySetDescriptor(event, resource, raw));
-  }
+  private static boolean hasRequiredFields(org.folio.common.utils.permission.model.PermissionData permissionData) {
+    if (PermissionUtils.hasRequiredFields(permissionData)) {
+      return true;
+    }
 
-  private CapabilitySetDescriptor createCapabilitySetDescriptor(
-    CapabilityEvent event, FolioResource res, Capability rawCapability) {
-    var permission = res.getPermission();
-    var subPermissions = permission.getSubPermissions();
-    var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
-
-    var capabilities = subPermissionsExpanded.stream()
-      .map(Permission::getPermissionName)
-      .map(CapabilityConverterUtils::getRawCapability)
-      .filter(CapabilityConverterUtils::hasRequiredFields)
-      .collect(groupingBy(Capability::getResource, TreeMap::new, mapping(Capability::getAction, toList())));
-
-    return new CapabilitySetDescriptor()
-      .name(getCapabilityName(rawCapability))
-      .type(rawCapability.getType())
-      .action(rawCapability.getAction())
-      .resource(rawCapability.getResource())
-      .description(permission.getDescription())
-      .moduleId(event.getModuleId())
-      .applicationId(event.getApplicationId())
-      .permission(permission.getPermissionName())
-      .capabilities(capabilities);
+    log.warn("Capability cannot be resolved: there is no at least one of required field: {}", permissionData);
+    return false;
   }
 
   private static Map<Boolean, List<FolioResource>> groupByHavingSubPermissions(List<FolioResource> folioResources) {

@@ -20,10 +20,9 @@
       "description": "The type of policy. Required.",
       "$ref": "policyType.json"
     },
-    "system": {
-      "description": "Flag that shows is it a system created policy",
-      "default": false,
-      "type": "boolean"
+    "source": {
+      "description": "The source for the policy.",
+      "$ref": "../common/sourceType.json"
     },
     "userPolicy": {
       "description": "Object containing the details of the user-based policy",

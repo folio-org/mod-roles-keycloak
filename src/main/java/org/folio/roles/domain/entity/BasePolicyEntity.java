@@ -12,6 +12,7 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.model.LogicType;
 import org.folio.roles.repository.generators.FolioUuidGenerator;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -49,16 +50,18 @@ public class BasePolicyEntity extends Auditable {
   private String description;
 
   /**
-   * Flag that shows is it a system created policy.
-   */
-  @Column(name = "is_system", updatable = false)
-  private Boolean system = false;
-
-  /**
    * The logic of the policy.
    */
   @Enumerated(EnumType.STRING)
   @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "logic", columnDefinition = "logic_type", insertable = false, updatable = false)
   private LogicType logic;
+
+  /**
+   * The source of the policy.
+   */
+  @Enumerated(EnumType.STRING)
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+  @Column(name = "source", columnDefinition = "source_type", updatable = false)
+  private SourceType source;
 }

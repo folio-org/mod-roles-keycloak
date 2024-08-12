@@ -37,7 +37,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.entity.key.UserCapabilitySetKey;
 import org.folio.roles.domain.model.PageResult;
-import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.roles.integration.userskc.ModUsersKeycloakClient;
 import org.folio.roles.mapper.entity.UserCapabilitySetEntityMapper;
@@ -312,10 +311,9 @@ class UserCapabilitySetServiceTest {
 
       when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
       when(userCapabilitySetRepository.findAllByUserId(USER_ID)).thenReturn(List.of(userCapabilitySetEntity()));
+      userCapabilitySetService.update(USER_ID, capabilityIds);
 
-      assertThatThrownBy(() -> userCapabilitySetService.update(USER_ID, capabilityIds))
-        .isInstanceOf(RequestValidationException.class)
-        .hasMessage("Nothing to update, user-capability set relations are not changed");
+      verifyNoInteractions(userPermissionService);
     }
 
     @Test

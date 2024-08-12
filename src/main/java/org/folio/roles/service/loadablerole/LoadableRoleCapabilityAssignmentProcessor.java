@@ -1,8 +1,8 @@
 package org.folio.roles.service.loadablerole;
 
 import static java.util.stream.Collectors.groupingBy;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
+import static org.folio.roles.utils.CapabilityUtils.isTechnicalCapability;
 import static org.folio.roles.utils.CollectionUtils.findOne;
 
 import java.util.Collection;
@@ -50,7 +50,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
     log.info("Handling created capability: {}", capability.getName());
 
-    if (isEmpty(capability.getEndpoints())) {
+    if (isTechnicalCapability(capability)) {
       log.debug("Technical capability found: {}. Skipping...", capability);
       return;
     }

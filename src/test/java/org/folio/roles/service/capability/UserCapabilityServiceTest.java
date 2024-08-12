@@ -37,7 +37,6 @@ import java.util.Optional;
 import java.util.UUID;
 import org.folio.roles.domain.entity.key.UserCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
-import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.roles.integration.userskc.ModUsersKeycloakClient;
 import org.folio.roles.mapper.entity.UserCapabilityEntityMapper;
@@ -359,9 +358,9 @@ class UserCapabilityServiceTest {
       when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(List.of(userCapabilityEntity));
 
       var capabilityIds = List.of(capabilityId1);
-      assertThatThrownBy(() -> userCapabilityService.update(USER_ID, capabilityIds))
-        .isInstanceOf(RequestValidationException.class)
-        .hasMessage("Nothing to update, user-capability relations are not changed");
+      userCapabilityService.update(USER_ID, capabilityIds);
+
+      verifyNoInteractions(userPermissionService);
     }
 
     @Test

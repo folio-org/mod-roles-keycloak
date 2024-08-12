@@ -1,5 +1,6 @@
 package org.folio.roles.utils;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.Collection;
@@ -8,6 +9,8 @@ import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.common.utils.permission.model.PermissionAction;
+import org.folio.common.utils.permission.model.PermissionData;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.CapabilitySet;
@@ -16,6 +19,18 @@ import org.folio.roles.domain.model.PageResult;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class CapabilityUtils {
+
+  /**
+   * Generates capability name from permission resource and action.
+   *
+   * @param resource - permission resource name as {@link String}
+   * @param action - permission action as {@link PermissionAction}
+   * @return generated capability name
+   */
+  public static String getCapabilityName(String resource, PermissionAction action) {
+    var newResourceName = resource.toLowerCase().replaceAll("\\s+", "_");
+    return newResourceName + "." + action.getValue();
+  }
 
   /**
    * Generates capability name from resource and action.
@@ -30,13 +45,13 @@ public class CapabilityUtils {
   }
 
   /**
-   * Generates capability name from raw {@link Capability} object.
+   * Generates capability name from {@link PermissionData} object.
    *
-   * @param capability - capability as {@link Capability} object
+   * @param permissionData - permission data as {@link PermissionData} object
    * @return generated capability name
    */
-  public static String getCapabilityName(Capability capability) {
-    return getCapabilityName(capability.getResource(), capability.getAction());
+  public static String getCapabilityName(PermissionData permissionData) {
+    return getCapabilityName(permissionData.getResource(), permissionData.getAction());
   }
 
   /**
@@ -67,5 +82,9 @@ public class CapabilityUtils {
       .flatMap(Collection::stream)
       .distinct()
       .toList();
+  }
+
+  public static boolean isTechnicalCapability(Capability capability) {
+    return isEmpty(capability.getEndpoints());
   }
 }
