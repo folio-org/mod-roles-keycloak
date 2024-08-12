@@ -97,7 +97,7 @@
           "methods": [ "POST" ],
           "pathPattern": "/roles/users",
           "permissionsRequired": [ "roles.users.item.post" ],
-		  "permissionsDesired": [ "users-keycloak.auth-users.item.post" ]
+          "permissionsDesired": [ "users-keycloak.auth-users.item.post" ]
         },
         {
           "methods": [ "GET" ],
@@ -224,7 +224,7 @@
           "methods": [ "POST" ],
           "pathPattern": "/users/capabilities",
           "permissionsRequired": [ "user-capabilities.collection.post" ],
-		  "permissionsDesired": [ "users-keycloak.auth-users.item.post" ]
+          "permissionsDesired": [ "users-keycloak.auth-users.item.post" ]
         },
         {
           "methods": [ "GET" ],
@@ -256,7 +256,7 @@
           "methods": [ "POST" ],
           "pathPattern": "/users/capability-sets",
           "permissionsRequired": [ "user-capability-sets.collection.post" ],
-		  "permissionsDesired": [ "users-keycloak.auth-users.item.post" ]
+          "permissionsDesired": [ "users-keycloak.auth-users.item.post" ]
         },
         {
           "methods": [ "GET" ],
