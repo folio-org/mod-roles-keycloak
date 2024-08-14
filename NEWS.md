@@ -1,3 +1,13 @@
+## Version `v1.4.3` (14.08.2024)
+* Ensure Keycloak user existence on creation of user-role/user-capability/user-capabilityset relation (MODROLESKC-176)
+* Remove error on update operation (MODROLESKC-206)
+* Follow-up changes to main implementation: ignore technical capabilities, safely delete roles (MODROLESKC-168)
+* Add Source field to Policy entity with migration script (MODROLESKC-202)
+* Use permission utils for capability creation (EUREKA-240)
+* Implement upgrade operation for default roles (MODROLESKC-168)
+* Extend the Policy with an additional flag to determine a system-generated entity (MODROLESKC-205)
+* Handle application version upgrade in capabilities (MODROLESKC-200)
+
 ## Version `v1.4.2` (07.10.2024)
 * Upgrade keycloak client to v25.0.1 (KEYCLOAK-11)
 
