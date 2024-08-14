@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.integration.keyclock.KeycloakRolesUserService;
+import org.folio.roles.integration.userskc.ModUsersKeycloakClient;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +34,7 @@ class UserRoleServiceTest {
   @Mock private RoleService roleService;
   @Mock private UserRoleEntityService userRoleEntityService;
   @Mock private KeycloakRolesUserService keycloakRolesUserService;
+  @Mock private ModUsersKeycloakClient modUsersKeycloakClient;
 
   @InjectMocks private UserRoleService userRoleService;
 

@@ -19,6 +19,7 @@ import org.folio.roles.domain.entity.UserCapabilityEntity;
 import org.folio.roles.domain.entity.key.UserCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
+import org.folio.roles.integration.userskc.ModUsersKeycloakClient;
 import org.folio.roles.mapper.entity.UserCapabilityEntityMapper;
 import org.folio.roles.repository.UserCapabilityRepository;
 import org.folio.roles.service.permission.UserPermissionService;
@@ -42,6 +43,7 @@ public class UserCapabilityService {
   private final UserCapabilityRepository userCapabilityRepository;
   private final CapabilityEndpointService capabilityEndpointService;
   private final UserCapabilityEntityMapper userCapabilityEntityMapper;
+  private final ModUsersKeycloakClient modUsersKeycloakClient;
 
   /**
    * Creates a record(s) associating one or more capabilities with the user.
@@ -56,7 +58,7 @@ public class UserCapabilityService {
       throw new IllegalArgumentException("Capability id list is empty");
     }
 
-    keycloakUserService.getKeycloakUserByUserId(userId);
+    modUsersKeycloakClient.createKeycloakUserIfNotExists(userId.toString());
     var existingEntities = userCapabilityRepository.findUserCapabilities(userId, capabilityIds);
     var existingCapabilitySetIds = getCapabilityIds(existingEntities);
     if (isNotEmpty(existingCapabilitySetIds)) {

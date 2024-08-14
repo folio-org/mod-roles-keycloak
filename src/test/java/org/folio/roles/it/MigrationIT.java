@@ -33,7 +33,8 @@ class MigrationIT extends BaseIntegrationTest {
     "/wiremock/stubs/perms/user-permissions-for-migrations-2.json",
     "/wiremock/stubs/perms/user-permissions-for-migrations-3.json",
     "/wiremock/stubs/perms/user-permissions-for-migrations-4.json",
-    "/wiremock/stubs/perms/user-permissions-for-migrations-5.json"
+    "/wiremock/stubs/perms/user-permissions-for-migrations-5.json",
+    "/wiremock/stubs/moduserskc/ensure-kc-user.json"
   })
   @KeycloakRealms("/json/keycloak/test-realm-for-migration.json")
   void getPolicy_positive() throws Exception {

@@ -10,6 +10,7 @@ import org.folio.roles.domain.dto.UserRole;
 import org.folio.roles.domain.dto.UserRoles;
 import org.folio.roles.domain.dto.UserRolesRequest;
 import org.folio.roles.integration.keyclock.KeycloakRolesUserService;
+import org.folio.roles.integration.userskc.ModUsersKeycloakClient;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +22,7 @@ public class UserRoleService {
   private final RoleService roleService;
   private final UserRoleEntityService userRoleEntityService;
   private final KeycloakRolesUserService keycloakRolesUserService;
+  private final ModUsersKeycloakClient modUsersKeycloakClient;
 
   /**
    * Creates a new user-role relation based on the provided {@link UserRolesRequest} object.
@@ -33,6 +35,7 @@ public class UserRoleService {
     var userId = userRolesRequest.getUserId();
     var roleIds = userRolesRequest.getRoleIds();
     var foundRoles = roleService.findByIds(roleIds);
+    modUsersKeycloakClient.createKeycloakUserIfNotExists(userId.toString());
     var createdUserRoles = userRoleEntityService.create(userId, roleIds);
     keycloakRolesUserService.assignRolesToUser(userId, foundRoles);
     return buildUserRoles(createdUserRoles);

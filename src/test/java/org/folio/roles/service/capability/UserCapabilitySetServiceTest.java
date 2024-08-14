@@ -17,22 +17,28 @@ import static org.folio.roles.support.UserCapabilitySetUtils.userCapabilitySetEn
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import feign.FeignException.NotFound;
+import feign.Request;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.entity.key.UserCapabilitySetKey;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
+import org.folio.roles.integration.userskc.ModUsersKeycloakClient;
 import org.folio.roles.mapper.entity.UserCapabilitySetEntityMapper;
 import org.folio.roles.repository.UserCapabilitySetRepository;
 import org.folio.roles.service.permission.UserPermissionService;
@@ -62,6 +68,7 @@ class UserCapabilitySetServiceTest {
   @Mock private CapabilityEndpointService endpointService;
   @Mock private UserCapabilitySetRepository userCapabilitySetRepository;
   @Mock private UserCapabilitySetEntityMapper userCapabilitySetEntityMapper;
+  @Mock private ModUsersKeycloakClient modUsersKeycloakClient;
 
   @AfterEach
   void tearDown() {
@@ -121,7 +128,6 @@ class UserCapabilitySetServiceTest {
       var entities = List.of(userCapabilityEntity1, userCapabilityEntity2);
       var endpoints = List.of(endpoint());
 
-      when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
       when(userCapabilitySetEntityMapper.convert(userCapabilityEntity1)).thenReturn(userCapability1);
       when(userCapabilitySetEntityMapper.convert(userCapabilityEntity2)).thenReturn(userCapability2);
       when(userCapabilitySetRepository.findUserCapabilitySets(USER_ID, capabilitySetIds)).thenReturn(emptyList());
@@ -134,6 +140,7 @@ class UserCapabilitySetServiceTest {
 
       assertThat(result).isEqualTo(asSinglePage(userCapability1, userCapability2));
       verify(capabilitySetService).checkIds(capabilitySetIds);
+      verify(modUsersKeycloakClient).createKeycloakUserIfNotExists(any());
     }
 
     @Test
@@ -150,21 +157,22 @@ class UserCapabilitySetServiceTest {
       var userCapabilityEntity = userCapabilitySetEntity(USER_ID, capabilitySetId1);
       var foundEntities = List.of(userCapabilityEntity);
 
-      when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
       when(userCapabilitySetRepository.findUserCapabilitySets(USER_ID, capIds)).thenReturn(foundEntities);
 
       assertThatThrownBy(() -> userCapabilitySetService.create(USER_ID, capIds))
         .isInstanceOf(EntityExistsException.class)
         .hasMessage("Relation already exists for user='%s' and capabilitySets=[%s]", USER_ID, capabilitySetId1);
+      verify(modUsersKeycloakClient).createKeycloakUserIfNotExists(any());
     }
 
     @Test
     void negative_userIsNotFound() {
       var errorMessage = "User is not found by id: " + USER_ID;
-      when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenThrow(new EntityNotFoundException(errorMessage));
+      doThrow(new NotFound(errorMessage, mock(Request.class), null, Map.of())).when(modUsersKeycloakClient)
+        .createKeycloakUserIfNotExists(any());
       var capabilityIds = List.of(CAPABILITY_SET_ID);
       assertThatThrownBy(() -> userCapabilitySetService.create(USER_ID, capabilityIds))
-        .isInstanceOf(EntityNotFoundException.class)
+        .isInstanceOf(NotFound.class)
         .hasMessage(errorMessage);
     }
   }
