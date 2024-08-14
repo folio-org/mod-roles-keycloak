@@ -13,5 +13,5 @@ public interface ModUsersKeycloakClient {
    * @param userId folio user ID, UUID.
    */
   @PostMapping("/auth-users/{userId}")
-  void ensureKeycloakUserExists(@PathVariable("userId") String userId);
+  void createKeycloakUserIfNotExists(@PathVariable("userId") String userId);
 }

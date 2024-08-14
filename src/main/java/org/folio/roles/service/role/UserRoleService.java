@@ -35,7 +35,7 @@ public class UserRoleService {
     var userId = userRolesRequest.getUserId();
     var roleIds = userRolesRequest.getRoleIds();
     var foundRoles = roleService.findByIds(roleIds);
-    modUsersKeycloakClient.ensureKeycloakUserExists(userId.toString());
+    modUsersKeycloakClient.createKeycloakUserIfNotExists(userId.toString());
     var createdUserRoles = userRoleEntityService.create(userId, roleIds);
     keycloakRolesUserService.assignRolesToUser(userId, foundRoles);
     return buildUserRoles(createdUserRoles);

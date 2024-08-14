@@ -141,7 +141,7 @@ class UserCapabilityServiceTest {
 
       assertThat(result).isEqualTo(asSinglePage(userCapability1, userCapability2));
       verify(capabilityService).checkIds(capabilityIds);
-      verify(modUsersKeycloakClient).ensureKeycloakUserExists(any());
+      verify(modUsersKeycloakClient).createKeycloakUserIfNotExists(any());
     }
 
     @Test
@@ -168,7 +168,7 @@ class UserCapabilityServiceTest {
 
       assertThat(result).isEqualTo(asSinglePage(userCapability1, userCapability2));
       verify(capabilityService).checkIds(capabilityIds);
-      verify(modUsersKeycloakClient).ensureKeycloakUserExists(any());
+      verify(modUsersKeycloakClient).createKeycloakUserIfNotExists(any());
     }
 
     @Test
@@ -189,14 +189,14 @@ class UserCapabilityServiceTest {
       assertThatThrownBy(() -> userCapabilityService.create(USER_ID, capIds))
         .isInstanceOf(EntityExistsException.class)
         .hasMessage("Relation already exists for user='%s' and capabilities=[%s]", USER_ID, capabilityId1);
-      verify(modUsersKeycloakClient).ensureKeycloakUserExists(any());
+      verify(modUsersKeycloakClient).createKeycloakUserIfNotExists(any());
     }
 
     @Test
     void negative_userIsNotFound() {
       var errorMessage = "User is not found by id: " + USER_ID;
       doThrow(new NotFound(errorMessage, mock(Request.class), null, Map.of())).when(modUsersKeycloakClient)
-        .ensureKeycloakUserExists(any());
+        .createKeycloakUserIfNotExists(any());
       var capabilityIds = List.of(capabilityId1);
       assertThatThrownBy(() -> userCapabilityService.create(USER_ID, capabilityIds))
         .isInstanceOf(NotFound.class)

@@ -58,7 +58,7 @@ public class UserCapabilityService {
       throw new IllegalArgumentException("Capability id list is empty");
     }
 
-    modUsersKeycloakClient.ensureKeycloakUserExists(userId.toString());
+    modUsersKeycloakClient.createKeycloakUserIfNotExists(userId.toString());
     var existingEntities = userCapabilityRepository.findUserCapabilities(userId, capabilityIds);
     var existingCapabilitySetIds = getCapabilityIds(existingEntities);
     if (isNotEmpty(existingCapabilitySetIds)) {
