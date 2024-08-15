@@ -32,7 +32,7 @@
     <apache-commons-lang3.version>3.14.0</apache-commons-lang3.version>
     <apache-commons-collections4.version>4.4</apache-commons-collections4.version>
     <openapi-tools.jackson-databind-nullable.version>0.2.6</openapi-tools.jackson-databind-nullable.version>
-    <mapstruct.version>1.5.5.Final</mapstruct.version>
+    <mapstruct.version>1.6.0</mapstruct.version>
     <hypersistence-utils-hibernate-63.version>3.8.2</hypersistence-utils-hibernate-63.version>
     <folio-spring-support.version>8.1.2</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
@@ -53,7 +53,7 @@
     <maven-checkstyle-plugin.version>3.4.0</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
-    <openapi-generator.version>7.4.0</openapi-generator.version>
+    <openapi-generator.version>7.7.0</openapi-generator.version>
     <keycloak-admin-client.version>25.0.2</keycloak-admin-client.version>
 
     <sonar.exclusions>
