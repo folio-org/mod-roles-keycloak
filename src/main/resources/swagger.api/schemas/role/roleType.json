@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "string",
-  "description": "Loadable Role type",
-  "enum": [ "default", "support" ],
+  "description": "Role type",
+  "enum": [ "default", "support", "regular", "consortium" ],
   "default": "default"
 }

@@ -22,7 +22,7 @@
     },
     "source": {
       "description": "The source for the policy.",
-      "$ref": "../common/sourceType.json"
+      "$ref": "sourceType.json"
     },
     "userPolicy": {
       "description": "Object containing the details of the user-based policy",

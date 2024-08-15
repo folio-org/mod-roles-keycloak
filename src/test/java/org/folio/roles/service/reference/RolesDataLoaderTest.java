@@ -4,8 +4,8 @@ import static java.util.Collections.emptyList;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.common.utils.CollectionUtils.mapItems;
-import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
-import static org.folio.roles.domain.dto.LoadableRoleType.SUPPORT;
+import static org.folio.roles.domain.dto.RoleType.DEFAULT;
+import static org.folio.roles.domain.dto.RoleType.SUPPORT;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 

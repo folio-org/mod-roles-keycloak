@@ -37,6 +37,7 @@ import org.folio.roles.domain.dto.PolicyType;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
+import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.domain.dto.SourceType;
 import org.folio.roles.domain.dto.UserRolesRequest;
 import org.folio.roles.exception.MigrationException;
@@ -175,7 +176,8 @@ public class PermissionMigrationService {
   private static Role createRole(Entry<String, List<String>> permissionsEntry) {
     return new Role()
       .name(permissionsEntry.getKey())
-      .description("System generated role during migration");
+      .description("System generated role during migration")
+      .type(RoleType.DEFAULT);
   }
 
   private void createPermissionsForRoles(List<Policy> policies, Map<String, List<String>> roleFolioPermissionMap) {

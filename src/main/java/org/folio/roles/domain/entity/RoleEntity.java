@@ -2,11 +2,18 @@ package org.folio.roles.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Table;
 import java.util.UUID;
+
+import org.folio.roles.domain.entity.type.EntityRoleType;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -37,4 +44,12 @@ public class RoleEntity extends Auditable implements Identifiable<UUID> {
    */
   @Column(name = "description", nullable = false)
   private String description;
+
+  /**
+   * The type of role.
+   */
+  @Enumerated(EnumType.STRING)
+  @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+  @Column(name = "type", columnDefinition = "role_type")
+  private EntityRoleType type;
 }
