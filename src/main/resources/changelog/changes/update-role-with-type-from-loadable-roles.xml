@@ -26,10 +26,10 @@
 
   <changeSet id="update role table type from loadable role table" author="Saba Zedginidze">
     <sql>
-      UPDATE role R
-      SET R.type = RL.type
+      UPDATE role
+      SET type = RL.type
       FROM role_loadable RL
-      WHERE R.id = RL.id;
+      WHERE role.id = RL.id;
     </sql>
   </changeSet>
 
@@ -41,9 +41,9 @@
 
   <changeSet id="update type field based on description" author="Saba Zedginidze">
     <sql>
-      UPDATE role R
-      SET R.type = 'DEFAULT'
-      WHERE R.description = 'System generated role during migration';
+      UPDATE role
+      SET type = 'DEFAULT'
+      WHERE description = 'System generated role during migration';
     </sql>
   </changeSet>
 
