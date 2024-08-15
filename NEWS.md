@@ -1,3 +1,19 @@
+## Version `v1.4.4` (15.08.2024)
+* Fix liquibase error connected with new source type
+
+## Version `v1.4.3` (14.08.2024)
+* Handle application version upgrade in capabilities (MODROLESKC-200)
+* Enable docker build in Jenkinsfile
+* EPC. Remove old approach and switch to Docker Hub
+* Extend the Policy with an additional flag to determine a system-generated entity (MODROLESKC-205)
+* Implement upgrade operation for default roles (MODROLESKC-168)
+* Use permission utils for capability creation (EUREKA-240)
+* Fix(deps): bump the prod-deps group across 1 directory with 12 updates
+* Add Source field to Policy entity with migration script by @Saba-Zedginidze-EPAM in #118 (MODROLESKC-202)
+* Follow-up changes to main implementation: ignore technical capabilities, safely delete roles (MODROLESKC-168)
+* Remove error on update operation (MODROLESKC-206)
+* Ensure Keycloak user existence on creation of user-role/user-capability/user-capabilityset relation (MODROLESKC-176)
+
 ## Version `v1.4.2` (07.10.2024)
 * Upgrade keycloak client to v25.0.1 (KEYCLOAK-11)
 
