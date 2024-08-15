@@ -9,8 +9,8 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.domain.dto.Role;
+import org.folio.roles.domain.dto.RoleType;
 
 @Data
 @NoArgsConstructor

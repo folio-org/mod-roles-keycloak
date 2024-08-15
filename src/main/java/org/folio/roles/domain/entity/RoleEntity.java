@@ -9,13 +9,11 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.Table;
 import java.util.UUID;
-
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * Entity class for role information.
