@@ -46,8 +46,4 @@
       WHERE description = 'System generated role during migration';
     </sql>
   </changeSet>
-
-  <changeSet id="set role type column default value to 'DEFAULT'" author="Saba Zedginidze">
-    <sql>ALTER TABLE role ALTER COLUMN type SET DEFAULT 'DEFAULT';</sql>
-  </changeSet>
 </databaseChangeLog>
