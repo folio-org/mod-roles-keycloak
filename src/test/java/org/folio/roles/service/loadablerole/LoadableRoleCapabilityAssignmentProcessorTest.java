@@ -71,7 +71,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     when(service.findAllByPermissions(List.of(permission))).thenReturn(perms);
 
     perms.forEach(perm -> {
-      when(roleCapabilityService.create(perm.getRoleId(), List.of(capabilityId))).thenReturn(null);
+      when(roleCapabilityService.create(perm.getRoleId(), List.of(capabilityId), false)).thenReturn(null);
 
       var permsWithCapabilityId = List.of(copy(perm).capabilityId(capabilityId));
       when(service.saveAll(permsWithCapabilityId)).thenReturn(permsWithCapabilityId);
@@ -82,7 +82,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     processor.handleCapabilitiesCreatedEvent(event);
 
     var firstLoadablePermission = perms.get(0);
-    verify(roleCapabilityService).create(firstLoadablePermission.getRoleId(), List.of(capabilityId));
+    verify(roleCapabilityService).create(firstLoadablePermission.getRoleId(), List.of(capabilityId), false);
     verify(service).saveAll(List.of(copy(firstLoadablePermission).capabilityId(capabilityId)));
   }
 
@@ -112,7 +112,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
     when(service.findAllByPermissions(List.of(capability.getPermission()))).thenReturn(perms);
     perms.forEach(perm -> {
-      when(roleCapabilitySetService.create(perm.getRoleId(), List.of(capabilitySet.getId()))).thenReturn(null);
+      when(roleCapabilitySetService.create(perm.getRoleId(), List.of(capabilitySet.getId()), false)).thenReturn(null);
 
       var permWithCapabilitySetId = copy(perm).capabilitySetId(capabilitySet.getId());
       when(service.save(permWithCapabilitySetId)).thenReturn(permWithCapabilitySetId);
@@ -123,7 +123,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     processor.handleCapabilitySetCreatedEvent(event);
 
     var firstLoadablePermission = perms.get(0);
-    verify(roleCapabilitySetService).create(firstLoadablePermission.getRoleId(), List.of(CAPABILITY_SET_ID));
+    verify(roleCapabilitySetService).create(firstLoadablePermission.getRoleId(), List.of(CAPABILITY_SET_ID), false);
     verify(service).save(copy(firstLoadablePermission).capabilitySetId(CAPABILITY_SET_ID));
   }
 

@@ -9,6 +9,7 @@ import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilitySetEntity.DEFAULT_ROLE_CAPABILITY_SET_SORT;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityEndpoints;
+import static org.folio.roles.utils.CollectionUtils.difference;
 
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -55,7 +56,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
    * @return {@link PageResult} with created {@link RoleCapabilitySet} relations
    */
   @Override
-  public PageResult<RoleCapabilitySet> create(UUID roleId, List<UUID> capabilitySetIds) {
+  public PageResult<RoleCapabilitySet> create(UUID roleId, List<UUID> capabilitySetIds, boolean safeCreate) {
     if (isEmpty(capabilitySetIds)) {
       throw new IllegalArgumentException("List with capability set identifiers is empty");
     }
@@ -63,12 +64,12 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     roleService.getById(roleId);
     var existingEntities = roleCapabilitySetRepository.findRoleCapabilitySets(roleId, capabilitySetIds);
     var existingCapabilitySetIds = getCapabilitySetIds(existingEntities);
-    if (isNotEmpty(existingCapabilitySetIds)) {
+    if (!safeCreate && isNotEmpty(existingCapabilitySetIds)) {
       throw new EntityExistsException(String.format(
         "Relation already exists for role='%s' and capabilitySets=%s", roleId, existingCapabilitySetIds));
     }
 
-    return assignCapabilities(roleId, capabilitySetIds, emptyList());
+    return assignCapabilities(roleId, difference(capabilitySetIds, existingCapabilitySetIds), emptyList());
   }
 
   /**

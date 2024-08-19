@@ -1,6 +1,7 @@
 package org.folio.roles.integration.permissions;
 
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface PermissionsClient {
 
   @GetMapping("/users/{userId}/permissions")
-  Optional<UserPermissions> getUserPermissions(
-    @PathVariable("userId") String userId,
+  Optional<PermissionNames> getUserPermissions(
+    @PathVariable("userId") UUID userId,
     @RequestParam("indexField") String indexField,
     @RequestParam("expanded") boolean expanded);
 }

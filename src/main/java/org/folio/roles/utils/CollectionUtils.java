@@ -2,6 +2,8 @@ package org.folio.roles.utils;
 
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.ArrayList;
@@ -49,6 +51,20 @@ public class CollectionUtils {
   }
 
   /**
+   * Collects collection1 and collection2 to a single list, leaving only unique value and preserving order of element.
+   *
+   * @param collection1 - first {@link Collection} object
+   * @param collection2 - second {@link Collection} object
+   * @param <T> - generic type for collection elements
+   * @return new list with collection1 and collection2 unique element values
+   */
+  public static <T> List<T> unionUniqueValues(Collection<T> collection1, Collection<T> collection2) {
+    var resultSet = new LinkedHashSet<>(emptyIfNull(collection1));
+    resultSet.addAll(emptyIfNull(collection2));
+    return new ArrayList<>(resultSet);
+  }
+
+  /**
    * Returns a difference between list1 and list2 as new list ({@code list1 - list2}.
    *
    * @param list1 - first list value to process
@@ -57,7 +73,11 @@ public class CollectionUtils {
    * @return a new list containing difference between list1 and list2
    */
   public static <T> List<T> difference(List<T> list1, List<T> list2) {
-    var set = new LinkedHashSet<>(list1);
+    if (isEmpty(list2)) {
+      return emptyIfNull(list1);
+    }
+
+    var set = new LinkedHashSet<>(emptyIfNull(list1));
     emptyIfNull(list2).forEach(set::remove);
     return new ArrayList<>(set);
   }

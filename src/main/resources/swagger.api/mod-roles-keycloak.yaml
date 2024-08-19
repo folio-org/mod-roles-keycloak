@@ -599,19 +599,77 @@ paths:
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
 
-  /roles-keycloak/migrate:
-    post:
-      description: Migrate user policies from mod-permission to keycloak
-      operationId: migratePolicies
+  /roles-keycloak/migrations:
+    get:
+      operationId: findMigrations
+      description: Retrieve a list of permission migrations
       tags:
-        - migrate
+        - migration
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/limit'
       responses:
-        '204':
-          description: 'User policies have been migrated'
+        '200':
+          description: Retrieve a list of permission migrations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/permissionMigrationJobs'
         '400':
           $ref: '#/components/responses/badRequestResponse'
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
+    post:
+      operationId: migratePermissions
+      description: Migrate user permissions from mod-permissions to Keycloak
+      tags:
+        - migration
+      responses:
+        '201':
+          description: 'User migration jobs'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/permissionMigrationJob'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /roles-keycloak/migrations/{id}:
+    get:
+      description: Retrieve a permission migration
+      operationId: getMigration
+      tags:
+        - migration
+      parameters:
+        - $ref: '#/components/parameters/pathEntityId'
+      responses:
+        '200':
+          description: Retrieve a permission migration by id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/permissionMigrationJob'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    delete:
+      description: Delete a permission migration
+      operationId: deleteMigration
+      tags:
+        - migration
+      parameters:
+        - $ref: '#/components/parameters/pathEntityId'
+      responses:
+        '204':
+          description: Delete a permission migration
+          content:
+            text/plain:
+              schema:
+                type: string
 
   /capabilities:
     get:
@@ -1059,6 +1117,12 @@ components:
       $ref: schemas/permissions/permissions_user.json
     errorResponse:
       $ref: schemas/common/errors.json
+
+    # migrations
+    permissionMigrationJob:
+      $ref: schemas/migration/permissionMigrationJob.json
+    permissionMigrationJobs:
+      $ref: schemas/migration/permissionMigrationJobs.json
 
   responses:
     badRequestResponse:

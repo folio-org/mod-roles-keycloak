@@ -130,7 +130,7 @@ class RoleCapabilitySetServiceTest {
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
       doNothing().when(rolePermissionService).createPermissions(ROLE_ID, endpoints);
 
-      var result = roleCapabilitySetService.create(ROLE_ID, capabilitySetIds);
+      var result = roleCapabilitySetService.create(ROLE_ID, capabilitySetIds, false);
 
       assertThat(result).isEqualTo(asSinglePage(roleCapability1, roleCapability2));
       verify(capabilitySetService).checkIds(capabilitySetIds);
@@ -139,7 +139,7 @@ class RoleCapabilitySetServiceTest {
     @Test
     void negative_emptyCapabilities() {
       var capabilityIds = Collections.<UUID>emptyList();
-      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capabilityIds))
+      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capabilityIds, false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("List with capability set identifiers is empty");
     }
@@ -153,7 +153,7 @@ class RoleCapabilitySetServiceTest {
       when(roleService.getById(ROLE_ID)).thenReturn(role());
       when(roleCapabilitySetRepository.findRoleCapabilitySets(ROLE_ID, capIds)).thenReturn(foundEntities);
 
-      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capIds))
+      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capIds, false))
         .isInstanceOf(EntityExistsException.class)
         .hasMessage("Relation already exists for role='%s' and capabilitySets=[%s]", ROLE_ID, capabilitySetId1);
     }
@@ -163,7 +163,7 @@ class RoleCapabilitySetServiceTest {
       var errorMessage = "Role is not found by id: " + ROLE_ID;
       when(roleService.getById(ROLE_ID)).thenThrow(new EntityNotFoundException(errorMessage));
       var capabilityIds = List.of(CAPABILITY_SET_ID);
-      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capabilityIds))
+      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capabilityIds, false))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage(errorMessage);
     }

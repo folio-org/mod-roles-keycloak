@@ -107,13 +107,29 @@
       ]
     },
     {
-      "id": "migrate",
+      "id": "roles-permission-migration",
       "version": "1.0",
       "handlers": [
         {
           "methods": [ "POST" ],
-          "pathPattern": "/roles-keycloak/migrate",
-          "permissionsRequired": [ "roles-keycloak.migration.post" ]
+          "pathPattern": "/roles-keycloak/migrations",
+          "permissionsRequired": [ "roles-keycloak.migrations.item.post" ],
+          "modulePermissions": [ "perms.users.get" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/roles-keycloak/migrations",
+          "permissionsRequired": [ "roles-keycloak.migrations.collection.get" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/roles-keycloak/migrations/{id}",
+          "permissionsRequired": [ "roles-keycloak.migrations.item.get" ]
+        },
+        {
+          "methods": [ "DELETE" ],
+          "pathPattern": "/roles-keycloak/migrations/{id}",
+          "permissionsRequired": [ "roles-keycloak.migrations.item.delete" ]
         }
       ]
     },
@@ -433,9 +449,24 @@
       "description": "Searching roles user"
     },
     {
-      "permissionName": "roles-keycloak.migration.post",
-      "displayName": "Migrations - start a user permission migration",
-      "description": "Start user policies migration"
+      "permissionName": "roles-keycloak.migrations.item.post",
+      "displayName": "Migrations - start a user permission migration job",
+      "description": "Start user policies migration job (in async mode)"
+    },
+    {
+      "permissionName": "roles-keycloak.migrations.item.get",
+      "displayName": "Migrations - get migration job by id",
+      "description": "Retrieves permissions migration job by id"
+    },
+    {
+      "permissionName": "roles-keycloak.migrations.item.delete",
+      "displayName": "Migrations - remove migration job by id",
+      "description": "Removes permissions migration job by id"
+    },
+    {
+      "permissionName": "roles-keycloak.migrations.collection.get",
+      "displayName": "Migrations - search across user permission migration jobs",
+      "description": "Retrieves permissions migration job by CQL query and paging parameters"
     },
     {
       "permissionName": "roles.users.all",
