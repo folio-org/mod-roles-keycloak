@@ -75,7 +75,7 @@ public class UserPermissionsLoader {
   }
 
   private static String getPermissionsHash(List<String> permissions) {
-    return sha1Hex(String.join("|", permissions));
+    return sha1Hex(String.join("|", permissions)); //NOSONAR not used in secure contexts
   }
 
   private static List<UUID> getMigratedUserIds(List<UserRepresentation> keycloakUsers) {
