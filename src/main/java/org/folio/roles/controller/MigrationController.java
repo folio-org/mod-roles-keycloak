@@ -19,9 +19,9 @@ public class MigrationController implements MigrationApi {
   private final MigrationService migrationService;
 
   @Override
-  public ResponseEntity<String> deleteMigration(UUID id) {
-    migrationService.deleteMigrationById(id);
-    return ResponseEntity.status(NO_CONTENT).build();
+  public ResponseEntity<PermissionMigrationJob> getMigration(UUID id) {
+    var migrationById = migrationService.getMigrationById(id);
+    return ResponseEntity.ok(migrationById);
   }
 
   @Override
@@ -31,14 +31,14 @@ public class MigrationController implements MigrationApi {
   }
 
   @Override
-  public ResponseEntity<PermissionMigrationJob> getMigration(UUID id) {
-    var migrationById = migrationService.getMigrationById(id);
-    return ResponseEntity.ok(migrationById);
-  }
-
-  @Override
   public ResponseEntity<PermissionMigrationJob> migratePermissions() {
     var migration = migrationService.createMigration();
     return ResponseEntity.status(CREATED).body(migration);
+  }
+
+  @Override
+  public ResponseEntity<String> deleteMigration(UUID id) {
+    migrationService.deleteMigrationById(id);
+    return ResponseEntity.status(NO_CONTENT).build();
   }
 }

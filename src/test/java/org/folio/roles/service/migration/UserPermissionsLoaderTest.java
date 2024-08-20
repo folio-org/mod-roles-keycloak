@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.folio.roles.domain.model.UserPermissions;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
-import org.folio.roles.integration.permissions.PermissionNames;
+import org.folio.roles.integration.permissions.Permissions;
 import org.folio.roles.integration.permissions.PermissionsClient;
 import org.folio.roles.support.TestUtils;
 import org.folio.spring.FolioExecutionContext;
@@ -58,7 +58,7 @@ class UserPermissionsLoaderTest {
     when(realmResource.users().list(2, 1)).thenReturn(emptyList());
 
     var permissions = List.of("foo.item.get", "foo.item.post");
-    var permissionNames = new PermissionNames().permissionNames(permissions).totalRecords(2);
+    var permissionNames = new Permissions().permissionNames(permissions).totalRecords(2);
     when(permissionsClient.getUserPermissions(USER_ID, "userId", true)).thenReturn(Optional.of(permissionNames));
 
     var result = userPermissionsLoader.loadUserPermissions();
@@ -80,7 +80,7 @@ class UserPermissionsLoaderTest {
     when(realmResource.users().list(0, 1)).thenReturn(List.of(keycloakUser(USER_ID)));
     when(realmResource.users().list(1, 1)).thenReturn(emptyList());
 
-    when(permissionsClient.getUserPermissions(USER_ID, "userId", true)).thenReturn(Optional.of(new PermissionNames()));
+    when(permissionsClient.getUserPermissions(USER_ID, "userId", true)).thenReturn(Optional.of(new Permissions()));
 
     var result = userPermissionsLoader.loadUserPermissions();
 

@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -54,12 +53,6 @@ public class RoleEntityService {
     var roleEntity = repository.getReferenceById(id);
     log.debug("Role has been found: id = {}, name = {}", roleEntity.getId(), roleEntity.getName());
     return mapper.toRole(roleEntity);
-  }
-
-  @Transactional(readOnly = true)
-  public Optional<Role> findById(UUID ids) {
-    var roleEntity = repository.findById(ids);
-    return roleEntity.map(mapper::toRole);
   }
 
   @Transactional(readOnly = true)

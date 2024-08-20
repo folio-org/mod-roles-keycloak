@@ -173,6 +173,10 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   private PageResult<RoleCapabilitySet> assignCapabilities(
     UUID roleId, List<UUID> newSetIds, Collection<UUID> assignedSetIds) {
     log.debug("Assigning capabilities to role: roleId = {}, ids = {}", roleId, newSetIds);
+    if (isEmpty(newSetIds) && isEmpty(assignedSetIds)) {
+      return PageResult.empty();
+    }
+
     capabilitySetService.checkIds(newSetIds);
 
     var entities = mapItems(newSetIds, capabilitySetId -> new RoleCapabilitySetEntity(roleId, capabilitySetId));

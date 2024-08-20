@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface PermissionsClient {
 
   @GetMapping("/users/{userId}/permissions")
-  Optional<PermissionNames> getUserPermissions(
+  Optional<Permissions> getUserPermissions(
     @PathVariable("userId") UUID userId,
     @RequestParam("indexField") String indexField,
     @RequestParam("expanded") boolean expanded);

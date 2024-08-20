@@ -173,6 +173,19 @@ class RoleCapabilityServiceTest {
     }
 
     @Test
+    void positive_existingAssignmentWithCreateSafe() {
+      var capIds = List.of(capabilityId1);
+      var roleCapabilityEntity = roleCapabilityEntity(ROLE_ID, capabilityId1);
+
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+      when(roleCapabilityRepository.findRoleCapabilities(ROLE_ID, capIds)).thenReturn(List.of(roleCapabilityEntity));
+
+      var result = roleCapabilityService.create(ROLE_ID, capIds, true);
+
+      assertThat(result).isEqualTo(PageResult.empty());
+    }
+
+    @Test
     void negative_existingAssignment() {
       var capIds = List.of(capabilityId1, capabilityId2);
       var roleCapabilityEntity = roleCapabilityEntity(ROLE_ID, capabilityId1);

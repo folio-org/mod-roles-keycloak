@@ -13,7 +13,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.roles.domain.model.UserPermissions;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
-import org.folio.roles.integration.permissions.PermissionNames;
+import org.folio.roles.integration.permissions.Permissions;
 import org.folio.roles.integration.permissions.PermissionsClient;
 import org.folio.spring.FolioExecutionContext;
 import org.keycloak.admin.client.Keycloak;
@@ -75,7 +75,7 @@ public class UserPermissionsLoader {
   }
 
   private static String getPermissionsHash(List<String> permissions) {
-    return sha1Hex(String.join("|", permissions)); //NOSONAR not used in secure contexts
+    return sha1Hex(String.join("|", permissions));
   }
 
   private static List<UUID> getMigratedUserIds(List<UserRepresentation> keycloakUsers) {
@@ -94,7 +94,7 @@ public class UserPermissionsLoader {
       .map(userIdAttributes -> userIdAttributes.get(0));
   }
 
-  private static List<String> getPermissionNames(PermissionNames userPermissions) {
+  private static List<String> getPermissionNames(Permissions userPermissions) {
     return toStream(userPermissions.getPermissionNames()).distinct().sorted().toList();
   }
 

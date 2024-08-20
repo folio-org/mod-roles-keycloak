@@ -65,13 +65,13 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
     roleService.getById(roleId);
     var existingEntities = roleCapabilityRepository.findRoleCapabilities(roleId, capabilityIds);
-    var existingCapabilitySetIds = getCapabilityIds(existingEntities);
-    if (!safeCreate && isNotEmpty(existingCapabilitySetIds)) {
+    var existingCapabilityIds = getCapabilityIds(existingEntities);
+    if (!safeCreate && isNotEmpty(existingCapabilityIds)) {
       throw new EntityExistsException(String.format(
-        "Relation already exists for role='%s' and capabilities=%s", roleId, existingCapabilitySetIds));
+        "Relation already exists for role='%s' and capabilities=%s", roleId, existingCapabilityIds));
     }
 
-    return assignCapabilities(roleId, difference(capabilityIds, existingCapabilitySetIds), emptyList());
+    return assignCapabilities(roleId, difference(capabilityIds, existingCapabilityIds), emptyList());
   }
 
   /**
@@ -178,6 +178,10 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
   private PageResult<RoleCapability> assignCapabilities(UUID roleId, List<UUID> newIds, Collection<UUID> assignedIds) {
     log.debug("Assigning capabilities to role: roleId = {}, capabilityIds = {}", roleId, newIds);
+    if (isEmpty(newIds) && isEmpty(assignedIds)) {
+      return PageResult.empty();
+    }
+
     capabilityService.checkIds(newIds);
 
     var entities = mapItems(newIds, id -> new RoleCapabilityEntity(roleId, id));
@@ -211,6 +215,6 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
   private List<UUID> getAssignedCapabilityIds(UUID roleId) {
     var capabilitySets = capabilitySetService.findByRoleId(roleId, MAX_VALUE, 0);
-    return CapabilityUtils.getCapabilityIds(capabilitySets);
+    return CapabilityUtils.getCapabilitySetIds(capabilitySets);
   }
 }
