@@ -51,7 +51,7 @@ import org.springframework.data.domain.PageImpl;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-class RoleCapabilityServiceTest {
+class RoleCapabilityServiceImplTest {
 
   @InjectMocks private RoleCapabilityServiceImpl roleCapabilityService;
 
@@ -376,6 +376,23 @@ class RoleCapabilityServiceTest {
       assertThatThrownBy(() -> roleCapabilityService.update(ROLE_ID, capabilityIds))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Role is not found by id: %s", ROLE_ID);
+    }
+  }
+
+  @Nested
+  @DisplayName("getCapabilitySetCapabilityIds")
+  class GetCapabilitySetCapabilityIds {
+
+    @Test
+    void positive() {
+      var capabilityId = UUID.randomUUID();
+      var assignedIds = List.of(capabilityId);
+      var capabilitySet = capabilitySet(assignedIds);
+      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
+
+      var result = roleCapabilityService.getCapabilitySetCapabilityIds(ROLE_ID);
+
+      assertThat(result).containsExactly(capabilityId);
     }
   }
 }

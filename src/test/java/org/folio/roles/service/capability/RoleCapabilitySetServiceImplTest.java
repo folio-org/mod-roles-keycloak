@@ -51,7 +51,7 @@ import org.springframework.data.domain.PageImpl;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-class RoleCapabilitySetServiceTest {
+class RoleCapabilitySetServiceImplTest {
 
   @InjectMocks private RoleCapabilitySetServiceImpl roleCapabilitySetService;
 
@@ -244,6 +244,41 @@ class RoleCapabilitySetServiceTest {
 
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
       verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, capabilitySetIds);
+    }
+
+    @Test
+    void positive_collection() {
+      var existingEntity = roleCapabilitySetEntity();
+      var existingEntities = List.of(existingEntity);
+      var capabilitySetIds = List.of(CAPABILITY_SET_ID);
+      var endpoints = List.of(endpoint());
+
+      when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
+      when(capabilityService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
+
+      roleCapabilitySetService.delete(ROLE_ID, List.of(CAPABILITY_SET_ID));
+
+      verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
+      verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, capabilitySetIds);
+    }
+
+    @Test
+    void positive_collectionAndNoCapabilitySetsFound() {
+      when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(emptyList());
+
+      roleCapabilitySetService.delete(ROLE_ID, List.of(CAPABILITY_SET_ID));
+
+      verify(rolePermissionService, never()).deletePermissions(any(), anyList());
+      verify(roleCapabilitySetRepository, never()).deleteRoleCapabilitySets(any(), anyList());
+    }
+
+    @Test
+    void positive_emptyCollection() {
+      roleCapabilitySetService.delete(ROLE_ID, emptyList());
+
+      verify(rolePermissionService, never()).deletePermissions(any(), anyList());
+      verify(roleCapabilitySetRepository, never()).deleteRoleCapabilitySets(any(), anyList());
     }
 
     @Test
