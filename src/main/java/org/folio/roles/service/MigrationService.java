@@ -8,6 +8,9 @@ import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.
 import jakarta.persistence.EntityNotFoundException;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -34,6 +37,8 @@ public class MigrationService {
   private final PermissionMigrationMapper migrationJobMapper;
   private final PermissionMigrationService permissionMigrationService;
   private final PermissionMigrationJobRepository migrationJobRepository;
+
+  private final ExecutorService executor = getMigrationJobExecutor();
 
   /**
    * Retrieves permission migration by id.
@@ -96,14 +101,10 @@ public class MigrationService {
     return migrationJobMapper.toDto(savedEntity);
   }
 
-  private void startMigration(PermissionMigrationJobEntity job) {
-    var runnable = getRunnableWithCurrentFolioContext(() -> {
-      Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-      permissionMigrationService.migratePermissions(job.getId());
-    });
-
-    runAsync(runnable)
-      .whenComplete(handleMigrationComplete(job, (FolioExecutionContext) folioExecutionContext.getInstance()));
+  private void startMigration(PermissionMigrationJobEntity jobEntity) {
+    var migrationJob = (Runnable) () -> permissionMigrationService.migratePermissions(jobEntity.getId());
+    runAsync(getRunnableWithCurrentFolioContext(migrationJob), executor)
+      .whenComplete(handleMigrationComplete(jobEntity, (FolioExecutionContext) folioExecutionContext.getInstance()));
   }
 
   private BiConsumer<Void, ? super Throwable> handleMigrationComplete(
@@ -138,5 +139,16 @@ public class MigrationService {
     migration.setStatus(IN_PROGRESS);
     migration.setStartedAt(OffsetDateTime.now());
     return migration;
+  }
+
+  private static ExecutorService getMigrationJobExecutor() {
+    //noinspection ScheduledThreadPoolExecutorWithZeroCoreThreads
+    var executor = new ScheduledThreadPoolExecutor(0);
+
+    // Set the time after which idle threads are terminated
+    executor.setKeepAliveTime(15, TimeUnit.SECONDS);
+    executor.allowCoreThreadTimeOut(true);
+
+    return executor;
   }
 }
