@@ -97,7 +97,12 @@ public class MigrationService {
   }
 
   private void startMigration(PermissionMigrationJobEntity job) {
-    runAsync(getRunnableWithCurrentFolioContext(() -> permissionMigrationService.migratePermissions(job.getId())))
+    var runnable = getRunnableWithCurrentFolioContext(() -> {
+      Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+      permissionMigrationService.migratePermissions(job.getId());
+    });
+
+    runAsync(runnable)
       .whenComplete(handleMigrationComplete(job, (FolioExecutionContext) folioExecutionContext.getInstance()));
   }
 
