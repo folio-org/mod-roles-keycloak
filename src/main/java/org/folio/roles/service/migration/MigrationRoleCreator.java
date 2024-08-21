@@ -44,7 +44,7 @@ public class MigrationRoleCreator {
       .distinct()
       .toList();
 
-    log.info("Creating {} role(s) in keycloak...", userPermissions.size());
+    log.info("Creating {} role(s) in keycloak...", roleNames.size());
     var roles = mapItems(roleNames, MigrationRoleCreator::createRole);
     var createdRoles = roleService.create(roles).getRoles();
     log.info("Roles created: totalRecords = {}", createdRoles.size());
