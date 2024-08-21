@@ -19,6 +19,7 @@ import java.util.UUID;
 import org.folio.roles.domain.dto.Metadata;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.entity.RoleEntity;
+import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.folio.roles.mapper.entity.DateConvertHelper;
 import org.folio.roles.mapper.entity.RoleEntityMapper;
 import org.folio.roles.mapper.entity.RoleEntityMapperImpl;
@@ -70,6 +71,7 @@ class RoleEntityServiceTest {
     entity.setName(ROLE_NAME);
     entity.setId(ROLE_ID);
     entity.setDescription(ROLE_DESCRIPTION);
+    entity.setType(EntityRoleType.REGULAR);
     return entity;
   }
 
