@@ -48,6 +48,6 @@ public class RoleEntity extends Auditable implements Identifiable<UUID> {
    */
   @Enumerated(EnumType.STRING)
   @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-  @Column(name = "type", columnDefinition = "role_type")
+  @Column(name = "type", columnDefinition = "role_type", nullable = false)
   private EntityRoleType type;
 }
