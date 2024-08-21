@@ -2,6 +2,7 @@ package org.folio.roles.service.role;
 
 import static java.util.UUID.fromString;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.folio.roles.domain.dto.RoleType.REGULAR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
@@ -19,7 +20,6 @@ import java.util.UUID;
 import org.folio.roles.domain.dto.Metadata;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.entity.RoleEntity;
-import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.folio.roles.mapper.entity.DateConvertHelper;
 import org.folio.roles.mapper.entity.RoleEntityMapper;
 import org.folio.roles.mapper.entity.RoleEntityMapperImpl;
@@ -63,7 +63,8 @@ class RoleEntityServiceTest {
     return new Role()
       .name(ROLE_NAME)
       .id(ROLE_ID)
-      .description(ROLE_DESCRIPTION);
+      .description(ROLE_DESCRIPTION)
+      .type(REGULAR);
   }
 
   private static RoleEntity createRoleEntity() {
@@ -71,7 +72,6 @@ class RoleEntityServiceTest {
     entity.setName(ROLE_NAME);
     entity.setId(ROLE_ID);
     entity.setDescription(ROLE_DESCRIPTION);
-    entity.setType(EntityRoleType.REGULAR);
     return entity;
   }
 
