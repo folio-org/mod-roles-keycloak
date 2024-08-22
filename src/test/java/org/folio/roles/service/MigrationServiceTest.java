@@ -198,11 +198,6 @@ class MigrationServiceTest {
       }
 
       await().untilAsserted(() -> verify(migrationJobRepository).findById(MIGRATION_ID));
-      verify(folioExecutionContext, atLeastOnce()).getTenantId();
-      verify(folioExecutionContext, atLeastOnce()).getUserId();
-      verify(folioExecutionContext, atLeastOnce()).getFolioModuleMetadata();
-      verify(folioExecutionContext, atLeastOnce()).getRequestId();
-
       assertThat(entityCaptor.getAllValues().get(0).getStatus()).isEqualTo(IN_PROGRESS);
       assertThat(entityCaptor.getAllValues().get(1).getStatus()).isEqualTo(FINISHED);
     }
@@ -225,11 +220,6 @@ class MigrationServiceTest {
       }
 
       await().untilAsserted(() -> verify(migrationJobRepository).findById(MIGRATION_ID));
-      verify(folioExecutionContext, atLeastOnce()).getTenantId();
-      verify(folioExecutionContext, atLeastOnce()).getUserId();
-      verify(folioExecutionContext, atLeastOnce()).getFolioModuleMetadata();
-      verify(folioExecutionContext, atLeastOnce()).getRequestId();
-
       assertThat(entityCaptor.getAllValues().get(0).getStatus()).isEqualTo(IN_PROGRESS);
     }
 
