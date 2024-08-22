@@ -4,14 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
   <changeSet id="create source type enum" author="Saba Zedginidze">
-    <sql>
-      DO '
-      BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = ''source_type'') THEN
-          CREATE TYPE source_type AS ENUM (''SYSTEM'', ''USER'', ''CONSORTIUM'');
-        END IF;
-      END ' ;
-    </sql>
+    <sql>CREATE TYPE source_type AS ENUM ('SYSTEM', 'USER', 'CONSORTIUM');</sql>
   </changeSet>
 
   <changeSet id="add source field to policy schema" author="Saba Zedginidze">
