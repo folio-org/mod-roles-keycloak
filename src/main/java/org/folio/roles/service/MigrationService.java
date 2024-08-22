@@ -130,7 +130,6 @@ public class MigrationService {
       return EntityPermissionMigrationJobStatus.FAILED;
     }
 
-    log.info("Permission migration was successfully finished: jobId = {}", job.getId());
     return EntityPermissionMigrationJobStatus.FINISHED;
   }
 
