@@ -2,6 +2,8 @@ package org.folio.roles.controller;
 
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
+import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
+import static org.folio.roles.support.CapabilityUtils.PERMISSION_NAME;
 import static org.folio.roles.support.CapabilityUtils.capabilities;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.RoleCapabilityUtils.roleCapabilities;
@@ -24,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
+import org.folio.roles.domain.dto.RolePermissionNamesRequest;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.role.RoleService;
@@ -55,6 +58,25 @@ class RoleCapabilityControllerTest {
 
     var request = new RoleCapabilitiesRequest().roleId(ROLE_ID).addCapabilityIdsItem(CAPABILITY_SET_ID);
     mockMvc.perform(post("/roles/capabilities")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID)
+        .content(asJsonString(request)))
+      .andExpect(status().isCreated())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(roleCapabilities(1, roleCapability)), true));
+  }
+
+  @Test
+  void createRoleCapabilitiesByPermissionName_positive() throws Exception {
+    var roleCapability = roleCapability();
+    var expectedServiceResponse = asSinglePage(roleCapability);
+    var expectedCapability = capability();
+
+    when(roleCapabilityService.create(ROLE_ID, List.of(CAPABILITY_ID))).thenReturn(expectedServiceResponse);
+    when(capabilityService.findByPermissionNames(List.of(PERMISSION_NAME))).thenReturn(List.of(expectedCapability));
+
+    var request = new RolePermissionNamesRequest().roleId(ROLE_ID).addPermissionNamesItem(PERMISSION_NAME);
+    mockMvc.perform(post("/roles/capabilities/permissions")
         .contentType(APPLICATION_JSON)
         .header(TENANT, TENANT_ID)
         .content(asJsonString(request)))

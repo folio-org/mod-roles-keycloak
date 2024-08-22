@@ -4,6 +4,7 @@ import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySets;
+import static org.folio.roles.support.CapabilityUtils.PERMISSION_NAME;
 import static org.folio.roles.support.RoleCapabilitySetUtils.roleCapabilitySet;
 import static org.folio.roles.support.RoleCapabilitySetUtils.roleCapabilitySets;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
@@ -24,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
 import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
+import org.folio.roles.domain.dto.RolePermissionNamesRequest;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
 import org.folio.roles.service.role.RoleService;
@@ -48,13 +50,34 @@ class RoleCapabilitySetControllerTest {
   @MockBean private RoleCapabilitySetService roleCapabilitySetService;
 
   @Test
-  void createRoleCapabilities_positive() throws Exception {
+  void createRoleCapabilitySets_positive() throws Exception {
     var roleCapabilitySet = roleCapabilitySet();
     var expectedServiceResponse = asSinglePage(roleCapabilitySet);
     when(roleCapabilitySetService.create(ROLE_ID, List.of(CAPABILITY_SET_ID))).thenReturn(expectedServiceResponse);
 
     var request = new RoleCapabilitySetsRequest().roleId(ROLE_ID).addCapabilitySetIdsItem(CAPABILITY_SET_ID);
     mockMvc.perform(post("/roles/capability-sets")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID)
+        .content(asJsonString(request)))
+      .andExpect(status().isCreated())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), true));
+  }
+
+  @Test
+  void createRoleCapabilitySetsByPermissionName_positive() throws Exception {
+    var roleCapabilitySet = roleCapabilitySet();
+    var expectedServiceResponse = asSinglePage(roleCapabilitySet);
+    var expectedCapabilitySet = capabilitySet();
+
+    when(roleCapabilitySetService.create(ROLE_ID, List.of(CAPABILITY_SET_ID)))
+      .thenReturn(expectedServiceResponse);
+    when(capabilitySetService.findByPermissionNames(List.of(PERMISSION_NAME)))
+      .thenReturn(List.of(expectedCapabilitySet));
+
+    var request = new RolePermissionNamesRequest().roleId(ROLE_ID).addPermissionNamesItem(PERMISSION_NAME);
+    mockMvc.perform(post("/roles/capability-sets/permissions")
         .contentType(APPLICATION_JSON)
         .header(TENANT, TENANT_ID)
         .content(asJsonString(request)))

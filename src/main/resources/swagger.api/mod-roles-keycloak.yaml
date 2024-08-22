@@ -296,7 +296,7 @@ paths:
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
 
-  /roles/capabilities/permission:
+  /roles/capabilities/permissions:
     post:
       description: Create a record associating one or more capabilities with the role using permission names
       operationId: createRoleCapabilitiesByPermissionNames
@@ -435,7 +435,7 @@ paths:
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
 
-  /roles/capability-sets/permission:
+  /roles/capability-sets/permissions:
     post:
       description: Create a record associating one or more capability sets with the role using permission names
       operationId: createRoleCapabilitySetsByPermissionNames
