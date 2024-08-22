@@ -51,7 +51,7 @@ import org.springframework.data.domain.PageImpl;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-class RoleCapabilitySetServiceTest {
+class RoleCapabilitySetServiceImplTest {
 
   @InjectMocks private RoleCapabilitySetServiceImpl roleCapabilitySetService;
 
@@ -130,7 +130,7 @@ class RoleCapabilitySetServiceTest {
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
       doNothing().when(rolePermissionService).createPermissions(ROLE_ID, endpoints);
 
-      var result = roleCapabilitySetService.create(ROLE_ID, capabilitySetIds);
+      var result = roleCapabilitySetService.create(ROLE_ID, capabilitySetIds, false);
 
       assertThat(result).isEqualTo(asSinglePage(roleCapability1, roleCapability2));
       verify(capabilitySetService).checkIds(capabilitySetIds);
@@ -139,9 +139,23 @@ class RoleCapabilitySetServiceTest {
     @Test
     void negative_emptyCapabilities() {
       var capabilityIds = Collections.<UUID>emptyList();
-      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capabilityIds))
+      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capabilityIds, false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("List with capability set identifiers is empty");
+    }
+
+    @Test
+    void positive_existingAssignmentWithCreateSafe() {
+      var capIds = List.of(capabilitySetId1);
+      var roleCapabilityEntity = roleCapabilitySetEntity(ROLE_ID, capabilitySetId1);
+      var foundEntities = List.of(roleCapabilityEntity);
+
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+      when(roleCapabilitySetRepository.findRoleCapabilitySets(ROLE_ID, capIds)).thenReturn(foundEntities);
+
+      var result = roleCapabilitySetService.create(ROLE_ID, capIds, true);
+
+      assertThat(result).isEqualTo(PageResult.empty());
     }
 
     @Test
@@ -153,7 +167,7 @@ class RoleCapabilitySetServiceTest {
       when(roleService.getById(ROLE_ID)).thenReturn(role());
       when(roleCapabilitySetRepository.findRoleCapabilitySets(ROLE_ID, capIds)).thenReturn(foundEntities);
 
-      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capIds))
+      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capIds, false))
         .isInstanceOf(EntityExistsException.class)
         .hasMessage("Relation already exists for role='%s' and capabilitySets=[%s]", ROLE_ID, capabilitySetId1);
     }
@@ -163,7 +177,7 @@ class RoleCapabilitySetServiceTest {
       var errorMessage = "Role is not found by id: " + ROLE_ID;
       when(roleService.getById(ROLE_ID)).thenThrow(new EntityNotFoundException(errorMessage));
       var capabilityIds = List.of(CAPABILITY_SET_ID);
-      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capabilityIds))
+      assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capabilityIds, false))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage(errorMessage);
     }
@@ -230,6 +244,41 @@ class RoleCapabilitySetServiceTest {
 
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
       verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, capabilitySetIds);
+    }
+
+    @Test
+    void positive_collection() {
+      var existingEntity = roleCapabilitySetEntity();
+      var existingEntities = List.of(existingEntity);
+      var capabilitySetIds = List.of(CAPABILITY_SET_ID);
+      var endpoints = List.of(endpoint());
+
+      when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
+      when(capabilityService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
+
+      roleCapabilitySetService.delete(ROLE_ID, List.of(CAPABILITY_SET_ID));
+
+      verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
+      verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, capabilitySetIds);
+    }
+
+    @Test
+    void positive_collectionAndNoCapabilitySetsFound() {
+      when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(emptyList());
+
+      roleCapabilitySetService.delete(ROLE_ID, List.of(CAPABILITY_SET_ID));
+
+      verify(rolePermissionService, never()).deletePermissions(any(), anyList());
+      verify(roleCapabilitySetRepository, never()).deleteRoleCapabilitySets(any(), anyList());
+    }
+
+    @Test
+    void positive_emptyCollection() {
+      roleCapabilitySetService.delete(ROLE_ID, emptyList());
+
+      verify(rolePermissionService, never()).deletePermissions(any(), anyList());
+      verify(roleCapabilitySetRepository, never()).deleteRoleCapabilitySets(any(), anyList());
     }
 
     @Test

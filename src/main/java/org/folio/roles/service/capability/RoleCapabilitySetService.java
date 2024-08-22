@@ -12,9 +12,10 @@ public interface RoleCapabilitySetService {
    *
    * @param roleId - role identifier as {@link UUID} object
    * @param capabilitySetIds - capabilitySet identifiers as {@link List} of {@link UUID} objects
-   * @return {@link PageResult} with created {@link org.folio.roles.domain.dto.RoleCapabilitySet} relations
+   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @return {@link PageResult} with created {@link RoleCapabilitySet} relations
    */
-  PageResult<RoleCapabilitySet> create(UUID roleId, List<UUID> capabilitySetIds);
+  PageResult<RoleCapabilitySet> create(UUID roleId, List<UUID> capabilitySetIds, boolean safeCreate);
 
   /**
    * Retrieves role-capabilitySets items by CQL query.
@@ -22,7 +23,7 @@ public interface RoleCapabilitySetService {
    * @param query - CQL query as {@link String} object
    * @param limit - a number of results in response
    * @param offset - offset in pagination from first record.
-   * @return {@link PageResult} with found {@link org.folio.roles.domain.dto.RoleCapabilitySet} relations
+   * @return {@link PageResult} with found {@link RoleCapabilitySet} relations
    */
   PageResult<RoleCapabilitySet> find(String query, Integer limit, Integer offset);
 

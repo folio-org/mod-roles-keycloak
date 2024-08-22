@@ -54,6 +54,7 @@ class CollectionUtilsTest {
   private static Stream<Arguments> differenceDataProvider() {
     return Stream.of(
       arguments(emptyList(), emptyList(), emptyList()),
+      arguments(null, null, emptyList()),
       arguments(List.of(1), emptyList(), List.of(1)),
       arguments(emptyList(), List.of(1), emptyList()),
       arguments(List.of(1, 2), List.of(1), List.of(2))

@@ -44,9 +44,9 @@ class ApiRoleCapabilitySetServiceTest {
     @InstancioSource
     void create_positive(UUID roleId, List<UUID> capabilitySetIds, PageResult<RoleCapabilitySet> result) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
-      when(delegate.create(roleId, capabilitySetIds)).thenReturn(result);
+      when(delegate.create(roleId, capabilitySetIds, false)).thenReturn(result);
 
-      var actual = service.create(roleId, capabilitySetIds);
+      var actual = service.create(roleId, capabilitySetIds, false);
 
       assertThat(actual).isEqualTo(result);
     }
@@ -56,7 +56,7 @@ class ApiRoleCapabilitySetServiceTest {
     void create_negative_roleIsDefault(UUID roleId, List<UUID> capabilitySetIds) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(true);
 
-      assertThatThrownBy(() -> service.create(roleId, capabilitySetIds))
+      assertThatThrownBy(() -> service.create(roleId, capabilitySetIds, false))
         .isInstanceOf(ServiceException.class)
         .hasMessage("Changes to default role are prohibited: roleId = %s", roleId);
     }

@@ -51,7 +51,7 @@ import org.springframework.data.domain.PageImpl;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-class RoleCapabilityServiceTest {
+class RoleCapabilityServiceImplTest {
 
   @InjectMocks private RoleCapabilityServiceImpl roleCapabilityService;
 
@@ -131,7 +131,7 @@ class RoleCapabilityServiceTest {
       when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(capabilityEndpointService.getByCapabilityIds(capabilityIds, emptyList())).thenReturn(endpoints);
 
-      var result = roleCapabilityService.create(ROLE_ID, capabilityIds);
+      var result = roleCapabilityService.create(ROLE_ID, capabilityIds, false);
 
       assertThat(result).isEqualTo(asSinglePage(roleCapability1, roleCapability2));
       verify(capabilityService).checkIds(capabilityIds);
@@ -158,7 +158,7 @@ class RoleCapabilityServiceTest {
       when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
       when(capabilityEndpointService.getByCapabilityIds(capabilityIds, assignedCapabilityIds)).thenReturn(endpoints);
 
-      var result = roleCapabilityService.create(ROLE_ID, capabilityIds);
+      var result = roleCapabilityService.create(ROLE_ID, capabilityIds, false);
 
       assertThat(result).isEqualTo(asSinglePage(roleCapability1, roleCapability2));
       verify(capabilityService).checkIds(capabilityIds);
@@ -167,9 +167,22 @@ class RoleCapabilityServiceTest {
     @Test
     void negative_emptyCapabilities() {
       var capabilityIds = Collections.<UUID>emptyList();
-      assertThatThrownBy(() -> roleCapabilityService.create(ROLE_ID, capabilityIds))
+      assertThatThrownBy(() -> roleCapabilityService.create(ROLE_ID, capabilityIds, false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Capability id list is empty");
+    }
+
+    @Test
+    void positive_existingAssignmentWithCreateSafe() {
+      var capIds = List.of(capabilityId1);
+      var roleCapabilityEntity = roleCapabilityEntity(ROLE_ID, capabilityId1);
+
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+      when(roleCapabilityRepository.findRoleCapabilities(ROLE_ID, capIds)).thenReturn(List.of(roleCapabilityEntity));
+
+      var result = roleCapabilityService.create(ROLE_ID, capIds, true);
+
+      assertThat(result).isEqualTo(PageResult.empty());
     }
 
     @Test
@@ -180,7 +193,7 @@ class RoleCapabilityServiceTest {
       when(roleService.getById(ROLE_ID)).thenReturn(role());
       when(roleCapabilityRepository.findRoleCapabilities(ROLE_ID, capIds)).thenReturn(List.of(roleCapabilityEntity));
 
-      assertThatThrownBy(() -> roleCapabilityService.create(ROLE_ID, capIds))
+      assertThatThrownBy(() -> roleCapabilityService.create(ROLE_ID, capIds, false))
         .isInstanceOf(EntityExistsException.class)
         .hasMessage("Relation already exists for role='%s' and capabilities=[%s]", ROLE_ID, capabilityId1);
     }
@@ -190,7 +203,7 @@ class RoleCapabilityServiceTest {
       var errorMessage = "Role is not found by id: " + ROLE_ID;
       when(roleService.getById(ROLE_ID)).thenThrow(new EntityNotFoundException(errorMessage));
       var capabilityIds = List.of(capabilityId1);
-      assertThatThrownBy(() -> roleCapabilityService.create(ROLE_ID, capabilityIds))
+      assertThatThrownBy(() -> roleCapabilityService.create(ROLE_ID, capabilityIds, false))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage(errorMessage);
     }
@@ -363,6 +376,23 @@ class RoleCapabilityServiceTest {
       assertThatThrownBy(() -> roleCapabilityService.update(ROLE_ID, capabilityIds))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Role is not found by id: %s", ROLE_ID);
+    }
+  }
+
+  @Nested
+  @DisplayName("getCapabilitySetCapabilityIds")
+  class GetCapabilitySetCapabilityIds {
+
+    @Test
+    void positive() {
+      var capabilityId = UUID.randomUUID();
+      var assignedIds = List.of(capabilityId);
+      var capabilitySet = capabilitySet(assignedIds);
+      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
+
+      var result = roleCapabilityService.getCapabilitySetCapabilityIds(ROLE_ID);
+
+      assertThat(result).containsExactly(capabilityId);
     }
   }
 }

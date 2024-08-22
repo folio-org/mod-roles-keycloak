@@ -41,8 +41,23 @@ public class KeycloakConfigurationProperties {
    */
   private TlsProperties tls;
 
+  /**
+   * Keycloak configuration for permission migration.
+   */
+  private MigrationProperties migration;
+
   @Data
   public static class Login {
+
     private String clientNameSuffix;
+  }
+
+  @Data
+  public static class MigrationProperties {
+
+    /**
+     * Users batch size for users migration.
+     */
+    private int usersBatchSize = 100;
   }
 }

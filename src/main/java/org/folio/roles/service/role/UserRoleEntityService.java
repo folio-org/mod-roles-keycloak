@@ -8,6 +8,7 @@ import static org.folio.common.utils.CollectionUtils.mapItems;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.folio.roles.domain.dto.UserRole;
 import org.folio.roles.domain.dto.UserRoles;
 import org.folio.roles.domain.entity.UserRoleEntity;
+import org.folio.roles.domain.entity.key.UserRoleKey;
 import org.folio.roles.mapper.entity.UserRoleMapper;
 import org.folio.roles.repository.UserRoleRepository;
 import org.folio.spring.data.OffsetRequest;
@@ -50,6 +52,18 @@ public class UserRoleEntityService {
     return mapper.toDto(savedEntities);
   }
 
+  /**
+   * Creates a new {@link UserRole} record in the database.
+   *
+   * @param userRole - {@link UserRole} to be created
+   * @return saved {@link UserRole} object.
+   */
+  public UserRole createSafe(UserRole userRole) {
+    var userRoleEntity = mapper.toEntity(userRole);
+    var savedEntity = repository.save(userRoleEntity);
+    return mapper.toDto(savedEntity);
+  }
+
   public void delete(UUID userId, List<UUID> roleIds) {
     repository.deleteByUserIdAndRoleIdIn(userId, roleIds);
     log.debug("User roles have been deleted: userId = {}, roleIds = {}", userId, roleIds);
@@ -68,6 +82,12 @@ public class UserRoleEntityService {
   public List<UserRole> findByUserId(UUID userId) {
     var rolesUserEntity = repository.findByUserId(userId);
     return mapper.toDto(rolesUserEntity);
+  }
+
+  @Transactional(readOnly = true)
+  public Optional<UserRole> find(UserRole userRole) {
+    var rolesUserEntity = repository.findById(UserRoleKey.of(userRole.getUserId(), userRole.getRoleId()));
+    return rolesUserEntity.map(mapper::toDto);
   }
 
   @Transactional(readOnly = true)

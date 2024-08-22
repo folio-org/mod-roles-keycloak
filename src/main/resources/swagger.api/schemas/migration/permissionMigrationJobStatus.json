@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "migration/permissionMigrationJobStatus.json",
+  "title": "Permission Migration Job Status Schema",
+  "description": "An permission migration job status",
+  "type": "string",
+  "enum": [
+    "in_progress",
+    "failed",
+    "finished"
+  ]
+}

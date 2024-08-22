@@ -66,7 +66,7 @@ public class RolePermissionService implements PermissionService {
     return capabilityEndpointService.getRoleAssignedEndpoints(roleId, excludedCapabilityIds, excludedSetIds);
   }
 
-  public static Function<Endpoint, String> getPermissionNameGenerator(UUID roleId) {
+  private static Function<Endpoint, String> getPermissionNameGenerator(UUID roleId) {
     return endpoint -> format("%s access for role '%s' to '%s'", endpoint.getMethod(), roleId, endpoint.getPath());
   }
 

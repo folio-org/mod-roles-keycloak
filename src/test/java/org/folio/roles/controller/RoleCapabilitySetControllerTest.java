@@ -52,8 +52,8 @@ class RoleCapabilitySetControllerTest {
   @Test
   void createRoleCapabilitySets_positive() throws Exception {
     var roleCapabilitySet = roleCapabilitySet();
-    var expectedServiceResponse = asSinglePage(roleCapabilitySet);
-    when(roleCapabilitySetService.create(ROLE_ID, List.of(CAPABILITY_SET_ID))).thenReturn(expectedServiceResponse);
+    var roleCapabilitySets = asSinglePage(roleCapabilitySet);
+    when(roleCapabilitySetService.create(ROLE_ID, List.of(CAPABILITY_SET_ID), false)).thenReturn(roleCapabilitySets);
 
     var request = new RoleCapabilitySetsRequest().roleId(ROLE_ID).addCapabilitySetIdsItem(CAPABILITY_SET_ID);
     mockMvc.perform(post("/roles/capability-sets")

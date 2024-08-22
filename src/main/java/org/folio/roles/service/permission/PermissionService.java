@@ -23,6 +23,14 @@ public interface PermissionService {
    */
   void deletePermissions(UUID id, List<Endpoint> endpoints);
 
+  /**
+   * Returns a list of assigned endpoints excluding capability and capability sets.
+   *
+   * @param id - entity identifier as {@link UUID}
+   * @param excludedCapabilityIds - list with excluded capability identifiers
+   * @param excludedCapabilitySetIds - list with excluded capability set identifiers
+   * @return a list with assigned {@link Endpoint} objects
+   */
   List<Endpoint> getAssignedEndpoints(UUID id, List<UUID> excludedCapabilityIds, List<UUID> excludedCapabilitySetIds);
 
   /**

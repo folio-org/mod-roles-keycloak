@@ -19,9 +19,9 @@ public class ApiRoleCapabilityService implements RoleCapabilityService {
   private final LoadableRoleService loadableRoleService;
 
   @Override
-  public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds) {
+  public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
     checkRoleIsNotDefault(roleId);
-    return delegate.create(roleId, capabilityIds);
+    return delegate.create(roleId, capabilityIds, safeCreate);
   }
 
   @Override

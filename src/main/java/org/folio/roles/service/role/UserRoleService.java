@@ -1,5 +1,6 @@
 package org.folio.roles.service.role;
 
+import static java.util.Collections.singletonList;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 
@@ -39,6 +40,23 @@ public class UserRoleService {
     var createdUserRoles = userRoleEntityService.create(userId, roleIds);
     keycloakRolesUserService.assignRolesToUser(userId, foundRoles);
     return buildUserRoles(createdUserRoles);
+  }
+
+  /**
+   * Creates a relation between user and role by their identifiers.
+   *
+   * @param userRole - user-role relation
+   */
+  @Transactional
+  public void createSafe(UserRole userRole) {
+    var roleById = roleService.getById(userRole.getRoleId());
+    var foundUserRole = userRoleEntityService.find(userRole);
+    if (foundUserRole.isPresent()) {
+      return;
+    }
+
+    keycloakRolesUserService.assignRolesToUser(userRole.getUserId(), singletonList(roleById));
+    userRoleEntityService.createSafe(userRole);
   }
 
   /**

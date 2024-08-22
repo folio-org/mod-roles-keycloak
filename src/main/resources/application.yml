@@ -71,6 +71,8 @@ application:
       trust-store-path: ${KC_CLIENT_TLS_TRUSTSTORE_PATH:}
       trust-store-password: ${KC_CLIENT_TLS_TRUSTSTORE_PASSWORD:}
       trust-store-type: ${KC_CLIENT_TLS_TRUSTSTORE_TYPE:}
+    migration:
+      users-batch-size: ${KC_MIGRATION_USERS_BATCH_SIZE:100}
   secret-store:
     type: ${SECRET_STORE_TYPE}
     aws-ssm:

@@ -13,9 +13,10 @@ public interface RoleCapabilityService {
    *
    * @param roleId - role identifier as {@link UUID} object
    * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
-   * @return {@link org.folio.roles.domain.dto.UserCapabilities} object with created role-capability relations
+   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @return {@link RoleCapability} object with created role-capability relations
    */
-  PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds);
+  PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate);
 
   /**
    * Retrieves role-capability items by CQL query.
@@ -23,7 +24,7 @@ public interface RoleCapabilityService {
    * @param query - CQL query as {@link String} object
    * @param limit - a number of results in response
    * @param offset - offset in pagination from first record.
-   * @return {@link PageResult} object with found {@link org.folio.roles.domain.dto.RoleCapability} relation
+   * @return {@link PageResult} object with found {@link RoleCapability} relation
    *   descriptors.
    */
   PageResult<RoleCapability> find(String query, Integer limit, Integer offset);
