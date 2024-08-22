@@ -9,7 +9,8 @@ import jakarta.persistence.EntityNotFoundException;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
@@ -142,11 +143,10 @@ public class MigrationService {
   }
 
   private static ExecutorService getMigrationJobExecutor() {
-    //noinspection ScheduledThreadPoolExecutorWithZeroCoreThreads
-    var executor = new ScheduledThreadPoolExecutor(0);
+    var corePoolSize = 1;
+    var maxPoolSize = 2;
 
-    // Set the time after which idle threads are terminated
-    executor.setKeepAliveTime(15, TimeUnit.SECONDS);
+    var executor = new ThreadPoolExecutor(corePoolSize, maxPoolSize, 60, TimeUnit.SECONDS, new SynchronousQueue<>());
     executor.allowCoreThreadTimeOut(true);
 
     return executor;
