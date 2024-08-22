@@ -50,8 +50,8 @@ class RoleCapabilityControllerTest {
   @Test
   void createRoleCapabilities_positive() throws Exception {
     var roleCapability = roleCapability();
-    var expectedServiceResponse = asSinglePage(roleCapability);
-    when(roleCapabilityService.create(ROLE_ID, List.of(CAPABILITY_SET_ID))).thenReturn(expectedServiceResponse);
+    var roleCapabilities = asSinglePage(roleCapability);
+    when(roleCapabilityService.create(ROLE_ID, List.of(CAPABILITY_SET_ID), false)).thenReturn(roleCapabilities);
 
     var request = new RoleCapabilitiesRequest().roleId(ROLE_ID).addCapabilityIdsItem(CAPABILITY_SET_ID);
     mockMvc.perform(post("/roles/capabilities")

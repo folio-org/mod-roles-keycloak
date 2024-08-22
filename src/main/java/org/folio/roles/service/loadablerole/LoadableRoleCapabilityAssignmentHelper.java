@@ -1,7 +1,6 @@
 package org.folio.roles.service.loadablerole;
 
 import static java.util.function.Function.identity;
-import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -16,7 +15,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -27,7 +25,6 @@ import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
-import org.folio.roles.utils.CapabilityUtils;
 import org.springframework.stereotype.Component;
 
 @Log4j2
@@ -64,11 +61,10 @@ public class LoadableRoleCapabilityAssignmentHelper {
 
     var permsByName = permissionsByName(permissions);
 
-    var capabilities = capabilityService.findByPermissionNames(permsByName.keySet()).stream()
-      .filter(notTechnical()).toList();
+    var capabilities = capabilityService.findByPermissionNames(permsByName.keySet());
 
     if (isNotEmpty(capabilities)) {
-      roleCapabilityService.create(roleId, mapItems(capabilities, Capability::getId));
+      roleCapabilityService.create(roleId, mapItems(capabilities, Capability::getId), false);
 
       for (Capability cap : capabilities) {
         var perm = permsByName.get(cap.getPermission());
@@ -79,7 +75,7 @@ public class LoadableRoleCapabilityAssignmentHelper {
 
     var capabilitySets = capabilitySetService.findByPermissionNames(permsByName.keySet());
     if (isNotEmpty(capabilitySets)) {
-      roleCapabilitySetService.create(roleId, mapItems(capabilitySets, CapabilitySet::getId));
+      roleCapabilitySetService.create(roleId, mapItems(capabilitySets, CapabilitySet::getId), false);
 
       for (CapabilitySet set : capabilitySets) {
         var perm = permsByName.get(set.getPermission());
@@ -133,9 +129,5 @@ public class LoadableRoleCapabilityAssignmentHelper {
 
   private static Map<String, LoadablePermissionEntity> permissionsByName(List<LoadablePermissionEntity> perms) {
     return toStream(perms).collect(toMap(LoadablePermissionEntity::getPermissionName, identity()));
-  }
-
-  private static Predicate<Capability> notTechnical() {
-    return not(CapabilityUtils::isTechnicalCapability);
   }
 }

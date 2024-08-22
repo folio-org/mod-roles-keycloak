@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "permissionMigrationJobs.json",
+  "title": "List of Permission Migration Jobs Schema",
+  "description": "A list of permission migration job entities",
+  "type": "object",
+  "properties": {
+    "migrations": {
+      "description": "List of Migration Jobs",
+      "type": "array",
+      "id": "migrations",
+      "items": {
+        "$ref": "permissionMigrationJob.json"
+      }
+    },
+    "totalRecords": {
+      "type": "integer"
+    }
+  }
+}

@@ -7,14 +7,17 @@ import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.folio.roles.support.UserRoleTestUtils.userRole;
 import static org.folio.roles.support.UserRoleTestUtils.userRoles;
 import static org.folio.roles.support.UserRoleTestUtils.userRolesRequest;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.folio.roles.domain.dto.Role;
+import org.folio.roles.domain.dto.UserRole;
 import org.folio.roles.integration.keyclock.KeycloakRolesUserService;
 import org.folio.roles.integration.userskc.ModUsersKeycloakClient;
 import org.folio.test.types.UnitTest;
@@ -68,6 +71,37 @@ class UserRoleServiceTest {
 
       assertThat(result).isEqualTo(userRoles(userRole()));
       verify(keycloakRolesUserService).assignRolesToUser(USER_ID, roles);
+    }
+  }
+
+  @Nested
+  @DisplayName("createSafe")
+  class CreateSafe {
+
+    @Test
+    void positive() {
+      var request = new UserRole().userId(USER_ID).roleId(ROLE_ID);
+
+      when(userRoleEntityService.find(request)).thenReturn(Optional.empty());
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+
+      userRoleService.createSafe(request);
+
+      verify(keycloakRolesUserService).assignRolesToUser(USER_ID, List.of(role()));
+      verify(userRoleEntityService).createSafe(request);
+    }
+
+    @Test
+    void positive_userRoleRelationExists() {
+      var request = new UserRole().userId(USER_ID).roleId(ROLE_ID);
+
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+      when(userRoleEntityService.find(request)).thenReturn(Optional.of(request));
+
+      userRoleService.createSafe(request);
+
+      verify(keycloakRolesUserService, never()).assignRolesToUser(USER_ID, List.of(role()));
+      verify(userRoleEntityService, never()).createSafe(request);
     }
   }
 

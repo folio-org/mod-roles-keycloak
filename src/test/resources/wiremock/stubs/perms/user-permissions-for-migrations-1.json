@@ -23,11 +23,12 @@
     },
     "jsonBody": {
       "permissionNames": [
-        "perms.users.assign.okapi",
-        "perms.users.assign.mutable",
-        "perms.permissions.post"
+        "foo.item.get",
+        "foo.item.post",
+        "foo.item.all",
+        "ui-foo.item.edit"
       ],
-      "totalRecords": 3
+      "totalRecords": 4
     }
   }
 }

@@ -8,6 +8,7 @@ import static org.apache.commons.collections4.ListUtils.intersection;
 import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
+import static org.folio.roles.utils.CollectionUtils.difference;
 
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -53,24 +54,25 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
    *
    * @param roleId - role identifier as {@link UUID} object
    * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
+   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
    * @return {@link UserCapabilities} object with created role-capability relations
    */
-  @Override
   @Transactional
-  public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds) {
+  public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
     if (isEmpty(capabilityIds)) {
       throw new IllegalArgumentException("Capability id list is empty");
     }
 
     roleService.getById(roleId);
     var existingEntities = roleCapabilityRepository.findRoleCapabilities(roleId, capabilityIds);
-    var existingCapabilitySetIds = getCapabilityIds(existingEntities);
-    if (isNotEmpty(existingCapabilitySetIds)) {
+    var existingCapabilityIds = getCapabilityIds(existingEntities);
+    if (!safeCreate && isNotEmpty(existingCapabilityIds)) {
       throw new EntityExistsException(String.format(
-        "Relation already exists for role='%s' and capabilities=%s", roleId, existingCapabilitySetIds));
+        "Relation already exists for role='%s' and capabilities=%s", roleId, existingCapabilityIds));
     }
 
-    return assignCapabilities(roleId, capabilityIds, emptyList());
+    var newCapabilityIds = difference(capabilityIds, existingCapabilityIds);
+    return isEmpty(newCapabilityIds) ? PageResult.empty() : assignCapabilities(roleId, newCapabilityIds, emptyList());
   }
 
   /**
@@ -210,6 +212,6 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
   private List<UUID> getAssignedCapabilityIds(UUID roleId) {
     var capabilitySets = capabilitySetService.findByRoleId(roleId, MAX_VALUE, 0);
-    return CapabilityUtils.getCapabilityIds(capabilitySets);
+    return CapabilityUtils.getCapabilitySetIds(capabilitySets);
   }
 }

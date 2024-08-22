@@ -60,7 +60,7 @@ public class CapabilityUtils {
    * @param capabilitySets - {@link PageResult} with {@link CapabilitySet} values
    * @return {@link List} with {@link UUID} values
    */
-  public static List<UUID> getCapabilityIds(PageResult<CapabilitySet> capabilitySets) {
+  public static List<UUID> getCapabilitySetIds(PageResult<CapabilitySet> capabilitySets) {
     return toStream(capabilitySets.getRecords())
       .map(CapabilitySet::getCapabilities)
       .filter(CollectionUtils::isNotEmpty)

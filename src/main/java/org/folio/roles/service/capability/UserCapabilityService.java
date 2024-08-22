@@ -172,6 +172,6 @@ public class UserCapabilityService {
 
   public List<UUID> getCapabilitySetCapabilityIds(UUID userId) {
     var capabilitySets = capabilitySetService.findByUserId(userId, MAX_VALUE, 0);
-    return CapabilityUtils.getCapabilityIds(capabilitySets);
+    return CapabilityUtils.getCapabilitySetIds(capabilitySets);
   }
 }

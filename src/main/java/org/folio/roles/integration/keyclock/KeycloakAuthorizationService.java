@@ -138,13 +138,13 @@ public class KeycloakAuthorizationService {
     }
 
     client.findById(foundPermission.getId()).remove();
-    log.info("Permission removed from Keycloak [name: {}]", permissionName);
+    log.debug("Permission removed from Keycloak [name: {}]", permissionName);
   }
 
   private static void processKeycloakResponse(ScopePermissionRepresentation permission, Response response) {
     var statusInfo = response.getStatusInfo();
     if (statusInfo.getFamily() == SUCCESSFUL) {
-      log.info("Permission created in Keycloak [name: {}]", permission.getName());
+      log.debug("Permission created in Keycloak [name: {}]", permission.getName());
       return;
     }
 

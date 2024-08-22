@@ -32,4 +32,5 @@
   <include file="changes/add-module-id-field-to-capability-tables.xml" relativeToChangelogFile="true"/>
   <include file="changes/update-policy-add-system-column.xml" relativeToChangelogFile="true"/>
   <include file="changes/update-policy-replace-system-with-source.xml" relativeToChangelogFile="true"/>
+  <include file="changes/create-permission-migration-schema.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

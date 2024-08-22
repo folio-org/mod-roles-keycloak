@@ -27,7 +27,7 @@ public class RoleCapabilitySetController implements RoleCapabilitySetApi {
 
   @Override
   public ResponseEntity<RoleCapabilitySets> createRoleCapabilitySets(RoleCapabilitySetsRequest request) {
-    var pageResult = roleCapabilitySetService.create(request.getRoleId(), request.getCapabilitySetIds());
+    var pageResult = roleCapabilitySetService.create(request.getRoleId(), request.getCapabilitySetIds(), false);
     return ResponseEntity.status(CREATED).body(new RoleCapabilitySets()
       .roleCapabilitySets(pageResult.getRecords())
       .totalRecords(pageResult.getTotalRecords()));
