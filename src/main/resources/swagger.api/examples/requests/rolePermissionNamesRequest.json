@@ -1,0 +1,7 @@
+{
+  "roleId": "03db8142-c79f-4f38-8662-ee0f7ca05a36",
+  "capabilitySetIds": [
+    "ui-checkin.all",
+    "accounts.item.get"
+  ]
+}

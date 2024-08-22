@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Role-PermissionNames Request Schema",
+  "description": "Request body to assign existing capability sets and capabilities to a role using permission names",
+  "type": "object",
+  "properties": {
+    "roleId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "ID of the role"
+    },
+    "permissionNames": {
+      "description": "List of Folio permission names",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Folio permission names"
+      },
+      "minItems": 1
+    }
+  },
+  "required": [ "roleId", "permissionNames" ]
+}

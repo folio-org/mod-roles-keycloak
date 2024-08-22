@@ -296,6 +296,34 @@ paths:
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
 
+  /roles/capabilities/permission:
+    post:
+      description: Create a record associating one or more capabilities with the role using permission names
+      operationId: createRoleCapabilitiesByPermissionNames
+      tags:
+        - role-capability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/rolePermissionNamesRequest'
+            example:
+              $ref: '#/components/examples/rolePermissionNamesRequest'
+      responses:
+        '201':
+          description: Assigned roles to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roleCapabilities'
+              example:
+                $ref: '#/components/examples/roleCapabilitiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
   /roles/{id}/capabilities:
     get:
       description: Get capabilities assigned to role by role identifier
@@ -396,6 +424,34 @@ paths:
       responses:
         '201':
           description: Array of roles users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roleCapabilitySets'
+              example:
+                $ref: '#/components/examples/roleCapabilitySetsResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
+  /roles/capability-sets/permission:
+    post:
+      description: Create a record associating one or more capability sets with the role using permission names
+      operationId: createRoleCapabilitySetsByPermissionNames
+      tags:
+        - role-capability-set
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/rolePermissionNamesRequest'
+            example:
+              $ref: '#/components/examples/rolePermissionNamesRequest'
+      responses:
+        '201':
+          description: Assigned roles to user
           content:
             application/json:
               schema:
@@ -1053,6 +1109,8 @@ components:
       $ref: schemas/capability/role/roleCapabilitiesRequest.json
     roleCapabilitySetsRequest:
       $ref: schemas/capability/role/roleCapabilitySetsRequest.json
+    rolePermissionNamesRequest:
+      $ref: schemas/capability/role/rolePermissionNamesRequest.json
 
     # auth-resources
     permissionsUser:

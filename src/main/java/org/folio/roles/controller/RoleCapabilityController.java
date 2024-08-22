@@ -9,6 +9,8 @@ import org.folio.roles.domain.dto.Capabilities;
 import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.RoleCapabilities;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
+import org.folio.roles.domain.dto.RolePermissionNamesRequest;
+import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.rest.resource.RoleCapabilityApi;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.RoleCapabilityService;
@@ -32,6 +34,19 @@ public class RoleCapabilityController implements RoleCapabilityApi {
     return ResponseEntity.status(CREATED).body(new RoleCapabilities()
       .roleCapabilities(pageResult.getRecords())
       .totalRecords(pageResult.getTotalRecords()));
+  }
+
+  @Override
+  public ResponseEntity<RoleCapabilities> createRoleCapabilitiesByPermissionNames(RolePermissionNamesRequest rolePermissionNamesRequest) {
+    var capabilityIds = capabilityService.findByPermissionNames(rolePermissionNamesRequest.getPermissionNames())
+      .stream()
+      .map(Capability::getId)
+      .toList();
+    var roleCapabilitiesRequest = new RoleCapabilitiesRequest()
+      .roleId(rolePermissionNamesRequest.getRoleId())
+      .capabilityIds(capabilityIds);
+
+    return createRoleCapabilities(roleCapabilitiesRequest);
   }
 
   @Override
