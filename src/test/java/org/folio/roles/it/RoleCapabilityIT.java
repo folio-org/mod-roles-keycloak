@@ -225,7 +225,7 @@ class RoleCapabilityIT extends BaseIntegrationTest {
     attemptToPostRoleCapabilities(roleCapabilitiesRequest(ROLE_ID, emptyList()))
       .andExpect(status().isBadRequest())
       .andExpect(jsonPath("$.errors[0].message")
-        .value("'capabilitySetIds' or 'capabilitySetNames' must not be null"))
+        .value("'capabilityIds' or 'capabilityNames' must not be null"))
       .andExpect(jsonPath("$.errors[0].type").value("IllegalArgumentException"))
       .andExpect(jsonPath("$.errors[0].code").value("validation_error"));
   }
