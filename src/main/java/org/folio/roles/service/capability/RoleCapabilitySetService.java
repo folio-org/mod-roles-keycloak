@@ -2,6 +2,7 @@ package org.folio.roles.service.capability;
 
 import java.util.List;
 import java.util.UUID;
+import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.dto.RoleCapabilitySet;
 import org.folio.roles.domain.model.PageResult;
 
@@ -16,6 +17,8 @@ public interface RoleCapabilitySetService {
    * @return {@link PageResult} with created {@link RoleCapabilitySet} relations
    */
   PageResult<RoleCapabilitySet> create(UUID roleId, List<UUID> capabilitySetIds, boolean safeCreate);
+
+  PageResult<RoleCapabilitySet> create(RoleCapabilitySetsRequest roleCapabilitiesRequest, boolean safeCreate);
 
   /**
    * Retrieves role-capabilitySets items by CQL query.

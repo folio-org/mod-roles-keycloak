@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.domain.dto.Capability;
+import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.dto.RoleCapability;
 import org.folio.roles.domain.dto.UserCapabilities;
 import org.folio.roles.domain.entity.RoleCapabilityEntity;
@@ -73,6 +75,24 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
     var newCapabilityIds = difference(capabilityIds, existingCapabilityIds);
     return isEmpty(newCapabilityIds) ? PageResult.empty() : assignCapabilities(roleId, newCapabilityIds, emptyList());
+  }
+
+  @Override
+  public PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate) {
+    verifyRequest(request);
+    if (isEmpty(request.getCapabilityIds())) {
+      return createByNames(request.getRoleId(), request.getCapabilityNames(), safeCreate);
+    }
+    return create(request.getRoleId(), request.getCapabilityIds(), safeCreate);
+  }
+
+  private PageResult<RoleCapability> createByNames(UUID roleId,
+                                                   List<String> capabilityNames,
+                                                   boolean safeCreate) {
+    var capabilityIds = capabilityService.findByNames(capabilityNames).stream()
+      .map(Capability::getId)
+      .toList();
+    return create(roleId, capabilityIds, safeCreate);
   }
 
   /**
@@ -213,5 +233,11 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   private List<UUID> getAssignedCapabilityIds(UUID roleId) {
     var capabilitySets = capabilitySetService.findByRoleId(roleId, MAX_VALUE, 0);
     return CapabilityUtils.getCapabilitySetIds(capabilitySets);
+  }
+
+  private void verifyRequest(RoleCapabilitiesRequest request) {
+    if (isEmpty(request.getCapabilityIds()) && isEmpty(request.getCapabilityNames())) {
+      throw new IllegalArgumentException("'capabilityIds' or 'capabilityNames' must not be null");
+    }
   }
 }

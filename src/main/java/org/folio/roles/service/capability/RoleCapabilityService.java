@@ -3,6 +3,7 @@ package org.folio.roles.service.capability;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
+import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.dto.RoleCapability;
 import org.folio.roles.domain.model.PageResult;
 
@@ -17,6 +18,9 @@ public interface RoleCapabilityService {
    * @return {@link RoleCapability} object with created role-capability relations
    */
   PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate);
+
+  PageResult<RoleCapability> create(RoleCapabilitiesRequest roleCapabilitiesRequest, boolean safeCreate);
+
 
   /**
    * Retrieves role-capability items by CQL query.

@@ -18,8 +18,10 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.RoleCapabilitySet;
+import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.entity.RoleCapabilitySetEntity;
 import org.folio.roles.domain.entity.key.RoleCapabilitySetKey;
 import org.folio.roles.domain.model.PageResult;
@@ -71,6 +73,24 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
 
     var newSetIds = difference(capabilitySetIds, existingCapabilitySetIds);
     return isEmpty(newSetIds) ? PageResult.empty() : assignCapabilities(roleId, newSetIds, emptyList());
+  }
+
+  @Override
+  public PageResult<RoleCapabilitySet> create(RoleCapabilitySetsRequest request, boolean safeCreate) {
+    verifyRequest(request);
+    if (isEmpty(request.getCapabilitySetIds())) {
+      return createByNames(request.getRoleId(), request.getCapabilitySetNames(), safeCreate);
+    }
+    return create(request.getRoleId(), request.getCapabilitySetIds(), safeCreate);
+  }
+
+  private PageResult<RoleCapabilitySet> createByNames(UUID roleId,
+                                                      List<String> capabilitySetNames,
+                                                      boolean safeCreate) {
+    var capabilitySetIds = capabilitySetService.findByNames(capabilitySetNames).stream()
+      .map(CapabilitySet::getId)
+      .toList();
+    return create(roleId, capabilitySetIds, safeCreate);
   }
 
   /**
@@ -208,4 +228,11 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   private static List<UUID> getCapabilitySetIds(List<RoleCapabilitySetEntity> existingEntities) {
     return mapItems(existingEntities, RoleCapabilitySetEntity::getCapabilitySetId);
   }
+
+  private void verifyRequest(RoleCapabilitySetsRequest request) {
+    if (isEmpty(request.getCapabilitySetIds()) && isEmpty(request.getCapabilitySetNames())) {
+      throw new IllegalArgumentException("'capabilitySetIds' or 'capabilitySetNames' must not be null");
+    }
+  }
+
 }
