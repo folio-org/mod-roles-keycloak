@@ -2,8 +2,8 @@ package org.folio.roles.service.capability;
 
 import java.util.List;
 import java.util.UUID;
-import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.dto.RoleCapabilitySet;
+import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.model.PageResult;
 
 public interface RoleCapabilitySetService {

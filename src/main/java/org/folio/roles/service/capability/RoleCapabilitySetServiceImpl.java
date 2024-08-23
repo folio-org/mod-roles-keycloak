@@ -234,5 +234,4 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
       throw new IllegalArgumentException("'capabilitySetIds' or 'capabilitySetNames' must not be null");
     }
   }
-
 }
