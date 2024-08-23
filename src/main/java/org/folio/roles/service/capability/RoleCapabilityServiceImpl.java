@@ -61,38 +61,17 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
    */
   @Transactional
   public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
-    if (isEmpty(capabilityIds)) {
-      throw new IllegalArgumentException("Capability id list is empty");
-    }
-
-    roleService.getById(roleId);
-    var existingEntities = roleCapabilityRepository.findRoleCapabilities(roleId, capabilityIds);
-    var existingCapabilityIds = getCapabilityIds(existingEntities);
-    if (!safeCreate && isNotEmpty(existingCapabilityIds)) {
-      throw new EntityExistsException(String.format(
-        "Relation already exists for role='%s' and capabilities=%s", roleId, existingCapabilityIds));
-    }
-
-    var newCapabilityIds = difference(capabilityIds, existingCapabilityIds);
-    return isEmpty(newCapabilityIds) ? PageResult.empty() : assignCapabilities(roleId, newCapabilityIds, emptyList());
+    return createByIds(roleId, capabilityIds, safeCreate);
   }
 
   @Override
+  @Transactional
   public PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate) {
     verifyRequest(request);
     if (isEmpty(request.getCapabilityIds())) {
       return createByNames(request.getRoleId(), request.getCapabilityNames(), safeCreate);
     }
-    return create(request.getRoleId(), request.getCapabilityIds(), safeCreate);
-  }
-
-  private PageResult<RoleCapability> createByNames(UUID roleId,
-                                                   List<String> capabilityNames,
-                                                   boolean safeCreate) {
-    var capabilityIds = capabilityService.findByNames(capabilityNames).stream()
-      .map(Capability::getId)
-      .toList();
-    return create(roleId, capabilityIds, safeCreate);
+    return createByIds(request.getRoleId(), request.getCapabilityIds(), safeCreate);
   }
 
   /**
@@ -195,6 +174,30 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Transactional(readOnly = true)
   public List<UUID> getCapabilitySetCapabilityIds(UUID roleId) {
     return getAssignedCapabilityIds(roleId);
+  }
+
+  private PageResult<RoleCapability> createByIds(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
+    if (isEmpty(capabilityIds)) {
+      throw new IllegalArgumentException("Capability id list is empty");
+    }
+
+    roleService.getById(roleId);
+    var existingEntities = roleCapabilityRepository.findRoleCapabilities(roleId, capabilityIds);
+    var existingCapabilityIds = getCapabilityIds(existingEntities);
+    if (!safeCreate && isNotEmpty(existingCapabilityIds)) {
+      throw new EntityExistsException(String.format(
+        "Relation already exists for role='%s' and capabilities=%s", roleId, existingCapabilityIds));
+    }
+
+    var newCapabilityIds = difference(capabilityIds, existingCapabilityIds);
+    return isEmpty(newCapabilityIds) ? PageResult.empty() : assignCapabilities(roleId, newCapabilityIds, emptyList());
+  }
+
+  private PageResult<RoleCapability> createByNames(UUID roleId, List<String> capabilityNames, boolean safeCreate) {
+    var capabilityIds = capabilityService.findByNames(capabilityNames).stream()
+      .map(Capability::getId)
+      .toList();
+    return create(roleId, capabilityIds, safeCreate);
   }
 
   private PageResult<RoleCapability> assignCapabilities(UUID roleId, List<UUID> newIds, Collection<UUID> assignedIds) {
