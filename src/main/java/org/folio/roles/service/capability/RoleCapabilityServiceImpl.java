@@ -20,7 +20,6 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.dto.RoleCapability;
-import org.folio.roles.domain.dto.UserCapabilities;
 import org.folio.roles.domain.entity.RoleCapabilityEntity;
 import org.folio.roles.domain.entity.key.RoleCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
@@ -51,14 +50,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   private final CapabilityEndpointService capabilityEndpointService;
   private final RoleCapabilityEntityMapper roleCapabilityEntityMapper;
 
-  /**
-   * Creates a record(s) associating one or more capabilities with the role.
-   *
-   * @param roleId - role identifier as {@link UUID} object
-   * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
-   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
-   * @return {@link UserCapabilities} object with created role-capability relations
-   */
+  @Override
   @Transactional
   public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
     return createByIds(roleId, capabilityIds, safeCreate);
