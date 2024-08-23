@@ -9,6 +9,8 @@ import static org.folio.roles.domain.entity.RoleCapabilitySetEntity.DEFAULT_ROLE
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.domain.model.PageResult.empty;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
+import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_NAME;
+import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.RoleCapabilitySetUtils.roleCapabilitySet;
 import static org.folio.roles.support.RoleCapabilitySetUtils.roleCapabilitySetEntity;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.entity.key.RoleCapabilitySetKey;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.mapper.entity.RoleCapabilitySetEntityMapper;
@@ -133,6 +136,32 @@ class RoleCapabilitySetServiceImplTest {
       var result = roleCapabilitySetService.create(ROLE_ID, capabilitySetIds, false);
 
       assertThat(result).isEqualTo(asSinglePage(roleCapability1, roleCapability2));
+      verify(capabilitySetService).checkIds(capabilitySetIds);
+    }
+
+    @Test
+    void byName_positive() {
+      var roleCapability = roleCapabilitySet(capabilitySetId1);
+      var capabilitySets = List.of(capabilitySet(capabilitySetId1));
+      var capabilitySetIds = List.of(capabilitySetId1);
+      var capabilitySetNames = List.of(CAPABILITY_SET_NAME);
+      var roleCapabilityEntity = roleCapabilitySetEntity(capabilitySetId1);
+      var entities = List.of(roleCapabilityEntity);
+      var request = new RoleCapabilitySetsRequest().roleId(ROLE_ID).addCapabilitySetNamesItem(CAPABILITY_SET_NAME);
+      var endpoints = List.of(endpoint());
+
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+      when(roleCapabilitySetEntityMapper.convert(roleCapabilityEntity)).thenReturn(roleCapability);
+      when(roleCapabilitySetRepository.findRoleCapabilitySets(ROLE_ID, capabilitySetIds)).thenReturn(emptyList());
+      when(roleCapabilitySetRepository.saveAll(entities)).thenReturn(entities);
+      when(capabilityService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilitySetService.findByNames(capabilitySetNames)).thenReturn(capabilitySets);
+      when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
+      doNothing().when(rolePermissionService).createPermissions(ROLE_ID, endpoints);
+
+      var result = roleCapabilitySetService.create(request, false);
+
+      assertThat(result).isEqualTo(asSinglePage(roleCapability));
       verify(capabilitySetService).checkIds(capabilitySetIds);
     }
 

@@ -28,6 +28,7 @@ public class CapabilityUtils {
   public static final String APPLICATION_ID = "test-application-0.0.1";
   public static final String APPLICATION_ID_V2 = "test-application-0.0.2";
   public static final String PERMISSION_NAME = "test-resource.item.create";
+  public static final String CAPABILITY_NAME = "test-resource_item.create";
 
   public static final UUID CAPABILITY_ID = UUID.randomUUID();
 

@@ -37,6 +37,8 @@ public class CapabilitySetUtils {
 
   public static final UUID CAPABILITY_SET_ID = UUID.randomUUID();
 
+  public static final String CAPABILITY_SET_NAME = "test-resource_item.create";
+
   public static final UUID FOO_MANAGE_CAPABILITY_SET = fromString("a1002e06-a2bc-4ce4-9d71-e25db1250e09");
   public static final List<UUID> FOO_MANAGE_CAPABILITIES = List.of(
     FOO_VIEW_CAPABILITY, FOO_CREATE_CAPABILITY, FOO_EDIT_CAPABILITY, FOO_DELETE_CAPABILITY);
