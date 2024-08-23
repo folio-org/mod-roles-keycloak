@@ -32,6 +32,8 @@ public class CapabilityUtils {
 
   public static final UUID CAPABILITY_ID = UUID.randomUUID();
 
+  public static final String FOO_DELETE_CAPABILITY_NAME = "foo_item.delete";
+  public static final String FOO_EDIT_CAPABILITY_NAME = "foo_item.edit";
   public static final UUID FOO_CREATE_CAPABILITY = fromString("8d2da27c-1d56-48b6-958d-2bfae6d79dc8");
   public static final UUID FOO_VIEW_CAPABILITY = fromString("e2628d7d-059a-46a1-a5ea-10a5a37b1af2");
   public static final UUID FOO_EDIT_CAPABILITY = fromString("78d6a59f-90ab-46a1-a349-4d25d0798763");
