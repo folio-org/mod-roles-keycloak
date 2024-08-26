@@ -189,7 +189,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     var capabilityIds = capabilityService.findByNames(capabilityNames).stream()
       .map(Capability::getId)
       .toList();
-    return create(roleId, capabilityIds, safeCreate);
+    return createByIds(roleId, capabilityIds, safeCreate);
   }
 
   private PageResult<RoleCapability> assignCapabilities(UUID roleId, List<UUID> newIds, Collection<UUID> assignedIds) {

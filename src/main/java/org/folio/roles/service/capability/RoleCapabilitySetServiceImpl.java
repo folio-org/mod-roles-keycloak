@@ -63,7 +63,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     if (isEmpty(request.getCapabilitySetIds())) {
       return createByNames(request.getRoleId(), request.getCapabilitySetNames(), safeCreate);
     }
-    return create(request.getRoleId(), request.getCapabilitySetIds(), safeCreate);
+    return createByIds(request.getRoleId(), request.getCapabilitySetIds(), safeCreate);
   }
 
   /**
