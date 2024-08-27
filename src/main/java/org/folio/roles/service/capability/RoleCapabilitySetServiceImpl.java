@@ -25,10 +25,12 @@ import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.entity.RoleCapabilitySetEntity;
 import org.folio.roles.domain.entity.key.RoleCapabilitySetKey;
 import org.folio.roles.domain.model.PageResult;
+import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.RoleCapabilitySetEntityMapper;
 import org.folio.roles.repository.RoleCapabilitySetRepository;
 import org.folio.roles.service.permission.RolePermissionService;
 import org.folio.roles.service.role.RoleService;
+import org.folio.roles.utils.CollectionUtils;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.annotation.Primary;
@@ -50,20 +52,34 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   private final RoleCapabilitySetRepository roleCapabilitySetRepository;
   private final RoleCapabilitySetEntityMapper roleCapabilitySetEntityMapper;
 
+  /**
+   * Creates a record(s) associating one or more capabilitySets with a role.
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param capabilitySetIds - capabilitySet identifiers as {@link List} of {@link UUID} objects
+   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @return {@link PageResult} with created {@link RoleCapabilitySet} relations
+   */
   @Override
   @Transactional
   public PageResult<RoleCapabilitySet> create(UUID roleId, List<UUID> capabilitySetIds, boolean safeCreate) {
-    return createByIds(roleId, capabilitySetIds, safeCreate);
+    return createRoleCapabilitySets(roleId, capabilitySetIds, safeCreate);
   }
 
+  /**
+   * Creates a record(s) associating one or more capabilitySets with a role.
+   *
+   * @param request - roleCapabilitiesRequest contains roleId, capabilitySetIds, and capabilitySetNames
+   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @return {@link PageResult} with created {@link RoleCapabilitySet} relations
+   */
   @Override
   @Transactional
   public PageResult<RoleCapabilitySet> create(RoleCapabilitySetsRequest request, boolean safeCreate) {
     verifyRequest(request);
-    if (isEmpty(request.getCapabilitySetIds())) {
-      return createByNames(request.getRoleId(), request.getCapabilitySetNames(), safeCreate);
-    }
-    return createByIds(request.getRoleId(), request.getCapabilitySetIds(), safeCreate);
+    var resolvedCapabilitySetIds = resolveCapabilitySetsByNames(request.getCapabilitySetNames());
+    var allCapabilitySetIds = CollectionUtils.union(resolvedCapabilitySetIds, request.getCapabilitySetIds());
+    return createRoleCapabilitySets(request.getRoleId(), allCapabilitySetIds, safeCreate);
   }
 
   /**
@@ -164,29 +180,37 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     removeCapabilities(roleId, capabilitySetIds, emptyList());
   }
 
-  private PageResult<RoleCapabilitySet> createByIds(UUID roleId, List<UUID> capabilitySetIds, boolean safeCreate) {
-    if (isEmpty(capabilitySetIds)) {
+  private PageResult<RoleCapabilitySet> createRoleCapabilitySets(UUID roleId, List<UUID> setIds, boolean safeCreate) {
+    if (isEmpty(setIds)) {
       throw new IllegalArgumentException("List with capability set identifiers is empty");
     }
 
     roleService.getById(roleId);
-    var existingEntities = roleCapabilitySetRepository.findRoleCapabilitySets(roleId, capabilitySetIds);
+    var existingEntities = roleCapabilitySetRepository.findRoleCapabilitySets(roleId, setIds);
     var existingCapabilitySetIds = getCapabilitySetIds(existingEntities);
     if (!safeCreate && isNotEmpty(existingCapabilitySetIds)) {
       throw new EntityExistsException(String.format(
         "Relation already exists for role='%s' and capabilitySets=%s", roleId, existingCapabilitySetIds));
     }
 
-    var newSetIds = difference(capabilitySetIds, existingCapabilitySetIds);
+    var newSetIds = difference(setIds, existingCapabilitySetIds);
     return isEmpty(newSetIds) ? PageResult.empty() : assignCapabilities(roleId, newSetIds, emptyList());
   }
 
-  private PageResult<RoleCapabilitySet> createByNames(UUID roleId, List<String> capabilitySetNames,
-                                                      boolean safeCreate) {
-    var capabilitySetIds = capabilitySetService.findByNames(capabilitySetNames).stream()
-      .map(CapabilitySet::getId)
-      .toList();
-    return createByIds(roleId, capabilitySetIds, safeCreate);
+  private List<UUID> resolveCapabilitySetsByNames(List<String> capabilitySetNames) {
+    if (isEmpty(capabilitySetNames)) {
+      return emptyList();
+    }
+
+    var foundCapabilitySetsByNames = capabilitySetService.findByNames(capabilitySetNames);
+    var foundCapabilitySetNames = mapItems(foundCapabilitySetsByNames, CapabilitySet::getName);
+    var notFoundCapabilities = difference(capabilitySetNames, foundCapabilitySetNames);
+    if (isNotEmpty(notFoundCapabilities)) {
+      throw new RequestValidationException("Capability sets by name are not found",
+        "capabilitySetNames", notFoundCapabilities);
+    }
+
+    return mapItems(foundCapabilitySetsByNames, CapabilitySet::getId);
   }
 
   private PageResult<RoleCapabilitySet> assignCapabilities(

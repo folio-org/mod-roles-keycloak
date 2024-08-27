@@ -11,6 +11,7 @@ import static org.folio.roles.domain.model.PageResult.empty;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_NAME;
+import static org.folio.roles.support.CapabilityUtils.INVALID_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.RoleCapabilityUtils.roleCapability;
@@ -35,6 +36,7 @@ import java.util.UUID;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.entity.key.RoleCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
+import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.RoleCapabilityEntityMapper;
 import org.folio.roles.repository.RoleCapabilityRepository;
 import org.folio.roles.service.permission.RolePermissionService;
@@ -234,6 +236,23 @@ class RoleCapabilityServiceImplTest {
       var capabilityIds = List.of(capabilityId1);
       assertThatThrownBy(() -> roleCapabilityService.create(ROLE_ID, capabilityIds, false))
         .isInstanceOf(EntityNotFoundException.class)
+        .hasMessage(errorMessage);
+    }
+
+    @Test
+    void negative_capabilitySetNameIsNotFound() {
+      var errorMessage = "Capabilities by name are not found";
+      var capabilityNames = List.of(CAPABILITY_NAME, INVALID_CAPABILITY_NAME);
+      var capability = capability(capabilityId1).name(CAPABILITY_NAME);
+      var capabilities = List.of(capability);
+      var request = new RoleCapabilitiesRequest()
+        .roleId(ROLE_ID)
+        .capabilityNames(capabilityNames);
+
+      when(capabilityService.findByNames(capabilityNames)).thenReturn(capabilities);
+
+      assertThatThrownBy(() -> roleCapabilityService.create(request, false))
+        .isInstanceOf(RequestValidationException.class)
         .hasMessage(errorMessage);
     }
   }

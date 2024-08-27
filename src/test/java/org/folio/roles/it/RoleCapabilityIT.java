@@ -13,6 +13,7 @@ import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.FOO_VIEW_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.INVALID_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.capabilities;
 import static org.folio.roles.support.CapabilityUtils.capabilitiesUpdateRequest;
 import static org.folio.roles.support.CapabilityUtils.capability;
@@ -228,6 +229,19 @@ class RoleCapabilityIT extends BaseIntegrationTest {
         .value("'capabilityIds' or 'capabilityNames' must not be null"))
       .andExpect(jsonPath("$.errors[0].type").value("IllegalArgumentException"))
       .andExpect(jsonPath("$.errors[0].code").value("validation_error"));
+  }
+
+  @Test
+  void assignCapabilitySets_negative_notFoundCapabilitySetNames() throws Exception {
+    var request = roleCapabilitiesRequest(ROLE_ID, INVALID_CAPABILITY_NAME);
+    attemptToPostRoleCapabilities(request)
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].message")
+        .value("Capabilities by name are not found"))
+      .andExpect(jsonPath("$.errors[0].type").value("RequestValidationException"))
+      .andExpect(jsonPath("$.errors[0].code").value("validation_error"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilityNames"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].value").value("[boo_item.create]"));
   }
 
   @Test

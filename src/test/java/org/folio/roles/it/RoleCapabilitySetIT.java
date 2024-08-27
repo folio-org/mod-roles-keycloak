@@ -12,6 +12,7 @@ import static org.folio.roles.support.CapabilitySetUtils.FOO_CREATE_CAPABILITY_S
 import static org.folio.roles.support.CapabilitySetUtils.FOO_EDIT_CAPABILITY_SET;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_EDIT_CAPABILITY_SET_NAME;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_MANAGE_CAPABILITY_SET;
+import static org.folio.roles.support.CapabilitySetUtils.INVALID_CAPABILITY_SET_NAME;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySets;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySetsUpdateRequest;
@@ -230,6 +231,19 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
   }
 
   @Test
+  void assignCapabilitySets_negative_notFoundCapabilitySetNames() throws Exception {
+    var request = roleCapabilitySetsRequest(ROLE_ID, INVALID_CAPABILITY_SET_NAME);
+    attemptToPostRoleCapabilitySets(request)
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].message")
+        .value("Capability sets by name are not found"))
+      .andExpect(jsonPath("$.errors[0].type").value("RequestValidationException"))
+      .andExpect(jsonPath("$.errors[0].code").value("validation_error"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilitySetNames"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].value").value("[boo_item.create]"));
+  }
+
+  @Test
   void assignCapabilitySets_negative_emptyCapabilitySet() throws Exception {
     var request = roleCapabilitySetsRequest(ROLE_ID, emptyList());
     attemptToPostRoleCapabilitySets(request)
@@ -258,8 +272,8 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.errors[0].code", is("found_error")))
       .andExpect(jsonPath("$.errors[0].type", is("EntityExistsException")))
       .andExpect(jsonPath("$.errors[0].message", is(String.format(
-        "Relation already exists for role='%s' and capabilitySets=%s", ROLE_ID, capabilitySetIds))))
-    ;
+        "Relation already exists for role='%s' and capabilitySets=%s", ROLE_ID, capabilitySetIds))
+      ));
   }
 
   @Test

@@ -18,6 +18,13 @@ public interface RoleCapabilitySetService {
    */
   PageResult<RoleCapabilitySet> create(UUID roleId, List<UUID> capabilitySetIds, boolean safeCreate);
 
+  /**
+   * Creates a record(s) associating one or more capabilitySets with a role.
+   *
+   * @param roleCapabilitiesRequest - roleCapabilitiesRequest contains roleId, capabilitySetIds, and capabilitySetNames
+   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @return {@link PageResult} with created {@link RoleCapabilitySet} relations
+   */
   PageResult<RoleCapabilitySet> create(RoleCapabilitySetsRequest roleCapabilitiesRequest, boolean safeCreate);
 
   /**

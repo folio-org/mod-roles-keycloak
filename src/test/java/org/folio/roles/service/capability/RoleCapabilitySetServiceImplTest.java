@@ -10,6 +10,7 @@ import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.domain.model.PageResult.empty;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_NAME;
+import static org.folio.roles.support.CapabilitySetUtils.INVALID_CAPABILITY_SET_NAME;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.RoleCapabilitySetUtils.roleCapabilitySet;
@@ -35,6 +36,7 @@ import java.util.UUID;
 import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.entity.key.RoleCapabilitySetKey;
 import org.folio.roles.domain.model.PageResult;
+import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.RoleCapabilitySetEntityMapper;
 import org.folio.roles.repository.RoleCapabilitySetRepository;
 import org.folio.roles.service.permission.RolePermissionService;
@@ -140,9 +142,10 @@ class RoleCapabilitySetServiceImplTest {
     }
 
     @Test
-    void byName_positive() {
+    void positive_capabilityNamesInRequest() {
       var roleCapability = roleCapabilitySet(capabilitySetId1);
-      var capabilitySets = List.of(capabilitySet(capabilitySetId1));
+      var capabilitySet = capabilitySet(capabilitySetId1).name(CAPABILITY_SET_NAME);
+      var capabilitySets = List.of(capabilitySet);
       var capabilitySetIds = List.of(capabilitySetId1);
       var capabilitySetNames = List.of(CAPABILITY_SET_NAME);
       var roleCapabilityEntity = roleCapabilitySetEntity(capabilitySetId1);
@@ -208,6 +211,23 @@ class RoleCapabilitySetServiceImplTest {
       var capabilityIds = List.of(CAPABILITY_SET_ID);
       assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capabilityIds, false))
         .isInstanceOf(EntityNotFoundException.class)
+        .hasMessage(errorMessage);
+    }
+
+    @Test
+    void negative_capabilitySetNameIsNotFound() {
+      var errorMessage = "Capability sets by name are not found";
+      var capabilitySetNames = List.of(CAPABILITY_SET_NAME, INVALID_CAPABILITY_SET_NAME);
+      var capabilitySet = capabilitySet(capabilitySetId1).name(CAPABILITY_SET_NAME);
+      var capabilitySets = List.of(capabilitySet);
+      var request = new RoleCapabilitySetsRequest()
+        .roleId(ROLE_ID)
+        .capabilitySetNames(capabilitySetNames);
+
+      when(capabilitySetService.findByNames(capabilitySetNames)).thenReturn(capabilitySets);
+
+      assertThatThrownBy(() -> roleCapabilitySetService.create(request, false))
+        .isInstanceOf(RequestValidationException.class)
         .hasMessage(errorMessage);
     }
   }

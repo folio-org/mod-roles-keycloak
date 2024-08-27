@@ -20,7 +20,7 @@ public interface RoleCapabilityService {
   PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate);
 
   /**
-   * Create a record(s) associating one or moe capabilities with role.
+   * Create a record(s) associating one or moe capabilities with a role.
    *
    * @param roleCapabilitiesRequest - request that contains roleId, capabilityIds or capabilityNames
    * @param safeCreate              - defines if new capabilities must be added or error thrown if any already exists

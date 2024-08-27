@@ -23,6 +23,7 @@ import org.folio.roles.domain.dto.RoleCapability;
 import org.folio.roles.domain.entity.RoleCapabilityEntity;
 import org.folio.roles.domain.entity.key.RoleCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
+import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.RoleCapabilityEntityMapper;
 import org.folio.roles.repository.RoleCapabilityRepository;
 import org.folio.roles.service.permission.RolePermissionService;
@@ -50,20 +51,34 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   private final CapabilityEndpointService capabilityEndpointService;
   private final RoleCapabilityEntityMapper roleCapabilityEntityMapper;
 
+  /**
+   * Creates a record(s) associating one or more capabilities with the role.
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
+   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @return {@link RoleCapability} object with created role-capability relations
+   */
   @Override
   @Transactional
   public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
-    return createByIds(roleId, capabilityIds, safeCreate);
+    return createRoleCapabilities(roleId, capabilityIds, safeCreate);
   }
 
+  /**
+   * Create a record(s) associating one or moe capabilities with role.
+   *
+   * @param request    - request that contains roleId, capabilityIds or capabilityNames
+   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @return {@link RoleCapability} object with created role-capability relations
+   */
   @Override
   @Transactional
   public PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate) {
     verifyRequest(request);
-    if (isEmpty(request.getCapabilityIds())) {
-      return createByNames(request.getRoleId(), request.getCapabilityNames(), safeCreate);
-    }
-    return createByIds(request.getRoleId(), request.getCapabilityIds(), safeCreate);
+    var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
+    var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
+    return createRoleCapabilities(request.getRoleId(), allCapabilityIds, safeCreate);
   }
 
   /**
@@ -168,7 +183,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     return getAssignedCapabilityIds(roleId);
   }
 
-  private PageResult<RoleCapability> createByIds(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
+  private PageResult<RoleCapability> createRoleCapabilities(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
     if (isEmpty(capabilityIds)) {
       throw new IllegalArgumentException("Capability id list is empty");
     }
@@ -185,11 +200,20 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     return isEmpty(newCapabilityIds) ? PageResult.empty() : assignCapabilities(roleId, newCapabilityIds, emptyList());
   }
 
-  private PageResult<RoleCapability> createByNames(UUID roleId, List<String> capabilityNames, boolean safeCreate) {
-    var capabilityIds = capabilityService.findByNames(capabilityNames).stream()
-      .map(Capability::getId)
-      .toList();
-    return createByIds(roleId, capabilityIds, safeCreate);
+  private List<UUID> resolveCapabilitiesByNames(List<String> capabilityNames) {
+    if (isEmpty(capabilityNames)) {
+      return emptyList();
+    }
+
+    var foundCapabilitiesByNames = capabilityService.findByNames(capabilityNames);
+    var foundCapabilitiesNames = mapItems(foundCapabilitiesByNames, Capability::getName);
+    var notFoundCapabilities = difference(capabilityNames, foundCapabilitiesNames);
+    if (isNotEmpty(notFoundCapabilities)) {
+      throw new RequestValidationException("Capabilities by name are not found",
+        "capabilityNames", notFoundCapabilities);
+    }
+
+    return mapItems(foundCapabilitiesByNames, Capability::getId);
   }
 
   private PageResult<RoleCapability> assignCapabilities(UUID roleId, List<UUID> newIds, Collection<UUID> assignedIds) {
