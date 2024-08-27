@@ -145,7 +145,8 @@ class RoleCapabilityServiceImplTest {
     @Test
     void positive_plainCapabilitiesByNames() {
       var roleCapability = roleCapability(capabilityId1);
-      var capabilities = List.of(capability(capabilityId1));
+      var capability = capability(capabilityId1).name(CAPABILITY_NAME);
+      var capabilities = List.of(capability);
       var capabilityIds = List.of(capabilityId1);
       var capabilityNames = List.of(CAPABILITY_NAME);
       var roleCapabilityEntity1 = roleCapabilityEntity(capabilityId1);
