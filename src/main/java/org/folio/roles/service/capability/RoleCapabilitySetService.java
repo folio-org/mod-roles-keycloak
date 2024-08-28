@@ -21,11 +21,11 @@ public interface RoleCapabilitySetService {
   /**
    * Creates a record(s) associating one or more capabilitySets with a role.
    *
-   * @param roleCapabilitiesRequest - roleCapabilitiesRequest contains roleId, capabilitySetIds, and capabilitySetNames
+   * @param request - RoleCapabilitySetsRequest contains roleId, capabilitySetIds, and capabilitySetNames
    * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
    * @return {@link PageResult} with created {@link RoleCapabilitySet} relations
    */
-  PageResult<RoleCapabilitySet> create(RoleCapabilitySetsRequest roleCapabilitiesRequest, boolean safeCreate);
+  PageResult<RoleCapabilitySet> create(RoleCapabilitySetsRequest request, boolean safeCreate);
 
   /**
    * Retrieves role-capabilitySets items by CQL query.

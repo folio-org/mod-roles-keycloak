@@ -22,11 +22,11 @@ public interface RoleCapabilityService {
   /**
    * Create a record(s) associating one or moe capabilities with a role.
    *
-   * @param roleCapabilitiesRequest - request that contains roleId, capabilityIds or capabilityNames
+   * @param request - RoleCapabilitiesRequest that contains roleId, capabilityIds or capabilityNames
    * @param safeCreate              - defines if new capabilities must be added or error thrown if any already exists
    * @return {@link RoleCapability} object with created role-capability relations
    */
-  PageResult<RoleCapability> create(RoleCapabilitiesRequest roleCapabilitiesRequest, boolean safeCreate);
+  PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate);
 
   /**
    * Retrieves role-capability items by CQL query.
