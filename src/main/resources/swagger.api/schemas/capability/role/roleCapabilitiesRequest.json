@@ -16,12 +16,18 @@
         "type": "string",
         "description": "Capability identifier",
         "format": "uuid"
-      },
-      "minItems": 1
+      }
+    },
+    "capabilityNames": {
+      "description": "List of capability names",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Capability names"
+      }
     }
   },
   "required": [
-    "roleId",
-    "capabilityIds"
+    "roleId"
   ]
 }

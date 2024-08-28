@@ -2,6 +2,8 @@ package org.folio.roles.controller;
 
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
+import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
+import static org.folio.roles.support.CapabilityUtils.CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.capabilities;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.RoleCapabilityUtils.roleCapabilities;
@@ -51,9 +53,29 @@ class RoleCapabilityControllerTest {
   void createRoleCapabilities_positive() throws Exception {
     var roleCapability = roleCapability();
     var roleCapabilities = asSinglePage(roleCapability);
-    when(roleCapabilityService.create(ROLE_ID, List.of(CAPABILITY_SET_ID), false)).thenReturn(roleCapabilities);
+    var expectedRequest = new RoleCapabilitiesRequest().roleId(ROLE_ID).addCapabilityIdsItem(CAPABILITY_ID);
 
-    var request = new RoleCapabilitiesRequest().roleId(ROLE_ID).addCapabilityIdsItem(CAPABILITY_SET_ID);
+    when(roleCapabilityService.create(expectedRequest, false)).thenReturn(roleCapabilities);
+
+    var request = new RoleCapabilitiesRequest().roleId(ROLE_ID).addCapabilityIdsItem(CAPABILITY_ID);
+    mockMvc.perform(post("/roles/capabilities")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID)
+        .content(asJsonString(request)))
+      .andExpect(status().isCreated())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(roleCapabilities(1, roleCapability)), true));
+  }
+
+  @Test
+  void createRoleCapabilitiesByNames_positive() throws Exception {
+    var roleCapability = roleCapability();
+    var roleCapabilities = asSinglePage(roleCapability);
+    var expectedRequest = new RoleCapabilitiesRequest().roleId(ROLE_ID).addCapabilityNamesItem(CAPABILITY_NAME);
+
+    when(roleCapabilityService.create(expectedRequest, false)).thenReturn(roleCapabilities);
+
+    var request = new RoleCapabilitiesRequest().roleId(ROLE_ID).addCapabilityNamesItem(CAPABILITY_NAME);
     mockMvc.perform(post("/roles/capabilities")
         .contentType(APPLICATION_JSON)
         .header(TENANT, TENANT_ID)

@@ -60,6 +60,10 @@ public class RoleCapabilitySetUtils {
     return new RoleCapabilitySetsRequest().roleId(roleId).capabilitySetIds(Arrays.asList(capabilitySetIds));
   }
 
+  public static RoleCapabilitySetsRequest roleCapabilitySetsRequest(UUID roleId, String... capabilitySetNames) {
+    return new RoleCapabilitySetsRequest().roleId(roleId).capabilitySetNames(Arrays.asList(capabilitySetNames));
+  }
+
   public static RoleCapabilitySetsRequest roleCapabilitySetsRequest(UUID roleId, List<UUID> capabilitySetIds) {
     return new RoleCapabilitySetsRequest().roleId(roleId).capabilitySetIds(capabilitySetIds);
   }

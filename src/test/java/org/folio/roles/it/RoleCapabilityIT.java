@@ -8,9 +8,12 @@ import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.support.CapabilityUtils.FOO_CREATE_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_DELETE_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.FOO_DELETE_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.FOO_VIEW_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.INVALID_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.capabilities;
 import static org.folio.roles.support.CapabilityUtils.capabilitiesUpdateRequest;
 import static org.folio.roles.support.CapabilityUtils.capability;
@@ -167,6 +170,34 @@ class RoleCapabilityIT extends BaseIntegrationTest {
   }
 
   @Test
+  @KeycloakRealms("/json/keycloak/role-capability-realm.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-role-capability-relations.sql"
+  })
+  void assignCapabilitiesByNames_positive() throws Exception {
+    var request = roleCapabilitiesRequest(ROLE_ID, FOO_DELETE_CAPABILITY_NAME, FOO_EDIT_CAPABILITY_NAME);
+    var fooItemDeleteRoleCapability = roleCapability(ROLE_ID, FOO_DELETE_CAPABILITY);
+    var fooItemEditRoleCapability = roleCapability(ROLE_ID, FOO_EDIT_CAPABILITY);
+
+    postRoleCapabilities(request)
+      .andExpect(content().json(asJsonString(roleCapabilities(fooItemDeleteRoleCapability, fooItemEditRoleCapability))))
+      .andExpect(jsonPath("$.roleCapabilities[0].metadata.createdByUserId", is(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.roleCapabilities[0].metadata.createdDate", notNullValue()))
+      .andExpect(jsonPath("$.roleCapabilities[1].metadata.createdByUserId", is(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.roleCapabilities[1].metadata.createdDate", notNullValue()));
+
+    assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
+      kcPermissionName(fooItemGetEndpoint()),
+      kcPermissionName(fooItemPostEndpoint()),
+      kcPermissionName(fooItemDeleteEndpoint()),
+      kcPermissionName(fooItemPutEndpoint())
+    ));
+  }
+
+  @Test
   @KeycloakRealms("/json/keycloak/role-capability-fresh-realm.json")
   @Sql(scripts = {
     "classpath:/sql/populate-test-role.sql",
@@ -194,7 +225,23 @@ class RoleCapabilityIT extends BaseIntegrationTest {
   void assignCapabilities_negative_emptyCapabilities() throws Exception {
     attemptToPostRoleCapabilities(roleCapabilitiesRequest(ROLE_ID, emptyList()))
       .andExpect(status().isBadRequest())
-      .andExpectAll(argumentNotValidErr("size must be between 1 and 2147483647", "capabilityIds", "[]"));
+      .andExpect(jsonPath("$.errors[0].message")
+        .value("'capabilityIds' or 'capabilityNames' must not be null"))
+      .andExpect(jsonPath("$.errors[0].type").value("IllegalArgumentException"))
+      .andExpect(jsonPath("$.errors[0].code").value("validation_error"));
+  }
+
+  @Test
+  void assignCapabilitySets_negative_notFoundCapabilitySetNames() throws Exception {
+    var request = roleCapabilitiesRequest(ROLE_ID, INVALID_CAPABILITY_NAME);
+    attemptToPostRoleCapabilities(request)
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].message")
+        .value("Capabilities by name are not found"))
+      .andExpect(jsonPath("$.errors[0].type").value("RequestValidationException"))
+      .andExpect(jsonPath("$.errors[0].code").value("validation_error"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilityNames"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].value").value("[boo_item.create]"));
   }
 
   @Test
