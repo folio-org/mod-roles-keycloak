@@ -12,6 +12,7 @@
       }
     },
     "logic": {
+      "description": "User policy logic",
       "$ref": "policyLogicType.json"
     }
   },
