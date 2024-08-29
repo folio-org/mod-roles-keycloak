@@ -26,14 +26,18 @@ public class PolicyController implements PoliciesApi {
 
   @Override
   public ResponseEntity<Policies> createPolicies(PoliciesRequest policiesRequest) {
-    var policies = policyService.create(policiesRequest.getPolicies());
-    return ResponseEntity.status(CREATED).body(policies);
+    var policiesPage = policyService.create(policiesRequest.getPolicies());
+    return ResponseEntity.status(CREATED).body(new Policies()
+      .policies(policiesPage.getRecords())
+      .totalRecords((int) policiesPage.getTotalRecords()));
   }
 
   @Override
   public ResponseEntity<Policies> findPolicies(String query, Integer limit, Integer offset) {
-    var policies = policyService.search(query, limit, offset);
-    return ResponseEntity.ok(policies);
+    var policiesPage = policyService.search(query, limit, offset);
+    return ResponseEntity.ok(new Policies()
+      .policies(policiesPage.getRecords())
+      .totalRecords((int) policiesPage.getTotalRecords()));
   }
 
   @Override

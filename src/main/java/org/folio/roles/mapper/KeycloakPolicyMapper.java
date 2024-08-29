@@ -1,28 +1,35 @@
 package org.folio.roles.mapper;
 
-import static java.time.ZoneOffset.UTC;
-import static java.util.Collections.emptyList;
-import static java.util.Objects.isNull;
-import static java.util.stream.Collectors.toList;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
+import static java.util.Optional.ofNullable;
+import static org.apache.commons.collections4.MapUtils.emptyIfNull;
+import static org.apache.commons.lang3.ObjectUtils.anyNotNull;
+import static org.folio.roles.utils.ParseUtils.parseDateSafe;
+import static org.folio.roles.utils.ParseUtils.parseIntSafe;
 import static org.mapstruct.InjectionStrategy.CONSTRUCTOR;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
-import java.util.Date;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.UUID;
-import lombok.SneakyThrows;
-import org.folio.roles.domain.dto.Policies;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.folio.roles.domain.dto.Policy;
+import org.folio.roles.domain.dto.PolicyLogicType;
 import org.folio.roles.domain.dto.PolicyType;
+import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
-import org.folio.roles.integration.keyclock.model.policy.BasePolicy;
-import org.folio.roles.integration.keyclock.model.policy.RolePolicy;
-import org.folio.roles.integration.keyclock.model.policy.TimePolicy;
-import org.folio.roles.integration.keyclock.model.policy.UserPolicy;
+import org.folio.roles.domain.dto.TimePolicy;
+import org.folio.roles.utils.JsonHelper;
+import org.keycloak.representations.idm.authorization.AbstractPolicyRepresentation;
+import org.keycloak.representations.idm.authorization.PolicyRepresentation;
+import org.keycloak.representations.idm.authorization.RolePolicyRepresentation;
+import org.keycloak.representations.idm.authorization.UserPolicyRepresentation;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -34,229 +41,269 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring", injectionStrategy = CONSTRUCTOR, imports = PolicyType.class)
 public abstract class KeycloakPolicyMapper {
 
-  @Resource
-  private ObjectMapper objectMapper;
+  private static final String EMPTY_STRING = "";
+  private static final DateTimeFormatter KC_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+  @Resource private JsonHelper jsonHelper;
 
   /**
    * Maps a TimePolicy object from Keycloak to a Policy object used by the application.
    *
-   * @param source the {@link TimePolicy} object to be mapped.
+   * @param kcPolicy the {@link TimePolicy} object to be mapped.
    * @return the mapped {@link Policy} object.
    */
-  @Mapping(target = "timePolicy.start", source = "notBefore")
-  @Mapping(target = "timePolicy.expires", source = "notOnOrAfter")
-  @Mapping(target = "timePolicy.dayOfMonthStart", source = "dayMonth")
-  @Mapping(target = "timePolicy.dayOfMonthEnd", source = "dayMonthEnd")
-  @Mapping(target = "timePolicy.monthStart", source = "month")
-  @Mapping(target = "timePolicy.monthEnd", source = "monthEnd")
-  @Mapping(target = "timePolicy.hourStart", source = "hour")
-  @Mapping(target = "timePolicy.hourEnd", source = "hourEnd")
-  @Mapping(target = "timePolicy.minuteStart", source = "minute")
-  @Mapping(target = "timePolicy.minuteEnd", source = "minuteEnd")
-  @Mapping(target = "timePolicy.logic", source = "logic")
-  @Mapping(target = "timePolicy.repeat", expression = "java(timePolicy.isRepeated())")
-  @Mapping(target = "type", expression = "java(PolicyType.fromValue(source.getType().toUpperCase()))")
+  @Mapping(target = "id", source = "kcPolicy.id")
+  @Mapping(target = "description", source = "kcPolicy.description")
+  @Mapping(target = "name", source = "kcPolicy.name")
+  @Mapping(target = "type", expression = "java(PolicyType.TIME)")
   @Mapping(target = "source", ignore = true)
   @Mapping(target = "metadata", ignore = true)
   @Mapping(target = "userPolicy", ignore = true)
   @Mapping(target = "rolePolicy", ignore = true)
-  public abstract Policy toTimePolicy(TimePolicy source);
+  public abstract Policy toTimePolicy(PolicyRepresentation kcPolicy, TimePolicy timePolicy);
+
+  /**
+   * Maps a RolePolicy object from Keycloak to a Policy object used by the application.
+   *
+   * @param kcPolicy the {@link TimePolicy} object to be mapped.
+   * @return the mapped {@link Policy} object.
+   */
+  @Mapping(target = "id", source = "kcPolicy.id")
+  @Mapping(target = "description", source = "kcPolicy.description")
+  @Mapping(target = "name", source = "kcPolicy.name")
+  @Mapping(target = "type", expression = "java(PolicyType.ROLE)")
+  @Mapping(target = "rolePolicy.roles", source = "rolePolicyRoles")
+  @Mapping(target = "source", ignore = true)
+  @Mapping(target = "metadata", ignore = true)
+  @Mapping(target = "userPolicy", ignore = true)
+  @Mapping(target = "timePolicy", ignore = true)
+  public abstract Policy toRolePolicy(PolicyRepresentation kcPolicy, List<RolePolicyRole> rolePolicyRoles);
+
+  /**
+   * Maps a RolePolicy object from Keycloak to a Policy object used by the application.
+   *
+   * @param kcPolicy the {@link TimePolicy} object to be mapped.
+   * @return the mapped {@link Policy} object.
+   */
+  @Mapping(target = "id", source = "kcPolicy.id")
+  @Mapping(target = "description", source = "kcPolicy.description")
+  @Mapping(target = "name", source = "kcPolicy.name")
+  @Mapping(target = "type", expression = "java(PolicyType.USER)")
+  @Mapping(target = "userPolicy.users", source = "userIds")
+  @Mapping(target = "source", ignore = true)
+  @Mapping(target = "metadata", ignore = true)
+  @Mapping(target = "rolePolicy", ignore = true)
+  @Mapping(target = "timePolicy", ignore = true)
+  public abstract Policy toUserPolicy(PolicyRepresentation kcPolicy, List<UUID> userIds);
 
   /**
    * Maps a Policy object used by the application to a TimePolicy object used by Keycloak.
    *
    * @param source the {@link Policy} object to be mapped.
-   * @return the mapped {@link TimePolicy} object.
+   * @return the mapped {@link PolicyRepresentation} object.
    */
-  @Mapping(target = "notBefore", source = "timePolicy.start")
-  @Mapping(target = "notOnOrAfter", source = "timePolicy.expires")
-  @Mapping(target = "dayMonth", source = "timePolicy.dayOfMonthStart")
-  @Mapping(target = "dayMonthEnd", source = "timePolicy.dayOfMonthEnd")
-  @Mapping(target = "month", source = "timePolicy.monthStart")
-  @Mapping(target = "monthEnd", source = "timePolicy.monthEnd")
-  @Mapping(target = "hour", source = "timePolicy.hourStart")
-  @Mapping(target = "hourEnd", source = "timePolicy.hourEnd")
-  @Mapping(target = "minute", source = "timePolicy.minuteStart")
-  @Mapping(target = "minuteEnd", source = "timePolicy.minuteEnd")
-  @Mapping(target = "logic", source = "timePolicy.logic")
-  @Mapping(target = "config", ignore = true)
-  @Mapping(target = "decisionStrategy", ignore = true)
-  public abstract TimePolicy toKeycloakTimePolicy(Policy source);
+  @KeycloakPolicyIgnoredFieldMappings
+  @Mapping(target = "id", source = "source.id")
+  @Mapping(target = "name", source = "source.name")
+  @Mapping(target = "description", source = "source.description")
+  @Mapping(target = "type", expression = "java(\"time\")")
+  @Mapping(target = "logic", source = "source.timePolicy.logic")
+  @Mapping(target = "config", source = "config")
+  public abstract PolicyRepresentation toKeycloakTimePolicy(Policy source, Map<String, String> config);
 
   /**
-   * Maps a {@link RolePolicy} object to a {@link Policy} object.
-   *
-   * @param source the source {@link RolePolicy} object
-   * @return the mapped {@link Policy} object
-   */
-  @Mapping(target = "rolePolicy.logic", source = "logic")
-  @Mapping(target = "rolePolicy.roles", source = "roles")
-  @Mapping(target = "type", expression = "java(PolicyType.fromValue(source.getType().toUpperCase()))")
-  @Mapping(target = "source", ignore = true)
-  @Mapping(target = "metadata", ignore = true)
-  @Mapping(target = "userPolicy", ignore = true)
-  @Mapping(target = "timePolicy", ignore = true)
-  public abstract Policy toRolePolicy(RolePolicy source);
-
-  /**
-   * Maps a {@link Policy} object to a {@link RolePolicy} object.
+   * Maps a {@link Policy} object to a {@link RolePolicyRepresentation} object.
    *
    * @param source the source {@link Policy} object
-   * @return the mapped {@link RolePolicy} object
+   * @return the mapped {@link PolicyRepresentation} object
    */
-  @Mapping(target = "logic", source = "rolePolicy.logic")
-  @Mapping(target = "roles", source = "rolePolicy.roles")
-  @Mapping(target = "config", ignore = true)
-  @Mapping(target = "decisionStrategy", ignore = true)
-  public abstract RolePolicy toKeycloakRolePolicy(Policy source);
+  @KeycloakPolicyIgnoredFieldMappings
+  @Mapping(target = "id", source = "source.id")
+  @Mapping(target = "name", source = "source.name")
+  @Mapping(target = "description", source = "source.description")
+  @Mapping(target = "type", expression = "java(\"role\")")
+  @Mapping(target = "config", source = "config")
+  @Mapping(target = "logic", source = "source.rolePolicy.logic")
+  public abstract PolicyRepresentation toKeycloakRolePolicy(Policy source, Map<String, String> config);
 
   /**
-   * Maps a {@link UserPolicy} object to a {@link Policy} object.
-   *
-   * @param source the source {@link UserPolicy} object
-   * @return the mapped {@link Policy} object
-   */
-  @Mapping(target = "userPolicy.logic", source = "logic")
-  @Mapping(target = "userPolicy.users", source = "users")
-  @Mapping(target = "type", expression = "java(PolicyType.fromValue(source.getType().toUpperCase()))")
-  @Mapping(target = "source", ignore = true)
-  @Mapping(target = "metadata", ignore = true)
-  @Mapping(target = "timePolicy", ignore = true)
-  @Mapping(target = "rolePolicy", ignore = true)
-  public abstract Policy toUserPolicy(UserPolicy source);
-
-  /**
-   * Maps a {@link Policy} object to a {@link UserPolicy} subclass.
+   * Maps a {@link Policy} object to a {@link UserPolicyRepresentation} subclass.
    *
    * @param source the source {@link Policy} object
-   * @return the mapped {@link BasePolicy} object
+   * @return the mapped {@link PolicyRepresentation} object
    */
-  @Mapping(target = "logic", source = "userPolicy.logic")
-  @Mapping(target = "users", source = "userPolicy.users")
-  @Mapping(target = "config", ignore = true)
+  @KeycloakPolicyIgnoredFieldMappings
+  @Mapping(target = "id", source = "source.id")
+  @Mapping(target = "name", source = "source.name")
+  @Mapping(target = "description", source = "source.description")
+  @Mapping(target = "type", expression = "java(\"user\")")
+  @Mapping(target = "config", source = "config")
+  @Mapping(target = "logic", source = "source.userPolicy.logic")
   @Mapping(target = "decisionStrategy", ignore = true)
-  public abstract UserPolicy toKeycloakUserPolicy(Policy source);
+  public abstract PolicyRepresentation toKeycloakUserPolicy(Policy source, Map<String, String> config);
 
   /**
-   * Maps a {@link Policy} object to its corresponding {@link BasePolicy} subclass.
-   * The mapping is based on the "type" field of the source object, which can be one of:
-   * {@link PolicyType#TIME},
-   * {@link PolicyType#ROLE},
+   * Maps a {@link Policy} object to a {@link Policy} object.
+   *
+   * @param policyRepresentation the source {@link Policy} object
+   * @return the mapped {@link Policy} object
+   * @throws UnsupportedOperationException if the source object is not a known subclass
+   */
+  public Policy toPolicy(PolicyRepresentation policyRepresentation) {
+    if (policyRepresentation == null || policyRepresentation.getConfig() == null) {
+      return null;
+    }
+
+    var config = policyRepresentation.getConfig();
+    var policyType = policyRepresentation.getType();
+    return switch (policyType) {
+      case "role" -> toRolePolicy(policyRepresentation, parseRoleIds(config));
+      case "user" -> toUserPolicy(policyRepresentation, parseUserIds(config));
+      case "time" -> toTimePolicy(policyRepresentation, parseTimePolicy(config));
+      default -> throw new UnsupportedOperationException("Mapper not defined for source type: " + policyType);
+    };
+  }
+
+  /**
+   * Maps a {@link Policy} object to its corresponding {@link Policy} subclass. The mapping is based on the "type"
+   * field of the source object, which can be one of: {@link PolicyType#TIME}, {@link PolicyType#ROLE},
    * {@link PolicyType#USER}.
    *
    * @param source the source {@link Policy} object
-   * @return the mapped {@link BasePolicy} object
+   * @return the mapped {@link Policy} object
    * @throws UnsupportedOperationException if the source object is not a known subclass
    */
-  public BasePolicy toKeycloakPolicy(Policy source) {
-    if (isNull(source)) {
+  public PolicyRepresentation toKeycloakPolicy(Policy source, PolicyMapperContext mappingContext) {
+    if (source == null || mappingContext == null) {
       return null;
     }
+
     return switch (source.getType()) {
-      case TIME -> toKeycloakTimePolicy(source);
-      case ROLE -> toKeycloakRolePolicy(source);
-      case USER -> toKeycloakUserPolicy(source);
+      case TIME -> toKeycloakTimePolicy(source, getTimePolicyConfig(source.getTimePolicy()));
+      case ROLE -> toKeycloakRolePolicy(source, getRolePolicyConfig(source.getRolePolicy()));
+      case USER -> toKeycloakUserPolicy(source, getUserPolicyConfig(mappingContext.getKeycloakUserIds()));
       default -> throw new UnsupportedOperationException(
         "Mapper not defined: source type = " + source.getClass().getSimpleName());
     };
   }
 
-  /**
-   * Maps a {@link BasePolicy} object to a {@link Policy} object.
-   *
-   * @param source the source {@link BasePolicy} object
-   * @return the mapped {@link Policy} object
-   * @throws UnsupportedOperationException if the source object is not a known subclass
-   */
-  public <S extends BasePolicy> Policy toPolicy(S source) {
-    if (isNull(source)) {
-      return null;
-    }
-    if (source instanceof TimePolicy policy) {
-      return toTimePolicy(policy);
-    } else if (source instanceof UserPolicy policy) {
-      return toUserPolicy(policy);
-    } else if (source instanceof RolePolicy policy) {
-      return toRolePolicy(policy);
-    }
-    throw new UnsupportedOperationException("Mapper not defined: source type = " + source.getClass().getSimpleName());
-  }
-
-  /**
-   * Maps a {@link List} of {@link BasePolicy} to a {@link Policies} object. Fills totalRecords property.
-   *
-   * @param policies the list of source {@link BasePolicy} objects
-   * @return the mapped {@link Policies} object with count of total records
-   */
-  public Policies toPolicies(List<BasePolicy> policies) {
-    var mappedPolicies = policies.stream().map(this::toPolicy).filter(Objects::isNull).collect(toList());
-    if (isEmpty(mappedPolicies)) {
-      return null;
-    }
-    return new Policies().policies(mappedPolicies).totalRecords(mappedPolicies.size());
-  }
-
-  /**
-   * Method that is executed after mapping to convert role configuration if exists.
-   *
-   * @param rolePolicy the source {@link RolePolicy} object
-   * @param policy     the mapped {@link Policy} object
-   */
   @AfterMapping
-  protected void convertRoleConfigIfExists(RolePolicy rolePolicy, @MappingTarget Policy policy) {
-    if (rolePolicy.hasConfigValue()) {
-      policy.getRolePolicy().setRoles(extractRoles(rolePolicy));
+  public void setTimePolicyLogic(PolicyRepresentation policyRepresentation, @MappingTarget Policy policy) {
+    if (policy.getTimePolicy() != null) {
+      policy.getTimePolicy().setLogic(parsePolicyLogic(policyRepresentation));
+      return;
+    }
+
+    if (policy.getRolePolicy() != null) {
+      policy.getRolePolicy().setLogic(parsePolicyLogic(policyRepresentation));
+      return;
+    }
+
+    if (policy.getUserPolicy() != null) {
+      policy.getUserPolicy().setLogic(parsePolicyLogic(policyRepresentation));
     }
   }
 
-  /**
-   * Method that is executed after mapping to convert user configuration if exists.
-   *
-   * @param userPolicy the source {@link UserPolicy} object
-   * @param policy     the mapped {@link Policy} objec
-   */
-  @AfterMapping
-  protected void convertUserConfigIfExists(UserPolicy userPolicy, @MappingTarget Policy policy) {
-    if (userPolicy.hasConfigValue()) {
-      policy.getUserPolicy().setUsers(extractUsersIds(userPolicy));
-    }
+  private static Map<String, String> getTimePolicyConfig(TimePolicy timePolicy) {
+    return Map.ofEntries(
+      Map.entry("nbf", EMPTY_STRING),
+      Map.entry("noa", EMPTY_STRING),
+      Map.entry("minute", getIntegerAsStringOrEmpty(timePolicy.getMinuteStart())),
+      Map.entry("minuteEnd", getIntegerAsStringOrEmpty(timePolicy.getMinuteEnd())),
+      Map.entry("hour", getIntegerAsStringOrEmpty(timePolicy.getHourStart())),
+      Map.entry("hourEnd", getIntegerAsStringOrEmpty(timePolicy.getHourEnd())),
+      Map.entry("dayMonth", getIntegerAsStringOrEmpty(timePolicy.getDayOfMonthStart())),
+      Map.entry("dayMonthEnd", getIntegerAsStringOrEmpty(timePolicy.getDayOfMonthEnd())),
+      Map.entry("month", getIntegerAsStringOrEmpty(timePolicy.getMonthStart())),
+      Map.entry("monthEnd", getIntegerAsStringOrEmpty(timePolicy.getMonthEnd()))
+    );
   }
 
-  /**
-   * Method that is executed after mapping to convert time configuration if exists.
-   *
-   * @param timePolicy the source {@link TimePolicy} object
-   * @param policy     the mapped {@link Policy} object
-   */
-  @AfterMapping
-  protected void convertTimeConfigIfExists(TimePolicy timePolicy, @MappingTarget Policy policy) {
-    if (timePolicy.hasConfigValue()) {
-      var target = policy.getTimePolicy();
-      var config = timePolicy.getConfig();
-      target.setRepeat(timePolicy.isRepeated());
-      target.setStart(Date.from(config.getNbf().toInstant(UTC)));
-      target.setExpires(Date.from(config.getNoa().toInstant(UTC)));
-      target.setDayOfMonthStart(config.getDayMonth());
-      target.setDayOfMonthEnd(config.getDayMonthEnd());
-      target.setMonthStart(config.getMonth());
-      target.setMonthEnd(config.getMonthEnd());
-      target.setHourStart(config.getHour());
-      target.setHourEnd(config.getHourEnd());
-      target.setMinuteStart(config.getMinute());
-      target.setMinuteEnd(config.getMinuteEnd());
-    }
+  private Map<String, String> getUserPolicyConfig(List<String> userIds) {
+    return userIds != null ? singletonMap("users", jsonHelper.asJsonStringSafe(userIds)) : emptyMap();
   }
 
-  @SneakyThrows
-  private List<RolePolicyRole> extractRoles(RolePolicy source) {
-    if (isNull(source.getConfig().getRoles())) {
-      return emptyList();
-    }
-    return objectMapper.readValue(source.getConfig().getRoles(), new TypeReference<>() {});
+  private Map<String, String> getRolePolicyConfig(RolePolicy rolePolicy) {
+    return rolePolicy != null
+      ? singletonMap("roles", jsonHelper.asJsonStringSafe(rolePolicy.getRoles()))
+      : emptyMap();
   }
 
-  @SneakyThrows
-  private List<UUID> extractUsersIds(UserPolicy source) {
-    return objectMapper.readValue(source.getConfig().getUsers(), new TypeReference<>() {});
+  private List<UUID> parseUserIds(Map<String, String> config) {
+    return jsonHelper.fromJson(emptyIfNull(config).get("users"), new TypeReference<>() {});
+  }
+
+  private List<RolePolicyRole> parseRoleIds(Map<String, String> config) {
+    return jsonHelper.fromJson(emptyIfNull(config).get("roles"), new TypeReference<>() {});
+  }
+
+  private static TimePolicy parseTimePolicy(Map<String, String> config) {
+    var timePolicyConfig = emptyIfNull(config);
+
+    return new TimePolicy()
+      .start(parseDateSafe(timePolicyConfig.get("nbf")))
+      .expires(parseDateSafe(timePolicyConfig.get("noa")))
+      .minuteStart(parseIntSafe(timePolicyConfig.get("minute")))
+      .minuteEnd(parseIntSafe(timePolicyConfig.get("minuteEnd")))
+      .hourStart(parseIntSafe(timePolicyConfig.get("hour")))
+      .hourEnd(parseIntSafe(timePolicyConfig.get("hourEnd")))
+      .dayOfMonthStart(parseIntSafe(timePolicyConfig.get("dayMonth")))
+      .dayOfMonthEnd(parseIntSafe(timePolicyConfig.get("dayMonthEnd")))
+      .monthStart(parseIntSafe(timePolicyConfig.get("month")))
+      .monthEnd(parseIntSafe(timePolicyConfig.get("monthEnd")))
+      .repeat(isRepeatedTimePolicy(config));
+  }
+
+  protected static boolean isRepeatedTimePolicy(Map<String, String> policyConfig) {
+    var minuteStart = parseIntSafe(policyConfig.get("minute"));
+    var hourStart = parseIntSafe(policyConfig.get("hour"));
+    var dayStart = parseIntSafe(policyConfig.get("dayMonth"));
+    var monthStart = parseIntSafe(policyConfig.get("month"));
+    return anyNotNull(hourStart, monthStart, dayStart, minuteStart);
+  }
+
+  protected static PolicyLogicType parsePolicyLogic(PolicyRepresentation policyRepresentation) {
+    return ofNullable(policyRepresentation)
+      .map(AbstractPolicyRepresentation::getLogic)
+      .map(Enum::name)
+      .map(enumValue -> PolicyLogicType.fromValue(enumValue.toLowerCase()))
+      .orElse(null);
+  }
+
+  private static String getIntegerAsStringOrEmpty(Integer integer) {
+    return integer != null ? integer.toString() : "";
+  }
+
+  @Retention(RetentionPolicy.CLASS)
+  @Mapping(target = "owner", ignore = true)
+  @Mapping(target = "scopes", ignore = true)
+  @Mapping(target = "policies", ignore = true)
+  @Mapping(target = "resources", ignore = true)
+  @Mapping(target = "scopesData", ignore = true)
+  @Mapping(target = "resourcesData", ignore = true)
+  @interface KeycloakPolicyIgnoredFieldMappings {}
+
+  @Data
+  @NoArgsConstructor
+  public static class PolicyMapperContext {
+
+    private List<String> keycloakUserIds;
+
+    /**
+     * Creates an empty {@link PolicyMapperContext} object.
+     */
+    public static PolicyMapperContext empty() {
+      return new PolicyMapperContext();
+    }
+
+    /**
+     * Sets keycloakUserIds for {@link PolicyMapperContext} and returns {@link PolicyMapperContext}.
+     *
+     * @return this {@link PolicyMapperContext} with new keycloakUserIds value
+     */
+    public PolicyMapperContext keycloakUserIds(List<String> keycloakUserIds) {
+      this.keycloakUserIds = keycloakUserIds;
+      return this;
+    }
   }
 }

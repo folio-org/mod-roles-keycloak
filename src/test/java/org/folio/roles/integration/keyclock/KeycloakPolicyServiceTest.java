@@ -1,158 +1,169 @@
 package org.folio.roles.integration.keyclock;
 
-import static java.util.Objects.nonNull;
-import static java.util.UUID.fromString;
-import static org.folio.roles.domain.dto.PolicyType.TIME;
-import static org.folio.roles.support.KeycloakUtils.ACCESS_TOKEN;
-import static org.folio.roles.support.PolicyUtils.DAY_OF_MONTH_END;
-import static org.folio.roles.support.PolicyUtils.DAY_OF_MONTH_START;
-import static org.folio.roles.support.PolicyUtils.EXPIRE;
-import static org.folio.roles.support.PolicyUtils.HOUR_END;
-import static org.folio.roles.support.PolicyUtils.HOUR_START;
-import static org.folio.roles.support.PolicyUtils.MINUTE_START;
-import static org.folio.roles.support.PolicyUtils.MONTH_END;
-import static org.folio.roles.support.PolicyUtils.MONTH_START;
-import static org.folio.roles.support.PolicyUtils.POLICY_DESCRIPTION;
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.folio.roles.support.KeycloakUserUtils.KEYCLOAK_USER_ID;
 import static org.folio.roles.support.PolicyUtils.POLICY_ID;
-import static org.folio.roles.support.PolicyUtils.POLICY_NAME;
-import static org.folio.roles.support.PolicyUtils.START;
-import static org.folio.roles.support.PolicyUtils.createKeycloakTimePolicy;
-import static org.folio.roles.support.PolicyUtils.createKeycloakTimePolicyWithConfig;
-import static org.folio.roles.support.PolicyUtils.createResponseKeycloakUserPolicy;
-import static org.folio.roles.support.PolicyUtils.createTimePolicy;
+import static org.folio.roles.support.PolicyUtils.keycloakTimePolicy;
+import static org.folio.roles.support.PolicyUtils.keycloakUserPolicy;
+import static org.folio.roles.support.PolicyUtils.timePolicy;
 import static org.folio.roles.support.PolicyUtils.userPolicy;
-import static org.folio.roles.support.TestConstants.LOGIN_CLIENT_SUFFIX;
-import static org.folio.roles.support.TestConstants.TENANT_ID;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.folio.roles.support.TestConstants.USER_ID;
+import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
-import feign.FeignException;
-import feign.codec.DecodeException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.ws.rs.InternalServerErrorException;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.UUID;
-import org.folio.roles.integration.keyclock.client.PolicyClient;
 import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.roles.mapper.KeycloakPolicyMapper;
-import org.folio.roles.mapper.KeycloakPolicyMapperImpl;
-import org.folio.roles.support.TestConstants;
-import org.folio.spring.FolioExecutionContext;
+import org.folio.roles.mapper.KeycloakPolicyMapper.PolicyMapperContext;
+import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
+import org.jboss.resteasy.core.Headers;
+import org.jboss.resteasy.core.ServerResponse;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.keycloak.admin.client.resource.AuthorizationResource;
+import org.keycloak.admin.client.resource.PolicyResource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
 class KeycloakPolicyServiceTest {
 
-  private static final UUID KEYCLOAK_USER_ID = fromString("00000000-0000-0000-0000-000000000002");
-  private static final String LOGIN_CLIENT_ID = TENANT_ID + LOGIN_CLIENT_SUFFIX;
-
-  @Mock private PolicyClient client;
-  @Mock private KeycloakAccessTokenService tokenService;
-  @Mock private KeycloakClientService clientService;
-  @Mock private FolioExecutionContext context;
-  @Mock private KeycloakUserService userService;
-  @Spy private KeycloakPolicyMapper mapper = new KeycloakPolicyMapperImpl();
-
   @InjectMocks private KeycloakPolicyService keycloakPolicyService;
 
-  @BeforeEach
-  void setUp() {
-    when(tokenService.getToken()).thenReturn(ACCESS_TOKEN);
-    when(context.getTenantId()).thenReturn(TestConstants.TENANT_ID);
-    when(clientService.findAndCacheLoginClientUuid()).thenReturn(LOGIN_CLIENT_ID);
-  }
+  @Mock private PolicyResource policyResource;
+  @Mock private KeycloakUserService keycloakUserService;
+  @Mock private KeycloakPolicyMapper keycloakPolicyMapper;
+  @Mock private KeycloakAuthorizationClientProvider authClientProvider;
+  @Mock(answer = RETURNS_DEEP_STUBS) private AuthorizationResource authorizationResource;
 
   @AfterEach
   void afterEach() {
-    verifyNoMoreInteractions(client, tokenService, context);
+    TestUtils.verifyNoMoreInteractions(this);
   }
 
   @Nested
-  @DisplayName("findById")
-  class FindByIdTest {
+  @DisplayName("getById")
+  class GetById {
 
     @Test
     void positive() {
-      var expectedPolicy = createKeycloakTimePolicyWithConfig();
-      when(client.getById(anyString(), anyString(), anyString(), any(UUID.class))).thenReturn(expectedPolicy);
+      var expectedPolicy = timePolicy();
+      var keycloakPolicy = keycloakTimePolicy();
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policy(POLICY_ID.toString()).toRepresentation()).thenReturn(keycloakPolicy);
+      when(keycloakPolicyMapper.toPolicy(keycloakPolicy)).thenReturn(expectedPolicy);
 
-      var policy = keycloakPolicyService.findById(POLICY_ID);
+      var policy = keycloakPolicyService.getById(POLICY_ID);
 
-      assertAll(() -> {
-        assertEquals(POLICY_NAME, policy.getName());
-        assertEquals(POLICY_ID, policy.getId());
-        assertEquals(POLICY_DESCRIPTION, policy.getDescription());
-        assertEquals(TIME, policy.getType());
-        assertTrue(nonNull(policy.getTimePolicy()));
+      assertThat(policy).isEqualTo(expectedPolicy);
 
-        var timePolicy = policy.getTimePolicy();
-        assertEquals(START, timePolicy.getStart());
-        assertEquals(EXPIRE, timePolicy.getExpires());
-        assertEquals(DAY_OF_MONTH_START, timePolicy.getDayOfMonthStart());
-        assertEquals(DAY_OF_MONTH_END, timePolicy.getDayOfMonthEnd());
-        assertEquals(MONTH_START, timePolicy.getMonthStart());
-        assertEquals(MONTH_END, timePolicy.getMonthEnd());
-        assertEquals(HOUR_START, timePolicy.getHourStart());
-        assertEquals(HOUR_END, timePolicy.getHourEnd());
-        assertEquals(MINUTE_START, timePolicy.getMinuteStart());
-        assertEquals(MONTH_END, timePolicy.getMinuteEnd());
-      });
-      verify(client).getById(anyString(), anyString(), anyString(), any(UUID.class));
+      verify(authorizationResource, atLeastOnce()).policies();
     }
 
     @Test
-    void negative_throwsEntityNotFoundExceptionIfNotFeignNotFound() {
-      when(client.getById(anyString(), anyString(), anyString(), any(UUID.class))).thenThrow(
-        FeignException.NotFound.class);
+    void negative_throwsNotFoundException() {
+      var exception = new NotFoundException();
 
-      assertThrows(EntityNotFoundException.class, () -> keycloakPolicyService.findById(POLICY_ID));
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policy(POLICY_ID.toString()).toRepresentation()).thenThrow(exception);
+
+      assertThatThrownBy(() -> keycloakPolicyService.getById(POLICY_ID))
+        .isInstanceOf(EntityNotFoundException.class)
+        .hasMessage("Failed to find policy: id = %s", POLICY_ID);
+
+      verify(authorizationResource, atLeastOnce()).policies();
+    }
+
+    @Test
+    void negative_throwsClientErrorException() {
+      var response = new ServerResponse(null, 500, new Headers<>());
+      var exception = new InternalServerErrorException(response);
+
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policy(POLICY_ID.toString()).toRepresentation()).thenThrow(exception);
+
+      assertThatThrownBy(() -> keycloakPolicyService.getById(POLICY_ID))
+        .isInstanceOf(KeycloakApiException.class)
+        .hasMessage("Failed to find policy: id = %s", POLICY_ID);
+
+      verify(authorizationResource, atLeastOnce()).policies();
     }
   }
 
   @Nested
-  @DisplayName("createSafe")
+  @DisplayName("create")
   class Create {
 
     @Test
     void positive() {
-      var timePolicy = createTimePolicy();
+      var timePolicy = timePolicy();
+      var keycloakPolicy = keycloakTimePolicy();
+      var response = mock(Response.class);
+
+      when(response.getStatusInfo()).thenReturn(Status.CREATED);
+      when(keycloakPolicyMapper.toKeycloakPolicy(timePolicy, PolicyMapperContext.empty())).thenReturn(keycloakPolicy);
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().create(keycloakPolicy)).thenReturn(response);
+
       keycloakPolicyService.create(timePolicy);
 
-      verify(clientService).findAndCacheLoginClientUuid();
-      verify(tokenService).getToken();
-
-      var keycloakTimePolicy = createKeycloakTimePolicy();
-      verify(client).create(ACCESS_TOKEN, TENANT_ID, LOGIN_CLIENT_ID, "time", keycloakTimePolicy);
+      verify(authorizationResource, atLeastOnce()).policies();
     }
 
     @Test
-    void create_positive_alreadyExists() {
-      var policy = createTimePolicy();
+    void positive_policyExistsByName() {
+      var timePolicy = timePolicy();
+      var keycloakPolicy = keycloakTimePolicy();
+      var response = mock(Response.class);
 
-      doThrow(FeignException.Conflict.class).when(client)
-        .create(anyString(), any(), any(), any(), any());
-      assertDoesNotThrow(() -> keycloakPolicyService.create(policy));
+      when(response.getStatusInfo()).thenReturn(Status.CONFLICT);
+      when(keycloakPolicyMapper.toKeycloakPolicy(timePolicy, PolicyMapperContext.empty())).thenReturn(keycloakPolicy);
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().create(keycloakPolicy)).thenReturn(response);
+
+      keycloakPolicyService.create(timePolicy);
+
+      verify(authorizationResource, atLeastOnce()).policies();
+    }
+
+    @Test
+    void positive_userPolicy() {
+      var userPolicy = userPolicy();
+      var policyMapperContext = new PolicyMapperContext().keycloakUserIds(List.of(KEYCLOAK_USER_ID));
+      var keycloakPolicy = keycloakUserPolicy();
+      var response = mock(Response.class);
+
+      when(response.getStatusInfo()).thenReturn(Status.CONFLICT);
+      when(keycloakUserService.findKeycloakIdByUserId(USER_ID)).thenReturn(KEYCLOAK_USER_ID);
+      when(keycloakPolicyMapper.toKeycloakPolicy(userPolicy, policyMapperContext)).thenReturn(keycloakPolicy);
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().create(keycloakPolicy)).thenReturn(response);
+
+      keycloakPolicyService.create(userPolicy);
+
+      verify(authorizationResource, atLeastOnce()).policies();
     }
   }
 
@@ -161,45 +172,54 @@ class KeycloakPolicyServiceTest {
   class Search {
 
     @Test
-    void positive_returns_all_if_null_parameters() {
-      var userPolicy = userPolicy();
-      var timePolicy = createTimePolicy();
-      userPolicy.setSource(null);
-      timePolicy.setSource(null);
-      var responseKeycloakUserPolicy = createResponseKeycloakUserPolicy();
-      var keycloakTimePolicyWithConfig = createKeycloakTimePolicyWithConfig();
+    void positive_returnsAllNullParameters() {
+      var userPolicyId = UUID.randomUUID();
+      var timePolicyId = UUID.randomUUID();
+      var userPolicy = userPolicy(KEYCLOAK_USER_ID).id(userPolicyId).source(null);
+      var timePolicy = timePolicy().id(timePolicyId).source(null);
+      var keycloakUserPolicy = keycloakUserPolicy(userPolicyId);
+      var keycloakTimePolicy = keycloakTimePolicy(timePolicyId);
+      var query = "test";
 
-      when(client.findAll(anyString(), anyString(), anyString(), anyInt(), anyInt(), anyString())).thenReturn(
-        List.of(responseKeycloakUserPolicy, keycloakTimePolicyWithConfig));
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policies(null, query, null, null, null, false, null, null, 5, 10))
+        .thenReturn(List.of(keycloakTimePolicy, keycloakUserPolicy));
+      when(keycloakPolicyMapper.toPolicy(keycloakTimePolicy)).thenReturn(timePolicy);
+      when(keycloakPolicyMapper.toPolicy(keycloakUserPolicy)).thenReturn(userPolicy);
 
-      var policies = keycloakPolicyService.search("role", 0, 10);
+      var result = keycloakPolicyService.find(query, 10, 5);
 
-      assertEquals(List.of(userPolicy, timePolicy), policies);
-      assertEquals(2, policies.size());
+      assertThat(result).containsExactly(timePolicy, userPolicy);
+      verify(authorizationResource, atLeastOnce()).policies();
     }
 
     @Test
-    void positive_returns_empty_result() {
-      when(client.findAll(anyString(), anyString(), anyString(), anyInt(), anyInt(), anyString())).thenReturn(
-        List.of());
+    void positive_emptyResults() {
+      var query = "test";
 
-      assertEquals(keycloakPolicyService.search("test-search", 0, 10), List.of());
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policies(null, query, null, null, null, false, null, null, 5, 10))
+        .thenReturn(emptyList());
+
+      var result = keycloakPolicyService.find(query, 10, 5);
+
+      assertThat(result).isEmpty();
+      verify(authorizationResource, atLeastOnce()).policies();
     }
 
     @Test
-    void negative_throws_api_exception() {
-      doThrow(FeignException.class).when(client)
-        .findAll(anyString(), anyString(), anyString(), anyInt(), anyInt(), anyString());
+    void positive_webApplicationException() {
+      var query = "test";
 
-      assertThrows(KeycloakApiException.class, () -> keycloakPolicyService.search("test-search", 0, 10));
-    }
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policies(null, query, null, null, null, false, null, null, 5, 10))
+        .thenThrow(new NotAuthorizedException("Unauthorized"));
 
-    @Test
-    void negative_throwsDecodeException() {
-      doThrow(DecodeException.class).when(client)
-        .findAll(anyString(), anyString(), anyString(), anyInt(), anyInt(), anyString());
+      assertThatThrownBy(() -> keycloakPolicyService.find(query, 10, 5))
+        .isInstanceOf(KeycloakApiException.class)
+        .hasMessage("Failed to search policies");
 
-      assertThrows(KeycloakApiException.class, () -> keycloakPolicyService.search("test-search", 0, 10));
+      verify(authorizationResource, atLeastOnce()).policies();
     }
   }
 
@@ -209,27 +229,54 @@ class KeycloakPolicyServiceTest {
 
     @Test
     void positive() {
-      var policy = createTimePolicy();
-      var keycloakTimePolicy = createKeycloakTimePolicy();
-      keycloakPolicyService.update(policy);
+      var policy = timePolicy();
+      var keycloakTimePolicy = keycloakTimePolicy();
 
-      verify(client).updateById(anyString(), anyString(), anyString(), eq(policy.getType()
-        .name()
-        .toLowerCase()), eq(policy.getId()), eq(keycloakTimePolicy));
+      when(keycloakPolicyMapper.toKeycloakPolicy(policy, PolicyMapperContext.empty())).thenReturn(keycloakTimePolicy);
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policy(POLICY_ID.toString())).thenReturn(policyResource);
+      doNothing().when(policyResource).update(keycloakTimePolicy);
+
+      keycloakPolicyService.update(policy);
+      verify(authorizationResource, atLeastOnce()).policies();
     }
 
     @Test
-    void negative_throws_api_exception() {
-      var policy = userPolicy();
+    void negative_internalServerErrorException() {
+      var policy = timePolicy();
+      var keycloakTimePolicy = keycloakTimePolicy();
+      var exception = new InternalServerErrorException(new ServerResponse(null, 500, new Headers<>()));
 
-      when(userService.findKeycloakIdByUserId(policy.getUserPolicy()
-        .getUsers()
-        .get(0))).thenReturn(KEYCLOAK_USER_ID);
-      doThrow(FeignException.class).when(client)
-        .updateById(anyString(), anyString(), anyString(), anyString(), any(UUID.class), any());
+      when(keycloakPolicyMapper.toKeycloakPolicy(policy, PolicyMapperContext.empty())).thenReturn(keycloakTimePolicy);
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policy(POLICY_ID.toString())).thenReturn(policyResource);
+      doThrow(exception).when(policyResource).update(keycloakTimePolicy);
 
-      assertThrows(KeycloakApiException.class, () -> keycloakPolicyService.update(policy));
-      verify(client).updateById(anyString(), anyString(), anyString(), anyString(), any(UUID.class), any());
+      assertThatThrownBy(() -> keycloakPolicyService.update(policy))
+        .isInstanceOf(KeycloakApiException.class)
+        .hasMessage("Failed to update policy")
+        .satisfies(err -> assertThat(((KeycloakApiException) err).getStatus()).isEqualTo(NOT_FOUND));
+
+      verify(authorizationResource, atLeastOnce()).policies();
+    }
+
+    @Test
+    void negative_unauthorizedException() {
+      var policy = timePolicy();
+      var keycloakTimePolicy = keycloakTimePolicy();
+      var exception = new NotAuthorizedException(new ServerResponse(null, 401, new Headers<>()));
+
+      when(keycloakPolicyMapper.toKeycloakPolicy(policy, PolicyMapperContext.empty())).thenReturn(keycloakTimePolicy);
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policy(POLICY_ID.toString())).thenReturn(policyResource);
+      doThrow(exception).when(policyResource).update(keycloakTimePolicy);
+
+      assertThatThrownBy(() -> keycloakPolicyService.update(policy))
+        .isInstanceOf(KeycloakApiException.class)
+        .hasMessage("Failed to update policy")
+        .satisfies(err -> assertThat(((KeycloakApiException) err).getStatus()).isEqualTo(UNAUTHORIZED));
+
+      verify(authorizationResource, atLeastOnce()).policies();
     }
   }
 
@@ -239,19 +286,42 @@ class KeycloakPolicyServiceTest {
 
     @Test
     void positive() {
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policy(POLICY_ID.toString())).thenReturn(policyResource);
+      doNothing().when(policyResource).remove();
+
       keycloakPolicyService.deleteById(POLICY_ID);
 
-      verify(client).deleteById(anyString(), anyString(), anyString(), eq(POLICY_ID));
+      verify(authorizationResource, atLeastOnce()).policies();
     }
 
     @Test
-    void negative_throws_api_exception() {
+    void negative_notFoundException() {
+      var exception = new NotFoundException(new ServerResponse(null, 404, new Headers<>()));
 
-      doThrow(FeignException.class).when(client)
-        .deleteById(anyString(), anyString(), anyString(), eq(POLICY_ID));
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policy(POLICY_ID.toString())).thenReturn(policyResource);
+      doThrow(exception).when(policyResource).remove();
 
-      assertThrows(KeycloakApiException.class, () -> keycloakPolicyService.deleteById(POLICY_ID));
-      verify(client).deleteById(anyString(), anyString(), anyString(), eq(POLICY_ID));
+      assertThatThrownBy(() -> keycloakPolicyService.deleteById(POLICY_ID))
+        .isInstanceOf(EntityNotFoundException.class)
+        .hasMessage("Failed to find policy: id = %s", POLICY_ID);
+      verify(authorizationResource, atLeastOnce()).policies();
+    }
+
+    @Test
+    void negative_notAuthorizedException() {
+      var exception = new NotAuthorizedException(new ServerResponse(null, 401, new Headers<>()));
+
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().policy(POLICY_ID.toString())).thenReturn(policyResource);
+      doThrow(exception).when(policyResource).remove();
+
+      assertThatThrownBy(() -> keycloakPolicyService.deleteById(POLICY_ID))
+        .isInstanceOf(KeycloakApiException.class)
+        .hasMessage("Failed to delete policy")
+        .satisfies(err -> assertThat(((KeycloakApiException) err).getStatus()).isEqualTo(UNAUTHORIZED));
+      verify(authorizationResource, atLeastOnce()).policies();
     }
   }
 }

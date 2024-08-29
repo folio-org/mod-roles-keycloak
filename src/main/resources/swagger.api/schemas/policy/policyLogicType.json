@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "The logic type of policy.",
+  "type": "string",
+  "enum": [
+    "positive",
+    "negative"
+  ],
+  "default": "positive",
+  "examples": [
+    "positive",
+    "negative"
+  ]
+}

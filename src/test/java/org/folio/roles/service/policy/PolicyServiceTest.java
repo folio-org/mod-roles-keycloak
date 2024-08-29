@@ -1,6 +1,5 @@
 package org.folio.roles.service.policy;
 
-import static org.apache.commons.collections4.IterableUtils.find;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.dto.PolicyType.ROLE;
@@ -10,16 +9,13 @@ import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.PolicyUtils.POLICY_ID;
 import static org.folio.roles.support.PolicyUtils.POLICY_NAME;
-import static org.folio.roles.support.PolicyUtils.createTimePolicy;
 import static org.folio.roles.support.PolicyUtils.rolePolicy;
+import static org.folio.roles.support.PolicyUtils.timePolicy;
 import static org.folio.roles.support.PolicyUtils.userPolicy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -29,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.folio.roles.domain.dto.Policy;
+import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.integration.keyclock.KeycloakPolicyService;
 import org.folio.roles.support.PolicyUtils;
 import org.folio.test.types.UnitTest;
@@ -61,8 +58,8 @@ class PolicyServiceTest {
 
     @Test
     void positive() {
-      var timePolicy = createTimePolicy();
-      when(entityService.findById(POLICY_ID)).thenReturn(timePolicy);
+      var timePolicy = timePolicy();
+      when(entityService.getById(POLICY_ID)).thenReturn(timePolicy);
 
       var policy = service.findById(POLICY_ID);
 
@@ -78,7 +75,7 @@ class PolicyServiceTest {
 
     @Test
     void positive() {
-      var timePolicy = createTimePolicy().id(null);
+      var timePolicy = timePolicy().id(null);
       var policies = List.of(timePolicy);
 
       when(entityService.create(timePolicy)).thenReturn(timePolicy);
@@ -89,13 +86,12 @@ class PolicyServiceTest {
 
       var result = service.create(policies);
 
-      assertThat(result.getTotalRecords()).isEqualTo(1);
-      assertThat(result.getPolicies()).hasSize(1).containsExactly(timePolicy);
+      assertThat(result).isEqualTo(PageResult.asSinglePage(timePolicy));
     }
 
     @Test
     void positive_singlePolicy() {
-      var timePolicy = createTimePolicy().id(null);
+      var timePolicy = timePolicy().id(null);
 
       when(entityService.create(timePolicy)).thenReturn(timePolicy);
       doNothing().when(keycloakService).create(timePolicy);
@@ -207,22 +203,16 @@ class PolicyServiceTest {
 
     @Test
     void positive() {
-      var timePolicy = createTimePolicy();
+      var timePolicy = timePolicy();
       var userPolicy = userPolicy();
-      var policies = List.of(timePolicy, userPolicy);
-      var cqlQuery = "cql.allRecords = 2";
+      var policiesPage = PageResult.asSinglePage(timePolicy, userPolicy);
+      var cqlQuery = "cql.allRecords = 1";
 
-      when(entityService.findByQuery(cqlQuery, 0, 2)).thenReturn(policies).thenReturn(null);
+      when(entityService.findByQuery(cqlQuery, 0, 2)).thenReturn(policiesPage);
 
       var result = service.search(cqlQuery, 2, 0);
-      var result2 = service.search(cqlQuery, 2, 0);
 
-      assertNull(result2);
-      assertEquals(2, result.getTotalRecords());
-      assertEquals(2, result.getPolicies().size());
-      assertNotNull(find(result.getPolicies(), item -> TIME == item.getType()));
-      assertNotNull(find(result.getPolicies(), item -> USER == item.getType()));
-      verify(entityService, times(2)).findByQuery(cqlQuery, 0, 2);
+      assertThat(result).isEqualTo(policiesPage);
     }
   }
 

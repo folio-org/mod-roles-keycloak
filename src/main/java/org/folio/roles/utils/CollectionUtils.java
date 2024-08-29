@@ -82,7 +82,32 @@ public class CollectionUtils {
     return new ArrayList<>(set);
   }
 
+  /**
+   * Retrieves first element from given source collection.
+   *
+   * @param source - source collection
+   * @param <T> - generic type for collection element
+   * @return {@link Optional} of first element of collection (according to iterator), empty if collection is empty
+   */
   public static <T> Optional<T> findOne(Collection<T> source) {
     return emptyIfNull(source).size() == 1 ? Optional.ofNullable(source.iterator().next()) : Optional.empty();
+  }
+
+  /**
+   * Returns true of values contains any non null value.
+   *
+   * @param values - values to analyze
+   * @param <T> - value generic type
+   * @return true if values contains non-null value, false - otherwise
+   */
+  @SafeVarargs
+  public static <T> boolean anyNonNull(T... values) {
+    for (T value : values) {
+      if (value != null) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
