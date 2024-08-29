@@ -3,6 +3,7 @@ package org.folio.roles.service.capability;
 import java.util.List;
 import java.util.UUID;
 import org.folio.roles.domain.dto.RoleCapabilitySet;
+import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.model.PageResult;
 
 public interface RoleCapabilitySetService {
@@ -16,6 +17,15 @@ public interface RoleCapabilitySetService {
    * @return {@link PageResult} with created {@link RoleCapabilitySet} relations
    */
   PageResult<RoleCapabilitySet> create(UUID roleId, List<UUID> capabilitySetIds, boolean safeCreate);
+
+  /**
+   * Creates a record(s) associating one or more capabilitySets with a role.
+   *
+   * @param request - RoleCapabilitySetsRequest contains roleId, capabilitySetIds, and capabilitySetNames
+   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @return {@link PageResult} with created {@link RoleCapabilitySet} relations
+   */
+  PageResult<RoleCapabilitySet> create(RoleCapabilitySetsRequest request, boolean safeCreate);
 
   /**
    * Retrieves role-capabilitySets items by CQL query.

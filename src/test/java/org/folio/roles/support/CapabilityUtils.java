@@ -28,9 +28,13 @@ public class CapabilityUtils {
   public static final String APPLICATION_ID = "test-application-0.0.1";
   public static final String APPLICATION_ID_V2 = "test-application-0.0.2";
   public static final String PERMISSION_NAME = "test-resource.item.create";
+  public static final String CAPABILITY_NAME = "test-resource_item.create";
+  public static final String INVALID_CAPABILITY_NAME = "boo_item.create";
 
   public static final UUID CAPABILITY_ID = UUID.randomUUID();
 
+  public static final String FOO_DELETE_CAPABILITY_NAME = "foo_item.delete";
+  public static final String FOO_EDIT_CAPABILITY_NAME = "foo_item.edit";
   public static final UUID FOO_CREATE_CAPABILITY = fromString("8d2da27c-1d56-48b6-958d-2bfae6d79dc8");
   public static final UUID FOO_VIEW_CAPABILITY = fromString("e2628d7d-059a-46a1-a5ea-10a5a37b1af2");
   public static final UUID FOO_EDIT_CAPABILITY = fromString("78d6a59f-90ab-46a1-a349-4d25d0798763");

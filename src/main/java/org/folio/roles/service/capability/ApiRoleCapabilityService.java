@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.dto.RoleCapability;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.exception.ServiceException;
@@ -22,6 +23,12 @@ public class ApiRoleCapabilityService implements RoleCapabilityService {
   public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
     checkRoleIsNotDefault(roleId);
     return delegate.create(roleId, capabilityIds, safeCreate);
+  }
+
+  @Override
+  public PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate) {
+    checkRoleIsNotDefault(request.getRoleId());
+    return delegate.create(request, safeCreate);
   }
 
   @Override
