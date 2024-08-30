@@ -56,6 +56,10 @@ public class RoleCapabilityUtils {
     return new RoleCapabilitiesRequest().roleId(roleId).capabilityIds(Arrays.asList(capabilityIds));
   }
 
+  public static RoleCapabilitiesRequest roleCapabilitiesRequest(UUID roleId, String... capabilityNames) {
+    return new RoleCapabilitiesRequest().roleId(roleId).capabilityNames(Arrays.asList(capabilityNames));
+  }
+
   public static RoleCapabilitiesRequest roleCapabilitiesRequest(UUID roleId, List<UUID> capabilityIds) {
     return new RoleCapabilitiesRequest().roleId(roleId).capabilityIds(capabilityIds);
   }

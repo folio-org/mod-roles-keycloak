@@ -8,8 +8,11 @@ import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.it.RoleCapabilityIT.postRoleCapabilities;
 import static org.folio.roles.it.RoleCapabilityIT.updateRoleCapabilities;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_CREATE_CAPABILITY_SET;
+import static org.folio.roles.support.CapabilitySetUtils.FOO_CREATE_CAPABILITY_SET_NAME;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_EDIT_CAPABILITY_SET;
+import static org.folio.roles.support.CapabilitySetUtils.FOO_EDIT_CAPABILITY_SET_NAME;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_MANAGE_CAPABILITY_SET;
+import static org.folio.roles.support.CapabilitySetUtils.INVALID_CAPABILITY_SET_NAME;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySets;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySetsUpdateRequest;
@@ -173,6 +176,34 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
   }
 
   @Test
+  @KeycloakRealms("/json/keycloak/role-capability-realm.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capability-sets/populate-capability-sets.sql"
+  })
+  void assignCapabilitySetsByNames_positive() throws Exception {
+    var request = roleCapabilitySetsRequest(ROLE_ID, FOO_CREATE_CAPABILITY_SET_NAME, FOO_EDIT_CAPABILITY_SET_NAME);
+    var fooItemEditCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_EDIT_CAPABILITY_SET);
+    var fooItemCreateCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_CREATE_CAPABILITY_SET);
+    var expectedRoleCapabilitySets = roleCapabilitySets(fooItemEditCapabilitySet, fooItemCreateCapabilitySet);
+
+    postRoleCapabilitySets(request)
+      .andExpect(content().json(asJsonString(expectedRoleCapabilitySets)))
+      .andExpect(jsonPath("$.roleCapabilitySets[0].metadata.createdByUserId", is(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.roleCapabilitySets[0].metadata.createdDate", notNullValue()))
+      .andExpect(jsonPath("$.roleCapabilitySets[1].metadata.createdByUserId", is(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.roleCapabilitySets[1].metadata.createdDate", notNullValue()));
+
+    assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
+      kcPermissionName(fooItemPutEndpoint()),
+      kcPermissionName(fooItemPostEndpoint()),
+      kcPermissionName(fooItemGetEndpoint())
+    ));
+  }
+
+  @Test
   @KeycloakRealms("/json/keycloak/role-capability-fresh-realm.json")
   @Sql(scripts = {
     "classpath:/sql/populate-test-role.sql",
@@ -200,11 +231,27 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
   }
 
   @Test
-  void assignCapabilities_negative_emptyCapabilities() throws Exception {
+  void assignCapabilitySets_negative_notFoundCapabilitySetNames() throws Exception {
+    var request = roleCapabilitySetsRequest(ROLE_ID, INVALID_CAPABILITY_SET_NAME);
+    attemptToPostRoleCapabilitySets(request)
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].message")
+        .value("Capability sets by name are not found"))
+      .andExpect(jsonPath("$.errors[0].type").value("RequestValidationException"))
+      .andExpect(jsonPath("$.errors[0].code").value("validation_error"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilitySetNames"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].value").value("[boo_item.create]"));
+  }
+
+  @Test
+  void assignCapabilitySets_negative_emptyCapabilitySet() throws Exception {
     var request = roleCapabilitySetsRequest(ROLE_ID, emptyList());
     attemptToPostRoleCapabilitySets(request)
       .andExpect(status().isBadRequest())
-      .andExpectAll(argumentNotValidErr("size must be between 1 and 2147483647", "capabilitySetIds", "[]"));
+      .andExpect(jsonPath("$.errors[0].message")
+        .value("'capabilitySetIds' or 'capabilitySetNames' must not be null"))
+      .andExpect(jsonPath("$.errors[0].type").value("IllegalArgumentException"))
+      .andExpect(jsonPath("$.errors[0].code").value("validation_error"));
   }
 
   @Test
@@ -225,8 +272,8 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.errors[0].code", is("found_error")))
       .andExpect(jsonPath("$.errors[0].type", is("EntityExistsException")))
       .andExpect(jsonPath("$.errors[0].message", is(String.format(
-        "Relation already exists for role='%s' and capabilitySets=%s", ROLE_ID, capabilitySetIds))))
-    ;
+        "Relation already exists for role='%s' and capabilitySets=%s", ROLE_ID, capabilitySetIds))
+      ));
   }
 
   @Test
