@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import org.apache.commons.lang3.SerializationException;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +45,12 @@ class JsonHelperTest {
     }
 
     @Test
+    void positive_nullStringInput() {
+      var actual = helper.parse((String) null, User.class);
+      assertThat(actual).isNull();
+    }
+
+    @Test
     void negative_stringInputMapperException() throws JsonProcessingException {
       when(mapper.readValue(TEST_USER_JSON, User.class)).thenThrow(new TestJsonProcessingException("Failed"));
       assertThatThrownBy(() -> helper.parse(TEST_USER_JSON, User.class))
@@ -57,6 +64,13 @@ class JsonHelperTest {
       when(mapper.readValue(TEST_USER_JSON, typeReference)).thenReturn(TEST_USER);
       var actual = helper.parse(TEST_USER_JSON, typeReference);
       assertThat(actual).isEqualTo(TEST_USER);
+    }
+
+    @Test
+    void positive_nullStringForTypeReference() {
+      var typeReference = new TypeReference<User>() {};
+      var actual = helper.parse(null, typeReference);
+      assertThat(actual).isNull();
     }
 
     @Test
@@ -74,6 +88,12 @@ class JsonHelperTest {
       when(mapper.readValue(inputStream, User.class)).thenReturn(TEST_USER);
       var actual = helper.parse(inputStream, User.class);
       assertThat(actual).isEqualTo(TEST_USER);
+    }
+
+    @Test
+    void positive_nullInputStream() {
+      var actual = helper.parse((InputStream) null, User.class);
+      assertThat(actual).isNull();
     }
 
     @Test
