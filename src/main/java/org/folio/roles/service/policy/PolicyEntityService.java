@@ -12,6 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Policy;
+import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.mapper.entity.PolicyEntityMapper;
 import org.folio.roles.repository.PolicyEntityRepository;
 import org.folio.spring.data.OffsetRequest;
@@ -60,7 +61,7 @@ public class PolicyEntityService {
   }
 
   @Transactional(readOnly = true)
-  public Policy findById(UUID id) {
+  public Policy getById(UUID id) {
     var policyEntity =
       repository.findById(id).orElseThrow(() -> new EntityNotFoundException("Policy not found: id = " + id));
     log.debug("Policy has been found: id = {}", id);
@@ -68,13 +69,13 @@ public class PolicyEntityService {
   }
 
   @Transactional(readOnly = true)
-  public List<Policy> findByQuery(String query, Integer offset, Integer limit) {
+  public PageResult<Policy> findByQuery(String query, Integer offset, Integer limit) {
     var offsetRequest = OffsetRequest.of(offset, limit);
-    var policyEntities = isNotBlank(query)
+    var pageResult = isNotBlank(query)
       ? repository.findByCql(query, offsetRequest)
       : repository.findAll(offsetRequest);
-    log.debug("Policies have been found: count = {}", policyEntities.getTotalElements());
-    return mapper.toPolicy(policyEntities.getContent());
+    log.debug("Policies have been found: count = {}", pageResult.getTotalElements());
+    return PageResult.of(pageResult.getTotalElements(), mapItems(pageResult.getContent(), mapper::toPolicy));
   }
 
   /**

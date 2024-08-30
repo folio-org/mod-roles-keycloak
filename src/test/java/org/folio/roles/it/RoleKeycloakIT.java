@@ -189,14 +189,16 @@ class RoleKeycloakIT extends BaseIntegrationTest {
 
   @Test
   void deleteRole_negative_notFound() throws Exception {
-    mockMvc
-      .perform(delete("/roles/{id}", ROLE_NOT_EXISTED.getId())
+    var notExistingRoleId = ROLE_NOT_EXISTED.getId();
+    mockMvc.perform(delete("/roles/{id}", notExistingRoleId)
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER))
       .andExpect(status().isNotFound())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(jsonPath("$.errors[0].type", is("KeycloakApiException")))
-      .andExpect(jsonPath("$.errors[0].code", is("service_error")));
+      .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
+      .andExpect(jsonPath("$.errors[0].code", is("not_found_error")))
+      .andExpect(jsonPath("$.errors[0].message", is("Failed to find role: id = " + notExistingRoleId)))
+    ;
   }
 
   @Test
@@ -230,14 +232,17 @@ class RoleKeycloakIT extends BaseIntegrationTest {
 
   @Test
   void updateRole_negative_notFoundError() throws Exception {
-    mockMvc.perform(put("/roles/{id}", ROLE_NOT_EXISTED.getId()).header(TENANT, TENANT_ID)
+    var notExistingRoleId = ROLE_NOT_EXISTED.getId();
+    mockMvc.perform(put("/roles/{id}", notExistingRoleId).header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER)
         .content(asJsonString(new Role().name("Updated name").description("updated description")))
         .contentType(APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(jsonPath("$.errors[0].type", is("KeycloakApiException")))
-      .andExpect(jsonPath("$.errors[0].code", is("service_error")));
+      .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
+      .andExpect(jsonPath("$.errors[0].code", is("not_found_error")))
+      .andExpect(jsonPath("$.errors[0].message", is("Failed to find role: id = " + notExistingRoleId)))
+    ;
   }
 
   private static Date timestampFrom(String value) {

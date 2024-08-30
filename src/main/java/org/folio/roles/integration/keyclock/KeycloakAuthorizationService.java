@@ -51,7 +51,7 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    var scopePermissionsClient = getAuthorizationResource().permissions().scope();
+    var scopePermissionsClient = getAuthorizationClient().permissions().scope();
     for (var endpoint : endpoints) {
       var resource = getAuthResourceByStaticPath(endpoint.getPath());
       var scope = getScopeByMethod(resource, endpoint.getMethod());
@@ -80,7 +80,7 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    var scopePermissionsClient = getAuthorizationResource().permissions().scope();
+    var scopePermissionsClient = getAuthorizationClient().permissions().scope();
     for (var endpoint : endpoints) {
       removeKeycloakPermission(scopePermissionsClient, endpoint, nameGenerator);
     }
@@ -88,7 +88,7 @@ public class KeycloakAuthorizationService {
 
   private ResourceRepresentation getAuthResourceByStaticPath(String staticPath) {
     log.debug("Searching for Keycloak resource by permission: {}", staticPath);
-    var resources = getAuthorizationResource().resources().find(staticPath, null, null, null, null, 0, MAX_VALUE);
+    var resources = getAuthorizationClient().resources().find(staticPath, null, null, null, null, 0, MAX_VALUE);
 
     var resourceRepresentation = resources.stream()
       .filter(resource -> StringUtils.equals(staticPath, resource.getName()))
@@ -107,7 +107,7 @@ public class KeycloakAuthorizationService {
         "Scope '%s' is not found in the resource: %s", method, resource.getName())));
   }
 
-  private AuthorizationResource getAuthorizationResource() {
+  private AuthorizationResource getAuthorizationClient() {
     return authResourceProvider.getAuthorizationClient();
   }
 

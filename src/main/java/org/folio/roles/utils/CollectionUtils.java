@@ -82,6 +82,13 @@ public class CollectionUtils {
     return new ArrayList<>(set);
   }
 
+  /**
+   * Retrieves first element from given source collection.
+   *
+   * @param source - source collection
+   * @param <T> - generic type for collection element
+   * @return {@link Optional} of first element of collection (according to iterator), empty if collection is empty
+   */
   public static <T> Optional<T> findOne(Collection<T> source) {
     return emptyIfNull(source).size() == 1 ? Optional.ofNullable(source.iterator().next()) : Optional.empty();
   }

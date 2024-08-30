@@ -34,7 +34,7 @@ public class ResourceHelper {
 
   private <T> T deserializeResource(Resource res, Class<T> resourceType) {
     try {
-      return jsonHelper.fromJsonStream(res.getInputStream(), resourceType);
+      return jsonHelper.parse(res.getInputStream(), resourceType);
     } catch (IOException e) {
       var msg =
         String.format("Failed to deserialize data of type %s from file: %s", resourceType, res.getFilename());
