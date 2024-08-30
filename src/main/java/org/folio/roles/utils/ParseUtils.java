@@ -11,7 +11,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 
 @Log4j2
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -29,16 +28,12 @@ public class ParseUtils {
       return null;
     }
 
-    if (NumberUtils.isDigits(value)) {
-      try {
-        return Integer.parseInt(value);
-      } catch (NumberFormatException e) {
-        log.warn("Failed to parse '{}' as integer value", value);
-        return null;
-      }
+    try {
+      return Integer.parseInt(value);
+    } catch (NumberFormatException e) {
+      log.warn("Failed to parse '{}' as integer value", value);
+      return null;
     }
-
-    return null;
   }
 
   /**
@@ -53,14 +48,12 @@ public class ParseUtils {
       return null;
     }
 
-    LocalDateTime localDateTime;
     try {
-      localDateTime = LocalDateTime.parse(dateString, DEFAULT_DATE_TIME_FORMATTER);
+      var localDateTime = LocalDateTime.parse(dateString, DEFAULT_DATE_TIME_FORMATTER);
+      return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
     } catch (DateTimeParseException dateTimeParseException) {
       log.warn("Failed to parse '{}' as date", dateString, dateTimeParseException);
       return null;
     }
-
-    return Date.from(localDateTime.toInstant(ZoneOffset.UTC));
   }
 }

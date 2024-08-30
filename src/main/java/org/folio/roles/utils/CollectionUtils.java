@@ -92,22 +92,4 @@ public class CollectionUtils {
   public static <T> Optional<T> findOne(Collection<T> source) {
     return emptyIfNull(source).size() == 1 ? Optional.ofNullable(source.iterator().next()) : Optional.empty();
   }
-
-  /**
-   * Returns true of values contains any non null value.
-   *
-   * @param values - values to analyze
-   * @param <T> - value generic type
-   * @return true if values contains non-null value, false - otherwise
-   */
-  @SafeVarargs
-  public static <T> boolean anyNonNull(T... values) {
-    for (T value : values) {
-      if (value != null) {
-        return true;
-      }
-    }
-
-    return false;
-  }
 }

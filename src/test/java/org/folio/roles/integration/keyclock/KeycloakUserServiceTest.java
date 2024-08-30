@@ -1,9 +1,11 @@
 package org.folio.roles.integration.keyclock;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.KeycloakUserUtils.KEYCLOAK_USER_ID;
+import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.folio.test.TestConstants.TENANT_ID;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.atLeastOnce;
@@ -32,8 +34,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @UnitTest
 @ExtendWith(MockitoExtension.class)
 class KeycloakUserServiceTest {
-
-  private static final UUID USER_ID = UUID.randomUUID();
 
   @Mock private Keycloak keycloak;
   @Mock(answer = RETURNS_DEEP_STUBS) private RealmResource realmResource;
@@ -111,6 +111,48 @@ class KeycloakUserServiceTest {
         .hasMessage("Too many keycloak users with 'user_id' attribute: %s", USER_ID);
 
       verify(realmResource, atLeastOnce()).users();
+    }
+  }
+
+  @Nested
+  @DisplayName("getUserId")
+  class GetUserId {
+
+    @Test
+    void positive() {
+      var keycloakUser = keycloakUser();
+      var result = KeycloakUserService.getUserId(keycloakUser);
+      assertThat(result).isEqualTo(USER_ID);
+    }
+
+    @Test
+    void negative_invalidUuid() {
+      var keycloakUser = keycloakUser();
+      keycloakUser.setAttributes(Map.of("user_id", List.of("text identifier")));
+
+      assertThatThrownBy(() -> KeycloakUserService.getUserId(keycloakUser))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid UUID string: text identifier");
+    }
+
+    @Test
+    void negative_userNotFoundByAttributes() {
+      var keycloakUser = keycloakUser();
+      keycloakUser.setAttributes(emptyMap());
+
+      assertThatThrownBy(() -> KeycloakUserService.getUserId(keycloakUser))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("User id attribute is not found");
+    }
+
+    @Test
+    void negative_multipleValuesInAttribute() {
+      var keycloakUser = keycloakUser();
+      keycloakUser.setAttributes(Map.of("user_id", List.of(USER_ID.toString(), USER_ID.toString())));
+
+      assertThatThrownBy(() -> KeycloakUserService.getUserId(keycloakUser))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("User id attribute contains too many values");
     }
   }
 }

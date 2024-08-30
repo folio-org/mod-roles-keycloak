@@ -1,5 +1,6 @@
 package org.folio.roles.integration.keyclock;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
@@ -120,7 +121,7 @@ class KeycloakClientServiceTest {
     void negative_nothingFound() {
       var clientName = TENANT_ID + LOGIN_CLIENT_SUFFIX;
       when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.clients().findByClientId(clientName)).thenReturn(List.of(otherKeycloakClient()));
+      when(realmResource.clients().findByClientId(clientName)).thenReturn(emptyList());
 
       assertThatThrownBy(() -> service.getLoginClient())
         .isInstanceOf(EntityNotFoundException.class)

@@ -108,22 +108,34 @@ public class KeycloakTestClient {
     var dummyTrustManager = new X509ExtendedTrustManager() {
 
       @Override
-      public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) {}
+      public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) {
+        // used in tests, not implemented
+      }
 
       @Override
-      public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {}
+      public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
+        // used in tests, not implemented
+      }
 
       @Override
-      public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+      public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        // used in tests, not implemented
+      }
 
       @Override
-      public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) {}
+      public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) {
+        // used in tests, not implemented
+      }
 
       @Override
-      public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {}
+      public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
+        // used in tests, not implemented
+      }
 
       @Override
-      public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+      public void checkServerTrusted(X509Certificate[] chain, String authType) {
+        // used in tests, not implemented
+      }
 
       @Override
       public X509Certificate[] getAcceptedIssuers() {

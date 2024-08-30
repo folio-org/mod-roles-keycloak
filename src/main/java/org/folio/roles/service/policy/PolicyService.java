@@ -3,7 +3,6 @@ package org.folio.roles.service.policy;
 import static java.lang.String.format;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toList;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
@@ -68,7 +67,7 @@ public class PolicyService {
     var createdPolicies = policies.stream()
       .map(this::createSafe)
       .flatMap(Optional::stream)
-      .collect(toList());
+      .toList();
 
     return PageResult.of(createdPolicies.size(), createdPolicies);
   }

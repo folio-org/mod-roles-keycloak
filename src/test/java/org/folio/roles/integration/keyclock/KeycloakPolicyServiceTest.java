@@ -165,6 +165,25 @@ class KeycloakPolicyServiceTest {
 
       verify(authorizationResource, atLeastOnce()).policies();
     }
+
+    @Test
+    void positive_notAuthorizedException() {
+      var timePolicy = timePolicy();
+      var keycloakPolicy = keycloakTimePolicy();
+      var response = mock(Response.class);
+
+      when(response.getStatusInfo()).thenReturn(Status.UNAUTHORIZED);
+      when(keycloakPolicyMapper.toKeycloakPolicy(timePolicy, PolicyMapperContext.empty())).thenReturn(keycloakPolicy);
+      when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
+      when(authorizationResource.policies().create(keycloakPolicy)).thenReturn(response);
+
+      assertThatThrownBy(() -> keycloakPolicyService.create(timePolicy))
+        .isInstanceOf(KeycloakApiException.class)
+        .hasMessage("Error during policy creation in Keycloak. Details: id = %s, status = %s, message = %s",
+          POLICY_ID, 401, "Unauthorized");
+
+      verify(authorizationResource, atLeastOnce()).policies();
+    }
   }
 
   @Nested

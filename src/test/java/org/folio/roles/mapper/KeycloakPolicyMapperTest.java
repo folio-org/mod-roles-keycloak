@@ -47,7 +47,7 @@ class KeycloakPolicyMapperTest {
     var result = mapper.toPolicy(kcPolicy);
     assertThat(result).isEqualTo(policy);
     if (!kcPolicy.getType().equals("time")) {
-      verify(jsonHelper).fromJson(anyString(), ArgumentMatchers.<TypeReference<List<UUID>>>any());
+      verify(jsonHelper).parse(anyString(), ArgumentMatchers.<TypeReference<List<UUID>>>any());
     }
   }
 

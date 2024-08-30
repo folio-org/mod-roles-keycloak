@@ -179,7 +179,7 @@ public class KeycloakPolicyService {
     }
 
     throw new KeycloakApiException(format(
-      "Error during scope-based permission creation in Keycloak. Details: status = %s, message = %s",
+      "Error during policy creation in Keycloak. Details: id = %s, status = %s, message = %s", policy.getId(),
       statusInfo.getStatusCode(), statusInfo.getReasonPhrase()), null, response.getStatus());
   }
 }

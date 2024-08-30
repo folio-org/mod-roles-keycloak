@@ -5,6 +5,7 @@ import static java.util.Collections.singletonMap;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections4.MapUtils.emptyIfNull;
 import static org.apache.commons.lang3.ObjectUtils.anyNotNull;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.folio.roles.utils.ParseUtils.parseDateSafe;
 import static org.folio.roles.utils.ParseUtils.parseIntSafe;
 import static org.mapstruct.InjectionStrategy.CONSTRUCTOR;
@@ -13,7 +14,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.annotation.Resource;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -40,9 +40,6 @@ import org.mapstruct.MappingTarget;
  */
 @Mapper(componentModel = "spring", injectionStrategy = CONSTRUCTOR, imports = PolicyType.class)
 public abstract class KeycloakPolicyMapper {
-
-  private static final String EMPTY_STRING = "";
-  private static final DateTimeFormatter KC_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
   @Resource private JsonHelper jsonHelper;
 
@@ -206,8 +203,8 @@ public abstract class KeycloakPolicyMapper {
 
   private static Map<String, String> getTimePolicyConfig(TimePolicy timePolicy) {
     return Map.ofEntries(
-      Map.entry("nbf", EMPTY_STRING),
-      Map.entry("noa", EMPTY_STRING),
+      Map.entry("nbf", EMPTY),
+      Map.entry("noa", EMPTY),
       Map.entry("minute", getIntegerAsStringOrEmpty(timePolicy.getMinuteStart())),
       Map.entry("minuteEnd", getIntegerAsStringOrEmpty(timePolicy.getMinuteEnd())),
       Map.entry("hour", getIntegerAsStringOrEmpty(timePolicy.getHourStart())),
@@ -230,11 +227,11 @@ public abstract class KeycloakPolicyMapper {
   }
 
   private List<UUID> parseUserIds(Map<String, String> config) {
-    return jsonHelper.fromJson(emptyIfNull(config).get("users"), new TypeReference<>() {});
+    return jsonHelper.parse(emptyIfNull(config).get("users"), new TypeReference<>() {});
   }
 
   private List<RolePolicyRole> parseRoleIds(Map<String, String> config) {
-    return jsonHelper.fromJson(emptyIfNull(config).get("roles"), new TypeReference<>() {});
+    return jsonHelper.parse(emptyIfNull(config).get("roles"), new TypeReference<>() {});
   }
 
   private static TimePolicy parseTimePolicy(Map<String, String> config) {
