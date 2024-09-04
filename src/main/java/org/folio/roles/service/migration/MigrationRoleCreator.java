@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Role;
+import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.domain.dto.UserRole;
 import org.folio.roles.domain.model.UserPermissions;
 import org.folio.roles.exception.MigrationException;
@@ -98,6 +99,7 @@ public class MigrationRoleCreator {
   private static Role createRole(String roleName) {
     return new Role()
       .name(roleName)
+      .type(RoleType.DEFAULT)
       .description("System generated role during migration");
   }
 }
