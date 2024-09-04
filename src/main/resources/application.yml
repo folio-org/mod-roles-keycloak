@@ -43,6 +43,7 @@ coffee-boots:
       keycloak-client-id: maximumSize=500,expireAfterWrite=${KC_CLIENT_ID_TTL:3600s}
       keycloak-users: maximumSize=100,expireAfterWrite=${KC_USER_ID_CACHE_TTL:10s}
       keycloak-user-id: maximumSize=100,expireAfterWrite=${KC_USER_ID_CACHE_TTL:10s}
+      authorization-client-cache: maximumSize=100,expireAfterWrite=${KC_AUTHORIZATION_CLIENTS_CACHE_TTL:3600s}
 
 server:
   port: 8081
@@ -71,6 +72,8 @@ application:
       trust-store-path: ${KC_CLIENT_TLS_TRUSTSTORE_PATH:}
       trust-store-password: ${KC_CLIENT_TLS_TRUSTSTORE_PASSWORD:}
       trust-store-type: ${KC_CLIENT_TLS_TRUSTSTORE_TYPE:}
+    migration:
+      users-batch-size: ${KC_MIGRATION_USERS_BATCH_SIZE:100}
   secret-store:
     type: ${SECRET_STORE_TYPE}
     aws-ssm:

@@ -3,6 +3,7 @@ package org.folio.roles.service.capability;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
+import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.dto.RoleCapability;
 import org.folio.roles.domain.model.PageResult;
 
@@ -13,9 +14,19 @@ public interface RoleCapabilityService {
    *
    * @param roleId - role identifier as {@link UUID} object
    * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
-   * @return {@link org.folio.roles.domain.dto.UserCapabilities} object with created role-capability relations
+   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @return {@link RoleCapability} object with created role-capability relations
    */
-  PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds);
+  PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate);
+
+  /**
+   * Create a record(s) associating one or moe capabilities with a role.
+   *
+   * @param request - RoleCapabilitiesRequest that contains roleId, capabilityIds or capabilityNames
+   * @param safeCreate              - defines if new capabilities must be added or error thrown if any already exists
+   * @return {@link RoleCapability} object with created role-capability relations
+   */
+  PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate);
 
   /**
    * Retrieves role-capability items by CQL query.
@@ -23,7 +34,7 @@ public interface RoleCapabilityService {
    * @param query - CQL query as {@link String} object
    * @param limit - a number of results in response
    * @param offset - offset in pagination from first record.
-   * @return {@link PageResult} object with found {@link org.folio.roles.domain.dto.RoleCapability} relation
+   * @return {@link PageResult} object with found {@link RoleCapability} relation
    *   descriptors.
    */
   PageResult<RoleCapability> find(String query, Integer limit, Integer offset);

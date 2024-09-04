@@ -23,9 +23,10 @@
     },
     "jsonBody": {
       "permissionNames": [
-        "users.item.put",
-        "users.item.get",
-        "users.collection.get"
+        "foo.item.get",
+        "foo.item.post",
+        "foo.item.all",
+        "ui-foo.item.edit"
       ],
       "totalRecords": 3
     }

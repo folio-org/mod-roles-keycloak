@@ -4,7 +4,7 @@ import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilityUtils.capabilities;
 import static org.folio.roles.support.CapabilityUtils.capability;
-import static org.folio.roles.support.KeycloakUtils.keycloakUser;
+import static org.folio.roles.support.KeycloakUserUtils.keycloakUser;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.folio.roles.support.UserCapabilityUtils.userCapabilities;

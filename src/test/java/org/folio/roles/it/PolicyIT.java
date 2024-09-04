@@ -7,7 +7,6 @@ import static java.util.UUID.fromString;
 import static org.folio.roles.domain.dto.PolicyType.ROLE;
 import static org.folio.roles.domain.dto.PolicyType.TIME;
 import static org.folio.roles.domain.dto.PolicyType.USER;
-import static org.folio.roles.domain.dto.TimePolicy.LogicEnum.POSITIVE;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
@@ -39,6 +38,7 @@ import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.Policies;
 import org.folio.roles.domain.dto.PoliciesRequest;
 import org.folio.roles.domain.dto.Policy;
+import org.folio.roles.domain.dto.PolicyLogicType;
 import org.folio.roles.domain.dto.RolePolicy;
 import org.folio.roles.domain.dto.RolePolicyRole;
 import org.folio.roles.domain.dto.SourceType;
@@ -259,7 +259,7 @@ class PolicyIT extends BaseIntegrationTest {
     timePolicy.setHourEnd(2);
     timePolicy.setMinuteStart(1);
     timePolicy.setMinuteEnd(2);
-    timePolicy.setLogic(POSITIVE);
+    timePolicy.setLogic(PolicyLogicType.POSITIVE);
     policy.setTimePolicy(timePolicy);
     return policy;
   }

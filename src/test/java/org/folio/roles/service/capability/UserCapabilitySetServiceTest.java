@@ -10,7 +10,7 @@ import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.domain.model.PageResult.empty;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.EndpointUtils.endpoint;
-import static org.folio.roles.support.KeycloakUtils.keycloakUser;
+import static org.folio.roles.support.KeycloakUserUtils.keycloakUser;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.folio.roles.support.UserCapabilitySetUtils.userCapabilitySet;
 import static org.folio.roles.support.UserCapabilitySetUtils.userCapabilitySetEntity;

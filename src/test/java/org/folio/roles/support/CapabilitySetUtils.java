@@ -37,6 +37,9 @@ public class CapabilitySetUtils {
 
   public static final UUID CAPABILITY_SET_ID = UUID.randomUUID();
 
+  public static final String CAPABILITY_SET_NAME = "test-resource_item.create";
+  public static final String INVALID_CAPABILITY_SET_NAME = "boo_item.create";
+
   public static final UUID FOO_MANAGE_CAPABILITY_SET = fromString("a1002e06-a2bc-4ce4-9d71-e25db1250e09");
   public static final List<UUID> FOO_MANAGE_CAPABILITIES = List.of(
     FOO_VIEW_CAPABILITY, FOO_CREATE_CAPABILITY, FOO_EDIT_CAPABILITY, FOO_DELETE_CAPABILITY);
@@ -47,9 +50,11 @@ public class CapabilitySetUtils {
   public static final UUID FOO_MANAGE_V2_CAPABILITY_SET = fromString("a8ec43cc-f38d-4d34-9e5c-39815ffd099c");
   public static final List<UUID> FOO_MANAGE_V2_CAPABILITIES = List.of(FOO_MANAGE_CAPABILITY);
 
+  public static final String FOO_EDIT_CAPABILITY_SET_NAME = "foo_item.edit";
   public static final UUID FOO_EDIT_CAPABILITY_SET = fromString("6532d4f8-3e97-4d8b-886f-4ec2a2adc4a3");
   public static final List<UUID> FOO_EDIT_CAPABILITIES = List.of(FOO_VIEW_CAPABILITY, FOO_EDIT_CAPABILITY);
 
+  public static final String FOO_CREATE_CAPABILITY_SET_NAME = "foo_item.create";
   public static final UUID FOO_CREATE_CAPABILITY_SET = fromString("55a910de-cecf-4e0e-9d35-2e8e2ecf699e");
   public static final List<UUID> FOO_CREATE_CAPABILITIES = List.of(FOO_VIEW_CAPABILITY, FOO_CREATE_CAPABILITY);
 

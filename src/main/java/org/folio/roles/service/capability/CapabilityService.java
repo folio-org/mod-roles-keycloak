@@ -32,6 +32,7 @@ import org.folio.roles.domain.model.event.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.ResourceEventType;
 import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.CapabilityRepository;
+import org.folio.roles.utils.CapabilityUtils;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -163,7 +164,9 @@ public class CapabilityService {
   @Transactional(readOnly = true)
   public List<Capability> findByPermissionNames(Collection<String> permissionNames) {
     var capabilityEntities = capabilityRepository.findAllByPermissionNames(permissionNames);
-    return capabilityEntityMapper.convert(capabilityEntities);
+    return toStream(capabilityEntityMapper.convert(capabilityEntities))
+      .filter(not(CapabilityUtils::isTechnicalCapability))
+      .toList();
   }
 
   /**

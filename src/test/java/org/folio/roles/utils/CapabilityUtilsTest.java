@@ -24,7 +24,7 @@ class CapabilityUtilsTest {
   }
 
   @Test
-  void getCapabilityIds_positive() {
+  void getCapabilitySetIds_positive() {
     var capabilityId1 = UUID.randomUUID();
     var capabilityId2 = UUID.randomUUID();
     var capabilityId3 = UUID.randomUUID();
@@ -36,7 +36,7 @@ class CapabilityUtilsTest {
       capabilitySet(UUID.randomUUID(), List.of(capabilityId1, capabilityId3))
     );
 
-    var result = CapabilityUtils.getCapabilityIds(capabilitySets);
+    var result = CapabilityUtils.getCapabilitySetIds(capabilitySets);
     assertThat(result).containsExactly(capabilityId1, capabilityId2, capabilityId3);
   }
 
