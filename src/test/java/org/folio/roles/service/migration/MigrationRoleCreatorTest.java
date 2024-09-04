@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.folio.roles.domain.dto.Role;
+import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.domain.dto.Roles;
 import org.folio.roles.domain.dto.UserRole;
 import org.folio.roles.domain.model.UserPermissions;
@@ -48,6 +49,7 @@ class MigrationRoleCreatorTest {
   private static Role migrationRole() {
     return new Role()
       .name(ROLE_NAME)
+      .type(RoleType.DEFAULT)
       .description("System generated role during migration");
   }
 
@@ -59,6 +61,7 @@ class MigrationRoleCreatorTest {
     return new Role()
       .id(ROLE_ID)
       .name(ROLE_NAME)
+      .type(RoleType.DEFAULT)
       .description("System generated role during migration");
   }
 
