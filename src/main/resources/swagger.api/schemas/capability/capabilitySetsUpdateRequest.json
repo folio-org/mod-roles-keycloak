@@ -13,7 +13,7 @@
         "format": "uuid"
       }
     },
-    "capabilityNames": {
+    "capabilitySetNames": {
       "description": "List of capability names",
       "type": "array",
       "items": {

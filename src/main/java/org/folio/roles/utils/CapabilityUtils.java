@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
+import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
+import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
+import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.common.utils.permission.model.PermissionAction;
 import org.folio.common.utils.permission.model.PermissionData;
@@ -86,5 +90,27 @@ public class CapabilityUtils {
 
   public static boolean isTechnicalCapability(Capability capability) {
     return isEmpty(capability.getEndpoints());
+  }
+
+  public static void verifyRequest(RoleCapabilitiesRequest request) {
+    verifyRequest(request.getCapabilityIds(), request.getCapabilityNames());
+  }
+
+  public static void verifyRequest(CapabilitiesUpdateRequest request) {
+    verifyRequest(request.getCapabilityIds(), request.getCapabilityNames());
+  }
+
+  public static void verifyRequest(RoleCapabilitySetsRequest request) {
+    verifyRequest(request.getCapabilitySetIds(), request.getCapabilitySetNames());
+  }
+
+  public static void verifyRequest(CapabilitySetsUpdateRequest request) {
+    verifyRequest(request.getCapabilitySetIds(), request.getCapabilitySetNames());
+  }
+
+  private static void verifyRequest(List<UUID> capabilityIds, List<String> capabilityNames ) {
+    if (isEmpty(capabilityIds) && isEmpty(capabilityNames)) {
+      throw new IllegalArgumentException("'capabilityIds' or 'capabilityNames' must not be null");
+    }
   }
 }

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
+import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
 import org.folio.roles.domain.dto.RoleCapabilitySet;
 import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.model.PageResult;
@@ -40,6 +42,12 @@ public class ApiRoleCapabilitySetService implements RoleCapabilitySetService {
   public void update(UUID roleId, List<UUID> capabilityIds) {
     checkRoleIsNotDefault(roleId);
     delegate.update(roleId, capabilityIds);
+  }
+
+  @Override
+  public void update(UUID roleId, CapabilitySetsUpdateRequest request) {
+    checkRoleIsNotDefault(roleId);
+    delegate.update(roleId, request);
   }
 
   @Override

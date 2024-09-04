@@ -8,6 +8,7 @@ import static org.apache.commons.collections4.ListUtils.intersection;
 import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
+import static org.folio.roles.utils.CapabilityUtils.verifyRequest;
 import static org.folio.roles.utils.CollectionUtils.difference;
 
 import jakarta.persistence.EntityExistsException;
@@ -116,6 +117,13 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
   }
 
+
+  /**
+   * Updates role-capability relations.
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param request - CapabilitiesUpdateRequest that contains either capability IDs or names, to be assigned to a role
+   */
   @Override
   public void update(UUID roleId, CapabilitiesUpdateRequest request) {
     verifyRequest(request);
@@ -261,19 +269,5 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   private List<UUID> getAssignedCapabilityIds(UUID roleId) {
     var capabilitySets = capabilitySetService.findByRoleId(roleId, MAX_VALUE, 0);
     return CapabilityUtils.getCapabilitySetIds(capabilitySets);
-  }
-
-  private void verifyRequest(RoleCapabilitiesRequest request) {
-    verifyRequest(request.getCapabilityIds(), request.getCapabilityNames());
-  }
-
-  private void verifyRequest(CapabilitiesUpdateRequest request) {
-    verifyRequest(request.getCapabilityIds(), request.getCapabilityNames());
-  }
-
-  private void verifyRequest(List<UUID> capabilityIds, List<String> capabilityNames ) {
-    if (isEmpty(capabilityIds) && isEmpty(capabilityNames)) {
-      throw new IllegalArgumentException("'capabilityIds' or 'capabilityNames' must not be null");
-    }
   }
 }

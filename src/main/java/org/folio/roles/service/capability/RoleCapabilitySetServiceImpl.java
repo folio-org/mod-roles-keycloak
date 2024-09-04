@@ -9,6 +9,7 @@ import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilitySetEntity.DEFAULT_ROLE_CAPABILITY_SET_SORT;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityEndpoints;
+import static org.folio.roles.utils.CapabilityUtils.verifyRequest;
 import static org.folio.roles.utils.CollectionUtils.difference;
 
 import jakarta.persistence.EntityExistsException;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.CapabilitySet;
+import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.RoleCapabilitySet;
 import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
@@ -115,6 +117,20 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     UpdateOperationHelper.create(assignedSetIds, capabilitySetIds, "role-capability set")
       .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(roleId, newIds, assignedSetIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+  }
+
+  /**
+   * Updates role-capability relations.
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param request - CapabilitySetsUpdateRequest that contains either capability IDs or names, to be assigned to a role
+   */
+  @Override
+  public void update(UUID roleId, CapabilitySetsUpdateRequest request) {
+    verifyRequest(request);
+    var resolvedCapabilitiesIds = resolveCapabilitySetsByNames(request.getCapabilitySetNames());
+    var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilitySetIds());
+    update(roleId, allCapabilityIds);
   }
 
   /**
@@ -249,11 +265,5 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
 
   private static List<UUID> getCapabilitySetIds(List<RoleCapabilitySetEntity> existingEntities) {
     return mapItems(existingEntities, RoleCapabilitySetEntity::getCapabilitySetId);
-  }
-
-  private void verifyRequest(RoleCapabilitySetsRequest request) {
-    if (isEmpty(request.getCapabilitySetIds()) && isEmpty(request.getCapabilitySetNames())) {
-      throw new IllegalArgumentException("'capabilitySetIds' or 'capabilitySetNames' must not be null");
-    }
   }
 }

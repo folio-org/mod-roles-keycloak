@@ -2,6 +2,7 @@ package org.folio.roles.service.capability;
 
 import java.util.List;
 import java.util.UUID;
+import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
 import org.folio.roles.domain.dto.RoleCapabilitySet;
 import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.model.PageResult;
@@ -44,6 +45,14 @@ public interface RoleCapabilitySetService {
    * @param capabilityIds - list with new capabilitySets, that should be assigned to a role
    */
   void update(UUID roleId, List<UUID> capabilityIds);
+
+  /**
+   * Updates a list of assigned to a role capabilitySets.
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param request - CapabilitySetsUpdateRequest that contains either capability IDs or names, to be assigned to a role
+   */
+  void update(UUID roleId, CapabilitySetsUpdateRequest request);
 
   /**
    * Removes role assigned capabilities using role identifier.

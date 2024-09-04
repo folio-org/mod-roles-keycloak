@@ -52,7 +52,7 @@ public interface RoleCapabilityService {
    * Updates role-capability relations.
    *
    * @param roleId - role identifier as {@link UUID} object
-   * @param request - CapabilitiesUpdateRequest that contains either capability IDs or names
+   * @param request - CapabilitiesUpdateRequest that contains either capability IDs or names, to be assigned to a role
    */
   void update(UUID roleId, CapabilitiesUpdateRequest request);
 
