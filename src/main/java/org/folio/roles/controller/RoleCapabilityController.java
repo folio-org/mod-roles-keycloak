@@ -53,7 +53,7 @@ public class RoleCapabilityController implements RoleCapabilityApi {
 
   @Override
   public ResponseEntity<Void> updateRoleCapabilities(UUID roleId, CapabilitiesUpdateRequest request) {
-    roleCapabilityService.update(roleId, request.getCapabilityIds());
+    roleCapabilityService.update(roleId, request);
     return ResponseEntity.noContent().build();
   }
 

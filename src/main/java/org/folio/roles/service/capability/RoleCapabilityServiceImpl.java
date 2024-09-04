@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.dto.RoleCapability;
@@ -113,6 +114,14 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "role-capability")
       .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(roleId, newIds, assignedCapabilityIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+  }
+
+  @Override
+  public void update(UUID roleId, CapabilitiesUpdateRequest request) {
+    verifyRequest(request);
+    var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
+    var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
+    update(roleId, allCapabilityIds);
   }
 
   /**
@@ -255,7 +264,15 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   }
 
   private void verifyRequest(RoleCapabilitiesRequest request) {
-    if (isEmpty(request.getCapabilityIds()) && isEmpty(request.getCapabilityNames())) {
+    verifyRequest(request.getCapabilityIds(), request.getCapabilityNames());
+  }
+
+  private void verifyRequest(CapabilitiesUpdateRequest request) {
+    verifyRequest(request.getCapabilityIds(), request.getCapabilityNames());
+  }
+
+  private void verifyRequest(List<UUID> capabilityIds, List<String> capabilityNames ) {
+    if (isEmpty(capabilityIds) && isEmpty(capabilityNames)) {
       throw new IllegalArgumentException("'capabilityIds' or 'capabilityNames' must not be null");
     }
   }
