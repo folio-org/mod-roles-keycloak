@@ -451,8 +451,7 @@ class RoleCapabilityIT extends BaseIntegrationTest {
       .header(TENANT, TENANT_ID)
       .header(USER_ID, USER_ID_HEADER)
       .contentType(APPLICATION_JSON)
-      .content(asJsonString(request)))
-      .andExpect(content().contentType(APPLICATION_JSON));
+      .content(asJsonString(request)));
   }
 
   static ResultActions postRoleCapabilities(RoleCapabilitiesRequest request) throws Exception {

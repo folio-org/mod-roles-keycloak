@@ -93,24 +93,30 @@ public class CapabilityUtils {
   }
 
   public static void verifyRequest(RoleCapabilitiesRequest request) {
-    verifyRequest(request.getCapabilityIds(), request.getCapabilityNames());
+    verifyCapabilities(request.getCapabilityIds(), request.getCapabilityNames());
   }
 
   public static void verifyRequest(CapabilitiesUpdateRequest request) {
-    verifyRequest(request.getCapabilityIds(), request.getCapabilityNames());
+    verifyCapabilities(request.getCapabilityIds(), request.getCapabilityNames());
   }
 
   public static void verifyRequest(RoleCapabilitySetsRequest request) {
-    verifyRequest(request.getCapabilitySetIds(), request.getCapabilitySetNames());
+    verifyCapabilitySets(request.getCapabilitySetIds(), request.getCapabilitySetNames());
   }
 
   public static void verifyRequest(CapabilitySetsUpdateRequest request) {
-    verifyRequest(request.getCapabilitySetIds(), request.getCapabilitySetNames());
+    verifyCapabilitySets(request.getCapabilitySetIds(), request.getCapabilitySetNames());
   }
 
-  private static void verifyRequest(List<UUID> capabilityIds, List<String> capabilityNames) {
+  private static void verifyCapabilities(List<UUID> capabilityIds, List<String> capabilityNames) {
     if (isEmpty(capabilityIds) && isEmpty(capabilityNames)) {
       throw new IllegalArgumentException("'capabilityIds' or 'capabilityNames' must not be null");
+    }
+  }
+
+  private static void verifyCapabilitySets(List<UUID> capabilitySetIds, List<String> capabilitySetNames) {
+    if (isEmpty(capabilitySetIds) && isEmpty(capabilitySetNames)) {
+      throw new IllegalArgumentException("'capabilitySetIds' or 'capabilitySetNames' must not be null");
     }
   }
 }

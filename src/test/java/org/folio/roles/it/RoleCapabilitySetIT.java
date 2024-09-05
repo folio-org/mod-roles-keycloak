@@ -326,15 +326,18 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
     "classpath:/sql/populate-test-role.sql",
     "classpath:/sql/populate-role-policy.sql",
     "classpath:/sql/capabilities/populate-capabilities.sql",
-    "classpath:/sql/capabilities/populate-role-capability-relations.sql"
+    "classpath:/sql/capability-sets/populate-capability-sets.sql",
+    "classpath:/sql/capability-sets/populate-role-capability-set-relations.sql"
   })
   void update_positiveByName() throws Exception {
     var request = capabilitySetsUpdateRequest(FOO_CREATE_CAPABILITY_SET_NAME, FOO_EDIT_CAPABILITY_SET_NAME);
     updateRoleCapabilitySets(request);
 
+    var fooItemCreateCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_CREATE_CAPABILITY_SET);
     var fooItemEditCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_EDIT_CAPABILITY_SET);
+    var expected = roleCapabilitySets(fooItemCreateCapabilitySet, fooItemEditCapabilitySet);
     doGet("/roles/capability-sets")
-      .andExpect(content().json(asJsonString(roleCapabilitySets(fooItemEditCapabilitySet))));
+      .andExpect(content().json(asJsonString(expected)));
 
     assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
       kcPermissionName(fooItemPostEndpoint()),
@@ -348,10 +351,10 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
     attemptUpdateRoleCapabilitySets(request)
       .andExpect(status().isBadRequest())
       .andExpect(jsonPath("$.errors[0].message")
-        .value("Capabilities by name are not found"))
+        .value("Capability sets by name are not found"))
       .andExpect(jsonPath("$.errors[0].type").value("RequestValidationException"))
       .andExpect(jsonPath("$.errors[0].code").value("validation_error"))
-      .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilityNames"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilitySetNames"))
       .andExpect(jsonPath("$.errors[0].parameters[0].value").value("[boo_item.create]"));
   }
 
