@@ -8,17 +8,17 @@ import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
-import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
-import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
-import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.common.utils.permission.model.PermissionAction;
 import org.folio.common.utils.permission.model.PermissionData;
+import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.CapabilitySet;
+import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
 import org.folio.roles.domain.dto.Endpoint;
+import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
+import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.model.PageResult;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -108,7 +108,7 @@ public class CapabilityUtils {
     verifyRequest(request.getCapabilitySetIds(), request.getCapabilitySetNames());
   }
 
-  private static void verifyRequest(List<UUID> capabilityIds, List<String> capabilityNames ) {
+  private static void verifyRequest(List<UUID> capabilityIds, List<String> capabilityNames) {
     if (isEmpty(capabilityIds) && isEmpty(capabilityNames)) {
       throw new IllegalArgumentException("'capabilityIds' or 'capabilityNames' must not be null");
     }

@@ -18,12 +18,9 @@ import static org.folio.roles.support.CapabilitySetUtils.capabilitySets;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySetsUpdateRequest;
 import static org.folio.roles.support.CapabilityUtils.FOO_CREATE_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_DELETE_CAPABILITY;
-import static org.folio.roles.support.CapabilityUtils.FOO_DELETE_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY;
-import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.FOO_VIEW_CAPABILITY;
-import static org.folio.roles.support.CapabilityUtils.INVALID_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.capabilitiesUpdateRequest;
 import static org.folio.roles.support.EndpointUtils.fooItemDeleteEndpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemGetEndpoint;
@@ -357,6 +354,7 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilityNames"))
       .andExpect(jsonPath("$.errors[0].parameters[0].value").value("[boo_item.create]"));
   }
+
   @Test
   @KeycloakRealms("/json/keycloak/role-capability-realm.json")
   @Sql(scripts = {
