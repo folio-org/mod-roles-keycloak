@@ -11,6 +11,7 @@ import org.folio.roles.domain.entity.RoleEntity;
 import org.folio.roles.mapper.AuditableEntityMapping;
 import org.folio.roles.mapper.AuditableMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 /**
  * Mapper for mapping {@link Role} objects to {@link RoleEntity} objects and vice versa.
@@ -19,6 +20,7 @@ import org.mapstruct.Mapper;
 public interface RoleEntityMapper {
 
   @AuditableEntityMapping
+  @Mapping(target = "type", source = "role.type", defaultValue = "REGULAR")
   RoleEntity toRoleEntity(Role role);
 
   /**

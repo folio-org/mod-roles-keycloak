@@ -15,7 +15,7 @@ import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.dto.LoadableRoles;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.entity.LoadableRoleEntity;
-import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
+import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.instancio.Instancio;
 import org.instancio.Model;
 import org.instancio.OnCompleteCallback;
@@ -38,7 +38,7 @@ public class LoadableRoleUtils {
     entity.setId(role.getId());
     entity.setName(role.getName());
     entity.setDescription(role.getDescription());
-    entity.setType(EntityLoadableRoleType.from(role.getType()));
+    entity.setType(EntityRoleType.from(role.getType()));
 
     entity.setPermissions(mapItems(role.getPermissions(), perm -> loadablePermissionEntity(role.getId(), perm)));
 
