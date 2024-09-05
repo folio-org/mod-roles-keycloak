@@ -9,7 +9,6 @@ import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilitySetEntity.DEFAULT_ROLE_CAPABILITY_SET_SORT;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityEndpoints;
-import static org.folio.roles.utils.CapabilityUtils.verifyRequest;
 import static org.folio.roles.utils.CollectionUtils.difference;
 
 import jakarta.persistence.EntityExistsException;
@@ -78,7 +77,6 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   @Override
   @Transactional
   public PageResult<RoleCapabilitySet> create(RoleCapabilitySetsRequest request, boolean safeCreate) {
-    verifyRequest(request);
     var resolvedCapabilitySetIds = resolveCapabilitySetsByNames(request.getCapabilitySetNames());
     var allCapabilitySetIds = CollectionUtils.union(resolvedCapabilitySetIds, request.getCapabilitySetIds());
     return createRoleCapabilitySets(request.getRoleId(), allCapabilitySetIds, safeCreate);
@@ -110,13 +108,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   @Override
   @Transactional
   public void update(UUID roleId, List<UUID> capabilitySetIds) {
-    roleService.getById(roleId);
-    var assignedRoleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
-
-    var assignedSetIds = getCapabilitySetIds(assignedRoleCapabilitySetEntities);
-    UpdateOperationHelper.create(assignedSetIds, capabilitySetIds, "role-capability set")
-      .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(roleId, newIds, assignedSetIds)))
-      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+    updateRoleCapabilitySets(roleId, capabilitySetIds);
   }
 
   /**
@@ -126,11 +118,11 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
    * @param request - CapabilitySetsUpdateRequest that contains either capability IDs or names, to be assigned to a role
    */
   @Override
+  @Transactional
   public void update(UUID roleId, CapabilitySetsUpdateRequest request) {
-    verifyRequest(request);
     var resolvedCapabilitiesIds = resolveCapabilitySetsByNames(request.getCapabilitySetNames());
     var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilitySetIds());
-    update(roleId, allCapabilityIds);
+    updateRoleCapabilitySets(roleId, allCapabilityIds);
   }
 
   /**
@@ -211,6 +203,15 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
 
     var newSetIds = difference(setIds, existingCapabilitySetIds);
     return isEmpty(newSetIds) ? PageResult.empty() : assignCapabilities(roleId, newSetIds, emptyList());
+  }
+
+  public void updateRoleCapabilitySets(UUID roleId, List<UUID> capabilitySetIds) {
+    roleService.getById(roleId);
+    var assignedRoleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
+    var assignedSetIds = getCapabilitySetIds(assignedRoleCapabilitySetEntities);
+    UpdateOperationHelper.create(assignedSetIds, capabilitySetIds, "role-capability set")
+      .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(roleId, newIds, assignedSetIds)))
+      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
   }
 
   private List<UUID> resolveCapabilitySetsByNames(List<String> capabilitySetNames) {

@@ -11,14 +11,10 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.common.utils.permission.model.PermissionAction;
 import org.folio.common.utils.permission.model.PermissionData;
-import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.CapabilitySet;
-import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
 import org.folio.roles.domain.dto.Endpoint;
-import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
-import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
 import org.folio.roles.domain.model.PageResult;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -90,33 +86,5 @@ public class CapabilityUtils {
 
   public static boolean isTechnicalCapability(Capability capability) {
     return isEmpty(capability.getEndpoints());
-  }
-
-  public static void verifyRequest(RoleCapabilitiesRequest request) {
-    verifyCapabilities(request.getCapabilityIds(), request.getCapabilityNames());
-  }
-
-  public static void verifyRequest(CapabilitiesUpdateRequest request) {
-    verifyCapabilities(request.getCapabilityIds(), request.getCapabilityNames());
-  }
-
-  public static void verifyRequest(RoleCapabilitySetsRequest request) {
-    verifyCapabilitySets(request.getCapabilitySetIds(), request.getCapabilitySetNames());
-  }
-
-  public static void verifyRequest(CapabilitySetsUpdateRequest request) {
-    verifyCapabilitySets(request.getCapabilitySetIds(), request.getCapabilitySetNames());
-  }
-
-  private static void verifyCapabilities(List<UUID> capabilityIds, List<String> capabilityNames) {
-    if (isEmpty(capabilityIds) && isEmpty(capabilityNames)) {
-      throw new IllegalArgumentException("'capabilityIds' or 'capabilityNames' must not be null");
-    }
-  }
-
-  private static void verifyCapabilitySets(List<UUID> capabilitySetIds, List<String> capabilitySetNames) {
-    if (isEmpty(capabilitySetIds) && isEmpty(capabilitySetNames)) {
-      throw new IllegalArgumentException("'capabilitySetIds' or 'capabilitySetNames' must not be null");
-    }
   }
 }

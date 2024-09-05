@@ -8,7 +8,6 @@ import static org.apache.commons.collections4.ListUtils.intersection;
 import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
-import static org.folio.roles.utils.CapabilityUtils.verifyRequest;
 import static org.folio.roles.utils.CollectionUtils.difference;
 
 import jakarta.persistence.EntityExistsException;
@@ -77,7 +76,6 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Override
   @Transactional
   public PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate) {
-    verifyRequest(request);
     var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
     var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
     return createRoleCapabilities(request.getRoleId(), allCapabilityIds, safeCreate);
@@ -109,12 +107,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Override
   @Transactional
   public void update(UUID roleId, List<UUID> capabilityIds) {
-    roleService.getById(roleId);
-    var assignedRoleCapabilityEntities = roleCapabilityRepository.findAllByRoleId(roleId);
-    var assignedCapabilityIds = getCapabilityIds(assignedRoleCapabilityEntities);
-    UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "role-capability")
-      .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(roleId, newIds, assignedCapabilityIds)))
-      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+    updateRoleCapabilities(roleId, capabilityIds);
   }
 
 
@@ -125,11 +118,11 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
    * @param request - CapabilitiesUpdateRequest that contains either capability IDs or names, to be assigned to a role
    */
   @Override
+  @Transactional
   public void update(UUID roleId, CapabilitiesUpdateRequest request) {
-    verifyRequest(request);
     var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
     var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
-    update(roleId, allCapabilityIds);
+    updateRoleCapabilities(roleId, allCapabilityIds);
   }
 
   /**
@@ -215,6 +208,15 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
     var newCapabilityIds = difference(capabilityIds, existingCapabilityIds);
     return isEmpty(newCapabilityIds) ? PageResult.empty() : assignCapabilities(roleId, newCapabilityIds, emptyList());
+  }
+
+  private void updateRoleCapabilities(UUID roleId, List<UUID> capabilityIds) {
+    roleService.getById(roleId);
+    var assignedRoleCapabilityEntities = roleCapabilityRepository.findAllByRoleId(roleId);
+    var assignedCapabilityIds = getCapabilityIds(assignedRoleCapabilityEntities);
+    UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "role-capability")
+      .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(roleId, newIds, assignedCapabilityIds)))
+      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
   }
 
   private List<UUID> resolveCapabilitiesByNames(List<String> capabilityNames) {

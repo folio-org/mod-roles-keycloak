@@ -1,5 +1,7 @@
 package org.folio.roles.service.capability;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class ApiRoleCapabilityService implements RoleCapabilityService {
   @Override
   public PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate) {
     checkRoleIsNotDefault(request.getRoleId());
+    verifyCapabilities(request.getCapabilityIds(), request.getCapabilityNames());
     return delegate.create(request, safeCreate);
   }
 
@@ -46,6 +49,7 @@ public class ApiRoleCapabilityService implements RoleCapabilityService {
   @Override
   public void update(UUID roleId, CapabilitiesUpdateRequest request) {
     checkRoleIsNotDefault(roleId);
+    verifyCapabilities(request.getCapabilityIds(), request.getCapabilityNames());
     delegate.update(roleId, request);
   }
 
@@ -76,6 +80,12 @@ public class ApiRoleCapabilityService implements RoleCapabilityService {
     if (loadableRoleService.isDefaultRole(roleId)) {
       throw new ServiceException("Changes to default role are prohibited: roleId = " + roleId,
         "roleId", roleId.toString());
+    }
+  }
+
+  private void verifyCapabilities(List<UUID> capabilityIds, List<String> capabilityNames) {
+    if (isEmpty(capabilityIds) && isEmpty(capabilityNames)) {
+      throw new IllegalArgumentException("'capabilityIds' or 'capabilityNames' must not be null");
     }
   }
 }
