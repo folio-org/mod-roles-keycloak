@@ -29,6 +29,7 @@ public class CapabilityUtils {
   public static final String APPLICATION_ID_V2 = "test-application-0.0.2";
   public static final String PERMISSION_NAME = "test-resource.item.create";
   public static final String CAPABILITY_NAME = "test-resource_item.create";
+  public static final String CAPABILITY_NAME_2 = "test-resource_item.create-2";
   public static final String INVALID_CAPABILITY_NAME = "boo_item.create";
 
   public static final UUID CAPABILITY_ID = UUID.randomUUID();
@@ -145,7 +146,7 @@ public class CapabilityUtils {
     return new CapabilitiesUpdateRequest().capabilityIds(List.of(capabilityIds));
   }
 
-  public static CapabilitiesUpdateRequest capabilitiesUpdateRequest(List<UUID> ids) {
-    return new CapabilitiesUpdateRequest().capabilityIds(ids);
+  public static CapabilitiesUpdateRequest capabilitiesUpdateRequest(String... capabilityNames) {
+    return new CapabilitiesUpdateRequest().capabilityNames(List.of(capabilityNames));
   }
 }

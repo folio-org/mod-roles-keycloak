@@ -153,7 +153,19 @@ class RoleCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isNoContent());
 
-    verify(roleCapabilitySetService).update(ROLE_ID, List.of(CAPABILITY_SET_ID));
+    verify(roleCapabilitySetService).update(ROLE_ID, updateRequest);
+  }
+
+  @Test
+  void updateRoleCapabilitiesByNames_positive() throws Exception {
+    var updateRequest = new CapabilitySetsUpdateRequest().addCapabilitySetNamesItem(CAPABILITY_SET_NAME);
+    mockMvc.perform(put("/roles/{id}/capability-sets", ROLE_ID)
+        .contentType(APPLICATION_JSON)
+        .content(asJsonString(updateRequest))
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isNoContent());
+
+    verify(roleCapabilitySetService).update(ROLE_ID, updateRequest);
   }
 
   @Test

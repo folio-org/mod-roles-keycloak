@@ -18,9 +18,12 @@ import static org.folio.roles.support.CapabilitySetUtils.capabilitySets;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySetsUpdateRequest;
 import static org.folio.roles.support.CapabilityUtils.FOO_CREATE_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_DELETE_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.FOO_DELETE_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.FOO_VIEW_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.INVALID_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.capabilitiesUpdateRequest;
 import static org.folio.roles.support.EndpointUtils.fooItemDeleteEndpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemGetEndpoint;
@@ -326,6 +329,40 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
     "classpath:/sql/populate-test-role.sql",
     "classpath:/sql/populate-role-policy.sql",
     "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-role-capability-relations.sql"
+  })
+  void update_positiveByName() throws Exception {
+    var request = capabilitySetsUpdateRequest(FOO_CREATE_CAPABILITY_SET_NAME, FOO_EDIT_CAPABILITY_SET_NAME);
+    updateRoleCapabilitySets(request);
+
+    var fooItemEditCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_EDIT_CAPABILITY_SET);
+    doGet("/roles/capability-sets")
+      .andExpect(content().json(asJsonString(roleCapabilitySets(fooItemEditCapabilitySet))));
+
+    assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
+      kcPermissionName(fooItemPostEndpoint()),
+      kcPermissionName(fooItemPutEndpoint())
+    ));
+  }
+
+  @Test
+  void update_negative_notFoundCapabilitySetNames() throws Exception {
+    var request = capabilitySetsUpdateRequest(INVALID_CAPABILITY_SET_NAME);
+    attemptUpdateRoleCapabilitySets(request)
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].message")
+        .value("Capabilities by name are not found"))
+      .andExpect(jsonPath("$.errors[0].type").value("RequestValidationException"))
+      .andExpect(jsonPath("$.errors[0].code").value("validation_error"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilityNames"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].value").value("[boo_item.create]"));
+  }
+  @Test
+  @KeycloakRealms("/json/keycloak/role-capability-realm.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
     "classpath:/sql/capability-sets/populate-capability-sets.sql",
     "classpath:/sql/capability-sets/populate-role-capability-set-relations.sql"
   })
@@ -437,12 +474,17 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
   }
 
   static void updateRoleCapabilitySets(CapabilitySetsUpdateRequest request) throws Exception {
-    mockMvc.perform(put("/roles/{id}/capability-sets", ROLE_ID)
-        .header(TENANT, TENANT_ID)
-        .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
-        .contentType(APPLICATION_JSON)
-        .content(asJsonString(request)))
+    attemptUpdateRoleCapabilitySets(request)
       .andExpect(status().isNoContent());
+  }
+
+  static ResultActions attemptUpdateRoleCapabilitySets(CapabilitySetsUpdateRequest request) throws Exception {
+    return mockMvc.perform(put("/roles/{id}/capability-sets", ROLE_ID)
+      .header(TENANT, TENANT_ID)
+      .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
+      .contentType(APPLICATION_JSON)
+      .content(asJsonString(request))
+      .contentType(APPLICATION_JSON));
   }
 
   static ResultActions postRoleCapabilitySets(RoleCapabilitySetsRequest request) throws Exception {

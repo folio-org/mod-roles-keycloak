@@ -342,6 +342,43 @@ class RoleCapabilityIT extends BaseIntegrationTest {
     "classpath:/sql/capabilities/populate-capabilities.sql",
     "classpath:/sql/capabilities/populate-role-capability-relations.sql"
   })
+  void update_positiveByName() throws Exception {
+    var request = capabilitiesUpdateRequest(FOO_EDIT_CAPABILITY_NAME, FOO_DELETE_CAPABILITY_NAME);
+
+    updateRoleCapabilities(request);
+
+    doGet("/roles/capabilities")
+      .andExpect(content().json(asJsonString(roleCapabilities(
+        roleCapability(ROLE_ID, FOO_EDIT_CAPABILITY),
+        roleCapability(ROLE_ID, FOO_DELETE_CAPABILITY)))));
+
+    assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
+      kcPermissionName(fooItemDeleteEndpoint()),
+      kcPermissionName(fooItemPutEndpoint())
+    ));
+  }
+
+  @Test
+  void update_negative_notFoundCapabilitySetNames() throws Exception {
+    var request = capabilitiesUpdateRequest(INVALID_CAPABILITY_NAME);
+    attemptUpdateRoleCapabilities(request)
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].message")
+        .value("Capabilities by name are not found"))
+      .andExpect(jsonPath("$.errors[0].type").value("RequestValidationException"))
+      .andExpect(jsonPath("$.errors[0].code").value("validation_error"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilityNames"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].value").value("[boo_item.create]"));
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-capability-realm.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-role-capability-relations.sql"
+  })
   void deleteCapabilities_positive() throws Exception {
     mockMvc.perform(delete("/roles/{id}/capabilities", ROLE_ID)
         .header(TENANT, TENANT_ID)
@@ -406,12 +443,16 @@ class RoleCapabilityIT extends BaseIntegrationTest {
   }
 
   static void updateRoleCapabilities(CapabilitiesUpdateRequest request) throws Exception {
-    mockMvc.perform(put("/roles/{id}/capabilities", ROLE_ID)
-        .header(TENANT, TENANT_ID)
-        .header(USER_ID, USER_ID_HEADER)
-        .contentType(APPLICATION_JSON)
-        .content(asJsonString(request)))
-      .andExpect(status().isNoContent());
+    attemptUpdateRoleCapabilities(request).andExpect(status().isNoContent());
+  }
+
+  static ResultActions attemptUpdateRoleCapabilities(CapabilitiesUpdateRequest request) throws Exception {
+    return mockMvc.perform(put("/roles/{id}/capabilities", ROLE_ID)
+      .header(TENANT, TENANT_ID)
+      .header(USER_ID, USER_ID_HEADER)
+      .contentType(APPLICATION_JSON)
+      .content(asJsonString(request)))
+      .andExpect(content().contentType(APPLICATION_JSON));
   }
 
   static ResultActions postRoleCapabilities(RoleCapabilitiesRequest request) throws Exception {

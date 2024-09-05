@@ -38,6 +38,7 @@ public class CapabilitySetUtils {
   public static final UUID CAPABILITY_SET_ID = UUID.randomUUID();
 
   public static final String CAPABILITY_SET_NAME = "test-resource_item.create";
+  public static final String CAPABILITY_SET_NAME_2 = "test-resource_item.create-2";
   public static final String INVALID_CAPABILITY_SET_NAME = "boo_item.create";
 
   public static final UUID FOO_MANAGE_CAPABILITY_SET = fromString("a1002e06-a2bc-4ce4-9d71-e25db1250e09");
@@ -162,11 +163,11 @@ public class CapabilitySetUtils {
     return entity;
   }
 
-  public static CapabilitySetsUpdateRequest capabilitySetsUpdateRequest(UUID... capabilityIds) {
-    return new CapabilitySetsUpdateRequest().capabilitySetIds(List.of(capabilityIds));
+  public static CapabilitySetsUpdateRequest capabilitySetsUpdateRequest(UUID... capabilitySetIds) {
+    return new CapabilitySetsUpdateRequest().capabilitySetIds(List.of(capabilitySetIds));
   }
 
-  public static CapabilitySetsUpdateRequest capabilitySetsUpdateRequest(List<UUID> ids) {
-    return new CapabilitySetsUpdateRequest().capabilitySetIds(ids);
+  public static CapabilitySetsUpdateRequest capabilitySetsUpdateRequest(String... capabilitySetNames) {
+    return new CapabilitySetsUpdateRequest().capabilitySetNames(List.of(capabilitySetNames));
   }
 }
