@@ -3,7 +3,7 @@ package org.folio.roles.it;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.common.utils.CollectionUtils.toStream;
-import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
+import static org.folio.roles.domain.dto.RoleType.DEFAULT;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.utils.TestValues.readValue;
 import static org.folio.test.TestUtils.parseResponse;

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="rename loadable role type" author="Saba Zedginidze">
+    <sql>
+      ALTER TYPE role_loadable_type RENAME TO role_type;
+    </sql>
+  </changeSet>
+
+  <changeSet id="add new values to role type" author="Saba Zedginidze">
+    <sql>
+      ALTER TYPE role_type ADD VALUE 'REGULAR';
+      ALTER TYPE role_type ADD VALUE 'CONSORTIUM';
+    </sql>
+  </changeSet>
+
+  <changeSet id="add type field to role schema" author="Saba Zedginidze">
+    <addColumn tableName="role">
+      <column name="type" type="role_type" defaultValue="REGULAR">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="update role table type from loadable role table" author="Saba Zedginidze">
+    <sql>
+      UPDATE role
+      SET type = RL.type
+      FROM role_loadable RL
+      WHERE role.id = RL.id;
+    </sql>
+  </changeSet>
+
+  <changeSet id="drop type field to loadable role schema" author="Saba Zedginidze">
+    <dropColumn tableName="role_loadable">
+      <column name="type"/>
+    </dropColumn>
+  </changeSet>
+
+  <changeSet id="update type field based on description" author="Saba Zedginidze">
+    <sql>
+      UPDATE role
+      SET type = 'DEFAULT'
+      WHERE description = 'System generated role during migration';
+    </sql>
+  </changeSet>
+</databaseChangeLog>

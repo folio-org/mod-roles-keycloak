@@ -7,7 +7,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
-import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
+import static org.folio.roles.domain.dto.RoleType.DEFAULT;
 import static org.folio.roles.domain.entity.LoadableRoleEntity.DEFAULT_LOADABLE_ROLE_SORT;
 import static org.folio.roles.service.ServiceUtils.comparatorById;
 import static org.folio.roles.service.ServiceUtils.merge;
@@ -23,11 +23,11 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.LoadableRole;
-import org.folio.roles.domain.dto.LoadableRoleType;
 import org.folio.roles.domain.dto.LoadableRoles;
+import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.LoadableRoleEntity;
-import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
+import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
@@ -63,7 +63,7 @@ public class LoadableRoleService {
 
   @Transactional(readOnly = true)
   public boolean isDefaultRole(UUID id) {
-    return repository.existsByIdAndType(id, EntityLoadableRoleType.DEFAULT);
+    return repository.existsByIdAndType(id, EntityRoleType.DEFAULT);
   }
 
   /**
@@ -71,7 +71,7 @@ public class LoadableRoleService {
    */
   @Transactional(readOnly = true)
   public void cleanupDefaultRolesFromKeycloak() {
-    try (var loadableRoles = repository.findAllByType(EntityLoadableRoleType.DEFAULT)) {
+    try (var loadableRoles = repository.findAllByType(EntityRoleType.DEFAULT)) {
       loadableRoles.map(LoadableRoleEntity::getName)
         .map(keycloakService::findByName)
         .forEach(optRole -> optRole.ifPresent(kcRole -> keycloakService.deleteByIdSafe(kcRole.getId())));
@@ -127,7 +127,7 @@ public class LoadableRoleService {
     return saved;
   }
 
-  private void saveAllByType(LoadableRoleType type, List<LoadableRole> roles) {
+  private void saveAllByType(RoleType type, List<LoadableRole> roles) {
     requireNonNull(type);
 
     if (type == DEFAULT) {
@@ -147,7 +147,7 @@ public class LoadableRoleService {
   }
 
   private List<LoadableRoleEntity> findAllDefaultRoles() {
-    try (var defaultRoles = repository.findAllByType(EntityLoadableRoleType.DEFAULT)) {
+    try (var defaultRoles = repository.findAllByType(EntityRoleType.DEFAULT)) {
       return defaultRoles.toList();
     }
   }

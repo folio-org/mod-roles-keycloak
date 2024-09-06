@@ -3,7 +3,7 @@ package org.folio.roles.service.reference;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.folio.common.utils.CollectionUtils.toStream;
-import static org.folio.roles.domain.dto.LoadableRoleType.DEFAULT;
+import static org.folio.roles.domain.dto.RoleType.DEFAULT;
 
 import java.util.List;
 import java.util.Set;
