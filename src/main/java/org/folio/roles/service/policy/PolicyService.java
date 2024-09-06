@@ -1,10 +1,8 @@
 package org.folio.roles.service.policy;
 
 import static java.lang.String.format;
-import static java.util.Objects.isNull;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toList;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
@@ -17,6 +15,7 @@ import org.folio.roles.controller.validation.PolicyValidate;
 import org.folio.roles.domain.dto.Policies;
 import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.domain.dto.PolicyType;
+import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.integration.keyclock.KeycloakPolicyService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +40,7 @@ public class PolicyService {
    */
   @Transactional(readOnly = true)
   public Policy findById(UUID id) {
-    return entityService.findById(id);
+    return entityService.getById(id);
   }
 
   /**
@@ -64,9 +63,13 @@ public class PolicyService {
    * @return The created {@link Policies}.
    * @throws IllegalStateException if there are no policies to create or policies already created.
    */
-  public Policies create(List<@PolicyValidate Policy> policies) {
-    var createdPolicies = policies.stream().map(this::createSafe).flatMap(Optional::stream).collect(toList());
-    return buildPolicies(createdPolicies);
+  public PageResult<Policy> create(List<@PolicyValidate Policy> policies) {
+    var createdPolicies = policies.stream()
+      .map(this::createSafe)
+      .flatMap(Optional::stream)
+      .toList();
+
+    return PageResult.of(createdPolicies.size(), createdPolicies);
   }
 
   /**
@@ -105,9 +108,8 @@ public class PolicyService {
    * @return The policies that match the search criteria.
    */
   @Transactional(readOnly = true)
-  public Policies search(String query, Integer limit, Integer offset) {
-    var policies = entityService.findByQuery(query, offset, limit);
-    return buildPolicies(policies);
+  public PageResult<Policy> search(String query, Integer limit, Integer offset) {
+    return entityService.findByQuery(query, offset, limit);
   }
 
   /**
@@ -217,12 +219,5 @@ public class PolicyService {
       log.warn("Failed to create a policy {}", policy.getName(), e);
       return empty();
     }
-  }
-
-  private Policies buildPolicies(List<Policy> policies) {
-    if (isNull(policies)) {
-      return null;
-    }
-    return new Policies().policies(policies).totalRecords(policies.size());
   }
 }

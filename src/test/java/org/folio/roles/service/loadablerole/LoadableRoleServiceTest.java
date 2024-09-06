@@ -16,7 +16,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
+import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
@@ -153,7 +153,7 @@ class LoadableRoleServiceTest {
       var role = role();
       var loadableRole = loadableRoleEntity(loadableRole());
 
-      when(repository.findAllByType(EntityLoadableRoleType.DEFAULT))
+      when(repository.findAllByType(EntityRoleType.DEFAULT))
         .thenReturn(Stream.of(loadableRole));
       when(keycloakService.findByName(loadableRole.getName()))
         .thenReturn(Optional.of(role));
@@ -165,7 +165,7 @@ class LoadableRoleServiceTest {
 
     @Test
     void positive_when_noRoles() {
-      when(repository.findAllByType(EntityLoadableRoleType.DEFAULT))
+      when(repository.findAllByType(EntityRoleType.DEFAULT))
         .thenReturn(Stream.empty());
 
       service.cleanupDefaultRolesFromKeycloak();

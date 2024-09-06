@@ -1,4 +1,5 @@
 {
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "description": "Object containing the details of the time-based policy.",
   "required": [],
@@ -68,13 +69,8 @@
       "min": "${minuteStart}"
     },
     "logic": {
-      "description": "Policies can be configured with positive or negative logic. Briefly, you can use this option to define whether the policy result should be kept as it is or be negated.",
-      "type": "string",
-      "enum": [
-        "positive",
-        "negative"
-      ],
-      "default": "positive"
+      "description": "Time policy logic",
+      "$ref": "policyLogicType.json"
     }
   }
 }

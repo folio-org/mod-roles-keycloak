@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.folio.roles.domain.entity.LoadableRoleEntity;
-import org.folio.roles.domain.entity.type.EntityLoadableRoleType;
+import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -12,9 +12,7 @@ public interface LoadableRoleRepository extends BaseCqlJpaRepository<LoadableRol
 
   Optional<LoadableRoleEntity> findByIdOrName(UUID id, String name);
 
-  boolean existsByIdAndType(UUID id, EntityLoadableRoleType type);
+  boolean existsByIdAndType(UUID id, EntityRoleType type);
 
-  int countAllByType(EntityLoadableRoleType type);
-
-  Stream<LoadableRoleEntity> findAllByType(EntityLoadableRoleType type);
+  Stream<LoadableRoleEntity> findAllByType(EntityRoleType type);
 }

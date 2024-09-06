@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.domain.dto.PolicyType.USER;
 import static org.folio.roles.support.EndpointUtils.endpoint;
-import static org.folio.roles.support.KeycloakUtils.keycloakUser;
+import static org.folio.roles.support.KeycloakUserUtils.keycloakUser;
 import static org.folio.roles.support.PolicyUtils.userPolicy;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.mockito.ArgumentMatchers.eq;

@@ -3,6 +3,7 @@ package org.folio.roles.service.permission;
 import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.roles.domain.dto.PolicyType.USER;
+import static org.folio.roles.integration.keyclock.KeycloakUserService.getUserId;
 import static org.folio.roles.service.permission.PermissionService.convertToString;
 
 import java.util.List;
@@ -40,7 +41,7 @@ public class UserPermissionService implements PermissionService {
 
     log.info("Creating permissions for user: id = {}, endpoints = {}", () -> userId, () -> convertToString(endpoints));
     var kcUser = keycloakUserService.getKeycloakUserByUserId(userId);
-    var policyName = getPolicyName(kcUser.getUserId());
+    var policyName = getPolicyName(getUserId(kcUser));
     var userPolicy = policyService.getOrCreatePolicy(policyName, USER, () -> createNewUserPolicy(userId));
     keycloakAuthService.createPermissions(userPolicy, endpoints, getPermissionNameGenerator(userId));
   }
@@ -54,8 +55,8 @@ public class UserPermissionService implements PermissionService {
 
     log.debug("Removing permissions for user: id = {}, endpoints = {}", () -> userId, () -> convertToString(endpoints));
     var kcUser = keycloakUserService.getKeycloakUserByUserId(userId);
-    var folioUserId = kcUser.getUserId();
-    var policyName = getPolicyName(kcUser.getUserId());
+    var folioUserId = getUserId(kcUser);
+    var policyName = getPolicyName(folioUserId);
     var policy = policyService.getByNameAndType(policyName, USER);
     keycloakAuthService.deletePermissions(policy, endpoints, getPermissionNameGenerator(folioUserId));
   }

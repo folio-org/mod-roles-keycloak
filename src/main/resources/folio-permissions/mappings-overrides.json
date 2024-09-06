@@ -299,6 +299,11 @@
     "action": "manage",
     "type": "data"
   },
+  "ui-consortia-settings.consortium-manager.share": {
+    "resource": "UI-Consortia-Settings Consortium-Manager Share",
+    "action": "execute",
+    "type": "data"
+  },
   "ui-dashboard.dashboards.admin": {
     "resource": "UI-Dashboard Dashboards Admin",
     "action": "manage",

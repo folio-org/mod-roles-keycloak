@@ -31,11 +31,10 @@ import javax.net.ssl.X509ExtendedTrustManager;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import org.folio.roles.integration.keyclock.KeycloakAccessTokenService;
-import org.folio.roles.integration.keyclock.KeycloakClientService;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.keycloak.admin.client.Keycloak;
 import org.springframework.stereotype.Component;
 
 @Log4j2
@@ -43,10 +42,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class KeycloakTestClient {
 
+  private static final String KEYCLOAK_LOGIN_CLIENT_ID = "00000000-0000-0000-0000-000000000010";
+
+  private final Keycloak keycloak;
   private final ObjectMapper objectMapper;
   private final FolioModuleMetadata folioModuleMetadata;
-  private final KeycloakClientService keycloakClientService;
-  private final KeycloakAccessTokenService keycloakTokenService;
   private final KeycloakConfigurationProperties keycloakConfiguration;
 
   private final HttpClient httpClient = HttpClient.newBuilder()
@@ -74,11 +74,7 @@ public class KeycloakTestClient {
   }
 
   private List<String> findKeycloakPermissions() throws Exception {
-    var clientId = keycloakClientService.findAndCacheLoginClientUuid();
-    var path = "/admin/realms/{realm}/clients/{clientId}/authz/resource-server/permission";
-
-    var request = keycloakPermissionsRequest(path, clientId);
-
+    var request = keycloakPermissionsRequest();
     var response = httpClient.send(request, BodyHandlers.ofString());
     assertThat(response.statusCode()).isEqualTo(200);
 
@@ -92,17 +88,18 @@ public class KeycloakTestClient {
       .collect(toList());
   }
 
-  private HttpRequest keycloakPermissionsRequest(String path, String clientId) {
+  private HttpRequest keycloakPermissionsRequest() {
+    var path = "/admin/realms/{realm}/clients/{clientId}/authz/resource-server/permission";
     var uri = fromUriString(keycloakConfiguration.getBaseUrl() + path)
       .queryParam("first", 0)
       .queryParam("last", 100)
-      .buildAndExpand(Map.of("realm", TENANT_ID, "clientId", clientId))
+      .buildAndExpand(Map.of("realm", TENANT_ID, "clientId", KEYCLOAK_LOGIN_CLIENT_ID))
       .encode().toUri();
 
     return HttpRequest.newBuilder(uri)
       .GET()
       .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
-      .header(AUTHORIZATION, keycloakTokenService.getToken())
+      .header(AUTHORIZATION, "Bearer " + keycloak.tokenManager().getAccessTokenString())
       .build();
   }
 
@@ -112,26 +109,32 @@ public class KeycloakTestClient {
 
       @Override
       public void checkClientTrusted(X509Certificate[] chain, String authType, Socket socket) {
+        // used in tests, not implemented
       }
 
       @Override
       public void checkClientTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
+        // used in tests, not implemented
       }
 
       @Override
       public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        // used in tests, not implemented
       }
 
       @Override
       public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) {
+        // used in tests, not implemented
       }
 
       @Override
       public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) {
+        // used in tests, not implemented
       }
 
       @Override
       public void checkServerTrusted(X509Certificate[] chain, String authType) {
+        // used in tests, not implemented
       }
 
       @Override

@@ -1,4 +1,5 @@
 {
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "description": "Object containing the details of the aggregated policy.",
   "properties": {
@@ -10,13 +11,8 @@
       }
     },
     "logic": {
-      "description": "The logic to apply for this policy.",
-      "type": "string",
-      "enum": [
-        "positive",
-        "negative"
-      ],
-      "default": "positive"
+      "description": "User policy logic",
+      "$ref": "policyLogicType.json"
     }
   },
   "required": [
