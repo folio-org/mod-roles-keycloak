@@ -3,6 +3,7 @@ package org.folio.roles.support;
 import static java.lang.String.format;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.support.AuditableUtils.populateAuditable;
+import static org.instancio.Instancio.gen;
 import static org.instancio.Select.field;
 
 import java.util.List;
@@ -11,7 +12,6 @@ import java.util.function.Supplier;
 import lombok.experimental.UtilityClass;
 import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
-import org.instancio.Gen;
 import org.instancio.Instancio;
 import org.instancio.Model;
 
@@ -38,7 +38,7 @@ public class LoadablePermissionUtils {
 
   public static List<LoadablePermission> loadablePermissions(int minSize, int maxSize) {
     return Instancio.ofList(LOADABLE_PERMISSION_MODEL)
-      .size(Gen.ints().range(minSize, maxSize).get())
+      .size(gen().ints().range(minSize, maxSize).get())
       .create();
   }
 
@@ -60,8 +60,8 @@ public class LoadablePermissionUtils {
 
   private static Supplier<String> generatePermName() {
     return () -> format("permission.resource.%s.%s.%s",
-      Gen.ints().min(0).get(),
-      Gen.oneOf("collection", "item").get(),
-      Gen.oneOf("get", "post", "put", "delete").get());
+      gen().ints().min(0).get(),
+      gen().oneOf("collection", "item").get(),
+      gen().oneOf("get", "post", "put", "delete").get());
   }
 }
