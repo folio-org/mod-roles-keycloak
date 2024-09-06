@@ -9,10 +9,6 @@
     }
   ],
   "properties": {
-    "type": {
-      "description": "Loadable role type",
-      "$ref": "loadableRoleType.json"
-    },
     "permissions": {
       "description": "List of permissions associated with role",
       "type": "array",

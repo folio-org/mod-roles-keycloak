@@ -17,6 +17,10 @@
       "description": "Free form description of the role",
       "type": "string"
     },
+    "type": {
+      "description": "Role type",
+      "$ref": "roleType.json"
+    },
     "metadata": {
       "readOnly": true,
       "$ref": "../common/metadata.json"
