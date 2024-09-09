@@ -329,6 +329,71 @@
     "action": "view",
     "type": "settings"
   },
+  "okapi.proxy.cleanup.modules": {
+    "resource": "Okapi Proxy Cleanup Modules",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "okapi.proxy.tenants.list": {
+    "resource": "Okapi Proxy Tenants List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.proxy.tenants.install.list": {
+    "resource": "Okapi Proxy Tenants Install List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.proxy.tenants.interfaces.list": {
+    "resource": "Okapi Proxy Tenants Interfaces List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.proxy.tenants.timers.list": {
+    "resource": "Okapi Proxy Tenants Timers List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.deploy": {
+    "resource": "Okapi Manage Deployments",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.modules": {
+    "resource": "Okapi Manage Modules",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.tenants": {
+    "resource": "Okapi Manage Tenants",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.tenantmodules": {
+    "resource": "Okapi Manage Modules Enabled for Tenant",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.timers": {
+    "resource": "Okapi Manage Timers",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.interfaces": {
+    "resource": "Okapi Module Interfaces",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.env": {
+    "resource": "Okapi Manage Environment Variables",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.readonly": {
+    "resource": "Okapi Read Only",
+    "action": "manage",
+    "type": "settings"
+  },
   "orders.item.approve": {
     "resource": "Orders Item Approve",
     "action": "execute",
