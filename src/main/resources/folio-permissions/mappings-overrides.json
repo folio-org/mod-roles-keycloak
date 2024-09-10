@@ -1058,5 +1058,15 @@
     "resource": "UI-Finance encumbrance unrelease",
     "action": "execute",
     "type": "procedural"
+  },
+  "erm.agreements.export": {
+    "resource": "Agreements export",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "erm.agreements.validate": {
+    "resource": "Agreements validation",
+    "action": "execute",
+    "type": "procedural"
   }
 }
