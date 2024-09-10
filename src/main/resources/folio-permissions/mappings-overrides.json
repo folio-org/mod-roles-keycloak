@@ -14,6 +14,16 @@
     "action": "view",
     "type": "settings"
   },
+  "erm.agreements.export": {
+    "resource": "ERM Agreements Export",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "erm.agreements.validate": {
+    "resource": "ERM Agreements Validation",
+    "action": "execute",
+    "type": "procedural"
+  },
   "circulation.override-renewal-block": {
     "resource": "Circulation Override-Renewal-Block",
     "action": "execute",
@@ -1056,16 +1066,6 @@
   },
   "ui-finance.encumbrance.unrelease": {
     "resource": "UI-Finance encumbrance unrelease",
-    "action": "execute",
-    "type": "procedural"
-  },
-  "erm.agreements.export": {
-    "resource": "Agreements export",
-    "action": "execute",
-    "type": "procedural"
-  },
-  "erm.agreements.validate": {
-    "resource": "Agreements validation",
     "action": "execute",
     "type": "procedural"
   }
