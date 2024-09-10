@@ -4,16 +4,6 @@
     "action": "execute",
     "type": "procedural"
   },
-  "erm.sts.template": {
-    "resource": "ERM STS Template",
-    "action": "execute",
-    "type": "procedural"
-  },
-  "erm.admin.action": {
-    "resource": "ERM Admin Action",
-    "action": "view",
-    "type": "settings"
-  },
   "erm.agreements.export": {
     "resource": "ERM Agreements Export",
     "action": "execute",
@@ -23,6 +13,16 @@
     "resource": "ERM Agreements Validation",
     "action": "execute",
     "type": "procedural"
+  },
+  "erm.sts.template": {
+    "resource": "ERM STS Template",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "erm.admin.action": {
+    "resource": "ERM Admin Action",
+    "action": "view",
+    "type": "settings"
   },
   "circulation.override-renewal-block": {
     "resource": "Circulation Override-Renewal-Block",
