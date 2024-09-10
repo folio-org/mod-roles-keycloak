@@ -329,6 +329,44 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
     "classpath:/sql/capability-sets/populate-capability-sets.sql",
     "classpath:/sql/capability-sets/populate-role-capability-set-relations.sql"
   })
+  void update_positiveByName() throws Exception {
+    var request = capabilitySetsUpdateRequest(FOO_CREATE_CAPABILITY_SET_NAME, FOO_EDIT_CAPABILITY_SET_NAME);
+    updateRoleCapabilitySets(request);
+
+    var fooItemCreateCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_CREATE_CAPABILITY_SET);
+    var fooItemEditCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_EDIT_CAPABILITY_SET);
+    var expected = roleCapabilitySets(fooItemCreateCapabilitySet, fooItemEditCapabilitySet);
+    doGet("/roles/capability-sets")
+      .andExpect(content().json(asJsonString(expected)));
+
+    assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
+      kcPermissionName(fooItemPostEndpoint()),
+      kcPermissionName(fooItemPutEndpoint())
+    ));
+  }
+
+  @Test
+  void update_negative_notFoundCapabilitySetNames() throws Exception {
+    var request = capabilitySetsUpdateRequest(INVALID_CAPABILITY_SET_NAME);
+    attemptUpdateRoleCapabilitySets(request)
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].message")
+        .value("Capability sets by name are not found"))
+      .andExpect(jsonPath("$.errors[0].type").value("RequestValidationException"))
+      .andExpect(jsonPath("$.errors[0].code").value("validation_error"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilitySetNames"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].value").value("[boo_item.create]"));
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-capability-realm.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capability-sets/populate-capability-sets.sql",
+    "classpath:/sql/capability-sets/populate-role-capability-set-relations.sql"
+  })
   void deleteCapabilitySets_positive() throws Exception {
     mockMvc.perform(delete("/roles/{id}/capability-sets", ROLE_ID)
         .header(TENANT, TENANT_ID)
@@ -437,12 +475,17 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
   }
 
   static void updateRoleCapabilitySets(CapabilitySetsUpdateRequest request) throws Exception {
-    mockMvc.perform(put("/roles/{id}/capability-sets", ROLE_ID)
-        .header(TENANT, TENANT_ID)
-        .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
-        .contentType(APPLICATION_JSON)
-        .content(asJsonString(request)))
+    attemptUpdateRoleCapabilitySets(request)
       .andExpect(status().isNoContent());
+  }
+
+  static ResultActions attemptUpdateRoleCapabilitySets(CapabilitySetsUpdateRequest request) throws Exception {
+    return mockMvc.perform(put("/roles/{id}/capability-sets", ROLE_ID)
+      .header(TENANT, TENANT_ID)
+      .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
+      .contentType(APPLICATION_JSON)
+      .content(asJsonString(request))
+      .contentType(APPLICATION_JSON));
   }
 
   static ResultActions postRoleCapabilitySets(RoleCapabilitySetsRequest request) throws Exception {

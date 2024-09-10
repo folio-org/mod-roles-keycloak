@@ -2,6 +2,7 @@ package org.folio.roles.controller;
 
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
+import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_NAME;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.capabilities;
@@ -23,7 +24,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
 import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.service.capability.CapabilityService;
@@ -168,7 +168,19 @@ class RoleCapabilityControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isNoContent());
 
-    verify(roleCapabilityService).update(ROLE_ID, List.of(CAPABILITY_SET_ID));
+    verify(roleCapabilityService).update(ROLE_ID, updateRequest);
+  }
+
+  @Test
+  void updateRoleCapabilitiesByNames_positive() throws Exception {
+    var updateRequest = new CapabilitiesUpdateRequest().addCapabilityNamesItem(CAPABILITY_SET_NAME);
+    mockMvc.perform(put("/roles/{id}/capabilities", ROLE_ID)
+        .contentType(APPLICATION_JSON)
+        .content(asJsonString(updateRequest))
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isNoContent());
+
+    verify(roleCapabilityService).update(ROLE_ID, updateRequest);
   }
 
   @Test

@@ -19,6 +19,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.CapabilitySet;
+import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.RoleCapabilitySet;
 import org.folio.roles.domain.dto.RoleCapabilitySetsRequest;
@@ -76,7 +77,6 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   @Override
   @Transactional
   public PageResult<RoleCapabilitySet> create(RoleCapabilitySetsRequest request, boolean safeCreate) {
-    verifyRequest(request);
     var resolvedCapabilitySetIds = resolveCapabilitySetsByNames(request.getCapabilitySetNames());
     var allCapabilitySetIds = CollectionUtils.union(resolvedCapabilitySetIds, request.getCapabilitySetIds());
     return createRoleCapabilitySets(request.getRoleId(), allCapabilitySetIds, safeCreate);
@@ -108,13 +108,21 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   @Override
   @Transactional
   public void update(UUID roleId, List<UUID> capabilitySetIds) {
-    roleService.getById(roleId);
-    var assignedRoleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
+    updateRoleCapabilitySets(roleId, capabilitySetIds);
+  }
 
-    var assignedSetIds = getCapabilitySetIds(assignedRoleCapabilitySetEntities);
-    UpdateOperationHelper.create(assignedSetIds, capabilitySetIds, "role-capability set")
-      .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(roleId, newIds, assignedSetIds)))
-      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+  /**
+   * Updates role-capability relations.
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param request - CapabilitySetsUpdateRequest that contains either capability IDs or names, to be assigned to a role
+   */
+  @Override
+  @Transactional
+  public void update(UUID roleId, CapabilitySetsUpdateRequest request) {
+    var resolvedCapabilitiesIds = resolveCapabilitySetsByNames(request.getCapabilitySetNames());
+    var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilitySetIds());
+    updateRoleCapabilitySets(roleId, allCapabilityIds);
   }
 
   /**
@@ -197,6 +205,15 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     return isEmpty(newSetIds) ? PageResult.empty() : assignCapabilities(roleId, newSetIds, emptyList());
   }
 
+  public void updateRoleCapabilitySets(UUID roleId, List<UUID> capabilitySetIds) {
+    roleService.getById(roleId);
+    var assignedRoleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
+    var assignedSetIds = getCapabilitySetIds(assignedRoleCapabilitySetEntities);
+    UpdateOperationHelper.create(assignedSetIds, capabilitySetIds, "role-capability set")
+      .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(roleId, newIds, assignedSetIds)))
+      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+  }
+
   private List<UUID> resolveCapabilitySetsByNames(List<String> capabilitySetNames) {
     if (isEmpty(capabilitySetNames)) {
       return emptyList();
@@ -249,11 +266,5 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
 
   private static List<UUID> getCapabilitySetIds(List<RoleCapabilitySetEntity> existingEntities) {
     return mapItems(existingEntities, RoleCapabilitySetEntity::getCapabilitySetId);
-  }
-
-  private void verifyRequest(RoleCapabilitySetsRequest request) {
-    if (isEmpty(request.getCapabilitySetIds()) && isEmpty(request.getCapabilitySetNames())) {
-      throw new IllegalArgumentException("'capabilitySetIds' or 'capabilitySetNames' must not be null");
-    }
   }
 }
