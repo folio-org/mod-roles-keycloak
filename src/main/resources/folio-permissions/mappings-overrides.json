@@ -4,6 +4,16 @@
     "action": "execute",
     "type": "procedural"
   },
+  "erm.agreements.export": {
+    "resource": "ERM Agreements Export",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "erm.agreements.validate": {
+    "resource": "ERM Agreements Validation",
+    "action": "execute",
+    "type": "procedural"
+  },
   "erm.sts.template": {
     "resource": "ERM STS Template",
     "action": "execute",

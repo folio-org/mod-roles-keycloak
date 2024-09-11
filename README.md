@@ -89,3 +89,26 @@ Keycloak all configuration properties: https://www.keycloak.org/server/all-confi
 
 The module pulls client_secret for client_id from AWS Parameter store, Vault or other reliable secret storages when they
 are required for login. The credentials are cached for 3600s.
+
+## Custom permission-capability mappings
+
+In order to avoid issues resulting from mapping permissions to capabilities (such as overlapping capabilities in cases
+of incorrect permission naming etc) mod-roles-keycloak provides a way  to define a custom mapping from permission
+to capability - via file mappings-overrides.json, placed in folio-permissions folder (see src/main/resources).
+
+One can define custom mapping of a module-descriptor permission to Eureka capability in this file. For example:
+```
+{
+  "some.nonstandard.named.permission": {
+    "resource": "Nonstandard entity",
+    "action": "execute",
+    "type": "procedural"
+  },
+  ...
+}
+```
+
+See [Permissions naming convention](https://folio-org.atlassian.net/wiki/spaces/FOLIJET/pages/156368925/Permissions+naming+convention) for more
+information regarding permission properties such as "action", permission naming conventions and other permission related
+information.
+
