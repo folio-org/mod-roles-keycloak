@@ -49,7 +49,6 @@ public class ApiRoleCapabilitySetService implements RoleCapabilitySetService {
   @Override
   public void update(UUID roleId, CapabilitySetsUpdateRequest request) {
     checkRoleIsNotDefault(roleId);
-    verifyCapabilitySets(request.getCapabilitySetIds(), request.getCapabilitySetNames());
     delegate.update(roleId, request);
   }
 
