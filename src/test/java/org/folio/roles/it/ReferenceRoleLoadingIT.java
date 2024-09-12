@@ -31,6 +31,8 @@ import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.keycloak.admin.client.Keycloak;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 @IntegrationTest
@@ -49,6 +51,7 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   private PlainLoadableRoles circObserverRole;
   private PlainLoadableRoles circStaffRole;
   private PlainLoadableRoles circStudentRole;
+  @Autowired private Keycloak keycloak;
 
   @BeforeEach
   void setUp() {
@@ -57,6 +60,7 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
     circObserverRole = readRole("circ-observer-role.json");
     circStaffRole = readRole("circ-staff-role.json");
     circStudentRole = readRole("circ-student-role.json");
+    keycloak.tokenManager().grantToken();
   }
 
   @AfterEach

@@ -17,7 +17,10 @@ import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.keycloak.admin.client.Keycloak;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @IntegrationTest
 class ReferenceDataIT extends BaseIntegrationTest {
@@ -26,6 +29,13 @@ class ReferenceDataIT extends BaseIntegrationTest {
     .addParametersItem(new Parameter()
       .key("loadReference")
       .value("true"));
+
+  @Autowired private Keycloak keycloak;
+
+  @BeforeEach
+  void setUp() {
+    keycloak.tokenManager().grantToken();
+  }
 
   @AfterEach
   void afterEach() {

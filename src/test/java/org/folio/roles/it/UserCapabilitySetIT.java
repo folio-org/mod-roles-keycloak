@@ -59,7 +59,9 @@ import org.folio.test.extensions.WireMockStub;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.keycloak.admin.client.Keycloak;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.jdbc.Sql;
@@ -79,6 +81,7 @@ class UserCapabilitySetIT extends BaseIntegrationTest {
   private static final UUID USER_ID = fromString("3e8647ee-2a23-4ca4-896b-95476559c567");
 
   @Autowired private KeycloakTestClient kcTestClient;
+  @Autowired private Keycloak keycloak;
 
   @BeforeAll
   static void beforeAll() {
@@ -88,6 +91,11 @@ class UserCapabilitySetIT extends BaseIntegrationTest {
   @AfterAll
   static void afterAll() {
     removeTenant(TENANT_ID);
+  }
+
+  @BeforeEach
+  void setUp() {
+    keycloak.tokenManager().grantToken();
   }
 
   @Test

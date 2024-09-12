@@ -51,7 +51,9 @@ import org.folio.test.extensions.WireMockStub;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.keycloak.admin.client.Keycloak;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -74,6 +76,7 @@ class UserCapabilityUpdateIT extends BaseIntegrationTest {
 
   @Autowired private KeycloakTestClient kcTestClient;
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
+  @Autowired private Keycloak keycloak;
 
   @BeforeAll
   static void beforeAll() {
@@ -83,6 +86,11 @@ class UserCapabilityUpdateIT extends BaseIntegrationTest {
   @AfterAll
   static void afterAll() {
     removeTenant(TENANT_ID);
+  }
+
+  @BeforeEach
+  void setUp() {
+    keycloak.tokenManager().grantToken();
   }
 
   @Test
