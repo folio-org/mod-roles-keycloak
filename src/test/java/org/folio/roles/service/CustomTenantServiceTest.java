@@ -20,6 +20,7 @@ import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.keycloak.admin.client.Keycloak;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -42,13 +43,15 @@ class CustomTenantServiceTest {
   private FolioExecutionContext context;
   @Mock
   private LoadableRoleService loadableRoleService;
+  @Mock
+  private Keycloak keycloak;
   private CustomTenantService customTenantService;
 
   @BeforeEach
   void setUp() {
     var referenceDataLoader = of(rolesDataLoader, policiesDataLoader);
     customTenantService = new TestCustomTenantService(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService,
-      referenceDataLoader, loadableRoleService);
+      referenceDataLoader, loadableRoleService, keycloak);
   }
 
   @Test
@@ -110,9 +113,10 @@ class CustomTenantServiceTest {
   public static class TestCustomTenantService extends CustomTenantService {
     TestCustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
       FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
-      List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService) {
+      List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService, Keycloak keycloak) {
 
-      super(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService, referenceDataLoaders, loadableRoleService);
+      super(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService, referenceDataLoaders, loadableRoleService,
+        keycloak);
     }
 
     @Override

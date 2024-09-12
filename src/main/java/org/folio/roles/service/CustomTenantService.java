@@ -11,6 +11,7 @@ import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
 import org.folio.spring.service.TenantService;
 import org.folio.tenant.domain.dto.TenantAttributes;
+import org.keycloak.admin.client.Keycloak;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -23,15 +24,17 @@ public class CustomTenantService extends TenantService {
   private final KafkaAdminService kafkaAdminService;
   private final List<ReferenceDataLoader> referenceDataLoaders;
   private final LoadableRoleService loadableRoleService;
+  private final Keycloak keycloak;
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
     FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
-    List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService) {
+    List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService, Keycloak keycloak) {
 
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.kafkaAdminService = kafkaAdminService;
     this.referenceDataLoaders = referenceDataLoaders;
     this.loadableRoleService = loadableRoleService;
+    this.keycloak = keycloak;
   }
 
   @Override
@@ -53,6 +56,8 @@ public class CustomTenantService extends TenantService {
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
     log.debug("Restarting event listeners after tenant update");
     kafkaAdminService.restartEventListeners();
+    log.debug("Issuing fresh Keycloak token after tenant update");
+    keycloak.tokenManager().grantToken();
   }
 
   @Override
