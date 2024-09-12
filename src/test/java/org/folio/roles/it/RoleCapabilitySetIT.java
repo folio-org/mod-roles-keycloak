@@ -354,6 +354,40 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
   }
 
   @Test
+  @KeycloakRealms("/json/keycloak/role-capability-realm.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capability-sets/populate-capability-sets.sql",
+    "classpath:/sql/capability-sets/populate-role-capability-set-relations.sql"
+  })
+  void update_positive_emptyCapabilitySet() throws Exception {
+    var request1 = capabilitySetsUpdateRequest(FOO_CREATE_CAPABILITY_SET_NAME, FOO_EDIT_CAPABILITY_SET_NAME);
+    updateRoleCapabilitySets(request1);
+
+    var fooItemCreateCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_CREATE_CAPABILITY_SET);
+    var fooItemEditCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_EDIT_CAPABILITY_SET);
+    var expected1 = roleCapabilitySets(fooItemCreateCapabilitySet, fooItemEditCapabilitySet);
+    doGet("/roles/capability-sets")
+      .andExpect(content().json(asJsonString(expected1)));
+
+    assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
+      kcPermissionName(fooItemPostEndpoint()),
+      kcPermissionName(fooItemPutEndpoint())
+    ));
+
+    var request2 = new CapabilitySetsUpdateRequest();
+    updateRoleCapabilitySets(request2);
+
+    var emptyResponse = roleCapabilitySets();
+    doGet("/roles/capability-sets")
+      .andExpect(content().json(asJsonString(emptyResponse)));
+
+    assertThat(kcTestClient.getPermissionNames()).isEmpty();
+  }
+
+  @Test
   void update_negative_notFoundCapabilitySetNames() throws Exception {
     var request = capabilitySetsUpdateRequest(INVALID_CAPABILITY_SET_NAME);
     attemptUpdateRoleCapabilitySets(request)
