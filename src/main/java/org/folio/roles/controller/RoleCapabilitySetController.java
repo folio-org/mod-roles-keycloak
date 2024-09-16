@@ -52,7 +52,7 @@ public class RoleCapabilitySetController implements RoleCapabilitySetApi {
 
   @Override
   public ResponseEntity<Void> updateRoleCapabilitySets(UUID roleId, CapabilitySetsUpdateRequest request) {
-    roleCapabilitySetService.update(roleId, request.getCapabilitySetIds());
+    roleCapabilitySetService.update(roleId, request);
     return ResponseEntity.noContent().build();
   }
 

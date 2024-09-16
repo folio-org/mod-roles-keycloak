@@ -11,6 +11,7 @@ import static org.folio.roles.domain.model.PageResult.empty;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_NAME;
+import static org.folio.roles.support.CapabilityUtils.CAPABILITY_NAME_2;
 import static org.folio.roles.support.CapabilityUtils.INVALID_CAPABILITY_NAME;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.EndpointUtils.endpoint;
@@ -33,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.entity.key.RoleCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
@@ -406,6 +408,43 @@ class RoleCapabilityServiceImplTest {
     }
 
     @Test
+    void positiveByName() {
+      var uce1 = roleCapabilityEntity(capabilityId1);
+      var uce2 = roleCapabilityEntity(capabilityId2);
+      var uce3 = roleCapabilityEntity(capabilityId3);
+      var existingEntities = List.of(uce1, uce3);
+
+      var capability2 = capability().id(capabilityId2).name(CAPABILITY_NAME);
+      var capability3 = capability().id(capabilityId3).name(CAPABILITY_NAME_2);
+      var capabilities = List.of(capability2, capability3);
+      var capabilityNames = List.of(capability2.getName(), capability3.getName());
+
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+      when(capabilityService.findByNames(capabilityNames)).thenReturn(capabilities);
+      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
+      when(roleCapabilityEntityMapper.convert(uce2)).thenReturn(roleCapability(ROLE_ID, capabilityId2));
+      when(roleCapabilityRepository.saveAll(List.of(uce2))).thenReturn(List.of(uce2));
+
+      var newIds = List.of(capabilityId2);
+      var deprecatedIds = List.of(capabilityId1);
+      var endpointsToAssign = List.of(endpoint("/c2", GET));
+      var endpointsToDelete = List.of(endpoint("/c1", GET));
+      when(capabilityEndpointService.getByCapabilityIds(eq(newIds), anyList())).thenReturn(endpointsToAssign);
+      when(capabilityEndpointService.getByCapabilityIds(eq(deprecatedIds), anyList())).thenReturn(endpointsToDelete);
+
+      var request = new CapabilitiesUpdateRequest().capabilityNames(capabilityNames);
+      roleCapabilityService.update(ROLE_ID, request);
+
+      verify(capabilityService).checkIds(List.of(capabilityId2));
+      verify(rolePermissionService).createPermissions(ROLE_ID, endpointsToAssign);
+      verify(rolePermissionService).deletePermissions(ROLE_ID, endpointsToDelete);
+      verify(roleCapabilityRepository).deleteRoleCapabilities(ROLE_ID, deprecatedIds);
+      verify(capabilityEndpointService).getByCapabilityIds(newIds, List.of(capabilityId1, capabilityId3));
+      verify(capabilityEndpointService).getByCapabilityIds(deprecatedIds, List.of(capabilityId3, capabilityId2));
+    }
+
+    @Test
     void negative_notingToUpdate() {
       var roleCapabilityEntity = roleCapabilityEntity(ROLE_ID, capabilityId1);
       when(roleService.getById(ROLE_ID)).thenReturn(role());
@@ -425,6 +464,21 @@ class RoleCapabilityServiceImplTest {
       assertThatThrownBy(() -> roleCapabilityService.update(ROLE_ID, capabilityIds))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Role is not found by id: %s", ROLE_ID);
+    }
+
+    @Test
+    void negative_capabilitySetNameIsNotFound() {
+      var errorMessage = "Capabilities by name are not found";
+      var capabilityNames = List.of(CAPABILITY_NAME, INVALID_CAPABILITY_NAME);
+      var capability = capability(capabilityId1).name(CAPABILITY_NAME);
+      var capabilities = List.of(capability);
+      var request = new CapabilitiesUpdateRequest().capabilityNames(capabilityNames);
+
+      when(capabilityService.findByNames(capabilityNames)).thenReturn(capabilities);
+
+      assertThatThrownBy(() -> roleCapabilityService.update(ROLE_ID, request))
+        .isInstanceOf(RequestValidationException.class)
+        .hasMessage(errorMessage);
     }
   }
 

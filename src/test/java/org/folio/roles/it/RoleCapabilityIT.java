@@ -57,7 +57,9 @@ import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.keycloak.admin.client.Keycloak;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.jdbc.Sql;
@@ -78,6 +80,7 @@ class RoleCapabilityIT extends BaseIntegrationTest {
   private static final UUID ROLE_ID = fromString("1e985e76-e9ca-401c-ad8e-0d121a11111e");
 
   @Autowired private KeycloakTestClient kcTestClient;
+  @Autowired private Keycloak keycloak;
 
   @BeforeAll
   static void beforeAll() {
@@ -87,6 +90,11 @@ class RoleCapabilityIT extends BaseIntegrationTest {
   @AfterAll
   static void afterAll() {
     removeTenant(TENANT_ID);
+  }
+
+  @BeforeEach
+  void setUp() {
+    keycloak.tokenManager().grantToken();
   }
 
   @Test
@@ -342,6 +350,77 @@ class RoleCapabilityIT extends BaseIntegrationTest {
     "classpath:/sql/capabilities/populate-capabilities.sql",
     "classpath:/sql/capabilities/populate-role-capability-relations.sql"
   })
+  void update_positiveByName() throws Exception {
+    var request = capabilitiesUpdateRequest(FOO_EDIT_CAPABILITY_NAME, FOO_DELETE_CAPABILITY_NAME);
+
+    updateRoleCapabilities(request);
+
+    doGet("/roles/capabilities")
+      .andExpect(content().json(asJsonString(roleCapabilities(
+        roleCapability(ROLE_ID, FOO_EDIT_CAPABILITY),
+        roleCapability(ROLE_ID, FOO_DELETE_CAPABILITY)))));
+
+    assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
+      kcPermissionName(fooItemDeleteEndpoint()),
+      kcPermissionName(fooItemPutEndpoint())
+    ));
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-capability-realm.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-role-capability-relations.sql"
+  })
+  void update_positive_emptyCapabilitySet() throws Exception {
+    var request1 = capabilitiesUpdateRequest(FOO_EDIT_CAPABILITY_NAME, FOO_DELETE_CAPABILITY_NAME);
+
+    updateRoleCapabilities(request1);
+
+    doGet("/roles/capabilities")
+      .andExpect(content().json(asJsonString(roleCapabilities(
+        roleCapability(ROLE_ID, FOO_EDIT_CAPABILITY),
+        roleCapability(ROLE_ID, FOO_DELETE_CAPABILITY)))));
+
+    assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
+      kcPermissionName(fooItemDeleteEndpoint()),
+      kcPermissionName(fooItemPutEndpoint())
+    ));
+
+    var request2 = new CapabilitiesUpdateRequest();
+
+    updateRoleCapabilities(request2);
+
+    var emptyResponse = roleCapabilities();
+    doGet("/roles/capabilities")
+      .andExpect(content().json(asJsonString(emptyResponse)));
+
+    assertThat(kcTestClient.getPermissionNames()).isEmpty();
+  }
+
+  @Test
+  void update_negative_notFoundCapabilitySetNames() throws Exception {
+    var request = capabilitiesUpdateRequest(INVALID_CAPABILITY_NAME);
+    attemptUpdateRoleCapabilities(request)
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].message")
+        .value("Capabilities by name are not found"))
+      .andExpect(jsonPath("$.errors[0].type").value("RequestValidationException"))
+      .andExpect(jsonPath("$.errors[0].code").value("validation_error"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key").value("capabilityNames"))
+      .andExpect(jsonPath("$.errors[0].parameters[0].value").value("[boo_item.create]"));
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-capability-realm.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-role-capability-relations.sql"
+  })
   void deleteCapabilities_positive() throws Exception {
     mockMvc.perform(delete("/roles/{id}/capabilities", ROLE_ID)
         .header(TENANT, TENANT_ID)
@@ -406,12 +485,15 @@ class RoleCapabilityIT extends BaseIntegrationTest {
   }
 
   static void updateRoleCapabilities(CapabilitiesUpdateRequest request) throws Exception {
-    mockMvc.perform(put("/roles/{id}/capabilities", ROLE_ID)
-        .header(TENANT, TENANT_ID)
-        .header(USER_ID, USER_ID_HEADER)
-        .contentType(APPLICATION_JSON)
-        .content(asJsonString(request)))
-      .andExpect(status().isNoContent());
+    attemptUpdateRoleCapabilities(request).andExpect(status().isNoContent());
+  }
+
+  static ResultActions attemptUpdateRoleCapabilities(CapabilitiesUpdateRequest request) throws Exception {
+    return mockMvc.perform(put("/roles/{id}/capabilities", ROLE_ID)
+      .header(TENANT, TENANT_ID)
+      .header(USER_ID, USER_ID_HEADER)
+      .contentType(APPLICATION_JSON)
+      .content(asJsonString(request)));
   }
 
   static ResultActions postRoleCapabilities(RoleCapabilitiesRequest request) throws Exception {

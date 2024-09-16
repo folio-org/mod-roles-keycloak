@@ -38,7 +38,9 @@ import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.keycloak.admin.client.Keycloak;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -63,6 +65,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
   @Autowired private JdbcTemplate jdbcTemplate;
+  @Autowired private Keycloak keycloak;
 
   @BeforeAll
   static void beforeAll() {
@@ -72,6 +75,11 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
   @AfterAll
   static void afterAll() {
     removeTenant(TENANT_ID);
+  }
+
+  @BeforeEach
+  void setUp() {
+    keycloak.tokenManager().grantToken();
   }
 
   @Test

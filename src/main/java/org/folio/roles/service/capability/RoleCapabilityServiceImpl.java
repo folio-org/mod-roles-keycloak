@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.dto.RoleCapability;
@@ -75,7 +76,6 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Override
   @Transactional
   public PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate) {
-    verifyRequest(request);
     var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
     var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
     return createRoleCapabilities(request.getRoleId(), allCapabilityIds, safeCreate);
@@ -107,12 +107,22 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Override
   @Transactional
   public void update(UUID roleId, List<UUID> capabilityIds) {
-    roleService.getById(roleId);
-    var assignedRoleCapabilityEntities = roleCapabilityRepository.findAllByRoleId(roleId);
-    var assignedCapabilityIds = getCapabilityIds(assignedRoleCapabilityEntities);
-    UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "role-capability")
-      .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(roleId, newIds, assignedCapabilityIds)))
-      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+    updateRoleCapabilities(roleId, capabilityIds);
+  }
+
+
+  /**
+   * Updates role-capability relations.
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param request - CapabilitiesUpdateRequest that contains either capability IDs or names, to be assigned to a role
+   */
+  @Override
+  @Transactional
+  public void update(UUID roleId, CapabilitiesUpdateRequest request) {
+    var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
+    var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
+    updateRoleCapabilities(roleId, allCapabilityIds);
   }
 
   /**
@@ -200,6 +210,15 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     return isEmpty(newCapabilityIds) ? PageResult.empty() : assignCapabilities(roleId, newCapabilityIds, emptyList());
   }
 
+  private void updateRoleCapabilities(UUID roleId, List<UUID> capabilityIds) {
+    roleService.getById(roleId);
+    var assignedRoleCapabilityEntities = roleCapabilityRepository.findAllByRoleId(roleId);
+    var assignedCapabilityIds = getCapabilityIds(assignedRoleCapabilityEntities);
+    UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "role-capability")
+      .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(roleId, newIds, assignedCapabilityIds)))
+      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+  }
+
   private List<UUID> resolveCapabilitiesByNames(List<String> capabilityNames) {
     if (isEmpty(capabilityNames)) {
       return emptyList();
@@ -252,11 +271,5 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   private List<UUID> getAssignedCapabilityIds(UUID roleId) {
     var capabilitySets = capabilitySetService.findByRoleId(roleId, MAX_VALUE, 0);
     return CapabilityUtils.getCapabilitySetIds(capabilitySets);
-  }
-
-  private void verifyRequest(RoleCapabilitiesRequest request) {
-    if (isEmpty(request.getCapabilityIds()) && isEmpty(request.getCapabilityNames())) {
-      throw new IllegalArgumentException("'capabilityIds' or 'capabilityNames' must not be null");
-    }
   }
 }

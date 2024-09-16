@@ -3,6 +3,7 @@ package org.folio.roles.service.capability;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.UUID;
+import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.dto.RoleCapability;
 import org.folio.roles.domain.model.PageResult;
@@ -46,6 +47,14 @@ public interface RoleCapabilityService {
    * @param capabilityIds - list of capabilities that must be assigned to a role
    */
   void update(UUID roleId, List<UUID> capabilityIds);
+
+  /**
+   * Updates role-capability relations.
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param request - CapabilitiesUpdateRequest that contains either capability IDs or names, to be assigned to a role
+   */
+  void update(UUID roleId, CapabilitiesUpdateRequest request);
 
   /**
    * Removes role-capability relations by role identifier.
