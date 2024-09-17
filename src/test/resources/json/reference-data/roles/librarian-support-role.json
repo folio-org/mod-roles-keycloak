@@ -3,7 +3,7 @@
     {
       "name": "Librarian Support",
       "description": "Role for Librarian Support",
-      "type": "support",
+      "type": "SUPPORT",
       "permissions": [
         "ui-users.view"
       ]

@@ -2,5 +2,5 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "string",
   "description": "Role type",
-  "enum": [ "default", "support", "regular", "consortium" ]
+  "enum": [ "DEFAULT", "SUPPORT", "REGULAR", "CONSORTIUM" ]
 }

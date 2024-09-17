@@ -4,12 +4,12 @@
   "description": "The logic type of policy.",
   "type": "string",
   "enum": [
-    "positive",
-    "negative"
+    "POSITIVE",
+    "NEGATIVE"
   ],
-  "default": "positive",
+  "default": "POSITIVE",
   "examples": [
-    "positive",
-    "negative"
+    "POSITIVE",
+    "NEGATIVE"
   ]
 }
