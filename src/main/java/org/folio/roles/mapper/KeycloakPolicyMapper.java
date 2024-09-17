@@ -263,7 +263,7 @@ public abstract class KeycloakPolicyMapper {
     return ofNullable(policyRepresentation)
       .map(AbstractPolicyRepresentation::getLogic)
       .map(Enum::name)
-      .map(PolicyLogicType::fromValue)
+      .map(enumValue -> PolicyLogicType.fromValue(enumValue.toUpperCase()))
       .orElse(null);
   }
 
