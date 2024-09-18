@@ -8,7 +8,7 @@
       "timePolicy": {
         "start": "2023-07-01T00:00:00",
         "expires": "2033-07-01T00:00:00",
-        "logic": "positive",
+        "logic": "POSITIVE",
         "monthStart": "1",
         "monthEnd": "12",
         "hourStart": "8",

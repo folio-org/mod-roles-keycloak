@@ -3,7 +3,7 @@
     {
       "name": "User Support",
       "description": "Role for User Support",
-      "type": "support",
+      "type": "SUPPORT",
       "permissions": [
         "ui-users.view"
       ]
