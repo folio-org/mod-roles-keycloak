@@ -31,8 +31,12 @@ public class KafkaMessageListener {
     groupId = "#{folioKafkaProperties.listener['capability'].groupId}",
     topicPattern = "#{folioKafkaProperties.listener['capability'].topicPattern}")
   public void handleCapabilityEvent(ResourceEvent resourceEvent) {
+    var start = System.currentTimeMillis();
+    log.warn("Handling capability event [id: {}]", resourceEvent.getId());
     try (var ignored = new FolioExecutionContextSetter(metadata, Map.of(TENANT, List.of(resourceEvent.getTenant())))) {
       capabilityKafkaEventHandler.handleEvent(resourceEvent);
+    } finally {
+      log.warn("Capability event [id: {}] handled in {} ms", resourceEvent.getId(), System.currentTimeMillis() - start);
     }
   }
 }
