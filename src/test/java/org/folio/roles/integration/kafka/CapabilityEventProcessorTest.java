@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.common.utils.permission.model.PermissionAction;
+import org.folio.common.utils.permission.model.PermissionData;
+import org.folio.common.utils.permission.model.PermissionType;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.Endpoint;
@@ -177,7 +180,14 @@ class CapabilityEventProcessorTest {
         result(List.of(uiCapability, capability), List.of(capabilitySetDesc))),
 
       arguments("module event(empty resources)", event(UI_MODULE), result(emptyList(), emptyList())),
-      arguments("ui-module event(empty resources)", event(UI_MODULE), result(emptyList(), emptyList()))
+      arguments("ui-module event(empty resources)", event(UI_MODULE), result(emptyList(), emptyList())),
+
+      arguments("module event mapping overrides",
+        event(MODULE,
+          Map.of("perm.name", new PermissionData(resource, PermissionType.DATA, PermissionAction.VIEW, null)),
+          resource(permission("perm.name").description("Capability to view a test-resource item"))),
+        result(List.of(capability(null, resource, VIEW, "perm.name").moduleId(MODULE_ID)),
+          emptyList()))
     );
   }
 
@@ -187,6 +197,16 @@ class CapabilityEventProcessorTest {
       .moduleType(type)
       .applicationId(APPLICATION_ID)
       .resources(asList(resources));
+  }
+
+  private static CapabilityEvent event(ModuleType type, Map<String, PermissionData> permissionMapping,
+    FolioResource... resources) {
+    return new CapabilityEvent()
+      .moduleId(MODULE_ID)
+      .moduleType(type)
+      .applicationId(APPLICATION_ID)
+      .resources(asList(resources))
+      .permissionMappingOverrides(permissionMapping);
   }
 
   private static FolioResource resource(Permission permission, Endpoint... endpoints) {

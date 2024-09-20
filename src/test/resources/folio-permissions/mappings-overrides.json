@@ -1,0 +1,1072 @@
+{
+  "erm.agreements.item.clone": {
+    "resource": "ERM Agreements Item Clone",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "erm.agreements.export": {
+    "resource": "ERM Agreements Export",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "erm.agreements.validate": {
+    "resource": "ERM Agreements Validation",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "erm.sts.template": {
+    "resource": "ERM STS Template",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "erm.admin.action": {
+    "resource": "ERM Admin Action",
+    "action": "view",
+    "type": "settings"
+  },
+  "circulation.override-renewal-block": {
+    "resource": "Circulation Override-Renewal-Block",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "circulation.override-item-limit-block": {
+    "resource": "Circulation Override-Item-Limit-Block",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "circulation.override-item-not-loanable-block": {
+    "resource": "Circulation Override-Item-Not-Loanable-Block",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "circulation.override-patron-block": {
+    "resource": "Circulation Override-Patron-Block",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "circulation.internal.fetch-items": {
+    "resource": "Circulation Internal All Entities",
+    "action": "view",
+    "type": "data"
+  },
+  "circulation.internal.apply-rules": {
+    "resource": "Circulation Internal Policies",
+    "action": "view",
+    "type": "data"
+  },
+  "circulation.renew-loan": {
+    "resource": "Circulation Renew-Loan",
+    "action": "manage",
+    "type": "data"
+  },
+  "modperms.circulation.loans.anonymize": {
+    "resource": "Modperms Circulation Loans Anonymize",
+    "action": "manage",
+    "type": "data"
+  },
+  "data-import.fileExtensions.default": {
+    "resource": "Data-Import Restore FileExtensions",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "data-export.job.item.download": {
+    "resource": "Data-Export Job Item Download",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "data-export.job.item.resend": {
+    "resource": "Data-Export Job Item Resend",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "eusage.user": {
+    "resource": "Eusage User",
+    "action": "manage",
+    "type": "data"
+  },
+  "ermusageharvester.readonly": {
+    "resource": "Ermusageharvester Readonly",
+    "action": "view",
+    "type": "data"
+  },
+  "harvester-admin.harvestables.log.store": {
+    "resource": "Harvester-Admin Harvestables Log Store",
+    "action": "manage",
+    "type": "data"
+  },
+  "harvester-admin.run-jobs": {
+    "resource": "Harvester-Admin Run Jobs",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "harvester-admin.stop-jobs": {
+    "resource": "Harvester-Admin Stop Jobs",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "invoice.item.pay": {
+    "resource": "Invoice Item Pay",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "invoice.item.cancel": {
+    "resource": "Invoice Item Cancel",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "licenses.licenses.item.clone": {
+    "resource": "Licenses Clone Item",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "licenses.compareTerms": {
+    "resource": "Licenses Compare Terms",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "licenses.files.item.download": {
+    "resource": "Licenses Download Files",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "licenses.admin.action": {
+    "resource": "Licenses Admin Action",
+    "action": "view",
+    "type": "settings"
+  },
+  "notes.allops": {
+    "resource": "Notes All Operations",
+    "action": "manage",
+    "type": "data"
+  },
+  "notes.collection.get.by.status": {
+    "resource": "Notes Collection By Status",
+    "action": "view",
+    "type": "data"
+  },
+  "orders-storage.audit-outbox.process": {
+    "resource": "Orders-Storage Audit-Outbox Process",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "perms.permissions": {
+    "resource": "Perms Permissions",
+    "action": "manage",
+    "type": "data"
+  },
+  "perms.users": {
+    "resource": "User Permissions",
+    "action": "manage",
+    "type": "data"
+  },
+  "sender.message-delivery": {
+    "resource": "Sender Message-Delivery",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "servint.admin.action": {
+    "resource": "Servint Admin Action",
+    "action": "view",
+    "type": "settings"
+  },
+  "servint.dashboards.admin": {
+    "resource": "Servint Dashboards Admin",
+    "action": "view",
+    "type": "settings"
+  },
+  "servint.numberGenerator.use": {
+    "resource": "Servint NumberGenerator Use",
+    "action": "view",
+    "type": "settings"
+  },
+  "servint.numberGenerator.config": {
+    "resource": "Servint NumberGenerator Config",
+    "action": "view",
+    "type": "settings"
+  },
+  "mod-settings.entries.upload": {
+    "resource": "Mod-Settings Entries Upload",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "source-storage.populate.records": {
+    "resource": "Source-Storage Populate Records",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "source-storage.verified.records": {
+    "resource": "Source-Storage Verified Records",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "user-import.add": {
+    "resource": "User-Import Import Users",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "patron-pin.set": {
+    "resource": "Patron-Pin",
+    "action": "edit",
+    "type": "data"
+  },
+  "users.read.basic": {
+    "resource": "Users Basic-Information",
+    "action": "view",
+    "type": "data"
+  },
+  "users.read.restricted": {
+    "resource": "Users Restricted-Information",
+    "action": "view",
+    "type": "data"
+  },
+  "users-keycloak.read.basic": {
+    "resource": "Users-Keycloak Basic-Information",
+    "action": "view",
+    "type": "data"
+  },
+  "users-keycloak.read.restricted": {
+    "resource": "Users-Keycloak Restricted-Information",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-bulk-edit.view.base": {
+    "resource": "UI-Bulk-Edit Base",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-bulk-edit.edit.base": {
+    "resource": "UI-Bulk-Edit Base",
+    "action": "edit",
+    "type": "data"
+  },
+  "ui-bulk-edit.app-view": {
+    "resource": "UI-Bulk-Edit In App",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-bulk-edit.app-edit": {
+    "resource": "UI-Bulk-Edit In App",
+    "action": "edit",
+    "type": "data"
+  },
+  "ui-bulk-edit.app-edit.users": {
+    "resource": "UI-Bulk-Edit In App Users",
+    "action": "edit",
+    "type": "data"
+  },
+  "ui-bulk-edit.app-delete": {
+    "resource": "UI-Bulk-Edit In App",
+    "action": "delete",
+    "type": "data"
+  },
+  "ui-bulk-edit.query": {
+    "resource": "UI-Bulk-Edit Query",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-checkout.circulation": {
+    "resource": "UI-Checkout Circulation",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-checkout.viewLoans": {
+    "resource": "UI-Checkout Loans",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-checkout.viewFeeFines": {
+    "resource": "UI-Checkout Fee-Fines",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-checkout.viewRequests": {
+    "resource": "UI-Checkout Requests",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-courses.maintain-courses": {
+    "resource": "UI-Courses Courses",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-courses.maintain-items": {
+    "resource": "UI-Courses Items",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-courses.maintain-settings": {
+    "resource": "UI-Courses Settings",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-courses.read-add-edit": {
+    "resource": "UI-Courses Courses",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-courses.add-edit-items": {
+    "resource": "UI-Courses Add-Edit-Items",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-consortia-settings.consortium-manager.share": {
+    "resource": "UI-Consortia-Settings Consortium-Manager Share",
+    "action": "execute",
+    "type": "data"
+  },
+  "ui-dashboard.dashboards.admin": {
+    "resource": "UI-Dashboard Dashboards Admin",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-data-export.app.enabled": {
+    "resource": "UI-Data-Export App Enabled",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.proxy.tenants.modules.list": {
+    "resource": "Okapi Proxy Tenants Modules List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.env.list": {
+    "resource": "Okapi Env List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.proxy.modules.list": {
+    "resource": "Okapi Proxy Modules List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.proxy.cleanup.modules": {
+    "resource": "Okapi Proxy Cleanup Modules",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "okapi.proxy.tenants.list": {
+    "resource": "Okapi Proxy Tenants List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.proxy.tenants.install.list": {
+    "resource": "Okapi Proxy Tenants Install List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.proxy.tenants.interfaces.list": {
+    "resource": "Okapi Proxy Tenants Interfaces List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.proxy.tenants.timers.list": {
+    "resource": "Okapi Proxy Tenants Timers List",
+    "action": "view",
+    "type": "settings"
+  },
+  "okapi.deploy": {
+    "resource": "Okapi Manage Deployments",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.modules": {
+    "resource": "Okapi Manage Modules",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.tenants": {
+    "resource": "Okapi Manage Tenants",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.tenantmodules": {
+    "resource": "Okapi Manage Modules Enabled for Tenant",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.timers": {
+    "resource": "Okapi Manage Timers",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.interfaces": {
+    "resource": "Okapi Module Interfaces",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.env": {
+    "resource": "Okapi Manage Environment Variables",
+    "action": "manage",
+    "type": "settings"
+  },
+  "okapi.readonly": {
+    "resource": "Okapi Read Only",
+    "action": "manage",
+    "type": "settings"
+  },
+  "orders.item.approve": {
+    "resource": "Orders Item Approve",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "orders.item.reopen": {
+    "resource": "Orders Item Reopen",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "orders.item.unopen": {
+    "resource": "Orders Item Unopen",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-eholdings.app.enabled": {
+    "resource": "UI-Eholdings App Enabled",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-eholdings.package-title.select-unselect": {
+    "resource": "UI-Eholdings Package-Title Select-Unselect",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-eholdings.titles-packages.create-delete": {
+    "resource": "UI-Eholdings Titles-Packages Create-Delete",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-erm-usage.udp.create-edit": {
+    "resource": "UI-Erm-Usage Udp Create-Edit",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-export-manager.jobs.downloadAndResend": {
+    "resource": "UI-Export-Manager Jobs Download-And-Resend",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-finance.ledger.rollover": {
+    "resource": "UI-Finance Ledger Rollover",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-finance.manually-release-encumbrances": {
+    "resource": "UI-Finance Manually-Release-Encumbrances",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-inventory.all-permissions.TEMPORARY": {
+    "resource": "UI-Inventory All-Permissions Temprorary",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-inventory.instance.createOrder": {
+    "resource": "UI-Inventory Instance Order",
+    "action": "create",
+    "type": "data"
+  },
+  "ui-inventory.item.markasmissing": {
+    "resource": "UI-Inventory Item Mark-As-Missing",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-inventory.instance.view-staff-suppressed-records": {
+    "resource": "UI-Inventory Instance Staff-Suppressed-Records",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-inventory.items.mark-items-withdrawn": {
+    "resource": "UI-Inventory Items Mark-Items-Withdrawn",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-inventory.items.mark-intellectual-item": {
+    "resource": "UI-Inventory Items Mark-Intellectual-Item",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-inventory.items.mark-restricted": {
+    "resource": "UI-Inventory Items Mark-Restricted",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-inventory.items.mark-unknown": {
+    "resource": "UI-Inventory Items Mark-Unknown",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-inventory.items.mark-unavailable": {
+    "resource": "UI-Inventory Items Mark-Unavailable",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-inventory.items.mark-long-missing": {
+    "resource": "UI-Inventory Items Mark-Long-Missing",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-inventory.items.mark-in-process-non-requestable": {
+    "resource": "UI-Inventory Items Mark-In-Process-Non-Requestable",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-inventory.items.mark-in-process": {
+    "resource": "UI-Inventory Items Mark-In-Process",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-invoice.approve": {
+    "resource": "UI-Invoice Approve",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-invoice.exportCSV": {
+    "resource": "UI-Invoice Export CSV",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-invoice.cancel": {
+    "resource": "UI-Invoice Cancel",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-invoice.pay": {
+    "resource": "UI-Invoice Pay",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-invoice.voucherExport": {
+    "resource": "UI-Invoice Voucher Export",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-orders.order.approve": {
+    "resource": "UI-Orders Order Approve",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-orders.order.cancel": {
+    "resource": "UI-Orders Order Cancel",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-orders.order.exportCSV": {
+    "resource": "UI-Orders Order Export CSV",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-orders.order.reopen": {
+    "resource": "UI-Orders Order Reopen",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-orders.order.showHidden": {
+    "resource": "UI-Orders Order Show Hidden",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-orders.order.unopen": {
+    "resource": "UI-Orders Order Unopen",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-orders.order.updateEncumbrances": {
+    "resource": "UI-Orders Order Update Encumbrances",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "mod-settings.global.read.ui-ldp.admin": {
+    "resource": "Ui-Ldp Admin Settings",
+    "action": "view",
+    "type": "settings"
+  },
+  "mod-settings.global.read.ui-ldp.queries": {
+    "resource": "Ui-Ldp Saved Queries",
+    "action": "view",
+    "type": "settings"
+  },
+  "mod-settings.global.write.ui-ldp.admin": {
+    "resource": "Ui-Ldp Admin Settings",
+    "action": "edit",
+    "type": "settings"
+  },
+  "mod-settings.global.write.ui-ldp.queries": {
+    "resource": "Mod-Settings Global Write Ui-Ldp Queries",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-notes.item.assign-unassign": {
+    "resource": "UI-Notes Item Assign-Unassign",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-orders.third-party-services": {
+    "resource": "UI-Orders Third-Party-Services",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-organizations.third-party-services": {
+    "resource": "UI-Organizations Third-Party-Services",
+    "action": "manage",
+    "type": "data"
+  },
+  "plugin-eusage-reports.view-charts": {
+    "resource": "Plugin-Eusage-Reports Charts",
+    "action": "view",
+    "type": "data"
+  },
+  "plugin-eusage-reports.edit-matches": {
+    "resource": "Plugin-Eusage-Reports Matches",
+    "action": "edit",
+    "type": "data"
+  },
+  "ui-tenant-settings.settings.location.view": {
+    "resource": "UI-Tenant-Settings Settings Location View",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-quick-marc.quick-marc-editor.duplicate": {
+    "resource": "UI-Quick-Marc Quick-Marc-Editor Duplicate",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-quick-marc.quick-marc-authority-records.linkUnlink": {
+    "resource": "UI-Quick-Marc Quick-Marc-Authority-Records Link-Unlink",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-receiving.third-party-services": {
+    "resource": "UI-Receiving Third-Party-Services",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-requests.moveRequest": {
+    "resource": "UI-Requests Move Request",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-requests.reorderQueue": {
+    "resource": "UI-Requests Reorder Queue",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-users.opentransactions": {
+    "resource": "UI-Users Open Transactions",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-users.viewperms": {
+    "resource": "UI-Users Perms",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-users.editperms": {
+    "resource": "UI-Users Perms",
+    "action": "edit",
+    "type": "data"
+  },
+  "ui-users.viewuserservicepoints": {
+    "resource": "UI-Users Users Service Points",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-users.edituserservicepoints": {
+    "resource": "UI-Users Users Service Points",
+    "action": "edit",
+    "type": "data"
+  },
+  "ui-users.viewproxies": {
+    "resource": "UI-Users Proxies",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-users.editproxies": {
+    "resource": "UI-Users Proxies",
+    "action": "edit",
+    "type": "data"
+  },
+  "ui-users.accounts": {
+    "resource": "UI-Users Accounts",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-users.feefineactions": {
+    "resource": "UI-Users Fee-Fine Actions",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-users.manual_pay": {
+    "resource": "UI-Users Manual Pay",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.manual_waive": {
+    "resource": "UI-Users Manual Waive",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.manual_charge": {
+    "resource": "UI-Users Manual Charge",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.patron_blocks": {
+    "resource": "UI-Users Patron Blocks",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-users.loans.renew": {
+    "resource": "UI-Users Loans Renew",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.loans.renew-override": {
+    "resource": "UI-Users Loans Renew-Override",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.loans.declare-item-lost": {
+    "resource": "UI-Users Loans Declare-Item-Lost",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.loans.declare-claimed-returned-item-as-missing": {
+    "resource": "UI-Users Loans Declare-Claimed-Returned-Item-As-Missing",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.loans.claim-item-returned": {
+    "resource": "UI-Users Loans Claim-Item-Returned",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.loans.change-due-date": {
+    "resource": "UI-Users Loans Change-Due-Date",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.loans.anonymize": {
+    "resource": "UI-Users Loans Anonymize",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.overridePatronBlock": {
+    "resource": "UI-Users Override Patron Block",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.overrideItemBlock": {
+    "resource": "UI-Users Override Item Block",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-users.cashDrawerReport": {
+    "resource": "UI-Users Cash Drawer Report",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-users.financialTransactionReport": {
+    "resource": "UI-Users Financial Transaction Report",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-users.manualProcessRefundsReport": {
+    "resource": "UI-Users Manual Process Refunds Report",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-users.lost-items.requiring-actual-cost": {
+    "resource": "UI-Users Lost-Items Requiring-Actual-Cost",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-harvester-admin.read-jobs": {
+    "resource": "UI-Harvester-Admin Jobs",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-harvester-admin.maintain-jobs": {
+    "resource": "UI-Harvester-Admin Jobs",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-harvester-admin.maintain-all-jobs": {
+    "resource": "UI-Harvester-Admin All Jobs",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-harvester-admin.maintain-pipelines": {
+    "resource": "UI-Harvester-Admin Maintain-Pipelines",
+    "action": "manage",
+    "type": "data"
+  },
+  "users-bl.password-reset-link.generate": {
+    "resource": "Users-bl Password-Reset-Link Generate",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "users-bl.password-reset-link.validate": {
+    "resource": "Users-bl Password-Reset-Link Validate",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "users-bl.password-reset-link.reset": {
+    "resource": "Users-bl Password-Reset-Link Reset",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "users-keycloak.password-reset-link.generate": {
+    "resource": "Users-keycloak Password-Reset-Link Generate",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "users-keycloak.password-reset-link.validate": {
+    "resource": "Users-keycloak Password-Reset-Link Validate",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "users-keycloak.password-reset-link.reset": {
+    "resource": "Users-keycloak Password-Reset-Link Reset",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "mod-settings.global.write.mod-circulation": {
+    "resource": "Mod-Circulation Admin Settings",
+    "action": "edit",
+    "type": "settings"
+  },
+  "mod-settings.global.read.mod-circulation": {
+    "resource": "Mod-Circulation Admin Settings",
+    "action": "view",
+    "type": "settings"
+  },
+  "consortia.inventory.share.local.instance": {
+    "resource": "Consortia Inventory Share Local Instance",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "data-export.job.item.send": {
+    "resource": "Data-Export Job Item Send",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ermusageharvester.jobs.purge": {
+    "resource": "Erm-Usage-Harvester Jobs Purge",
+    "action": "delete",
+    "type": "data"
+  },
+  "fqm.query.purge": {
+    "resource": "Fqm Query Purge",
+    "action": "delete",
+    "type": "data"
+  },
+  "lists.item.refresh": {
+    "resource": "Lists Item Refresh",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "lists.item.refresh.cancel": {
+    "resource": "Lists Item Refresh Cancel ",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "lists.item.export.post": {
+    "resource": "Lists Item Export Post",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "lists.item.export.cancel": {
+    "resource": "Lists Item Export Cancel",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "source-storage.records.fetch": {
+    "resource": "Source-Storage Records Fetch",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-courses.view-settings": {
+    "resource": "UI-Courses Settings View",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-invoice.payDifferentFY": {
+    "resource": "UI-Invoice Pay Different FY",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-oai-pmh.logs": {
+    "resource": "UI-Oai-Pmh Logs",
+    "action": "view",
+    "type": "data"
+  },
+  "ui-users.loans.add-patron-info": {
+    "resource": "UI-Users Loans Add Patron-Info",
+    "action": "edit",
+    "type": "data"
+  },
+  "ui-users.loans.add-staff-info": {
+    "resource": "UI-Users Loans Add Staff-Info",
+    "action": "edit",
+    "type": "data"
+  },
+  "invoices.bypass-acquisition-units": {
+    "resource": "Bypass acquisition units checks",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-tenant-settings.settings.locale": {
+    "resource": "UI-Tenant-Settings Settings Locale",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-tenant-settings.settings.addresses": {
+    "resource": "UI-Tenant-Settings Settings Addresses",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-tenant-settings.settings.plugins": {
+    "resource": "UI-Tenant-Settings Settings Plugins",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-tenant-settings.settings.sso": {
+    "resource": "UI-Tenant-Settings Settings SSO",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-tenant-settings.settings.location": {
+    "resource": "UI-Tenant-Settings Settings Location",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-tenant-settings.settings.servicepoints": {
+    "resource": "UI-Tenant-Settings Settings Service Points",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-acquisition-units.settings.userAssignments": {
+    "resource": "Acquisition Units Settings User Assignment",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-organizations.acqUnits.assign": {
+    "resource": "Organizations Acquisition Units Assignment",
+    "action": "create",
+    "type": "data"
+  },
+  "ui-organizations.settings": {
+    "resource": "Organizations Settings",
+    "action": "manage",
+    "type": "data"
+  },
+  "ui-circulation.settings.cancellation-reasons": {
+    "resource": "UI-Circulation Settings Cancellation-Reasons",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.loan-history": {
+    "resource": "UI-Circulation Settings Loan-History",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.edit-loan-history": {
+    "resource": "UI-Circulation Settings Loan-History",
+    "action": "edit",
+    "type": "settings"
+  },
+  "ui-circulation.settings.view-loan-policies": {
+    "resource": "UI-Circulation Settings Loan-Policies",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.loan-policies": {
+    "resource": "UI-Circulation Settings Loan-Policies",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.notice-policies": {
+    "resource": "UI-Circulation Settings Notice-Policies",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.view-circulation-rules": {
+    "resource": "UI-Circulation Settings Circulation-Rules",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.edit-circulation-rules": {
+    "resource": "UI-Circulation Settings Circulation-Rules",
+    "action": "edit",
+    "type": "settings"
+  },
+  "ui-circulation.settings.fixed-due-date-schedules": {
+    "resource": "UI-Circulation Settings Fixed-Due-Date-Schedules",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.view-staff-slips": {
+    "resource": "UI-Circulation Settings Staff-Slips",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.edit-staff-slips": {
+    "resource": "UI-Circulation Settings Staff-Slips",
+    "action": "edit",
+    "type": "settings"
+  },
+  "ui-circulation.settings.staff-slips": {
+    "resource": "UI-Circulation Settings Staff-Slips",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.request-policies": {
+    "resource": "UI-Circulation Settings Request-Policies",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.other-settings": {
+    "resource": "UI-Circulation Settings Other-Settings",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.notice-templates": {
+    "resource": "UI-Circulation Settings Notice-Templates",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.view-overdue-fines-policies": {
+    "resource": "UI-Circulation Settings Overdue-Fines-Policies",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.overdue-fines-policies": {
+    "resource": "UI-Circulation Settings Overdue-Fines-Policies",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.view-lost-item-fees-policies": {
+    "resource": "UI-Circulation Settings Lost-Item-Fees-Policies",
+    "action": "view",
+    "type": "settings"
+  },
+  "ui-circulation.settings.lost-item-fees-policies": {
+    "resource": "UI-Circulation Settings Lost-Item-Fees-Policies",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-circulation.settings.titleLevelRequests": {
+    "resource": "UI-Circulation Settings Title Level Requests",
+    "action": "manage",
+    "type": "settings"
+  },
+  "ui-finance.fund-budget.recalculateTotals": {
+    "resource": "UI-Finance fund budget recalculate totals",
+    "action": "execute",
+    "type": "procedural"
+  },
+  "ui-finance.encumbrance.unrelease": {
+    "resource": "UI-Finance encumbrance unrelease",
+    "action": "execute",
+    "type": "procedural"
+  }
+}

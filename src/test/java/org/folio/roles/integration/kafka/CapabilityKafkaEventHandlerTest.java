@@ -1,6 +1,7 @@
 package org.folio.roles.integration.kafka;
 
 import static java.util.Collections.emptyList;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.domain.dto.CapabilityType.DATA;
 import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
@@ -13,11 +14,14 @@ import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.ws.rs.NotFoundException;
 import java.util.List;
 import java.util.Map;
 import org.folio.roles.domain.dto.Capability;
@@ -31,7 +35,9 @@ import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.permission.FolioPermissionService;
+import org.folio.roles.service.permission.PermissionOverrider;
 import org.folio.test.types.UnitTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -52,6 +58,12 @@ class CapabilityKafkaEventHandlerTest {
   @Mock private FolioPermissionService folioPermissionService;
   @Mock private CapabilityEventProcessor capabilityEventProcessor;
   @Mock private CapabilitySetDescriptorService capabilitySetDescriptorService;
+  @Mock private PermissionOverrider permissionOverrider;
+
+  @BeforeEach
+  void setUp() {
+    lenient().when(permissionOverrider.getPermissionMappings()).thenReturn(null);
+  }
 
   @Test
   void handleEvent_positive_capabilityCreateEvent() {
@@ -71,6 +83,7 @@ class CapabilityKafkaEventHandlerTest {
     verify(capabilityService).update(CREATE, List.of(capability()), emptyList());
     verify(capabilitySetDescriptorService).update(CREATE, emptyList(), emptyList());
     verify(objectMapper).convertValue(newValueMap, CapabilityEvent.class);
+    verify(permissionOverrider).getPermissionMappings();
   }
 
   @Test
@@ -91,6 +104,7 @@ class CapabilityKafkaEventHandlerTest {
     verify(capabilityService).update(DELETE, emptyList(), List.of(capability()));
     verify(capabilitySetDescriptorService).update(DELETE, emptyList(), emptyList());
     verify(objectMapper).convertValue(oldValueMap, CapabilityEvent.class);
+    verify(permissionOverrider).getPermissionMappings();
   }
 
   @Test
@@ -113,6 +127,7 @@ class CapabilityKafkaEventHandlerTest {
     verify(capabilityService).update(UPDATE, List.of(capability()), List.of(capability()));
     verify(capabilitySetDescriptorService).update(UPDATE, emptyList(), emptyList());
     verify(objectMapper, times(2)).convertValue(anyMap(), eq(CapabilityEvent.class));
+    verify(permissionOverrider).getPermissionMappings();
   }
 
   @Test
@@ -135,6 +150,7 @@ class CapabilityKafkaEventHandlerTest {
     verify(capabilityService).update(UPDATE, List.of(capability()), emptyList());
     verify(capabilitySetDescriptorService).update(UPDATE, emptyList(), emptyList());
     verify(objectMapper, times(2)).convertValue(anyMap(), eq(CapabilityEvent.class));
+    verify(permissionOverrider).getPermissionMappings();
   }
 
   @Test
@@ -157,6 +173,7 @@ class CapabilityKafkaEventHandlerTest {
     verify(capabilityService).update(UPDATE, emptyList(), List.of(capability()));
     verify(capabilitySetDescriptorService).update(UPDATE, emptyList(), emptyList());
     verify(objectMapper, times(2)).convertValue(anyMap(), eq(CapabilityEvent.class));
+    verify(permissionOverrider).getPermissionMappings();
   }
 
   @Test
@@ -179,6 +196,7 @@ class CapabilityKafkaEventHandlerTest {
     verify(capabilityService).update(UPDATE, List.of(capability()), emptyList());
     verify(capabilitySetDescriptorService).update(UPDATE, emptyList(), emptyList());
     verify(objectMapper, times(2)).convertValue(anyMap(), eq(CapabilityEvent.class));
+    verify(permissionOverrider).getPermissionMappings();
   }
 
   @Test
@@ -201,6 +219,7 @@ class CapabilityKafkaEventHandlerTest {
     verify(capabilityService).update(UPDATE, emptyList(), List.of(capability()));
     verify(capabilitySetDescriptorService).update(UPDATE, emptyList(), emptyList());
     verify(objectMapper, times(2)).convertValue(anyMap(), eq(CapabilityEvent.class));
+    verify(permissionOverrider).getPermissionMappings();
   }
 
   @Test
@@ -216,6 +235,27 @@ class CapabilityKafkaEventHandlerTest {
 
     verify(capabilityService).updateApplicationVersion(MODULE_ID, APPLICATION_ID_V2, APPLICATION_ID);
     verify(capabilitySetDescriptorService).updateApplicationVersion(MODULE_ID, APPLICATION_ID_V2, APPLICATION_ID);
+    verifyNoInteractions(permissionOverrider);
+  }
+
+  @Test
+  void handleEvent_negative_permissionMappingFailed() {
+    var resourceEvent = ResourceEvent.builder()
+      .tenant(TENANT_ID)
+      .type(CREATE)
+      .newValue(capabilityEventBodyAsMap())
+      .build();
+
+    when(permissionOverrider.getPermissionMappings()).thenThrow(new NotFoundException("Error"));
+
+    assertThatThrownBy(() -> eventHandler.handleEvent(resourceEvent))
+      .isInstanceOf(NotFoundException.class)
+      .hasMessage("Error");
+
+    verifyNoInteractions(folioPermissionService);
+    verifyNoInteractions(capabilityService);
+    verifyNoInteractions(capabilitySetDescriptorService);
+    verify(permissionOverrider).getPermissionMappings();
   }
 
   private static Endpoint endpoint() {

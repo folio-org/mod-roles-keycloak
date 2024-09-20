@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import lombok.extern.log4j.Log4j2;
 import org.assertj.core.api.ThrowingConsumer;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
@@ -31,9 +32,7 @@ import org.folio.roles.domain.dto.CapabilitySets;
 import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.dto.LoadableRoles;
-import org.folio.roles.integration.kafka.CapabilityEventProcessor;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
-import org.folio.roles.utils.CapabilityUtils;
 import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
@@ -48,6 +47,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
+@Log4j2
 @IntegrationTest
 @SqlMergeMode(MERGE)
 @Sql(executionPhase = AFTER_TEST_METHOD, scripts = {
@@ -94,10 +94,16 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       assertThat(count).isZero();
     });
 
-    var capSetByName = getExistingCapabilitySets();
+    var capSetByPermission = getExistingCapabilitySets();
 
-    verifyAssignedCapabilitySets(CIRC_MANAGER_ROLE_NAME, role -> selectPermissionsLike(role, "ui-notes"), capSetByName);
-    verifyAssignedCapabilitySets(CIRC_STUDENT_ROLE_NAME, role -> selectPermissionsLike(role, "ui-notes"), capSetByName);
+    verifyAssignedCapabilitySets(
+      CIRC_MANAGER_ROLE_NAME,
+      role -> selectPermissionsLike(role, "ui-notes"),
+      capSetByPermission);
+    verifyAssignedCapabilitySets(
+      CIRC_STUDENT_ROLE_NAME,
+      role -> selectPermissionsLike(role, "ui-notes"),
+      capSetByPermission);
   }
 
   @Test
@@ -142,12 +148,14 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       assertThat(count).isZero();
     });
 
-    var capabilitiesByName = getExistingCapabilities();
+    var capabilitiesByPermission = getExistingCapabilities();
 
     verifyAssignedCapabilities(CIRC_MANAGER_ROLE_NAME,
-      role -> selectPermissionsLike(role, "notes.item"), capabilitiesByName);
+      role -> selectPermissionsLike(role, "notes.item"),
+      capabilitiesByPermission);
     verifyAssignedCapabilities(CIRC_STUDENT_ROLE_NAME,
-      role -> selectPermissionsLike(role, "notes.item"), capabilitiesByName);
+      role -> selectPermissionsLike(role, "notes.item"),
+      capabilitiesByPermission);
   }
 
   private int unassignedCapabilitySetCountForPermissionLike(String permission) {
@@ -167,51 +175,43 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
   private static void verifyAssignedCapabilitySets(String roleName,
     Function<LoadableRole, List<LoadablePermission>> permissionSelector,
-    Map<String, CapabilitySet> capSetByName) throws Exception {
+    Map<String, CapabilitySet> capSetByPermission) throws Exception {
     var cmRole = getLoadableRoleByName(roleName);
     var selectedPermissions = permissionSelector.apply(cmRole);
 
     assertThat(selectedPermissions)
       .isNotEmpty()
-      .allSatisfy(capabilitySetAssignedToOneFrom(capSetByName));
+      .allSatisfy(capabilitySetAssignedToOneFrom(capSetByPermission));
   }
 
   private static void verifyAssignedCapabilities(String roleName,
     Function<LoadableRole, List<LoadablePermission>> permissionSelector,
-    Map<String, Capability> capabilityByName) throws Exception {
+    Map<String, Capability> capabilityByPermission) throws Exception {
     var cmRole = getLoadableRoleByName(roleName);
     var selectedPermissions = permissionSelector.apply(cmRole);
 
     assertThat(selectedPermissions)
       .isNotEmpty()
-      .allSatisfy(capabilityAssignedToOneFrom(capabilityByName));
+      .allSatisfy(capabilityAssignedToOneFrom(capabilityByPermission));
   }
 
   private static ThrowingConsumer<LoadablePermission> capabilitySetAssignedToOneFrom(
-    Map<String, CapabilitySet> capSetByName) {
+    Map<String, CapabilitySet> capSetByPermission) {
     return p -> {
       assertThat(p.getCapabilitySetId()).isNotNull();
-
       var name = p.getPermissionName();
-      var permissionData = CapabilityEventProcessor.extractPermissionData(name);
-      var capabilitySetName = CapabilityUtils.getCapabilityName(permissionData);
-
-      var capabilitySet = capSetByName.get(capabilitySetName);
+      var capabilitySet = capSetByPermission.get(name);
       assertThat(capabilitySet).isNotNull();
       assertThat(p.getCapabilitySetId()).isEqualTo(capabilitySet.getId());
     };
   }
 
   private static ThrowingConsumer<LoadablePermission> capabilityAssignedToOneFrom(
-    Map<String, Capability> capabilityByName) {
+    Map<String, Capability> capSetByPermission) {
     return p -> {
       assertThat(p.getCapabilityId()).isNotNull();
-
       var name = p.getPermissionName();
-      var permissionData = CapabilityEventProcessor.extractPermissionData(name);
-      var capabilityName = CapabilityUtils.getCapabilityName(permissionData);
-
-      var capability = capabilityByName.get(capabilityName);
+      var capability = capSetByPermission.get(name);
       assertThat(capability).isNotNull();
       assertThat(p.getCapabilityId()).isEqualTo(capability.getId());
     };
@@ -246,7 +246,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
     var capabilitySets = parseResponse(mvcResult, CapabilitySets.class).getCapabilitySets();
     assertThat(capabilitySets).isNotEmpty();
 
-    return capabilitySets.stream().collect(toMap(CapabilitySet::getName, identity()));
+    return capabilitySets.stream().collect(toMap(CapabilitySet::getPermission, identity()));
   }
 
   private static Map<String, Capability> getExistingCapabilities() throws Exception {
@@ -258,7 +258,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
     var capabilities = parseResponse(mvcResult, Capabilities.class).getCapabilities();
     assertThat(capabilities).isNotEmpty();
 
-    return capabilities.stream().collect(toMap(Capability::getName, identity()));
+    return capabilities.stream().collect(toMap(Capability::getPermission, identity()));
   }
 
   private static ConditionFactory await() {
