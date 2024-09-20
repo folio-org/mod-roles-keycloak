@@ -32,9 +32,7 @@ application:
     url: moduserskc
   folio-permissions:
     mapping:
-#      source-path: classpath:folio-permissions/mappings-overrides.json
-      source-path: https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json
-
+      source-path: classpath:folio-permissions/mappings-overrides.json
 
 header:
   validation:
