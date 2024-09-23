@@ -1,6 +1,9 @@
+## Version `v1.4.6` (in progress)
+* Added dynamic permission mapping (MODROLESKC-210)
+
 ## Version `v1.4.5` (30.08.2024)
 * Implement async migration (MODROLESKC-207)
-*
+
 ## Version `v1.4.4` (15.08.2024)
 * Fix liquibase error connected with new source type
 

@@ -30,6 +30,9 @@ application:
       trust-store-type: JKS
   moduserskc:
     url: moduserskc
+  folio-permissions:
+    mapping:
+      source-path: classpath:folio-permissions/mappings-overrides.json
 
 header:
   validation:
