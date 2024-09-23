@@ -1,5 +1,6 @@
 package org.folio.roles.integration.kafka.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -35,6 +36,7 @@ public class CapabilityEvent {
   /**
    * Permission data mapping overrides.
    */
+  @JsonIgnore
   private Map<String, PermissionData> permissionMappingOverrides;
 
   /**

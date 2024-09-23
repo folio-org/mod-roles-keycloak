@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -66,8 +65,8 @@ class PermissionOverriderTest {
     when(resource.exists()).thenReturn(false);
 
     assertThatThrownBy(() -> permissionOverrider.getPermissionMappings())
-      .isInstanceOf(NotFoundException.class)
-      .hasMessage("Source not found: " + sourcePath);
+      .isInstanceOf(IllegalStateException.class)
+      .hasMessage("Source is empty: " + sourcePath);
 
     verify(permissionMappingProperties).getSourcePath();
     verify(resourceLoader).getResource(sourcePath);

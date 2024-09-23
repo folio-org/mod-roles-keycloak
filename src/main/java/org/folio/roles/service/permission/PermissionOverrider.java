@@ -4,7 +4,6 @@ import static java.util.stream.Collectors.toMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.ws.rs.NotFoundException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,7 +37,7 @@ public class PermissionOverrider {
           .collect(toMap(Map.Entry::getKey, PermissionOverrider::mapToPermissionData));
       } else {
         log.warn("Source not found: {}", sourcePath);
-        throw new NotFoundException("Source not found: " + sourcePath);
+        throw new IllegalStateException("Source is empty: " + sourcePath);
       }
     } catch (IOException e) {
       log.warn("Failed to load resource: {}", sourcePath, e);
