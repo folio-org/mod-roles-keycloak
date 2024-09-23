@@ -14,7 +14,6 @@ import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -37,7 +36,6 @@ import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.permission.FolioPermissionService;
 import org.folio.roles.service.permission.PermissionOverrider;
 import org.folio.test.types.UnitTest;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -60,16 +58,12 @@ class CapabilityKafkaEventHandlerTest {
   @Mock private CapabilitySetDescriptorService capabilitySetDescriptorService;
   @Mock private PermissionOverrider permissionOverrider;
 
-  @BeforeEach
-  void setUp() {
-    lenient().when(permissionOverrider.getPermissionMappings()).thenReturn(null);
-  }
-
   @Test
   void handleEvent_positive_capabilityCreateEvent() {
     var newValueMap = capabilityEventBodyAsMap();
     when(capabilityEventProcessor.process(capabilityEvent())).thenReturn(capabilityResultHolder());
     when(capabilityEventProcessor.process(null)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
+    when(permissionOverrider.getPermissionMappings()).thenReturn(null);
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -91,6 +85,7 @@ class CapabilityKafkaEventHandlerTest {
     var oldValueMap = capabilityEventBodyAsMap();
     when(capabilityEventProcessor.process(null)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(capabilityEvent())).thenReturn(capabilityResultHolder());
+    when(permissionOverrider.getPermissionMappings()).thenReturn(null);
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -113,6 +108,7 @@ class CapabilityKafkaEventHandlerTest {
     var newEvent = capabilityEvent(MODULE_ID_V2, folioResource());
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
+    when(permissionOverrider.getPermissionMappings()).thenReturn(null);
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -136,6 +132,7 @@ class CapabilityKafkaEventHandlerTest {
     var newEvent = capabilityEvent(MODULE_ID, folioResource());
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
+    when(permissionOverrider.getPermissionMappings()).thenReturn(null);
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -159,6 +156,7 @@ class CapabilityKafkaEventHandlerTest {
     var newEvent = capabilityEvent(MODULE_ID);
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
+    when(permissionOverrider.getPermissionMappings()).thenReturn(null);
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -182,6 +180,7 @@ class CapabilityKafkaEventHandlerTest {
     var newEvent = capabilityEvent(MODULE_ID_V2, folioResource());
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
+    when(permissionOverrider.getPermissionMappings()).thenReturn(null);
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -205,6 +204,7 @@ class CapabilityKafkaEventHandlerTest {
     var oldEvent = capabilityEvent(MODULE_ID, folioResource());
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
+    when(permissionOverrider.getPermissionMappings()).thenReturn(null);
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)

@@ -184,10 +184,9 @@ class CapabilityEventProcessorTest {
 
       arguments("module event mapping overrides",
         event(MODULE,
-          Map.of("perm.name", new PermissionData(resource, PermissionType.DATA, PermissionAction.VIEW, null)),
+          permissionMappingOverrides(),
           resource(permission("perm.name").description("Capability to view a test-resource item"))),
-        result(List.of(capability(null, resource, VIEW, "perm.name").moduleId(MODULE_ID)),
-          emptyList()))
+        result(List.of(capability(null, resource, VIEW, "perm.name").moduleId(MODULE_ID)), emptyList()))
     );
   }
 
@@ -233,5 +232,10 @@ class CapabilityEventProcessorTest {
   private static Capability fooCapability(CapabilityAction action, String permissionSuffix, Endpoint... endpoints) {
     return capability(null, FOO_RESOURCE, action, "foo.item." + permissionSuffix, endpoints)
       .moduleId(MODULE_ID).description(null);
+  }
+
+  private static Map<String, PermissionData> permissionMappingOverrides() {
+    return Map.of("perm.name",
+      new PermissionData("Test-Resource Item", PermissionType.DATA, PermissionAction.VIEW, null));
   }
 }
