@@ -1,5 +1,6 @@
 package org.folio.roles.exception;
 
+import static org.folio.common.domain.model.error.ErrorCode.SERVICE_ERROR;
 import static org.folio.common.domain.model.error.ErrorCode.VALIDATION_ERROR;
 
 import java.io.Serial;
@@ -41,5 +42,13 @@ public class ServiceException extends RuntimeException {
     this.key = "cause";
     this.value = cause.getMessage();
     this.errorCode = VALIDATION_ERROR;
+  }
+
+  public ServiceException(String message) {
+    super(message);
+
+    this.key = "cause";
+    this.value = message;
+    this.errorCode = SERVICE_ERROR;
   }
 }

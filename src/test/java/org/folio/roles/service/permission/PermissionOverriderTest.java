@@ -65,7 +65,7 @@ class PermissionOverriderTest {
     when(resource.exists()).thenReturn(false);
 
     assertThatThrownBy(() -> permissionOverrider.getPermissionMappings())
-      .isInstanceOf(IllegalStateException.class)
+      .isInstanceOf(ServiceException.class)
       .hasMessage("Source is empty: " + sourcePath);
 
     verify(permissionMappingProperties).getSourcePath();

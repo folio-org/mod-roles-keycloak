@@ -37,7 +37,7 @@ public class PermissionOverrider {
           .collect(toMap(Map.Entry::getKey, PermissionOverrider::mapToPermissionData));
       } else {
         log.warn("Source not found: {}", sourcePath);
-        throw new IllegalStateException("Source is empty: " + sourcePath);
+        throw new ServiceException("Source is empty: " + sourcePath);
       }
     } catch (IOException e) {
       log.warn("Failed to load resource: {}", sourcePath, e);
