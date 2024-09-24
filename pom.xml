@@ -37,7 +37,7 @@
     <folio-spring-support.version>8.1.2</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
-    <applications-poc-tools.version>1.5.6</applications-poc-tools.version>
+    <applications-poc-tools.version>1.5.7</applications-poc-tools.version>
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
     </mod-roles-keycloak.yaml-file>
