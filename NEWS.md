@@ -1,5 +1,11 @@
-## Version `v1.4.6` (in progress)
+## Version `v1.4.6` (24.09.2024)
 * Added dynamic permission mapping (MODROLESKC-210)
+* Extend Okapi mapping overrides (MODOKAPFAC-4)
+* Implemented api to update roleCapabilities and roleCapabilitySets by name (MODROLESKC-211)
+* Fixed overlapping capabilities for mod-agreement (EUREKA-287)
+* Cannot enable app-platform-minimal with reference data on a new tenant (EUREKA-338)
+* Cannot save a role after unchecking all capability/set checkboxes (UIROLES - 114)
+* Make all enum values in endpoints response with upper case as stored in DB (MODROLESKC-216)
 
 ## Version `v1.4.5` (30.08.2024)
 * Implement async migration (MODROLESKC-207)
