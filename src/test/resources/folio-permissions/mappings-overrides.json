@@ -419,6 +419,11 @@
     "action": "execute",
     "type": "procedural"
   },
+  "orders.bypass-acquisition-units": {
+    "resource": "Orders Bypass-Acquisition-Units",
+    "action": "manage",
+    "type": "data"
+  },
   "ui-eholdings.app.enabled": {
     "resource": "UI-Eholdings App Enabled",
     "action": "view",
