@@ -104,8 +104,8 @@ class CapabilityKafkaEventHandlerTest {
 
   @Test
   void handleEvent_positive_capabilityUpdatedEvent() {
-    var oldEvent = capabilityEvent(MODULE_ID, folioResource());
-    var newEvent = capabilityEvent(MODULE_ID_V2, folioResource());
+    var oldEvent = capabilityEvent(MODULE_ID, List.of(folioResource()));
+    var newEvent = capabilityEvent(MODULE_ID_V2, List.of(folioResource()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
     when(permissionOverrider.getPermissionMappings()).thenReturn(null);
@@ -128,8 +128,8 @@ class CapabilityKafkaEventHandlerTest {
 
   @Test
   void handleEvent_positive_resourcesAddedWithSameModuleId() {
-    var oldEvent = capabilityEvent(MODULE_ID);
-    var newEvent = capabilityEvent(MODULE_ID, folioResource());
+    var oldEvent = capabilityEvent(MODULE_ID, null);
+    var newEvent = capabilityEvent(MODULE_ID, List.of(folioResource()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
     when(permissionOverrider.getPermissionMappings()).thenReturn(null);
@@ -152,8 +152,8 @@ class CapabilityKafkaEventHandlerTest {
 
   @Test
   void handleEvent_positive_resourcesDeletedWithSameModuleId() {
-    var oldEvent = capabilityEvent(MODULE_ID, folioResource());
-    var newEvent = capabilityEvent(MODULE_ID);
+    var oldEvent = capabilityEvent(MODULE_ID, List.of(folioResource()));
+    var newEvent = capabilityEvent(MODULE_ID, null);
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(permissionOverrider.getPermissionMappings()).thenReturn(null);
@@ -176,8 +176,8 @@ class CapabilityKafkaEventHandlerTest {
 
   @Test
   void handleEvent_positive_capabilityUpdatedEventResourcesCreated() {
-    var oldEvent = capabilityEvent(MODULE_ID);
-    var newEvent = capabilityEvent(MODULE_ID_V2, folioResource());
+    var oldEvent = capabilityEvent(MODULE_ID, null);
+    var newEvent = capabilityEvent(MODULE_ID_V2, List.of(folioResource()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
     when(permissionOverrider.getPermissionMappings()).thenReturn(null);
@@ -200,8 +200,8 @@ class CapabilityKafkaEventHandlerTest {
 
   @Test
   void handleEvent_positive_capabilityUpdatedEventResourcesDeleted() {
-    var newEvent = capabilityEvent(MODULE_ID_V2);
-    var oldEvent = capabilityEvent(MODULE_ID, folioResource());
+    var newEvent = capabilityEvent(MODULE_ID_V2, null);
+    var oldEvent = capabilityEvent(MODULE_ID, List.of(folioResource()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
     when(permissionOverrider.getPermissionMappings()).thenReturn(null);
@@ -270,15 +270,15 @@ class CapabilityKafkaEventHandlerTest {
   }
 
   private static CapabilityEvent capabilityEvent() {
-    return capabilityEvent(MODULE_ID, folioResource());
+    return capabilityEvent(MODULE_ID, List.of(folioResource()));
   }
 
-  private static CapabilityEvent capabilityEvent(String moduleId, FolioResource ... folioResources) {
+  private static CapabilityEvent capabilityEvent(String moduleId, List<FolioResource> folioResources) {
     return new CapabilityEvent()
       .moduleType(MODULE)
       .moduleId(moduleId)
       .applicationId(APPLICATION_ID)
-      .resources(List.of(folioResources));
+      .resources(folioResources);
   }
 
   private static FolioResource folioResource() {
