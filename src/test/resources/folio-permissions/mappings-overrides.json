@@ -159,7 +159,7 @@
     "action": "manage",
     "type": "data"
   },
-  "sender.message-delivery": {
+  "sender.message-delivery.post": {
     "resource": "Sender Message-Delivery",
     "action": "execute",
     "type": "procedural"
