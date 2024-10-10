@@ -122,6 +122,8 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       .andExpect(status().isCreated())
       .andExpect(content().json(roleToCreateAsJson))
       .andExpect(jsonPath("$.id").value(notNullValue()))
+      .andExpect(jsonPath("$.name").value("test role"))
+      .andExpect(jsonPath("$.type").value(RoleType.CONSORTIUM.toString()))
       .andExpect(jsonPath("$.metadata.createdByUserId").value(equalTo(USER_ID_HEADER)))
       .andExpect(jsonPath("$.metadata.createdDate").value(notNullValue()))
       .andExpect(jsonPath("$.metadata.updatedByUserId").value(equalTo(USER_ID_HEADER)))
