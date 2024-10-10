@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.Role;
+import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.domain.dto.Roles;
 import org.folio.roles.domain.dto.RolesRequest;
 import org.folio.test.extensions.KeycloakRealms;
@@ -111,7 +112,7 @@ class RoleKeycloakIT extends BaseIntegrationTest {
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm.json")
   void createRole_positive() throws Exception {
-    var roleToCreate = new Role().name("test role").description("test description");
+    var roleToCreate = new Role().name("test role").description("test description").type(RoleType.CONSORTIUM);
     var roleToCreateAsJson = asJsonString(roleToCreate);
     mockMvc.perform(post("/roles")
         .content(roleToCreateAsJson)
