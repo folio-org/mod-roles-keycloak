@@ -108,7 +108,7 @@ public class CapabilityEventProcessor {
 
     var capabilities = subPermissionsExpanded.stream()
       .map(Permission::getPermissionName)
-      .map(PermissionUtils::extractPermissionData)
+      .map(permissionName -> extractPermissionData(permissionName, emptyIfNull(event.getPermissionMappingOverrides())))
       .filter(CapabilityEventProcessor::hasRequiredFields)
       .map(data -> createCapability(event, res, data))
       .collect(groupingBy(Capability::getResource, TreeMap::new, mapping(Capability::getAction, toList())));
