@@ -20,6 +20,7 @@ import static org.folio.roles.support.EndpointUtils.fooItemPutEndpoint;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -40,6 +41,7 @@ import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.ModuleType;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.service.permission.FolioPermissionService;
+import org.folio.roles.service.permission.PermissionOverrider;
 import org.folio.roles.support.AuthResourceUtils;
 import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
@@ -60,6 +62,7 @@ class CapabilityEventProcessorTest {
   public static final String MODULE_ID = "test-module-0.0.1";
   @InjectMocks private CapabilityEventProcessor capabilityEventProcessor;
   @Mock private FolioPermissionService folioPermissionService;
+  @Mock private PermissionOverrider permissionOverrider;
 
   @AfterEach
   void tearDown() {
@@ -76,7 +79,9 @@ class CapabilityEventProcessorTest {
         mapItems(inv.<List<String>>getArgument(0), AuthResourceUtils::permission));
     }
 
+    when(permissionOverrider.getPermissionMappings()).thenReturn(permissionMappingOverrides());
     var result = capabilityEventProcessor.process(event);
+    reset(permissionOverrider);
 
     assertThat(result).isEqualTo(expectedResult);
   }
@@ -184,7 +189,6 @@ class CapabilityEventProcessorTest {
 
       arguments("module event mapping overrides",
         event(MODULE,
-          permissionMappingOverrides(),
           resource(permission("perm.name").description("Capability to view a test-resource item"))),
         result(List.of(capability(null, resource, VIEW, "perm.name").moduleId(MODULE_ID)), emptyList()))
     );
@@ -196,16 +200,6 @@ class CapabilityEventProcessorTest {
       .moduleType(type)
       .applicationId(APPLICATION_ID)
       .resources(asList(resources));
-  }
-
-  private static CapabilityEvent event(ModuleType type, Map<String, PermissionData> permissionMapping,
-    FolioResource... resources) {
-    return new CapabilityEvent()
-      .moduleId(MODULE_ID)
-      .moduleType(type)
-      .applicationId(APPLICATION_ID)
-      .resources(asList(resources))
-      .permissionMappingOverrides(permissionMapping);
   }
 
   private static FolioResource resource(Permission permission, Endpoint... endpoints) {

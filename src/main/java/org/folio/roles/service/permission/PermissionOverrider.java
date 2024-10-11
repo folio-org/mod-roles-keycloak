@@ -14,6 +14,7 @@ import org.folio.common.utils.permission.model.PermissionData;
 import org.folio.common.utils.permission.model.PermissionType;
 import org.folio.roles.configuration.property.PermissionMappingProperties;
 import org.folio.roles.exception.ServiceException;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ public class PermissionOverrider {
   private final ResourceLoader resourceLoader;
   private final PermissionMappingProperties permissionMappingProperties;
 
+  @Cacheable(cacheNames = "permission-mappings", key = "permissionMappings")
   public Map<String, PermissionData> getPermissionMappings() {
     var sourcePath = permissionMappingProperties.getSourcePath();
     try {

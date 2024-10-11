@@ -40,6 +40,7 @@ import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.ModuleType;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.service.permission.FolioPermissionService;
+import org.folio.roles.service.permission.PermissionOverrider;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +50,7 @@ import org.springframework.stereotype.Service;
 public class CapabilityEventProcessor {
 
   private final FolioPermissionService folioPermissionService;
+  private final PermissionOverrider permissionOverrider;
 
   /**
    * Creates a {@link CapabilityResultHolder} with {@link Capability} and {@link CapabilitySetDescriptor} values.
@@ -91,10 +93,10 @@ public class CapabilityEventProcessor {
     return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
   }
 
-  private Optional<CapabilitySetDescriptor> createCapabilitySetDescriptor(
-    CapabilityEvent event, FolioResource resource) {
+  private Optional<CapabilitySetDescriptor> createCapabilitySetDescriptor(CapabilityEvent event,
+    FolioResource resource) {
     var folioPermission = resource.getPermission().getPermissionName();
-    var permissionMappingOverrides = emptyIfNull(event.getPermissionMappingOverrides());
+    var permissionMappingOverrides = permissionOverrider.getPermissionMappings();
     return Optional.of(extractPermissionData(folioPermission, permissionMappingOverrides))
       .filter(CapabilityEventProcessor::hasRequiredFields)
       .map(raw -> createCapabilitySetDescriptor(event, resource, raw));
@@ -132,9 +134,9 @@ public class CapabilityEventProcessor {
     return permission != null ? permission : PermissionUtils.extractPermissionData(permissionName);
   }
 
-  private static Optional<Capability> createCapability(CapabilityEvent event, FolioResource resource) {
+  private Optional<Capability> createCapability(CapabilityEvent event, FolioResource resource) {
     var folioPermission = resource.getPermission().getPermissionName();
-    var permissionMappingOverrides = emptyIfNull(event.getPermissionMappingOverrides());
+    var permissionMappingOverrides = permissionOverrider.getPermissionMappings();
     return Optional.of(extractPermissionData(folioPermission, permissionMappingOverrides))
       .filter(CapabilityEventProcessor::hasRequiredFields)
       .map(data -> createCapability(event, resource, data));

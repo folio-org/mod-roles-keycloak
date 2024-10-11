@@ -15,7 +15,6 @@ import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.permission.FolioPermissionService;
-import org.folio.roles.service.permission.PermissionOverrider;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +28,6 @@ public class CapabilityKafkaEventHandler {
   private final FolioPermissionService folioPermissionService;
   private final CapabilityEventProcessor capabilityEventProcessor;
   private final CapabilitySetDescriptorService capabilitySetDescriptorService;
-  private final PermissionOverrider permissionOverrider;
 
   /**
    * Handles resource event containing created, updated, or deprecated capabilities and capability sets.
@@ -52,8 +50,6 @@ public class CapabilityKafkaEventHandler {
       return;
     }
 
-    populateEventByPermissionDataMapping(newValue, oldValue);
-
     var orh = capabilityEventProcessor.process(oldValue);
 
     folioPermissionService.update(getPermissions(newValue), getPermissions(oldValue));
@@ -61,16 +57,6 @@ public class CapabilityKafkaEventHandler {
 
     capabilityService.update(eventType, nrh.capabilities(), orh.capabilities());
     capabilitySetDescriptorService.update(eventType, nrh.capabilitySets(), orh.capabilitySets());
-  }
-
-  private void populateEventByPermissionDataMapping(CapabilityEvent newValue, CapabilityEvent oldValue) {
-    var permissionMappings = permissionOverrider.getPermissionMappings();
-    if (newValue != null) {
-      newValue.setPermissionMappingOverrides(permissionMappings);
-    }
-    if (oldValue != null) {
-      oldValue.setPermissionMappingOverrides(permissionMappings);
-    }
   }
 
   private static List<Permission> getPermissions(CapabilityEvent eventPayload) {
