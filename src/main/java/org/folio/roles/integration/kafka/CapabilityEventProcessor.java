@@ -105,10 +105,11 @@ public class CapabilityEventProcessor {
     var permission = res.getPermission();
     var subPermissions = permission.getSubPermissions();
     var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
+    var permissionMappingOverrides = emptyIfNull(event.getPermissionMappingOverrides());
 
     var capabilities = subPermissionsExpanded.stream()
       .map(Permission::getPermissionName)
-      .map(PermissionUtils::extractPermissionData)
+      .map(permissionName -> extractPermissionData(permissionName, permissionMappingOverrides))
       .filter(CapabilityEventProcessor::hasRequiredFields)
       .map(data -> createCapability(event, res, data))
       .collect(groupingBy(Capability::getResource, TreeMap::new, mapping(Capability::getAction, toList())));

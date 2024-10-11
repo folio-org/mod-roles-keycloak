@@ -163,6 +163,11 @@ class CapabilityEventProcessorTest {
         event(MODULE, resource(permissionSet)),
         result(emptyList(), List.of(capabilitySetDesc))),
 
+      arguments("module event (permission set) mapping overrides",
+        event(MODULE, permissionMappingOverrides(),
+          resource(permission(itemViewPerm, "perm.name").description(csDescription))),
+        result(emptyList(), List.of(capabilitySetDesc))),
+
       arguments("module event (duplicate permission set)",
         event(MODULE, resource(permissionSet), resource(permissionSet)),
         result(emptyList(), List.of(capabilitySetDesc))),
