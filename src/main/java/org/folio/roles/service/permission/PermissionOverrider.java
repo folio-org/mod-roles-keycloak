@@ -27,7 +27,7 @@ public class PermissionOverrider {
   private final ResourceLoader resourceLoader;
   private final PermissionMappingProperties permissionMappingProperties;
 
-  @Cacheable(cacheNames = "permission-mappings", key = "permissionMappings")
+  @Cacheable(cacheNames = "permission-mappings")
   public Map<String, PermissionData> getPermissionMappings() {
     var sourcePath = permissionMappingProperties.getSourcePath();
     try {
