@@ -49,7 +49,7 @@ class MigrationRoleCreatorTest {
   private static Role migrationRole() {
     return new Role()
       .name(ROLE_NAME)
-      .type(RoleType.DEFAULT)
+      .type(RoleType.REGULAR)
       .description("System generated role during migration");
   }
 
@@ -61,7 +61,7 @@ class MigrationRoleCreatorTest {
     return new Role()
       .id(ROLE_ID)
       .name(ROLE_NAME)
-      .type(RoleType.DEFAULT)
+      .type(RoleType.REGULAR)
       .description("System generated role during migration");
   }
 
@@ -119,7 +119,8 @@ class MigrationRoleCreatorTest {
           + "    metadata: null\n"
           + "}]");
 
-      assertThat(output.getAll()).contains(format("Failed to assign user %s to role %s", USER_ID, ROLE_ID));
+      assertThat(output.getAll()).contains(format("Failed to assign user to role: userId = %s, roleId = %s",
+        USER_ID, ROLE_ID));
     }
   }
 }

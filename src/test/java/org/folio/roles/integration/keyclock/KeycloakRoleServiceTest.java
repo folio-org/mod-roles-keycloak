@@ -223,32 +223,34 @@ class KeycloakRoleServiceTest {
       when(realmResource.roles()).thenReturn(rolesResource);
       doNothing().when(rolesResource).create(keycloakRole);
 
-      when(rolesResource.get(ROLE_NAME).toRepresentation()).thenReturn(keycloakRole);
+      when(rolesResource.get(ROLE_NAME).toRepresentation())
+        .thenThrow(new NotFoundException())
+        .thenReturn(keycloakRole);
       when(keycloakRoleMapper.toRole(keycloakRole)).thenReturn(role());
 
       var createdRole = roleService.createSafe(role);
 
       assertThat(createdRole).contains(role());
-      verify(rolesResource, atLeastOnce()).get(ROLE_NAME);
     }
 
     @Test
     void positive_creationFailed(CapturedOutput output) {
       var keycloakRole = keycloakRole();
       var role = role();
-      var rolesResource = mock(RolesResource.class);
+      var rolesResource = mock(RolesResource.class, RETURNS_DEEP_STUBS);
       var response = new ServerResponse(null, CONFLICT.getStatusCode(), new Headers<>());
       var conflictException = new WebApplicationException(response);
 
       when(keycloakRoleMapper.toKeycloakRole(role)).thenReturn(keycloakRole);
       when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
       when(realmResource.roles()).thenReturn(rolesResource);
+      when(rolesResource.get(ROLE_NAME).toRepresentation()).thenThrow(new NotFoundException());
       doThrow(conflictException).when(rolesResource).create(keycloakRole);
 
       var createdRole = roleService.createSafe(role);
 
       assertThat(createdRole).isEmpty();
-      assertThat(output).contains("Failed to create role: name = " + ROLE_NAME);
+      assertThat(output).contains("Failed to create keycloak role: name = " + ROLE_NAME);
     }
   }
 

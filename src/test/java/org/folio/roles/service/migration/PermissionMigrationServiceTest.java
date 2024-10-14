@@ -64,7 +64,6 @@ class PermissionMigrationServiceTest {
 
     assertThatThrownBy(() -> permissionMigrationService.migratePermissions(MIGRATION_ID))
       .isInstanceOf(MigrationException.class)
-      .hasMessage("Roles are not created for user permissions: [UserPermissions("
-        + "userId=%s, role=null, roleName=test, permissions=%s)]", USER_ID, permissions);
+      .hasMessage("Roles are not created for user permissions: userCount = %s", userPermissionsList.size());
   }
 }
