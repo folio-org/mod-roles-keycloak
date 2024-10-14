@@ -232,7 +232,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
 
   private PageResult<RoleCapabilitySet> assignCapabilities(
     UUID roleId, List<UUID> newSetIds, Collection<UUID> assignedSetIds) {
-    log.debug("Assigning capabilities to role: roleId = {}, ids = {}", roleId, newSetIds);
+    log.debug("Assigning capability sets to role: roleId = {}, ids = {}", roleId, newSetIds);
     capabilitySetService.checkIds(newSetIds);
 
     var entities = mapItems(newSetIds, capabilitySetId -> new RoleCapabilitySetEntity(roleId, capabilitySetId));
@@ -241,7 +241,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
 
     var resultEntities = roleCapabilitySetRepository.saveAll(entities);
     var createdRoleCapabilities = mapItems(resultEntities, roleCapabilitySetEntityMapper::convert);
-    log.info("Capabilities assigned to role: roleId = {}, ids = {}", roleId, newSetIds);
+    log.info("Capability sets assigned to role: roleId = {}, ids = {}", roleId, newSetIds);
 
     return PageResult.of(createdRoleCapabilities.size(), createdRoleCapabilities);
   }

@@ -1,9 +1,12 @@
 package org.folio.roles.service.migration;
 
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PermissionMigrationService {
 
+  private static final int MAX_PERMS_NUMBER = 5;
+  
   private final MigrationRoleCreator migrationRoleCreator;
   private final UserPermissionsLoader userPermissionsLoader;
   private final RolePermissionAssignor rolePermissionAssignor;
@@ -69,10 +74,35 @@ public class PermissionMigrationService {
     }
 
     if (isNotEmpty(errorUserPermissions)) {
-      throw new MigrationException("Roles are not created for user permissions: " + errorUserPermissions);
+      logUserPermsWithMissingRoles(errorUserPermissions);
+
+      throw new MigrationException("Roles are not created for user permissions: userCount = "
+        + errorUserPermissions.size());
     }
 
     return resultUserPermissions;
+  }
+
+  private static void logUserPermsWithMissingRoles(ArrayList<UserPermissions> errorUserPermissions) {
+    log.info("Roles are not created for user permissions. See the detailed list of those user permissions below...");
+
+    for (int i = 0; i < errorUserPermissions.size(); i++) {
+      var perm = errorUserPermissions.get(i);
+
+      log.info("#{} User permission: userId = {}, roleName = {}, permissions = {}",
+        i, perm.getUserId(), perm.getRoleName(), firstItems(perm.getPermissions(), MAX_PERMS_NUMBER));
+    }
+  }
+
+  private static String firstItems(List<String> permissions, int numberOfItems) {
+    if (isEmpty(permissions)) {
+      return "[]";
+    }
+
+    var limited = toStream(permissions).limit(numberOfItems);
+    return permissions.size() <= numberOfItems
+      ? limited.collect(joining(", ", "[", "]"))
+      : limited.collect(joining(", ", "[", ", ...]"));
   }
 
   private static <K, V> Map<K, V> toHashMap(Collection<V> collection, Function<V, K> keyMapper) {

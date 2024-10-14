@@ -78,7 +78,7 @@ public class MigrationRoleCreator {
           userRoleService.createSafe(userRole);
           counter.getAndIncrement();
         } catch (Exception exception) {
-          log.warn("Failed to assign user {} to role {}", userId, roleId, exception);
+          log.warn("Failed to assign user to role: userId = {}, roleId = {}", userId, roleId, exception);
           errorPairs.add(userRole);
         }
       }
@@ -99,7 +99,7 @@ public class MigrationRoleCreator {
   private static Role createRole(String roleName) {
     return new Role()
       .name(roleName)
-      .type(RoleType.DEFAULT)
+      .type(RoleType.REGULAR)
       .description("System generated role during migration");
   }
 }

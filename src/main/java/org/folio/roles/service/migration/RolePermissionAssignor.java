@@ -48,14 +48,14 @@ public class RolePermissionAssignor {
   }
 
   private void assignCapabilitiesAndSets(UUID roleId, List<String> permissions) {
-    log.debug("Assigning capabilities/capability sets for role: roleId = {}", roleId);
+    log.info("Assigning capabilities/capability sets for role: roleId = {}", roleId);
 
     var capabilities = capabilityService.findByPermissionNames(permissions);
-    var notFoundPermissions = difference(permissions, mapItems(capabilities, Capability::getPermission));
     if (isNotEmpty(capabilities)) {
       roleCapabilityService.create(roleId, mapItems(capabilities, Capability::getId), true);
     }
 
+    var notFoundPermissions = difference(permissions, mapItems(capabilities, Capability::getPermission));
     var sets = capabilitySetService.findByPermissionNames(permissions);
     var notFoundPermissionsInSets = difference(notFoundPermissions, mapItems(sets, CapabilitySet::getPermission));
     if (isNotEmpty(sets)) {

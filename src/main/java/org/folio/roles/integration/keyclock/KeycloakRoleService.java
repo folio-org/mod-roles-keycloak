@@ -124,9 +124,10 @@ public class KeycloakRoleService {
    */
   public Optional<Role> createSafe(Role role) {
     try {
-      return Optional.of(create(role));
+      return Optional.of(findByName(role.getName())
+        .orElse(create(role)));
     } catch (Exception e) {
-      log.debug("Failed to create role: name = {}", role.getName(), e);
+      log.info("Failed to create keycloak role: name = {}", role.getName(), e);
       return empty();
     }
   }

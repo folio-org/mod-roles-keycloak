@@ -1,7 +1,5 @@
 package org.folio.roles.service.role;
 
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
 import static java.util.stream.Collectors.toList;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 
@@ -164,16 +162,17 @@ public class RoleService {
   }
 
   private Optional<Role> createSafe(Role role) {
-    var createdRole = keycloakService.createSafe(role);
-    if (createdRole.isEmpty()) {
-      return empty();
-    }
+    return keycloakService.createSafe(role)
+      .map(this::createEntitySafe);
+  }
+
+  private Role createEntitySafe(Role role) {
     try {
-      return of(entityService.create(createdRole.get()));
+      return entityService.create(role);
     } catch (Exception e) {
-      keycloakService.deleteById(createdRole.get().getId());
-      log.debug("Rollback created in Keycloak role: name = {}", createdRole.get().getName(), e);
-      return empty();
+      keycloakService.deleteById(role.getId());
+      log.debug("Rollback created in Keycloak role: name = {}", role.getName(), e);
+      return null;
     }
   }
 
