@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import java.util.List;
 import java.util.Map;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
@@ -26,6 +27,7 @@ class KafkaMessageListenerTest {
   @InjectMocks private KafkaMessageListener kafkaMessageListener;
   @Mock private FolioModuleMetadata folioModuleMetadata;
   @Mock private CapabilityKafkaEventHandler capabilityKafkaEventHandler;
+  @Mock private CapabilityReplacementsService capabilityReplacementsService;
 
   @AfterEach
   void tearDown() {

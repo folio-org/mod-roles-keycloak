@@ -7,6 +7,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -19,6 +20,7 @@ public class KafkaMessageListener {
 
   private final FolioModuleMetadata metadata;
   private final CapabilityKafkaEventHandler capabilityKafkaEventHandler;
+  private final CapabilityReplacementsService capabilityReplacementsService;
 
   /**
    * Handles capability event.
@@ -32,7 +34,8 @@ public class KafkaMessageListener {
     topicPattern = "#{folioKafkaProperties.listener['capability'].topicPattern}")
   public void handleCapabilityEvent(ResourceEvent resourceEvent) {
     try (var ignored = new FolioExecutionContextSetter(metadata, Map.of(TENANT, List.of(resourceEvent.getTenant())))) {
-      capabilityKafkaEventHandler.handleEvent(resourceEvent);
+      var capabilityReplacements = capabilityKafkaEventHandler.handleEvent(resourceEvent);
+      capabilityReplacements.ifPresent(capabilityReplacementsService::processReplacements);
     }
   }
 }

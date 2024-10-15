@@ -11,6 +11,7 @@ import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.HttpMethod;
@@ -29,6 +31,7 @@ import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
 import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.permission.FolioPermissionService;
 import org.folio.test.types.UnitTest;
@@ -52,12 +55,14 @@ class CapabilityKafkaEventHandlerTest {
   @Mock private FolioPermissionService folioPermissionService;
   @Mock private CapabilityEventProcessor capabilityEventProcessor;
   @Mock private CapabilitySetDescriptorService capabilitySetDescriptorService;
+  @Mock private CapabilityReplacementsService capabilityReplacementsService;
 
   @Test
   void handleEvent_positive_capabilityCreateEvent() {
     var newValueMap = capabilityEventBodyAsMap();
     when(capabilityEventProcessor.process(capabilityEvent())).thenReturn(capabilityResultHolder());
     when(capabilityEventProcessor.process(null)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
+    when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -78,6 +83,7 @@ class CapabilityKafkaEventHandlerTest {
     var oldValueMap = capabilityEventBodyAsMap();
     when(capabilityEventProcessor.process(null)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(capabilityEvent())).thenReturn(capabilityResultHolder());
+    when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -99,6 +105,7 @@ class CapabilityKafkaEventHandlerTest {
     var newEvent = capabilityEvent(MODULE_ID_V2, List.of(folioResource()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
+    when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -121,6 +128,7 @@ class CapabilityKafkaEventHandlerTest {
     var newEvent = capabilityEvent(MODULE_ID, List.of(folioResource()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
+    when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -143,6 +151,7 @@ class CapabilityKafkaEventHandlerTest {
     var newEvent = capabilityEvent(MODULE_ID, null);
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
+    when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -165,6 +174,7 @@ class CapabilityKafkaEventHandlerTest {
     var newEvent = capabilityEvent(MODULE_ID_V2, List.of(folioResource()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
+    when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
@@ -187,6 +197,7 @@ class CapabilityKafkaEventHandlerTest {
     var oldEvent = capabilityEvent(MODULE_ID, List.of(folioResource()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
+    when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
     var resourceEvent = ResourceEvent.builder()
       .tenant(TENANT_ID)
