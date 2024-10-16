@@ -154,7 +154,7 @@ public class CapabilityReplacementsService {
       if (replacements != null && !replacements.isEmpty()) {
         var replacementCapabilities = capabilityService.findByNames(replacements);
         var replacementCapabilitySets = capabilitySetService.findByNames(replacements);
-        assignReplacementsToRoles(permissionReplacements.oldCapabilitySetRoleAssignments().get(oldCapabilityName),
+        assignReplacementsToRoles(permissionReplacements.oldCapabilityRoleAssignments().get(oldCapabilityName),
           replacementCapabilities, replacementCapabilitySets);
         assignReplacementsToRoles(permissionReplacements.oldCapabilitySetRoleAssignments().get(oldCapabilityName),
           replacementCapabilities, replacementCapabilitySets);
@@ -168,26 +168,29 @@ public class CapabilityReplacementsService {
 
   protected void assignReplacementsToRoles(Set<UUID> roleIds, List<Capability> replacementCapabilities,
     List<CapabilitySet> replacementCapabilitySets) {
-    if (!replacementCapabilities.isEmpty()) {
-      roleIds.forEach(
-        roleId -> roleCapabilityService.create(roleId, replacementCapabilities.stream().map(Capability::getId).toList(),
-          true));
-    }
-    if (!replacementCapabilitySets.isEmpty()) {
-      roleIds.forEach(roleId -> roleCapabilitySetService.create(roleId,
-        replacementCapabilitySets.stream().map(CapabilitySet::getId).toList(), true));
+    if (roleIds != null && !roleIds.isEmpty()) {
+      if (!replacementCapabilities.isEmpty()) {
+        roleIds.forEach(roleId -> roleCapabilityService.create(roleId,
+          replacementCapabilities.stream().map(Capability::getId).toList(), true));
+      }
+      if (!replacementCapabilitySets.isEmpty()) {
+        roleIds.forEach(roleId -> roleCapabilitySetService.create(roleId,
+          replacementCapabilitySets.stream().map(CapabilitySet::getId).toList(), true));
+      }
     }
   }
 
   protected void assignReplacementsToUsers(Set<UUID> userIds, List<Capability> replacementCapabilities,
     List<CapabilitySet> replacementCapabilitySets) {
-    if (!replacementCapabilities.isEmpty()) {
-      userIds.forEach(userId -> userCapabilityService.create(userId,
-        replacementCapabilities.stream().map(Capability::getId).toList()));
-    }
-    if (!replacementCapabilitySets.isEmpty()) {
-      userIds.forEach(userId -> userCapabilitySetService.create(userId,
-        replacementCapabilitySets.stream().map(CapabilitySet::getId).toList()));
+    if (userIds != null && !userIds.isEmpty()) {
+      if (!replacementCapabilities.isEmpty()) {
+        userIds.forEach(userId -> userCapabilityService.create(userId,
+          replacementCapabilities.stream().map(Capability::getId).toList()));
+      }
+      if (!replacementCapabilitySets.isEmpty()) {
+        userIds.forEach(userId -> userCapabilitySetService.create(userId,
+          replacementCapabilitySets.stream().map(CapabilitySet::getId).toList()));
+      }
     }
   }
 
