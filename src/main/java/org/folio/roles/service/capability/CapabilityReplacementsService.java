@@ -6,6 +6,7 @@ import static java.util.Optional.empty;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 
+import jakarta.persistence.EntityExistsException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -96,16 +98,16 @@ public class CapabilityReplacementsService {
 
       // Determine which users and roles have assignments of old (replaced) capabilities/capability-sets
       var capabilityRoleAssignments = extractAssignments(oldCapabilities,
-        capability -> roleCapabilityRepository.findAllByCapabilityId(capability.getId()),
-        Capability::getName, RoleCapabilityEntity::getRoleId);
+        capability -> roleCapabilityRepository.findAllByCapabilityId(capability.getId()), Capability::getName,
+        RoleCapabilityEntity::getRoleId);
 
       var capabilitySetRoleAssignments = extractAssignments(oldCapabilitySets,
         capabilitySet -> roleCapabilitySetRepository.findAllByCapabilitySetId(capabilitySet.getId()),
         CapabilitySet::getName, RoleCapabilitySetEntity::getRoleId);
 
       var capabilityUserAssignments = extractAssignments(oldCapabilities,
-        capability -> userCapabilityRepository.findAllByCapabilityId(capability.getId()),
-        Capability::getName, UserCapabilityEntity::getUserId);
+        capability -> userCapabilityRepository.findAllByCapabilityId(capability.getId()), Capability::getName,
+        UserCapabilityEntity::getUserId);
 
       var capabilitySetUserAssignments = extractAssignments(oldCapabilitySets,
         capabilitySet -> userCapabilitySetRepository.findAllByCapabilitySetId(capabilitySet.getId()),
@@ -170,12 +172,12 @@ public class CapabilityReplacementsService {
     List<CapabilitySet> replacementCapabilitySets) {
     if (roleIds != null && !roleIds.isEmpty()) {
       if (!replacementCapabilities.isEmpty()) {
-        roleIds.forEach(roleId -> roleCapabilityService.create(roleId,
-          replacementCapabilities.stream().map(Capability::getId).toList(), true));
+        roleIds.forEach(doIgnoringExistingAssignments(roleId -> roleCapabilityService.create(roleId,
+          replacementCapabilities.stream().map(Capability::getId).toList(), true)));
       }
       if (!replacementCapabilitySets.isEmpty()) {
-        roleIds.forEach(roleId -> roleCapabilitySetService.create(roleId,
-          replacementCapabilitySets.stream().map(CapabilitySet::getId).toList(), true));
+        roleIds.forEach(doIgnoringExistingAssignments(roleId -> roleCapabilitySetService.create(roleId,
+          replacementCapabilitySets.stream().map(CapabilitySet::getId).toList(), true)));
       }
     }
   }
@@ -184,12 +186,12 @@ public class CapabilityReplacementsService {
     List<CapabilitySet> replacementCapabilitySets) {
     if (userIds != null && !userIds.isEmpty()) {
       if (!replacementCapabilities.isEmpty()) {
-        userIds.forEach(userId -> userCapabilityService.create(userId,
-          replacementCapabilities.stream().map(Capability::getId).toList()));
+        userIds.forEach(doIgnoringExistingAssignments(userId -> userCapabilityService.create(userId,
+          replacementCapabilities.stream().map(Capability::getId).toList())));
       }
       if (!replacementCapabilitySets.isEmpty()) {
-        userIds.forEach(userId -> userCapabilitySetService.create(userId,
-          replacementCapabilitySets.stream().map(CapabilitySet::getId).toList()));
+        userIds.forEach(doIgnoringExistingAssignments(userId -> userCapabilitySetService.create(userId,
+          replacementCapabilitySets.stream().map(CapabilitySet::getId).toList())));
       }
     }
   }
@@ -198,13 +200,23 @@ public class CapabilityReplacementsService {
     var oldCapabilitiesAndSetsToRemove = permissionReplacements.oldCapabilitiesToNewCapabilities().keySet();
 
     var oldCapabilitiesToRemove = capabilityService.findByNames(oldCapabilitiesAndSetsToRemove);
-    oldCapabilitiesToRemove.stream().map(deprecatedCapability ->
-      org.folio.roles.domain.model.event.CapabilityEvent.deleted(deprecatedCapability)
+    oldCapabilitiesToRemove.stream().map(
+      deprecatedCapability -> org.folio.roles.domain.model.event.CapabilityEvent.deleted(deprecatedCapability)
         .withContext(folioExecutionContext)).forEach(applicationEventPublisher::publishEvent);
 
     var oldCapabilitySetsToRemove = capabilitySetService.findByNames(oldCapabilitiesAndSetsToRemove);
     oldCapabilitySetsToRemove.stream().map(capSet -> capabilitySetMapper.toExtendedCapabilitySet(capSet, emptyList()))
       .map(capSetExt -> CapabilitySetEvent.deleted(capSetExt).withContext(folioExecutionContext))
       .forEach(applicationEventPublisher::publishEvent);
+  }
+
+  protected <T> Consumer<T> doIgnoringExistingAssignments(Consumer<T> action) {
+    return v -> {
+      try {
+        action.accept(v);
+      } catch (EntityExistsException existsException) {
+        // Ignore case when relation already exists
+      }
+    };
   }
 }
