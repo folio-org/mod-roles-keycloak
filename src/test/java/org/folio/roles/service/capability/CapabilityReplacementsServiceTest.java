@@ -129,7 +129,7 @@ class CapabilityReplacementsServiceTest {
         .permission(new Permission().permissionName("new-perm3.get"))));
 
     var replacements = unit.deduceReplacements(testData);
-    assertThat(replacements).isPresent();
+    assertThat(replacements).isEmpty();
   }
 
   @Test
