@@ -97,6 +97,9 @@ class CapabilityEventProcessorTest {
     var uiCapability = capability(null, csResource, VIEW, itemViewPerm).description(csDescription).moduleId(MODULE_ID);
     var setResources = Map.of(resource, List.of(VIEW));
     var capabilitySetDesc = capabilitySetDescriptor(csResource, itemViewPerm, setResources).moduleId(MODULE_ID);
+    var uiCapabilitySetDesc = capabilitySetDescriptor(
+      csResource, itemViewPerm, Map.of(resource, List.of(VIEW), csResource, List.of(VIEW))).moduleId(MODULE_ID);
+
     var permission = permission(itemGetPermName).description(description);
     var permissionSet = permission(itemViewPerm, itemGetPermName).description(csDescription);
 
@@ -168,6 +171,11 @@ class CapabilityEventProcessorTest {
         event(MODULE, resource(permissionSet)),
         result(emptyList(), List.of(capabilitySetDesc))),
 
+      arguments("module event (permission set) mapping overrides",
+        event(MODULE,
+          resource(permission(itemViewPerm, "perm.name").description(csDescription))),
+        result(emptyList(), List.of(capabilitySetDesc))),
+
       arguments("module event (duplicate permission set)",
         event(MODULE, resource(permissionSet), resource(permissionSet)),
         result(emptyList(), List.of(capabilitySetDesc))),
@@ -182,7 +190,7 @@ class CapabilityEventProcessorTest {
 
       arguments("ui-module event (permission set)",
         event(UI_MODULE, resource(permissionSet), resource(permission)),
-        result(List.of(uiCapability, capability), List.of(capabilitySetDesc))),
+        result(List.of(uiCapability, capability), List.of(uiCapabilitySetDesc))),
 
       arguments("module event(empty resources)", event(UI_MODULE), result(emptyList(), emptyList())),
       arguments("ui-module event(empty resources)", event(UI_MODULE), result(emptyList(), emptyList())),

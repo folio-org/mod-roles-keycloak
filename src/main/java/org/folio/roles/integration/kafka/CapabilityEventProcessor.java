@@ -9,10 +9,12 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
-import static org.apache.commons.collections4.MapUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 import static org.folio.common.utils.CollectionUtils.toStream;
+import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
+import static org.folio.roles.integration.kafka.model.ModuleType.UI_MODULE;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
+import static org.folio.roles.utils.CollectionUtils.union;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -64,7 +66,7 @@ public class CapabilityEventProcessor {
     }
 
     var folioResources = event.getResources();
-    return event.getModuleType() == ModuleType.MODULE
+    return event.getModuleType() == MODULE
       ? processModuleResources(event, folioResources)
       : processUiModuleResources(event, folioResources);
   }
@@ -72,7 +74,8 @@ public class CapabilityEventProcessor {
   private CapabilityResultHolder processModuleResources(CapabilityEvent event, List<FolioResource> resources) {
     var grouped = groupByHavingSubPermissions(resources);
     var capabilities = mapItems(grouped.get(FALSE), res -> createCapability(event, res));
-    var capabilitySetDescriptors = mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res));
+    var capabilitySetDescriptors =
+      mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res, MODULE));
     return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
   }
 
@@ -89,28 +92,31 @@ public class CapabilityEventProcessor {
   private CapabilityResultHolder processUiModuleResources(CapabilityEvent event, List<FolioResource> resources) {
     var grouped = groupByHavingSubPermissions(resources);
     var capabilities = mapItems(resources, res -> createCapability(event, res));
-    var capabilitySetDescriptors = mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res));
+    var capabilitySetDescriptors =
+      mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res, UI_MODULE));
     return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
   }
 
-  private Optional<CapabilitySetDescriptor> createCapabilitySetDescriptor(CapabilityEvent event,
-    FolioResource resource) {
+  private Optional<CapabilitySetDescriptor> createCapabilitySetDescriptor(
+    CapabilityEvent event, FolioResource resource, ModuleType moduleType) {
     var folioPermission = resource.getPermission().getPermissionName();
     var permissionMappingOverrides = permissionOverrider.getPermissionMappings();
     return Optional.of(extractPermissionData(folioPermission, permissionMappingOverrides))
       .filter(CapabilityEventProcessor::hasRequiredFields)
-      .map(raw -> createCapabilitySetDescriptor(event, resource, raw));
+      .map(raw -> createCapabilitySetDescriptor(event, resource, raw, moduleType));
   }
 
   private CapabilitySetDescriptor createCapabilitySetDescriptor(
-    CapabilityEvent event, FolioResource res, PermissionData permissionData) {
+    CapabilityEvent event, FolioResource res, PermissionData permissionData, ModuleType moduleType) {
     var permission = res.getPermission();
-    var subPermissions = permission.getSubPermissions();
+    var subPermissions = moduleType == UI_MODULE
+      ? union(permission.getSubPermissions(), List.of(permission.getPermissionName()))
+      : permission.getSubPermissions();
     var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
 
     var capabilities = subPermissionsExpanded.stream()
       .map(Permission::getPermissionName)
-      .map(PermissionUtils::extractPermissionData)
+      .map(permissionName -> extractPermissionData(permissionName, permissionOverrider.getPermissionMappings()))
       .filter(CapabilityEventProcessor::hasRequiredFields)
       .map(data -> createCapability(event, res, data))
       .collect(groupingBy(Capability::getResource, TreeMap::new, mapping(Capability::getAction, toList())));

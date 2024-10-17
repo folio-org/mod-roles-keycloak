@@ -82,6 +82,7 @@ public class RoleService {
   public Role create(Role role) {
     var createdRole = keycloakService.create(role);
     try {
+      createdRole.setType(role.getType());
       Role savedRole = entityService.create(createdRole);
       log.debug("Role has been created: id = {}, name = {}", savedRole.getId(), savedRole.getName());
       return savedRole;
@@ -169,6 +170,7 @@ public class RoleService {
       return empty();
     }
     try {
+      createdRole.get().setType(role.getType());
       return of(entityService.create(createdRole.get()));
     } catch (Exception e) {
       keycloakService.deleteById(createdRole.get().getId());

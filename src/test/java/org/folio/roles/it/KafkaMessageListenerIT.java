@@ -162,11 +162,12 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .andReturn();
 
     var foundCapabilitySet = parseResponse(searchResult, CapabilitySets.class).getCapabilitySets().get(0);
-    assertThat(foundCapabilitySet.getCapabilities()).hasSize(6);
+    assertThat(foundCapabilitySet.getCapabilities()).hasSize(7);
 
     doGet("/capability-sets/{id}/capabilities", foundCapabilitySet.getId())
       .andExpect(jsonPath("$.capabilities[*].name", containsInAnyOrder("foo_item.create", "foo_item.edit",
-        "foo_item.view", "settings_enabled.view", "settings_test_enabled.view", "ui-test_foo.view")));
+        "foo_item.view", "settings_enabled.view", "settings_test_enabled.view", "ui-test_foo.view",
+        "ui-test_foo.create")));
   }
 
   private void sendCapabilityEventAndCheckResult() throws Exception {
