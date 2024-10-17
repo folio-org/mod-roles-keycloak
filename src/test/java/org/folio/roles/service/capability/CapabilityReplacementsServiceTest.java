@@ -58,7 +58,7 @@ class CapabilityReplacementsServiceTest {
   @Mock private CapabilitySetMapper capabilitySetMapper;
 
   @Test
-  void testDeduceReplacements() {
+  void testDeduceReplacementsPositive() {
     when(permissionOverrider.getPermissionMappings()).thenReturn(Map.of("old-perm2.get",
       PermissionData.builder().permissionName("old-perm-two.get").action(VIEW).resource("resource2").type(DATA)
         .build()));
@@ -89,16 +89,14 @@ class CapabilityReplacementsServiceTest {
     var user2Uuid = UUID.randomUUID();
     var user3Uuid = UUID.randomUUID();
     when(roleCapabilityRepository.findAllByCapabilityId(capabilityUuid)).thenReturn(
-      List.of(RoleCapabilityEntity.builder().roleId(role1Uuid).build()));
+      List.of(RoleCapabilityEntity.of(role1Uuid, null)));
     when(roleCapabilitySetRepository.findAllByCapabilitySetId(capabilitySetUuid)).thenReturn(
-      List.of(RoleCapabilitySetEntity.builder().roleId(role2Uuid).build(),
-        RoleCapabilitySetEntity.builder().roleId(role3Uuid).build()));
+      List.of(RoleCapabilitySetEntity.of(role2Uuid, null), RoleCapabilitySetEntity.of(role3Uuid, null)));
 
     when(userCapabilityRepository.findAllByCapabilityId(capabilityUuid)).thenReturn(
-      List.of(UserCapabilityEntity.builder().userId(userUuid).build()));
+      List.of(UserCapabilityEntity.of(userUuid, null)));
     when(userCapabilitySetRepository.findAllByCapabilitySetId(capabilitySetUuid)).thenReturn(
-      List.of(UserCapabilitySetEntity.builder().userId(user2Uuid).build(),
-        UserCapabilitySetEntity.builder().userId(user3Uuid).build()));
+      List.of(UserCapabilitySetEntity.of(user2Uuid, null), UserCapabilitySetEntity.of(user3Uuid, null)));
 
     var replacements = unit.deduceReplacements(testData);
     assertThat(replacements.isPresent()).isTrue();
@@ -112,5 +110,12 @@ class CapabilityReplacementsServiceTest {
     assertThat(replacements.get().oldCapabilityUserAssignments()).isEqualTo(Map.of("old-perm.view", Set.of(userUuid)));
     assertThat(replacements.get().oldCapabilitySetUserAssignments()).isEqualTo(
       Map.of("old-perm-two.view", Set.of(user2Uuid, user3Uuid)));
+  }
+
+  @Test
+  void testDeduceReplacementsNoReplacements() {
+    when(permissionOverrider.getPermissionMappings()).thenReturn(Map.of("old-perm2.get",
+      PermissionData.builder().permissionName("old-perm-two.get").action(VIEW).resource("resource2").type(DATA)
+        .build()));
   }
 }

@@ -11,7 +11,6 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -22,7 +21,6 @@ import org.springframework.data.domain.Sort;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Table(name = "role_capability")
 @IdClass(RoleCapabilityKey.class)
 @EqualsAndHashCode(callSuper = true)
@@ -45,4 +43,11 @@ public class RoleCapabilityEntity extends Auditable implements Serializable {
   @Id
   @Column(name = "capability_id")
   private UUID capabilityId;
+
+  public static RoleCapabilityEntity of(UUID roleId, UUID capabilityId) {
+    var result = new RoleCapabilityEntity();
+    result.setRoleId(roleId);
+    result.setCapabilityId(capabilityId);
+    return result;
+  }
 }
