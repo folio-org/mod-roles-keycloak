@@ -78,15 +78,14 @@ public class CapabilityReplacementsService {
   }
 
   public Optional<CapabilityReplacements> deduceReplacements(CapabilityEvent newValue) {
-    // Create a map of replaced (old) capabilities to list of replacing (new) capabilities,
-    // e.g. {"old" : ["new1", "new2"]}
-    Map<String, Set<String>> capabilityReplacements;
     if (newValue != null && newValue.getResources() != null) {
       var permissionsWithReplacements =
         newValue.getResources().stream().map(FolioResource::getPermission).filter(Objects::nonNull)
           .filter(p -> p.getReplaces() != null && !p.getReplaces().isEmpty());
 
-      capabilityReplacements = permissionsWithReplacements.flatMap(
+      // Create a map of replaced (old) capabilities to list of replacing (new) capabilities,
+      // e.g. {"old" : ["new1", "new2"]}
+      var capabilityReplacements = permissionsWithReplacements.flatMap(
           permission -> getPermissionReplacementsAsCapabilities(permission).map(replacesValue -> entry(replacesValue,
             permissionNameToCapabilityName(applyFolioPermissionOverrides(permission.getPermissionName())))))
         .filter(entry -> entry.getValue().isPresent()).map(entry -> entry(entry.getKey(), entry.getValue().get()))

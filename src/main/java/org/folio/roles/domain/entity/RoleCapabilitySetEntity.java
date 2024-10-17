@@ -11,6 +11,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Sort;
 @Table(name = "role_capability_set")
 @IdClass(RoleCapabilitySetKey.class)
 @EqualsAndHashCode(callSuper = true)
+@Builder
 public class RoleCapabilitySetEntity extends Auditable implements Serializable {
 
   public static final Sort DEFAULT_ROLE_CAPABILITY_SET_SORT = Sort.by(ASC, "roleId", "capabilitySetId");
