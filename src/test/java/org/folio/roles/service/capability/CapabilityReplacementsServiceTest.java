@@ -114,8 +114,18 @@ class CapabilityReplacementsServiceTest {
 
   @Test
   void testDeduceReplacementsNoReplacements() {
-    when(permissionOverrider.getPermissionMappings()).thenReturn(Map.of("old-perm2.get",
-      PermissionData.builder().permissionName("old-perm-two.get").action(VIEW).resource("resource2").type(DATA)
-        .build()));
+    var testData = new CapabilityEvent();
+    testData.setModuleId("fake-module");
+    testData.setApplicationId("fake-application");
+    testData.setModuleType(MODULE);
+    testData.setResources(List.of(new FolioResource().endpoints(List.of(new Endpoint().path("/endpoint1").method(GET)))
+        .permission(new Permission().permissionName("new-perm.get")),
+      new FolioResource().endpoints(List.of(new Endpoint().path("/endpoint2").method(GET)))
+        .permission(new Permission().permissionName("new-perm2.get").subPermissions(List.of("A", "B"))),
+      new FolioResource().endpoints(List.of(new Endpoint().path("/endpoint3").method(GET)))
+        .permission(new Permission().permissionName("new-perm3.get"))));
+
+    var replacements = unit.deduceReplacements(testData);
+    assertThat(replacements.isPresent()).isFalse();
   }
 }
