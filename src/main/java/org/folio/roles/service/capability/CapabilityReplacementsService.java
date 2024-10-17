@@ -83,8 +83,7 @@ public class CapabilityReplacementsService {
         newValue.getResources().stream().map(FolioResource::getPermission).filter(Objects::nonNull)
           .filter(p -> p.getReplaces() != null && !p.getReplaces().isEmpty());
 
-      // Create a map of replaced (old) capabilities to list of replacing (new) capabilities,
-      // e.g. {"old" : ["new1", "new2"]}
+      // Create a map of replaced (old) capabilities to list of replacing (new) capabilities
       var capabilityReplacements = permissionsWithReplacements.flatMap(
           permission -> getPermissionReplacementsAsCapabilities(permission).map(replacesValue -> entry(replacesValue,
             permissionNameToCapabilityName(applyFolioPermissionOverrides(permission.getPermissionName())))))

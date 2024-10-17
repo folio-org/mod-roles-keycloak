@@ -102,7 +102,7 @@ class CapabilityReplacementsServiceTest {
       List.of(UserCapabilitySetEntity.of(user2Uuid, null), UserCapabilitySetEntity.of(user3Uuid, null)));
 
     var replacements = unit.deduceReplacements(testData);
-    assertThat(replacements.isPresent()).isTrue();
+    assertThat(replacements).isPresent();
     assertThat(replacements.get().oldCapabilitiesToNewCapabilities()).isEqualTo(
       Map.of("old-perm.view", Set.of("new-perm3.view", "new-perm.view"), "old-perm-two.view",
         Set.of("new-perm2.view")));
@@ -129,7 +129,7 @@ class CapabilityReplacementsServiceTest {
         .permission(new Permission().permissionName("new-perm3.get"))));
 
     var replacements = unit.deduceReplacements(testData);
-    assertThat(replacements.isPresent()).isFalse();
+    assertThat(replacements).isPresent();
   }
 
   @Test
