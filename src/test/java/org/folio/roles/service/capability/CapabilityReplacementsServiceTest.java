@@ -6,9 +6,6 @@ import static org.folio.common.utils.permission.model.PermissionAction.VIEW;
 import static org.folio.common.utils.permission.model.PermissionType.DATA;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -150,9 +147,6 @@ class CapabilityReplacementsServiceTest {
     Map<String, Set<UUID>> oldCapabilityUserAssignments = Map.of("oldcap1.view", Set.of(user1Id, user2Id));
     Map<String, Set<UUID>> oldCapabilitySetRoleAssignments = Map.of("oldcapset2.view", Set.of(role1Id, role2Id));
     Map<String, Set<UUID>> oldCapabilitySetUserAssignments = Map.of("oldcapset2.view", Set.of(user1Id, user2Id));
-    var capabilityReplacements =
-      new CapabilityReplacements(oldCapabilitiesToNewCapabilities, oldCapabilityRoleAssignments,
-        oldCapabilityUserAssignments, oldCapabilitySetRoleAssignments, oldCapabilitySetUserAssignments);
 
     var cap1Id = randomUUID();
     var cap2Id = randomUUID();
@@ -168,6 +162,9 @@ class CapabilityReplacementsServiceTest {
     when(capabilitySetService.findByNames(Set.of("newcap2.view", "newcapset1.view"))).thenReturn(
       List.of(createCapabilitySet(capSet1Id, "newcapset1.view")));
 
+    var capabilityReplacements =
+      new CapabilityReplacements(oldCapabilitiesToNewCapabilities, oldCapabilityRoleAssignments,
+        oldCapabilityUserAssignments, oldCapabilitySetRoleAssignments, oldCapabilitySetUserAssignments);
     unit.processReplacements(capabilityReplacements);
 
     verify(roleCapabilityService).create(role1Id, List.of(cap1Id), true);
