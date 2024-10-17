@@ -154,18 +154,18 @@ public class CapabilityReplacementsService {
       .filter(PermissionUtils::hasRequiredFields).map(CapabilityUtils::getCapabilityName);
   }
 
-  protected void assignReplacementCapabilities(CapabilityReplacements permissionReplacements) {
-    permissionReplacements.oldCapabilitiesToNewCapabilities().forEach((oldCapabilityName, replacements) -> {
+  protected void assignReplacementCapabilities(CapabilityReplacements capabilityReplacements) {
+    capabilityReplacements.oldCapabilitiesToNewCapabilities().forEach((oldCapabilityName, replacements) -> {
       if (replacements != null && !replacements.isEmpty()) {
         var replacementCapabilities = capabilityService.findByNames(replacements);
         var replacementCapabilitySets = capabilitySetService.findByNames(replacements);
-        assignReplacementsToRoles(permissionReplacements.oldCapabilityRoleAssignments().get(oldCapabilityName),
+        assignReplacementsToRoles(capabilityReplacements.oldCapabilityRoleAssignments().get(oldCapabilityName),
           replacementCapabilities, replacementCapabilitySets);
-        assignReplacementsToRoles(permissionReplacements.oldCapabilitySetRoleAssignments().get(oldCapabilityName),
+        assignReplacementsToRoles(capabilityReplacements.oldCapabilitySetRoleAssignments().get(oldCapabilityName),
           replacementCapabilities, replacementCapabilitySets);
-        assignReplacementsToUsers(permissionReplacements.oldCapabilityUserAssignments().get(oldCapabilityName),
+        assignReplacementsToUsers(capabilityReplacements.oldCapabilityUserAssignments().get(oldCapabilityName),
           replacementCapabilities, replacementCapabilitySets);
-        assignReplacementsToUsers(permissionReplacements.oldCapabilitySetUserAssignments().get(oldCapabilityName),
+        assignReplacementsToUsers(capabilityReplacements.oldCapabilitySetUserAssignments().get(oldCapabilityName),
           replacementCapabilities, replacementCapabilitySets);
       }
     });
@@ -209,8 +209,8 @@ public class CapabilityReplacementsService {
     }
   }
 
-  protected void unassignReplacedCapabilities(CapabilityReplacements permissionReplacements) {
-    var oldCapabilitiesAndSetsToRemove = permissionReplacements.oldCapabilitiesToNewCapabilities().keySet();
+  protected void unassignReplacedCapabilities(CapabilityReplacements capabilityReplacements) {
+    var oldCapabilitiesAndSetsToRemove = capabilityReplacements.oldCapabilitiesToNewCapabilities().keySet();
 
     var oldCapabilitiesToRemove = capabilityService.findByNames(oldCapabilitiesAndSetsToRemove);
     oldCapabilitiesToRemove.stream().map(

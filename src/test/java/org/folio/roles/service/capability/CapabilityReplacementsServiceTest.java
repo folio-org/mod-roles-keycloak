@@ -1,10 +1,15 @@
 package org.folio.roles.service.capability;
 
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.common.utils.permission.model.PermissionAction.VIEW;
 import static org.folio.common.utils.permission.model.PermissionType.DATA;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -19,6 +24,7 @@ import org.folio.roles.domain.entity.RoleCapabilityEntity;
 import org.folio.roles.domain.entity.RoleCapabilitySetEntity;
 import org.folio.roles.domain.entity.UserCapabilityEntity;
 import org.folio.roles.domain.entity.UserCapabilitySetEntity;
+import org.folio.roles.domain.model.CapabilityReplacements;
 import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.FolioResource;
@@ -75,19 +81,19 @@ class CapabilityReplacementsServiceTest {
       new FolioResource().endpoints(List.of(new Endpoint().path("/endpoint3").method(GET)))
         .permission(new Permission().permissionName("new-perm3.get").replaces(List.of("old-perm.get")))));
 
-    var capabilityUuid = UUID.randomUUID();
-    var capabilitySetUuid = UUID.randomUUID();
+    var capabilityUuid = randomUUID();
+    var capabilitySetUuid = randomUUID();
     when(capabilityService.findByNames(Set.of("old-perm.view", "old-perm-two.view"))).thenReturn(
       List.of(new Capability().id(capabilityUuid).name("old-perm.view")));
     when(capabilitySetService.findByNames(Set.of("old-perm.view", "old-perm-two.view"))).thenReturn(
       List.of(new CapabilitySet().id(capabilitySetUuid).name("old-perm-two.view")));
 
-    var role1Uuid = UUID.randomUUID();
-    var role2Uuid = UUID.randomUUID();
-    var role3Uuid = UUID.randomUUID();
-    var userUuid = UUID.randomUUID();
-    var user2Uuid = UUID.randomUUID();
-    var user3Uuid = UUID.randomUUID();
+    var role1Uuid = randomUUID();
+    var role2Uuid = randomUUID();
+    var role3Uuid = randomUUID();
+    var userUuid = randomUUID();
+    var user2Uuid = randomUUID();
+    var user3Uuid = randomUUID();
     when(roleCapabilityRepository.findAllByCapabilityId(capabilityUuid)).thenReturn(
       List.of(RoleCapabilityEntity.of(role1Uuid, null)));
     when(roleCapabilitySetRepository.findAllByCapabilitySetId(capabilitySetUuid)).thenReturn(
@@ -127,5 +133,65 @@ class CapabilityReplacementsServiceTest {
 
     var replacements = unit.deduceReplacements(testData);
     assertThat(replacements.isPresent()).isFalse();
+  }
+
+  @Test
+  void testProcessReplacements() {
+    Map<String, Set<String>> oldCapabilitiesToNewCapabilities =
+      Map.of("oldcap1.view", Set.of("newcap1.view", "newcapset2.view"), "oldcapset2.view",
+        Set.of("newcapset1.view", "newcap2.view"));
+
+    var role1Id = randomUUID();
+    var role2Id = randomUUID();
+    var user1Id = randomUUID();
+    var user2Id = randomUUID();
+
+    Map<String, Set<UUID>> oldCapabilityRoleAssignments = Map.of("oldcap1.view", Set.of(role1Id, role2Id));
+    Map<String, Set<UUID>> oldCapabilityUserAssignments = Map.of("oldcap1.view", Set.of(user1Id, user2Id));
+    Map<String, Set<UUID>> oldCapabilitySetRoleAssignments = Map.of("oldcapset2.view", Set.of(role1Id, role2Id));
+    Map<String, Set<UUID>> oldCapabilitySetUserAssignments = Map.of("oldcapset2.view", Set.of(user1Id, user2Id));
+    var capabilityReplacements =
+      new CapabilityReplacements(oldCapabilitiesToNewCapabilities, oldCapabilityRoleAssignments,
+        oldCapabilityUserAssignments, oldCapabilitySetRoleAssignments, oldCapabilitySetUserAssignments);
+
+    var cap1Id = randomUUID();
+    var cap2Id = randomUUID();
+    var capSet1Id = randomUUID();
+    var capSet2Id = randomUUID();
+
+    when(capabilityService.findByNames(Set.of("newcap1.view", "newcapset2.view"))).thenReturn(
+      List.of(createCapability(cap1Id, "newcap1.view")));
+    when(capabilitySetService.findByNames(Set.of("newcap1.view", "newcapset2.view"))).thenReturn(
+      List.of(createCapabilitySet(capSet2Id, "newcapset2.view")));
+    when(capabilityService.findByNames(Set.of("newcap2.view", "newcapset1.view"))).thenReturn(
+      List.of(createCapability(cap2Id, "newcap2.view")));
+    when(capabilitySetService.findByNames(Set.of("newcap2.view", "newcapset1.view"))).thenReturn(
+      List.of(createCapabilitySet(capSet1Id, "newcapset1.view")));
+
+    unit.processReplacements(capabilityReplacements);
+
+    verify(roleCapabilityService).create(role1Id, List.of(cap1Id), true);
+    verify(roleCapabilityService).create(role2Id, List.of(cap2Id), true);
+    verify(roleCapabilitySetService).create(role1Id, List.of(capSet1Id), true);
+    verify(roleCapabilitySetService).create(role2Id, List.of(capSet2Id), true);
+
+    verify(userCapabilityService).create(user1Id, List.of(cap1Id));
+    verify(userCapabilityService).create(user2Id, List.of(cap2Id));
+    verify(userCapabilitySetService).create(user1Id, List.of(capSet1Id));
+    verify(userCapabilitySetService).create(user2Id, List.of(capSet2Id));
+  }
+
+  private Capability createCapability(UUID id, String name) {
+    var result = new Capability();
+    result.setId(id);
+    result.setName(name);
+    return result;
+  }
+
+  private CapabilitySet createCapabilitySet(UUID id, String name) {
+    var result = new CapabilitySet();
+    result.setId(id);
+    result.setName(name);
+    return result;
   }
 }
