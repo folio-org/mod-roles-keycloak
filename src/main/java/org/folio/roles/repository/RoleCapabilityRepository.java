@@ -16,6 +16,8 @@ public interface RoleCapabilityRepository extends BaseCqlJpaRepository<RoleCapab
 
   List<RoleCapabilityEntity> findAllByRoleId(UUID roleId);
 
+  List<RoleCapabilityEntity> findAllByCapabilityId(UUID capabilityId);
+
   Page<RoleCapabilityEntity> findByRoleId(UUID roleId, Pageable pageable);
 
   @Query("select rce from RoleCapabilityEntity rce where rce.roleId = :roleId and rce.capabilityId in :ids")

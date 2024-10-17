@@ -7,15 +7,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.domain.model.CapabilityReplacements;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.permission.FolioPermissionService;
-import org.folio.roles.service.permission.PermissionOverrider;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +31,7 @@ public class CapabilityKafkaEventHandler {
   private final FolioPermissionService folioPermissionService;
   private final CapabilityEventProcessor capabilityEventProcessor;
   private final CapabilitySetDescriptorService capabilitySetDescriptorService;
-  private final PermissionOverrider permissionOverrider;
+  private final CapabilityReplacementsService capabilityReplacementsService;
 
   /**
    * Handles resource event containing created, updated, or deprecated capabilities and capability sets.
@@ -37,7 +39,7 @@ public class CapabilityKafkaEventHandler {
    * @param resourceEvent - resource event from message bus
    */
   @Transactional
-  public void handleEvent(ResourceEvent resourceEvent) {
+  public Optional<CapabilityReplacements> handleEvent(ResourceEvent resourceEvent) {
     var eventType = resourceEvent.getType();
     var newValue = objectMapper.convertValue(resourceEvent.getNewValue(), CapabilityEvent.class);
     var oldValue = objectMapper.convertValue(resourceEvent.getOldValue(), CapabilityEvent.class);
@@ -49,10 +51,11 @@ public class CapabilityKafkaEventHandler {
       var oldApplicationId = oldValue.getApplicationId();
       capabilityService.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
       capabilitySetDescriptorService.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
-      return;
+
+      return Optional.empty();
     }
 
-    populateEventByPermissionDataMapping(newValue, oldValue);
+    final var capabilityReplacements = capabilityReplacementsService.deduceReplacements(newValue);
 
     var orh = capabilityEventProcessor.process(oldValue);
 
@@ -61,16 +64,8 @@ public class CapabilityKafkaEventHandler {
 
     capabilityService.update(eventType, nrh.capabilities(), orh.capabilities());
     capabilitySetDescriptorService.update(eventType, nrh.capabilitySets(), orh.capabilitySets());
-  }
 
-  private void populateEventByPermissionDataMapping(CapabilityEvent newValue, CapabilityEvent oldValue) {
-    var permissionMappings = permissionOverrider.getPermissionMappings();
-    if (newValue != null) {
-      newValue.setPermissionMappingOverrides(permissionMappings);
-    }
-    if (oldValue != null) {
-      oldValue.setPermissionMappingOverrides(permissionMappings);
-    }
+    return capabilityReplacements;
   }
 
   private static List<Permission> getPermissions(CapabilityEvent eventPayload) {

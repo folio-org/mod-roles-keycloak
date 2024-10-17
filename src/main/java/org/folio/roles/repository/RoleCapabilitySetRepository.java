@@ -17,6 +17,8 @@ public interface RoleCapabilitySetRepository
 
   List<RoleCapabilitySetEntity> findAllByRoleId(UUID roleId);
 
+  List<RoleCapabilitySetEntity> findAllByCapabilitySetId(UUID capabilitySetId);
+
   @Query("select e from RoleCapabilitySetEntity e where e.roleId = :roleId and e.capabilitySetId in (:ids)")
   List<RoleCapabilitySetEntity> findRoleCapabilitySets(@Param("roleId") UUID roleId, @Param("ids") List<UUID> ids);
 
