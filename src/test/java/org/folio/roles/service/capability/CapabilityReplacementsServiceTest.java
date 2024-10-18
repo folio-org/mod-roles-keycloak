@@ -171,14 +171,14 @@ class CapabilityReplacementsServiceTest {
     var role2Id = randomUUID();
     var user1Id = randomUUID();
     var user2Id = randomUUID();
-    
-    Map<String, Set<String>> oldCapabilitiesToNewCapabilities =
+
+    var oldCapabilitiesToNewCapabilities =
       Map.of("oldcap1.view", Set.of("newcap1.view", "newcapset2.view"), "oldcapset2.view",
         Set.of("newcapset1.view", "newcap2.view"));
-    Map<String, Set<UUID>> oldCapabilityRoleAssignments = Map.of("oldcap1.view", Set.of(role1Id, role2Id));
-    Map<String, Set<UUID>> oldCapabilityUserAssignments = Map.of("oldcap1.view", Set.of(user1Id, user2Id));
-    Map<String, Set<UUID>> oldCapabilitySetRoleAssignments = Map.of("oldcapset2.view", Set.of(role1Id, role2Id));
-    Map<String, Set<UUID>> oldCapabilitySetUserAssignments = Map.of("oldcapset2.view", Set.of(user1Id, user2Id));
+    var oldCapabilityRoleAssignments = Map.of("oldcap1.view", Set.of(role1Id, role2Id));
+    var oldCapabilityUserAssignments = Map.of("oldcap1.view", Set.of(user1Id, user2Id));
+    var oldCapabilitySetRoleAssignments = Map.of("oldcapset2.view", Set.of(role1Id, role2Id));
+    var oldCapabilitySetUserAssignments = Map.of("oldcapset2.view", Set.of(user1Id, user2Id));
 
     var capabilityReplacements =
       new CapabilityReplacements(oldCapabilitiesToNewCapabilities, oldCapabilityRoleAssignments,
