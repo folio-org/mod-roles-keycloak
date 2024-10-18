@@ -6,7 +6,7 @@ RUN apk upgrade --no-cache
 USER folio
 
 # Copy your fat jar to the container
-ENV APP_FILE mod-roles-keycloak-fat.jar
+ENV APP_FILE=mod-roles-keycloak-fat.jar
 # - should be a single jar file
 ARG JAR_FILE=./target/*.jar
 # - copy

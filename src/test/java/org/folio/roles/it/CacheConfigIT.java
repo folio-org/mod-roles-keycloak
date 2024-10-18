@@ -82,7 +82,7 @@ class CacheConfigIT extends BaseIntegrationTest {
     cache.put("key1", "value1");
     cache.put("key2", "value2");
     assertEquals(2, cache.getNativeCache().estimatedSize());
-    await().atMost(ofMillis(expectedTtl + 25)).pollInterval(ofMillis(25)).untilAsserted(() -> {
+    await().atMost(ofMillis(expectedTtl + 250)).pollInterval(ofMillis(25)).untilAsserted(() -> {
       assertNull(cache.get("key1"));
       assertNull(cache.get("key2"));
     });

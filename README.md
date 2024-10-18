@@ -36,6 +36,8 @@ metadata about who and when created a record.
 | CAPABILITY_TOPIC_RETRY_ATTEMPTS        | 9223372036854775807                                                                                                                                       |  false   | `capability` topic retry attempts if tenant is not initialized (default value is Long.MAX_VALUE ~= infinite amount of retries) |
 | FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH  | [folio permission mapping json file](https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json)    |  false   | Link or path to resource that contains folio permission mappings. File path or URL can be used.                                |
 
+See also configurations from https://github.com/folio-org/folio-spring-support/tree/release/v8.1/folio-spring-system-user - FOLIO_ENVIRONMENT, FOLIO_OKAPI_URL, FOLIO_SYSTEM_USER_USERNAME, FOLIO_SYSTEM_USER_PASSWORD.
+
 ### Secure storage environment variables
 
 #### AWS-SSM

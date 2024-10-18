@@ -19,6 +19,8 @@ public interface UserCapabilitySetRepository
 
   List<UserCapabilitySetEntity> findAllByUserId(UUID userId);
 
+  List<UserCapabilitySetEntity> findAllByCapabilitySetId(UUID capabilitySetId);
+
   @Query("""
     select entity from UserCapabilitySetEntity entity
       where entity.userId = :userId
