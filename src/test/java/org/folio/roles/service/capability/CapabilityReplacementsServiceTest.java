@@ -6,9 +6,12 @@ import static org.folio.common.utils.permission.model.PermissionAction.VIEW;
 import static org.folio.common.utils.permission.model.PermissionType.DATA;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +25,9 @@ import org.folio.roles.domain.entity.RoleCapabilitySetEntity;
 import org.folio.roles.domain.entity.UserCapabilityEntity;
 import org.folio.roles.domain.entity.UserCapabilitySetEntity;
 import org.folio.roles.domain.model.CapabilityReplacements;
+import org.folio.roles.domain.model.ExtendedCapabilitySet;
+import org.folio.roles.domain.model.event.CapabilitySetEvent;
+import org.folio.roles.domain.model.event.DomainEvent;
 import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.FolioResource;
@@ -134,20 +140,6 @@ class CapabilityReplacementsServiceTest {
 
   @Test
   void testProcessReplacements() {
-    Map<String, Set<String>> oldCapabilitiesToNewCapabilities =
-      Map.of("oldcap1.view", Set.of("newcap1.view", "newcapset2.view"), "oldcapset2.view",
-        Set.of("newcapset1.view", "newcap2.view"));
-
-    var role1Id = randomUUID();
-    var role2Id = randomUUID();
-    var user1Id = randomUUID();
-    var user2Id = randomUUID();
-
-    Map<String, Set<UUID>> oldCapabilityRoleAssignments = Map.of("oldcap1.view", Set.of(role1Id, role2Id));
-    Map<String, Set<UUID>> oldCapabilityUserAssignments = Map.of("oldcap1.view", Set.of(user1Id, user2Id));
-    Map<String, Set<UUID>> oldCapabilitySetRoleAssignments = Map.of("oldcapset2.view", Set.of(role1Id, role2Id));
-    Map<String, Set<UUID>> oldCapabilitySetUserAssignments = Map.of("oldcapset2.view", Set.of(user1Id, user2Id));
-
     var cap1Id = randomUUID();
     var cap2Id = randomUUID();
     var capSet1Id = randomUUID();
@@ -161,6 +153,32 @@ class CapabilityReplacementsServiceTest {
       List.of(createCapability(cap2Id, "newcap2.view")));
     when(capabilitySetService.findByNames(Set.of("newcap2.view", "newcapset1.view"))).thenReturn(
       List.of(createCapabilitySet(capSet1Id, "newcapset1.view")));
+    when(capabilityService.findByNames(Set.of("oldcap1.view", "oldcapset2.view"))).thenReturn(
+      List.of(createCapability(cap1Id, "oldcap1.view")));
+    when(capabilitySetService.findByNames(Set.of("oldcap1.view", "oldcapset2.view"))).thenReturn(
+      List.of(createCapabilitySet(capSet1Id, "oldcapset2.view")));
+
+    var publishedEvents = new ArrayList<>();
+    doAnswer(inv -> publishedEvents.add(inv.getArgument(0))).when(applicationEventPublisher)
+      .publishEvent(any(DomainEvent.class));
+
+    var mockCapSet = new ExtendedCapabilitySet();
+    mockCapSet.setId(capSet1Id);
+    mockCapSet.setName("capset1.view");
+    when(capabilitySetMapper.toExtendedCapabilitySet(any(), any())).thenReturn(mockCapSet);
+
+    var role1Id = randomUUID();
+    var role2Id = randomUUID();
+    var user1Id = randomUUID();
+    var user2Id = randomUUID();
+    
+    Map<String, Set<String>> oldCapabilitiesToNewCapabilities =
+      Map.of("oldcap1.view", Set.of("newcap1.view", "newcapset2.view"), "oldcapset2.view",
+        Set.of("newcapset1.view", "newcap2.view"));
+    Map<String, Set<UUID>> oldCapabilityRoleAssignments = Map.of("oldcap1.view", Set.of(role1Id, role2Id));
+    Map<String, Set<UUID>> oldCapabilityUserAssignments = Map.of("oldcap1.view", Set.of(user1Id, user2Id));
+    Map<String, Set<UUID>> oldCapabilitySetRoleAssignments = Map.of("oldcapset2.view", Set.of(role1Id, role2Id));
+    Map<String, Set<UUID>> oldCapabilitySetUserAssignments = Map.of("oldcapset2.view", Set.of(user1Id, user2Id));
 
     var capabilityReplacements =
       new CapabilityReplacements(oldCapabilitiesToNewCapabilities, oldCapabilityRoleAssignments,
@@ -176,6 +194,16 @@ class CapabilityReplacementsServiceTest {
     verify(userCapabilityService).create(user2Id, List.of(cap2Id));
     verify(userCapabilitySetService).create(user1Id, List.of(capSet1Id));
     verify(userCapabilitySetService).create(user2Id, List.of(capSet2Id));
+
+    assertThat(publishedEvents).hasSize(2);
+    var capEvent = (org.folio.roles.domain.model.event.CapabilityEvent) publishedEvents.stream()
+      .filter(e -> e instanceof org.folio.roles.domain.model.event.CapabilityEvent).findAny().get();
+    var capSetEvent =
+      (CapabilitySetEvent) publishedEvents.stream().filter(e -> e instanceof CapabilitySetEvent).findAny().get();
+    assertThat(capEvent.getOldObject().getName()).isEqualTo("oldcap1.view");
+    assertThat(capEvent.getOldObject().getId()).isEqualTo(cap1Id);
+    assertThat(capSetEvent.getOldObject().getName()).isEqualTo("capset1.view");
+    assertThat(capSetEvent.getOldObject().getId()).isEqualTo(capSet1Id);
   }
 
   private Capability createCapability(UUID id, String name) {
