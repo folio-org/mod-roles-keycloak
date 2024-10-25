@@ -42,6 +42,7 @@ header:
 folio:
   environment: test
   system-user:
+    enabled: false
     username: test
     password: test
 

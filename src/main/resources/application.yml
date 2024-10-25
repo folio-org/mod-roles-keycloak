@@ -52,6 +52,8 @@ folio:
   jpa:
     repository:
       base-packages: org.folio.roles.repository
+  system-user:
+    enabled: false
 
 management:
   endpoints.web:
