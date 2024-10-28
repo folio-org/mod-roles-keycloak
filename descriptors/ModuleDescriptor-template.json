@@ -719,6 +719,7 @@
       "permissions": [
   		"users-keycloak.auth-users.item.get",
         "users-keycloak.auth-users.item.post"
-	]
+	  ]
+    }
   }
 }
