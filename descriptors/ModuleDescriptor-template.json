@@ -712,5 +712,13 @@
       { "name": "KC_TOKEN_TTL", "value": "59" },
       { "name": "KC_CLIENT_ID_TTL", "value": "3600" }
     ]
+  },
+  "metadata": {
+    "user": {
+      "type": "system",
+      "permissions": [
+  		"users-keycloak.auth-users.item.get",
+        "users-keycloak.auth-users.item.post"
+	]
   }
 }

@@ -53,7 +53,7 @@ folio:
     repository:
       base-packages: org.folio.roles.repository
   system-user:
-    enabled: false
+    enabled: true
 
 management:
   endpoints.web:
