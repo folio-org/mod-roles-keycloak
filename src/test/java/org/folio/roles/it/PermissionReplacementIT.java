@@ -144,7 +144,7 @@ public class PermissionReplacementIT extends BaseIntegrationTest {
       .andExpect(content().contentType(APPLICATION_JSON)).andExpect(status().isCreated());
 
     // Verify that user got the capabilityset assigned to it
-    var response = doGet(
+    doGet(
       get("/users/capability-sets").param("offset", "0").param("limit", "1")
         .header(TENANT, TENANT_ID).header(XOkapiHeaders.USER_ID, USER_ID_HEADER)).andExpect(
       jsonPath("$.userCapabilitySets[0].capabilitySetId", is(capabilitySet.getId().toString())));
