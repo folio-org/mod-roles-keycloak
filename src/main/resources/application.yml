@@ -49,11 +49,14 @@ server:
   port: 8081
 
 folio:
+  environment: ${ENV:folio}
   jpa:
     repository:
       base-packages: org.folio.roles.repository
   system-user:
-    enabled: false
+    enabled: ${SYSTEM_USER_ENABLED:false}
+    username: ${SYSTEM_USER_NAME:mod-roles-kc-system-user} # This isn't actually used, but we get dependency injection errors from folio-spring-system-user if we don't have it
+    password: ${SYSTEM_USER_PASSWORD:dummy} # This isn't actually used, but we get dependency injection errors from folio-spring-system-user if we don't have it
 
 management:
   endpoints.web:
