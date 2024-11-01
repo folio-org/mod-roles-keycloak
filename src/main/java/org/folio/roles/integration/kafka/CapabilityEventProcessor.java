@@ -9,7 +9,6 @@ import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
-import static org.apache.commons.collections4.MapUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
@@ -43,6 +42,7 @@ import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.ModuleType;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.service.permission.FolioPermissionService;
+import org.folio.roles.service.permission.PermissionOverrider;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +52,7 @@ import org.springframework.stereotype.Service;
 public class CapabilityEventProcessor {
 
   private final FolioPermissionService folioPermissionService;
+  private final PermissionOverrider permissionOverrider;
 
   /**
    * Creates a {@link CapabilityResultHolder} with {@link Capability} and {@link CapabilitySetDescriptor} values.
@@ -99,7 +100,7 @@ public class CapabilityEventProcessor {
   private Optional<CapabilitySetDescriptor> createCapabilitySetDescriptor(
     CapabilityEvent event, FolioResource resource, ModuleType moduleType) {
     var folioPermission = resource.getPermission().getPermissionName();
-    var permissionMappingOverrides = emptyIfNull(event.getPermissionMappingOverrides());
+    var permissionMappingOverrides = permissionOverrider.getPermissionMappings();
     return Optional.of(extractPermissionData(folioPermission, permissionMappingOverrides))
       .filter(CapabilityEventProcessor::hasRequiredFields)
       .map(raw -> createCapabilitySetDescriptor(event, resource, raw, moduleType));
@@ -112,11 +113,10 @@ public class CapabilityEventProcessor {
       ? union(permission.getSubPermissions(), List.of(permission.getPermissionName()))
       : permission.getSubPermissions();
     var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
-    var permissionMappingOverrides = emptyIfNull(event.getPermissionMappingOverrides());
 
     var capabilities = subPermissionsExpanded.stream()
       .map(Permission::getPermissionName)
-      .map(permissionName -> extractPermissionData(permissionName, permissionMappingOverrides))
+      .map(permissionName -> extractPermissionData(permissionName, permissionOverrider.getPermissionMappings()))
       .filter(CapabilityEventProcessor::hasRequiredFields)
       .map(data -> createCapability(event, res, data))
       .collect(groupingBy(Capability::getResource, TreeMap::new, mapping(Capability::getAction, toList())));
@@ -140,9 +140,9 @@ public class CapabilityEventProcessor {
     return permission != null ? permission : PermissionUtils.extractPermissionData(permissionName);
   }
 
-  private static Optional<Capability> createCapability(CapabilityEvent event, FolioResource resource) {
+  private Optional<Capability> createCapability(CapabilityEvent event, FolioResource resource) {
     var folioPermission = resource.getPermission().getPermissionName();
-    var permissionMappingOverrides = emptyIfNull(event.getPermissionMappingOverrides());
+    var permissionMappingOverrides = permissionOverrider.getPermissionMappings();
     return Optional.of(extractPermissionData(folioPermission, permissionMappingOverrides))
       .filter(CapabilityEventProcessor::hasRequiredFields)
       .map(data -> createCapability(event, resource, data));

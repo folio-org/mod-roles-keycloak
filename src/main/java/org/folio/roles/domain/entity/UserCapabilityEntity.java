@@ -43,4 +43,11 @@ public class UserCapabilityEntity extends Auditable implements Serializable {
   @Id
   @Column(name = "capability_id")
   private UUID capabilityId;
+
+  public static UserCapabilityEntity of(UUID userId, UUID capabilityId) {
+    var result = new UserCapabilityEntity();
+    result.setUserId(userId);
+    result.setCapabilityId(capabilityId);
+    return result;
+  }
 }

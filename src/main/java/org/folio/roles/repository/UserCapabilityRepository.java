@@ -18,6 +18,8 @@ public interface UserCapabilityRepository extends BaseCqlJpaRepository<UserCapab
 
   List<UserCapabilityEntity> findAllByUserId(UUID userId);
 
+  List<UserCapabilityEntity> findAllByCapabilityId(UUID capabilityId);
+
   @Query("select uce from UserCapabilityEntity uce where uce.userId = :userId and uce.capabilityId in :ids")
   List<UserCapabilityEntity> findUserCapabilities(@Param("userId") UUID userId, @Param("ids") List<UUID> ids);
 

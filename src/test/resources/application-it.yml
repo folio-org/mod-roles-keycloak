@@ -39,3 +39,10 @@ header:
     x-okapi-user-id:
       exclude:
         base-paths: /tests, /admin
+folio:
+  environment: test
+  system-user:
+    enabled: false
+    username: test
+    password: test
+

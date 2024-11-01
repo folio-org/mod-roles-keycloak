@@ -43,4 +43,11 @@ public class RoleCapabilityEntity extends Auditable implements Serializable {
   @Id
   @Column(name = "capability_id")
   private UUID capabilityId;
+
+  public static RoleCapabilityEntity of(UUID roleId, UUID capabilityId) {
+    var result = new RoleCapabilityEntity();
+    result.setRoleId(roleId);
+    result.setCapabilityId(capabilityId);
+    return result;
+  }
 }
