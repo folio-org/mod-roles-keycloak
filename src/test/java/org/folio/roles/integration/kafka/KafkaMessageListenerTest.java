@@ -3,6 +3,7 @@ package org.folio.roles.integration.kafka;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -12,7 +13,9 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
+import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.context.ExecutionContextBuilder;
 import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
@@ -33,6 +36,7 @@ class KafkaMessageListenerTest {
   @Mock private CapabilityKafkaEventHandler capabilityKafkaEventHandler;
   @Mock private CapabilityReplacementsService capabilityReplacementsService;
   @Mock private SystemUserScopedExecutionService systemUserScopedExecutionService;
+  @Mock private ExecutionContextBuilder executionContextBuilder;
 
   @AfterEach
   void tearDown() {
@@ -41,6 +45,7 @@ class KafkaMessageListenerTest {
 
   @Test
   void handleCapabilityEvent_positive() {
+    when(executionContextBuilder.buildContext(any())).thenReturn(mock(FolioExecutionContext.class));
     when(systemUserScopedExecutionService.executeSystemUserScoped(any())).thenAnswer(inv -> {
       Callable<?> callable = inv.getArgument(0);
       callable.call();
