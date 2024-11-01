@@ -1,3 +1,10 @@
+## Version `v2.0.0` (01.11.2024)
+* Increase keycloak-admin-client to v25.0.6 (KEYCLOAK-24)
+* Fix setting role type from payload (MODROLESKC-226)
+* Get PermissionData from mapping overrides first during capability set creation (MODUSERSKC-52)
+* Create capability set with its permission for UI modules (MODUSERSKC-52)
+* Permission replacement support (MODROLESKC-214)
+
 ## Version `v1.4.6` (24.09.2024)
 * Added dynamic permission mapping (MODROLESKC-210)
 * Extend Okapi mapping overrides (MODOKAPFAC-4)
