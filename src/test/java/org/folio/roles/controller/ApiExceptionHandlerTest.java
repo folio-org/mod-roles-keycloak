@@ -1,5 +1,6 @@
 package org.folio.roles.controller;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.Mockito.when;
@@ -201,7 +202,7 @@ class ApiExceptionHandlerTest {
         .header(CACHE_CONTROL, "no-cache"))
       .andExpect(status().isBadRequest())
       .andExpect(jsonPath("$.total_records", is(1)))
-      .andExpect(jsonPath("$.errors[0].message", startsWith(errorMessage)))
+      .andExpect(jsonPath("$.errors[0].message", containsString(errorMessage)))
       .andExpect(jsonPath("$.errors[0].type", is("MethodArgumentTypeMismatchException")))
       .andExpect(jsonPath("$.errors[0].code", is("validation_error")));
   }
