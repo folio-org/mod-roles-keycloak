@@ -1,3 +1,6 @@
+## Version `v2.0.2` (04.11.2024)
+* Fix for null-pointer in permission replacements deduction logic in case permission override mapping contains no new name for a mapped permission.
+
 ## Version `v2.0.1` (04.11.2024)
 * Provided defaults for system user configurations (MODROLESKC-214)
 
