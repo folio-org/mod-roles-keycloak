@@ -458,7 +458,7 @@ class CapabilityServiceTest {
     @Test
     void positive_onlyVisiblePermissions() {
       var permissions = List.of(PERMISSION_NAME);
-      when(capabilityRepository.findPermissionsByPrefixes(eq(USER_ID), eq(VISIBLE_PERMISSION_PREFIXES)))
+      when(capabilityRepository.findPermissionsByPrefixes(USER_ID, VISIBLE_PERMISSION_PREFIXES))
         .thenReturn(permissions);
       var result = capabilityService.getUserPermissions(USER_ID, true, emptyList());
 
