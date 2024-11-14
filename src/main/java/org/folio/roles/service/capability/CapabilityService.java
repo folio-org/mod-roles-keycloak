@@ -327,7 +327,7 @@ public class CapabilityService {
       var capabilityEntity = capabilitiesByName.get(updatedCapability.getName());
       var capabilityId = capabilityEntity.getId();
       updatedCapability.setId(capabilityId);
-      if (!StringUtils.hasText(updatedCapability.getDescription())){
+      if (!StringUtils.hasText(updatedCapability.getDescription())) {
         updatedCapability.setDescription(capabilityEntity.getDescription());
       }
       capabilityEntities.add(capabilityEntityMapper.convert(updatedCapability));
