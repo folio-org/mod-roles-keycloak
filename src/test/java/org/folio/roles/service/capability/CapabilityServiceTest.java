@@ -6,8 +6,10 @@ import static java.util.Collections.emptySet;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.domain.entity.CapabilityEntity.DEFAULT_CAPABILITY_SORT;
 import static org.folio.roles.integration.kafka.model.ResourceEventType.CREATE;
+import static org.folio.roles.service.capability.CapabilityService.VISIBLE_PERMISSION_PREFIXES;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
@@ -28,6 +30,7 @@ import static org.mockito.Mockito.when;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.domain.model.event.CapabilityEvent;
@@ -454,33 +457,40 @@ class CapabilityServiceTest {
 
     @Test
     void positive_onlyVisiblePermissions() {
-      var prefixes = ArgumentCaptor.forClass(String.class);
       var permissions = List.of(PERMISSION_NAME);
-      when(capabilityRepository.findPermissionsByPrefixes(eq(USER_ID), prefixes.capture())).thenReturn(permissions);
+      when(capabilityRepository.findPermissionsByPrefixes(USER_ID, VISIBLE_PERMISSION_PREFIXES))
+        .thenReturn(permissions);
       var result = capabilityService.getUserPermissions(USER_ID, true, emptyList());
 
       assertThat(result).containsExactly(PERMISSION_NAME);
-      assertThat(prefixes.getValue()).isEqualTo("{ui-, module, plugin}");
     }
 
-    @ParameterizedTest(name = "{index} request: {0}, user's perms: {1}, resolved perms: {2}")
+    @ParameterizedTest(name = "{index} request: {0}, permission names: {1}, prefixes: {2}, result: {3}")
     @MethodSource("permissionsProvider")
-    void positive_desiredPermissions(List<String> desiredPerms, List<String> userPerms, List<String> resolvedPerms) {
-      when(capabilityRepository.findPermissionsByPrefixes(eq(USER_ID), anyString())).thenReturn(userPerms);
+    void positive_desiredPermissions(List<String> request, List<String> permNames, List<String> prefixes,
+      List<String> resolvedPerms) {
+      var names = toStream(permNames).collect(Collectors.joining(", ", "{", "}"));
+      var prefs = toStream(prefixes).collect(Collectors.joining(", ", "{", "}"));
 
-      var result = capabilityService.getUserPermissions(USER_ID, false, desiredPerms);
+      when(capabilityRepository.findPermissionsByPrefixesAndPermissionNames(eq(USER_ID), anyString(), anyString()))
+        .thenReturn(resolvedPerms);
+
+      var result = capabilityService.getUserPermissions(USER_ID, false, request);
 
       assertThat(result).containsExactlyInAnyOrderElementsOf(resolvedPerms);
+      verify(capabilityRepository).findPermissionsByPrefixesAndPermissionNames(USER_ID, names, prefs);
     }
 
-    //permissionsToResolve : userPermissions : resolvedPermissions
+    //request : prefixes from request : permission names from request : resolved permissions
     static Stream<Arguments> permissionsProvider() {
       return Stream.of(
-        Arguments.of(of("ui.all", "be.all"), of("ui.all", "users.all"), of("ui.all")),
-        Arguments.of(of("be.*"), of("ui.all", "be.get", "be.post"), of("be.get", "be.post")),
-        Arguments.of(of("be.it.*", "ui.all"), of("be.all", "be.it.get", "be.it.post"), of("be.it.get", "be.it.post")),
-        Arguments.of(of("be.it.*", "ui.all"), emptyList(), emptyList()),
-        Arguments.of(of("be.it.*", "ui.all"), of("be.all", "users.item.all"), emptyList())
+        Arguments.of(of("ui.all", "be.all"), of("ui.all", "be.all"), emptyList(), of("ui.all")),
+        Arguments.of(of("be.*"), emptyList(), of("be."), emptyList()),
+        Arguments.of(of("be.it.*", "ui.all"), of("ui.all"), of("be.it."), emptyList()),
+        Arguments.of(of("be.it.*", "ui.*"), emptyList(), of("be.it.", "ui."), emptyList()),
+        Arguments.of(of("be.it.view.*", "ui.all"), of("ui.all"), of("be.it.view."), emptyList()),
+        Arguments.of(of("be.it.*", "ui.all"), of("ui.all"), of("be.it."),
+          of("be.all", "ui.all", "replaced.ui.all.view"))
       );
     }
   }
