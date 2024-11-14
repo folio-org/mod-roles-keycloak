@@ -45,7 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CapabilityService {
 
-  private final List<String> visiblePermissionPrefixes = List.of("ui-", "module", "plugin");
+  public static final String VISIBLE_PERMISSION_PREFIXES = buildPrefixesParam(List.of("ui-", "module", "plugin"));
 
   private final CapabilityRepository capabilityRepository;
   private final FolioExecutionContext folioExecutionContext;
@@ -245,16 +245,15 @@ public class CapabilityService {
   @Transactional(readOnly = true)
   public List<String> getUserPermissions(UUID userId, boolean onlyVisible, List<String> desiredPermissions) {
     if (onlyVisible) {
-      var permissionPrefixesParam = buildPrefixesParam(visiblePermissionPrefixes);
-      return capabilityRepository.findPermissionsByPrefixes(userId, permissionPrefixesParam);
+      return capabilityRepository.findPermissionsByPrefixes(userId, VISIBLE_PERMISSION_PREFIXES);
     }
 
     if (isNotEmpty(desiredPermissions)) {
-      var preparedPrefixes = desiredPermissions.stream().map(CapabilityService::trimWildcard).toList();
-      var filteredPerms = capabilityRepository.findPermissionsByPrefixes(userId, buildPrefixesParam(preparedPrefixes));
-      return toStream(filteredPerms)
-        .filter(s1 -> toStream(desiredPermissions).anyMatch(s2 -> match(s1, s2)))
-        .toList();
+      var prefixes =
+        toStream(desiredPermissions).filter(s -> s.contains("*")).map(CapabilityService::trimWildcard).toList();
+      var permNames = toStream(desiredPermissions).filter(s -> !s.contains("*")).toList();
+      return capabilityRepository.findPermissionsByPrefixesAndPermissionNames(userId, buildPrefixesParam(permNames),
+        buildPrefixesParam(prefixes));
     }
 
     return capabilityRepository.findAllFolioPermissions(userId);
@@ -278,12 +277,6 @@ public class CapabilityService {
 
   private static String trimWildcard(String param) {
     return param.endsWith("*") ? param.substring(0, param.length() - 1) : param;
-  }
-
-  private static boolean match(String s1, String s2) {
-    return s2.endsWith(".*")
-      ? s1.startsWith(s2.substring(0, s2.length() - 1))
-      : s1.equals(s2);
   }
 
   private static String buildPrefixesParam(List<String> prefixes) {
