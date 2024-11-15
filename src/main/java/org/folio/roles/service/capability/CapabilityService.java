@@ -321,6 +321,7 @@ public class CapabilityService {
       var capabilityId = capabilityEntity.getId();
       updatedCapability.setId(capabilityId);
       if (!StringUtils.hasText(updatedCapability.getDescription())) {
+        //Do not override the description if it does not exist in the new capability.
         updatedCapability.setDescription(capabilityEntity.getDescription());
       }
       capabilityEntities.add(capabilityEntityMapper.convert(updatedCapability));
