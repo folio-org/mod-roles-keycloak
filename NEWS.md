@@ -1,4 +1,7 @@
-## Version `v2.0.3` (15.11.2024)
+## Version `v2.0.4` (15.11.2024)
+* Added technical capability (MODROLESKC-233)
+
+* ## Version `v2.0.3` (15.11.2024)
 * Add replaced permissions for user permissions (MODROLESKC-221)
 
 ## Version `v2.0.2` (04.11.2024)
