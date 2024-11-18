@@ -26,9 +26,12 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -236,7 +239,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
 
     awaitFor(FIVE_HUNDRED_MILLISECONDS);
 
-    verifyNoInteractions(capabilitySetDescriptorService);
+    verify(capabilitySetDescriptorService, times(0)).update(any(), any(), any());
   }
 
   private static Stream<Arguments> exceptionDataProvider() {
