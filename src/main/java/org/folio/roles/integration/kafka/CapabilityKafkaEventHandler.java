@@ -2,6 +2,7 @@ package org.folio.roles.integration.kafka;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.toStream;
+import static org.folio.roles.integration.kafka.model.ResourceEventType.UPDATE;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
@@ -53,6 +54,13 @@ public class CapabilityKafkaEventHandler {
       capabilitySetDescriptorService.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
 
       return Optional.empty();
+    } else if (newValue != null && UPDATE == eventType) {
+      // Update application ID for stored capabilities and capability-sets - to cover the scenario when application
+      // update is done by uninstalling with purge=false, and then installing newer version
+      var newApplicationId = newValue.getApplicationId();
+      var applicationName = newApplicationId.substring(0, newApplicationId.lastIndexOf("-"));
+      capabilityService.updateApplicationVersionByAppName(moduleId, newApplicationId, applicationName);
+      capabilitySetDescriptorService.updateApplicationVersionByAppName(moduleId, newApplicationId, applicationName);
     }
 
     final var capabilityReplacements = capabilityReplacementsService.deduceReplacements(newValue);

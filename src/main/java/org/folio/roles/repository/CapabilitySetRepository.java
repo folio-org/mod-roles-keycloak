@@ -78,4 +78,10 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
     + "where cse.moduleId = :moduleId and cse.applicationId = :oldApplicationId")
   void updateApplicationVersion(@Param("moduleId") String moduleId,
     @Param("applicationId") String applicationId, @Param("oldApplicationId") String oldApplicationId);
+
+  @Modifying
+  @Query("update CapabilitySetEntity cse set cse.applicationId = :applicationId "
+    + "where cse.moduleId = :moduleId and cse.applicationId LIKE CONCAT(:applicationName, '-%')")
+  void updateApplicationVersionByAppName(@Param("moduleId") String moduleId,
+    @Param("applicationId") String applicationId, @Param("applicationName") String applicationName);
 }
