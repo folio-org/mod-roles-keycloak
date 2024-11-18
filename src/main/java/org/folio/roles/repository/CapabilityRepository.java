@@ -111,54 +111,112 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
   List<CapabilityEntity> findByCapabilitySetIds(@Param("ids") Collection<UUID> capabilitySetIds);
 
   @Query(nativeQuery = true, value = """
-    WITH prefixes AS (SELECT prefix || '%' AS prefix FROM UNNEST(cast(:prefixes as text[])) prefix)
-    SELECT DISTINCT c.folio_permission FROM (
-      SELECT uc.user_id, uc.capability_id FROM user_capability uc
+    WITH prefixes AS (
+        SELECT prefix || '%' AS pattern
+        FROM UNNEST(cast(:prefixes as text[])) prefix
+    ),
+    user_capabilities AS (
+        SELECT uc.user_id, uc.capability_id
+        FROM user_capability uc
 
-      UNION
+        UNION ALL
 
-      SELECT ucs.user_id, csc.capability_id FROM user_capability_set ucs
-      INNER JOIN capability_set_capability csc ON ucs.capability_set_id = csc.capability_set_id
+        SELECT ucs.user_id, csc.capability_id
+        FROM user_capability_set ucs
+        INNER JOIN capability_set_capability csc
+            ON ucs.capability_set_id = csc.capability_set_id
 
-      UNION
+        UNION ALL
 
-      SELECT ur.user_id, rc.capability_id FROM user_role ur
-      INNER JOIN (
-        SELECT rc.role_id, rc.capability_id FROM role_capability rc
+        SELECT ur.user_id, rc.capability_id
+        FROM user_role ur
+        INNER JOIN (
+            SELECT rc.role_id, rc.capability_id
+            FROM role_capability rc
 
-        UNION
+            UNION ALL
 
-        SELECT rcs.role_id, csc.capability_id FROM capability_set_capability csc
-        INNER JOIN role_capability_set rcs ON csc.capability_set_id = rcs.capability_set_id) rc
-        ON rc.role_id = ur.role_id) uc
+            SELECT rcs.role_id, csc.capability_id
+            FROM role_capability_set rcs
+            INNER JOIN capability_set_capability csc
+                ON rcs.capability_set_id = csc.capability_set_id
+        ) rc ON rc.role_id = ur.role_id
+    ),
+    user_permissions AS (
+        SELECT DISTINCT c.folio_permission
+        FROM user_capabilities uc
     INNER JOIN capability c ON uc.capability_id = c.id
-    INNER JOIN prefixes p ON c.folio_permission LIKE p.prefix
-    WHERE uc.user_id = :user_id""")
+        LEFT JOIN prefixes p ON c.folio_permission LIKE p.pattern
+        WHERE uc.user_id = :user_id
+          AND p.pattern IS NOT NULL
+    ),
+    replaced_permissions AS (
+        SELECT UNNEST(p.replaces) AS folio_permission
+        FROM user_permissions up
+        INNER JOIN permission p
+            ON p.name = up.folio_permission
+    )
+    SELECT DISTINCT folio_permission
+    FROM (
+        SELECT folio_permission FROM user_permissions
+
+        UNION ALL
+
+        SELECT folio_permission FROM replaced_permissions
+    ) combined_permissions;
+
+    """)
   List<String> findPermissionsByPrefixes(@Param("user_id") UUID userId, @Param("prefixes") String prefixes);
 
   @Query(nativeQuery = true, value = """
-    SELECT DISTINCT c.folio_permission FROM (
-      SELECT uc.user_id, uc.capability_id FROM user_capability uc
+    WITH user_permissions AS (
+      SELECT c.folio_permission
+      FROM (
+        SELECT uc.user_id, uc.capability_id
+        FROM user_capability uc
 
-      UNION
+        UNION ALL
 
-      SELECT ucs.user_id, csc.capability_id FROM user_capability_set ucs
-      INNER JOIN capability_set_capability csc ON ucs.capability_set_id = csc.capability_set_id
+        SELECT ucs.user_id, csc.capability_id
+        FROM user_capability_set ucs
+        INNER JOIN capability_set_capability csc
+          ON ucs.capability_set_id = csc.capability_set_id
 
-      UNION
+        UNION ALL
 
-      SELECT ur.user_id, rc.capability_id FROM user_role ur
-      INNER JOIN (
-        SELECT rc.role_id, rc.capability_id FROM role_capability rc
+        SELECT ur.user_id, rc.capability_id
+        FROM user_role ur
+        INNER JOIN (
+          SELECT rc.role_id, rc.capability_id
+          FROM role_capability rc
 
-        UNION
+          UNION ALL
 
-        SELECT rcs.role_id, csc.capability_id FROM capability_set_capability csc
-        INNER JOIN role_capability_set rcs ON csc.capability_set_id = rcs.capability_set_id
-      ) rc ON rc.role_id = ur.role_id) uc
-    INNER JOIN capability c ON uc.capability_id = c.id
-    WHERE uc.user_id = :user_id
-    ORDER BY c.folio_permission""")
+          SELECT rcs.role_id, csc.capability_id
+          FROM role_capability_set rcs
+          INNER JOIN capability_set_capability csc
+            ON rcs.capability_set_id = csc.capability_set_id
+        ) rc
+          ON rc.role_id = ur.role_id
+      ) uc
+      INNER JOIN capability c
+        ON uc.capability_id = c.id
+      WHERE uc.user_id = :user_id
+    ),
+    replaced_permissions AS (
+      SELECT UNNEST(p.replaces) AS folio_permission
+      FROM user_permissions up
+      INNER JOIN permission p
+        ON p.name = up.folio_permission
+    )
+    SELECT folio_permission
+    FROM (
+      SELECT folio_permission FROM user_permissions
+      UNION ALL
+      SELECT folio_permission FROM replaced_permissions
+    ) all_permissions
+    GROUP BY folio_permission;
+    """)
   List<String> findAllFolioPermissions(@Param("user_id") UUID userId);
 
   @Modifying
@@ -175,4 +233,69 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
 
   @Query("select entity from CapabilityEntity entity where entity.permission in :names order by entity.name")
   List<CapabilityEntity> findAllByPermissionNames(@Param("names") Collection<String> names);
+
+  @Query(nativeQuery = true, value = """
+    WITH prefixes AS (
+      SELECT prefix || '%' AS pattern
+      FROM UNNEST(CAST(:prefixes AS text[])) AS prefix
+    ),
+    permission_names AS (
+      SELECT permission_name
+      FROM UNNEST(CAST(:permission_names AS text[])) AS permission_name
+    ),
+    user_capabilities AS (
+      SELECT uc.user_id, uc.capability_id FROM user_capability uc
+
+      UNION ALL
+
+      SELECT ucs.user_id, csc.capability_id
+      FROM user_capability_set ucs
+      INNER JOIN capability_set_capability csc
+        ON ucs.capability_set_id = csc.capability_set_id
+
+      UNION ALL
+
+      SELECT ur.user_id, rc.capability_id
+      FROM user_role ur
+      INNER JOIN (
+        SELECT rc.role_id, rc.capability_id FROM role_capability rc
+
+        UNION ALL
+
+        SELECT rcs.role_id, csc.capability_id
+        FROM role_capability_set rcs
+        INNER JOIN capability_set_capability csc
+          ON rcs.capability_set_id = csc.capability_set_id
+      ) rc ON rc.role_id = ur.role_id
+    ),
+    user_permissions AS (
+      SELECT DISTINCT c.folio_permission
+      FROM user_capabilities uc
+      INNER JOIN capability c ON uc.capability_id = c.id
+      WHERE uc.user_id = :user_id
+        AND (
+          c.folio_permission IN (SELECT permission_name FROM permission_names)
+          OR EXISTS (
+            SELECT 1 FROM prefixes p
+            WHERE c.folio_permission LIKE p.pattern
+          )
+        )
+    ),
+    replaced_permissions AS (
+      SELECT UNNEST(p.replaces) AS folio_permission
+      FROM user_permissions up
+      INNER JOIN permission p
+        ON p.name = up.folio_permission
+    )
+    SELECT DISTINCT folio_permission
+    FROM (
+      SELECT folio_permission FROM user_permissions
+
+      UNION ALL
+
+      SELECT folio_permission FROM replaced_permissions
+    ) t;
+    """)
+  List<String> findPermissionsByPrefixesAndPermissionNames(@Param("user_id") UUID userId,
+    @Param("permission_names") String permissionNames, @Param("prefixes") String prefixes);
 }
