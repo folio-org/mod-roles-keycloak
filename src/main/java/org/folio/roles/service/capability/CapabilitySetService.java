@@ -295,13 +295,15 @@ public class CapabilitySetService {
   }
 
   /**
-   * Raises version for existing capability sets by module id + application name.
+   * Raises version for existing capability sets by module name + application name.
    *
-   * @param moduleId - module identifier
-   * @param newApplicationId - new application identifier
    * @param applicationName - application name
+   * @param moduleName - module name
+   * @param newApplicationId - new application identifier
+   * @param newModuleId - new module identifier
    */
-  public void updateApplicationVersionByAppName(String moduleId, String newApplicationId, String applicationName) {
-    repository.updateApplicationVersionByAppName(moduleId, newApplicationId, applicationName);
+  public void updateAppAndModuleVersionByAppAndModuleName(String applicationName, String moduleName,
+    String newApplicationId, String newModuleId) {
+    repository.updateAppAndModuleVersionByAppAndModuleName(applicationName, moduleName, newApplicationId, newModuleId);
   }
 }

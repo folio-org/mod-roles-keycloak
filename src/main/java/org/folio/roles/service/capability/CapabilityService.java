@@ -277,14 +277,17 @@ public class CapabilityService {
   }
 
   /**
-   * Raises version for existing capability sets by module id + application name.
+   * Raises version for existing capability sets by module name + application name.
    *
-   * @param moduleId - module identifier
-   * @param newApplicationId - new application identifier
    * @param applicationName - application name
+   * @param moduleName - module name
+   * @param newApplicationId - new application identifier
+   * @param newModuleId - new module identifier
    */
-  public void updateApplicationVersionByAppName(String moduleId, String newApplicationId, String applicationName) {
-    capabilityRepository.updateApplicationVersionByAppName(moduleId, newApplicationId, applicationName);
+  public void updateAppAndModuleVersionByAppAndModuleName(String applicationName, String moduleName,
+    String newApplicationId, String newModuleId) {
+    capabilityRepository.updateAppAndModuleVersionByAppAndModuleName(applicationName, moduleName, newApplicationId,
+      newModuleId);
   }
 
   private static String trimWildcard(String param) {

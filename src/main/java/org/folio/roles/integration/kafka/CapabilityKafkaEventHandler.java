@@ -4,6 +4,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.integration.kafka.model.ResourceEventType.CREATE;
 import static org.folio.roles.integration.kafka.model.ResourceEventType.UPDATE;
+import static org.folio.roles.utils.CapabilityUtils.getNameFromAppOrModuleId;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
@@ -59,9 +60,15 @@ public class CapabilityKafkaEventHandler {
       // Update application ID for stored capabilities and capability-sets - to cover the scenario when application
       // update is done by uninstalling with purge=false, and then installing newer version
       var newApplicationId = newValue.getApplicationId();
-      var applicationName = newApplicationId.substring(0, newApplicationId.lastIndexOf("-"));
-      capabilityService.updateApplicationVersionByAppName(moduleId, newApplicationId, applicationName);
-      capabilitySetDescriptorService.updateApplicationVersionByAppName(moduleId, newApplicationId, applicationName);
+      var newModuleId = newValue.getModuleId();
+      var applicationName = getNameFromAppOrModuleId(newApplicationId);
+      var moduleName = getNameFromAppOrModuleId(newModuleId);
+      log.info("Updating app and module IDs to {} and {} for application {} module {}", newApplicationId, newModuleId,
+        applicationName, moduleName);
+      capabilityService.updateAppAndModuleVersionByAppAndModuleName(applicationName, moduleName, newApplicationId,
+        newModuleId);
+      capabilitySetDescriptorService.updateAppAndModuleVersionByAppAndModuleName(applicationName, moduleName,
+        newApplicationId, newModuleId);
     }
 
     final var capabilityReplacements = capabilityReplacementsService.deduceReplacements(newValue);

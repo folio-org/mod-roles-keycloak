@@ -226,10 +226,11 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     @Param("applicationId") String applicationId, @Param("oldApplicationId") String oldApplicationId);
 
   @Modifying
-  @Query("update CapabilityEntity ce set ce.applicationId = :applicationId "
-    + "where ce.moduleId = :moduleId and ce.applicationId LIKE CONCAT(:applicationName, '-%')")
-  void updateApplicationVersionByAppName(@Param("moduleId") String moduleId,
-    @Param("applicationId") String applicationId, @Param("applicationName") String applicationName);
+  @Query("update CapabilityEntity ce set ce.applicationId = :applicationId, ce.moduleId = :newModuleId "
+    + "where ce.moduleId LIKE CONCAT(:moduleName, '-%') and ce.applicationId LIKE CONCAT(:applicationName, '-%')")
+  void updateAppAndModuleVersionByAppAndModuleName(@Param("applicationName") String applicationName,
+    @Param("moduleName") String moduleName, @Param("applicationId") String newApplicationId,
+    @Param("newModuleId") String newModuleId);
 
   @Query("select entity from CapabilityEntity entity where entity.permission in :names order by entity.name")
   List<CapabilityEntity> findAllByPermissionNames(@Param("names") Collection<String> names);

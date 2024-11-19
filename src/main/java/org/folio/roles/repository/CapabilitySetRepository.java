@@ -74,14 +74,15 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
   void deleteCapabilityCapabilitySetLinks(@Param("capabilityId") UUID capabilityId);
 
   @Modifying
-  @Query("update CapabilitySetEntity cse set cse.applicationId = :applicationId "
-    + "where cse.moduleId = :moduleId and cse.applicationId = :oldApplicationId")
+  @Query("UPDATE CapabilitySetEntity cse SET cse.applicationId = :applicationId "
+    + "WHERE cse.moduleId = :moduleId AND cse.applicationId = :oldApplicationId")
   void updateApplicationVersion(@Param("moduleId") String moduleId,
     @Param("applicationId") String applicationId, @Param("oldApplicationId") String oldApplicationId);
 
   @Modifying
-  @Query("update CapabilitySetEntity cse set cse.applicationId = :applicationId "
-    + "where cse.moduleId = :moduleId and cse.applicationId LIKE CONCAT(:applicationName, '-%')")
-  void updateApplicationVersionByAppName(@Param("moduleId") String moduleId,
-    @Param("applicationId") String applicationId, @Param("applicationName") String applicationName);
+  @Query("UPDATE CapabilitySetEntity cse SET cse.applicationId = :newApplicationId, cse.moduleId = :newModuleId "
+    + " WHERE cse.moduleId LIKE CONCAT(:moduleName, '-%') AND cse.applicationId LIKE CONCAT(:applicationName, '-%')")
+  void updateAppAndModuleVersionByAppAndModuleName(@Param("applicationName") String applicationName,
+    @Param("moduleName") String moduleName, @Param("newApplicationId") String newApplicationId,
+    @Param("newModuleId") String newModuleId);
 }
