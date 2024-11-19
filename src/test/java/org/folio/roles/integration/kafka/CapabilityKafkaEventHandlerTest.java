@@ -76,10 +76,10 @@ class CapabilityKafkaEventHandlerTest {
     verify(capabilityService).update(CREATE, List.of(capability()), emptyList());
     verify(capabilitySetDescriptorService).update(CREATE, emptyList(), emptyList());
     verify(objectMapper).convertValue(newValueMap, CapabilityEvent.class);
-    verify(capabilityService).updateAppAndModuleVersionByAppAndModuleName(eq("test-application"), eq("test-module"),
-      eq("test-application-0.0.1"), eq("test-module-1.0.0"));
-    verify(capabilitySetDescriptorService).updateAppAndModuleVersionByAppAndModuleName(eq("test-application"),
-      eq("test-module"), eq("test-application-0.0.1"), eq("test-module-1.0.0"));
+    verify(capabilityService).updateAppAndModuleVersionByAppAndModuleName("test-application", "test-module",
+      "test-application-0.0.1", "test-module-1.1.0");
+    verify(capabilitySetDescriptorService).updateAppAndModuleVersionByAppAndModuleName("test-application",
+      "test-module", "test-application-0.0.1", "test-module-1.1.0");
   }
 
   @Test
