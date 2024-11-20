@@ -91,6 +91,21 @@ public class CapabilitySetDescriptorService {
     capabilitySetService.updateApplicationVersion(moduleId, newApplicationId, oldApplicationId);
   }
 
+  /**
+   * Raises version for existing capability sets by module name + application name.
+   *
+   * @param applicationName - application name
+   * @param moduleName - module name
+   * @param newApplicationId - new application identifier
+   * @param newModuleId - new module identifier
+   */
+  @Transactional
+  public void updateAppAndModuleVersionByAppAndModuleName(String applicationName, String moduleName,
+    String newApplicationId, String newModuleId) {
+    capabilitySetService.updateAppAndModuleVersionByAppAndModuleName(applicationName, moduleName, newApplicationId,
+      newModuleId);
+  }
+
   private void handleNewCapabilitySets(List<CapabilitySetDescriptor> capabilitySetDescriptors) {
     if (isEmpty(capabilitySetDescriptors)) {
       return;
