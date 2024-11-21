@@ -35,7 +35,6 @@ import org.folio.roles.integration.keyclock.KeycloakClientService;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.test.extensions.KeycloakRealms;
-import org.folio.test.extensions.WireMockStub;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -91,7 +90,6 @@ public class PermissionReplacementIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-for-assignment.json")
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void permissionReplacement_positive() throws Exception {
     // Create Keycloak resources
     createResource("/foo/items/{id}", "GET", "PUT", "POST", "DELETE", "PATCH");
