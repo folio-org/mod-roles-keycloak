@@ -40,6 +40,9 @@ public class UserPermissionService implements PermissionService {
     var kcUser = keycloakUserService.getKeycloakUserByUserId(userId);
     var policyName = getPolicyName(getUserId(kcUser));
     var userPolicy = policyService.getOrCreatePolicy(policyName, USER, () -> createNewUserPolicy(userId));
+    if (isEmpty(endpoints)) {
+      return;
+    }
     keycloakAuthService.createPermissions(userPolicy, endpoints, getPermissionNameGenerator(userId));
   }
 
