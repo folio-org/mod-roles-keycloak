@@ -95,10 +95,11 @@ class CapabilityEventProcessorTest {
     var csDescription = csResource + " - permission set description";
     var capability = capability(null, resource, VIEW, itemGetPermName).description(description).moduleId(MODULE_ID);
     var uiCapability = capability(null, csResource, VIEW, itemViewPerm).description(csDescription).moduleId(MODULE_ID);
-    var setResources = Map.of(resource, List.of(VIEW));
+    // now subPermissions are processed identically for both UI_MODULE and MODULE moduleTypes!
+    // see capabilityEventProcessor.createCapabilitySetDescriptor#112 method
+    var setResources = Map.of(resource, List.of(VIEW), csResource, List.of(VIEW));
     var capabilitySetDesc = capabilitySetDescriptor(csResource, itemViewPerm, setResources).moduleId(MODULE_ID);
-    var uiCapabilitySetDesc = capabilitySetDescriptor(
-      csResource, itemViewPerm, Map.of(resource, List.of(VIEW), csResource, List.of(VIEW))).moduleId(MODULE_ID);
+    var uiCapabilitySetDesc = capabilitySetDescriptor(csResource, itemViewPerm, setResources).moduleId(MODULE_ID);
 
     var permission = permission(itemGetPermName).description(description);
     var permissionSet = permission(itemViewPerm, itemGetPermName).description(csDescription);
