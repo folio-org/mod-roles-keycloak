@@ -109,9 +109,12 @@ public class CapabilityEventProcessor {
   private CapabilitySetDescriptor createCapabilitySetDescriptor(
     CapabilityEvent event, FolioResource res, PermissionData permissionData, ModuleType moduleType) {
     var permission = res.getPermission();
-    var subPermissions = moduleType == UI_MODULE
-      ? union(permission.getSubPermissions(), List.of(permission.getPermissionName()))
-      : permission.getSubPermissions();
+    /*
+     * The SubPermissions are handled equally for both module types: MODULE and UI_MODULE.
+     * It is needed to support cases when a PermissionSet defined in BE modules are used in UI modules.
+     * see https://folio-org.atlassian.net/browse/MODROLESKC-240
+     */
+    var subPermissions =  union(permission.getSubPermissions(), List.of(permission.getPermissionName()));
     var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
 
     var capabilities = subPermissionsExpanded.stream()

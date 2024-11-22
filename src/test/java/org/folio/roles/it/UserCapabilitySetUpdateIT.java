@@ -192,7 +192,7 @@ class UserCapabilitySetUpdateIT extends BaseIntegrationTest {
   void handleCapabilityEvent_positive_updatedCapability() throws Exception {
     var capabilityEvent = readValue("json/kafka-events/be-capability-set-upgrade-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
-    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY);
+    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY, FOO_CREATE_CAPABILITY);
     var updatedCapabilitySet = capabilitySet(FOO_CREATE_CAPABILITY_SET, FOO_RESOURCE, CREATE, newCapabilities)
       .permission("foo.item.create")
       .applicationId(APPLICATION_ID_V2);
@@ -202,7 +202,8 @@ class UserCapabilitySetUpdateIT extends BaseIntegrationTest {
 
     assertAssignedCapabilitySets(updatedCapabilitySet);
     awaitUntilAsserted(() -> assertThat(kcTestClient.getPermissionNames()).containsExactlyInAnyOrder(
-      kcPermissionName(fooItemGetEndpoint()), kcPermissionName(fooItemDeleteEndpoint())));
+      kcPermissionName(fooItemGetEndpoint()), kcPermissionName(fooItemDeleteEndpoint()),
+      kcPermissionName(fooItemPostEndpoint())));
   }
 
   @Test
@@ -222,7 +223,7 @@ class UserCapabilitySetUpdateIT extends BaseIntegrationTest {
       kcPermissionName(fooItemGetEndpoint()), kcPermissionName(fooItemPostEndpoint()));
 
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
-    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY);
+    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY, FOO_CREATE_CAPABILITY);
     var updatedCapabilitySet = capabilitySet(FOO_CREATE_CAPABILITY_SET, FOO_RESOURCE, CREATE, newCapabilities)
       .permission("foo.item.create")
       .applicationId(APPLICATION_ID_V2);
@@ -254,7 +255,7 @@ class UserCapabilitySetUpdateIT extends BaseIntegrationTest {
       kcPermissionName(fooItemDeleteEndpoint()), kcPermissionName(fooItemPutEndpoint()));
 
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
-    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY);
+    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY, FOO_CREATE_CAPABILITY);
     var updatedCapabilitySet = capabilitySet(FOO_CREATE_CAPABILITY_SET, FOO_RESOURCE, CREATE, newCapabilities)
       .permission("foo.item.create")
       .applicationId(APPLICATION_ID_V2);
