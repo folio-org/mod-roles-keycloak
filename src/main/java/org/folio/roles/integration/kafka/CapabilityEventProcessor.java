@@ -12,7 +12,6 @@ import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
-import static org.folio.roles.integration.kafka.model.ModuleType.UI_MODULE;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 import static org.folio.roles.utils.CollectionUtils.union;
 
@@ -39,7 +38,6 @@ import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.CapabilityResultHolder;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
 import org.folio.roles.integration.kafka.model.FolioResource;
-import org.folio.roles.integration.kafka.model.ModuleType;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.service.permission.FolioPermissionService;
 import org.folio.roles.service.permission.PermissionOverrider;
@@ -75,7 +73,7 @@ public class CapabilityEventProcessor {
     var grouped = groupByHavingSubPermissions(resources);
     var capabilities = mapItems(grouped.get(FALSE), res -> createCapability(event, res));
     var capabilitySetDescriptors =
-      mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res, MODULE));
+      mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res));
     return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
   }
 
@@ -93,21 +91,21 @@ public class CapabilityEventProcessor {
     var grouped = groupByHavingSubPermissions(resources);
     var capabilities = mapItems(resources, res -> createCapability(event, res));
     var capabilitySetDescriptors =
-      mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res, UI_MODULE));
+      mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res));
     return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
   }
 
   private Optional<CapabilitySetDescriptor> createCapabilitySetDescriptor(
-    CapabilityEvent event, FolioResource resource, ModuleType moduleType) {
+    CapabilityEvent event, FolioResource resource) {
     var folioPermission = resource.getPermission().getPermissionName();
     var permissionMappingOverrides = permissionOverrider.getPermissionMappings();
     return Optional.of(extractPermissionData(folioPermission, permissionMappingOverrides))
       .filter(CapabilityEventProcessor::hasRequiredFields)
-      .map(raw -> createCapabilitySetDescriptor(event, resource, raw, moduleType));
+      .map(raw -> createCapabilitySetDescriptor(event, resource, raw));
   }
 
   private CapabilitySetDescriptor createCapabilitySetDescriptor(
-    CapabilityEvent event, FolioResource res, PermissionData permissionData, ModuleType moduleType) {
+    CapabilityEvent event, FolioResource res, PermissionData permissionData) {
     var permission = res.getPermission();
     /*
      * The SubPermissions are handled equally for both module types: MODULE and UI_MODULE.
