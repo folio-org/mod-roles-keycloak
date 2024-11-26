@@ -11,7 +11,9 @@ import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.USER_ID;
 import static org.folio.test.TestUtils.asJsonString;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -128,9 +130,9 @@ public class PermissionReplacementIT extends BaseIntegrationTest {
       .andExpect(content().contentType(APPLICATION_JSON)).andExpect(status().isCreated());
 
     // Verify that role got the capability assigned to it
-    doGet(get("/roles/capabilities").param("offset", "0").param("limit", "1").header(TENANT, TENANT_ID)
+    doGet(get("/roles/" + role.getId() + "/capabilities").header(TENANT, TENANT_ID)
       .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)).andExpect(
-      jsonPath("$.roleCapabilities[0].capabilityId", is(capability.getId().toString())));
+      jsonPath("$.capabilities[0].id", is(capability.getId().toString())));
 
     // Find out Keycloak test-user's FOLIO ID
     var userId = UUID.fromString(
@@ -144,10 +146,9 @@ public class PermissionReplacementIT extends BaseIntegrationTest {
       .andExpect(content().contentType(APPLICATION_JSON)).andExpect(status().isCreated());
 
     // Verify that user got the capabilityset assigned to it
-    doGet(
-      get("/users/capability-sets").param("offset", "0").param("limit", "1")
-        .header(TENANT, TENANT_ID).header(XOkapiHeaders.USER_ID, USER_ID_HEADER)).andExpect(
-      jsonPath("$.userCapabilitySets[0].capabilitySetId", is(capabilitySet.getId().toString())));
+    doGet(get("/users/" + userId + "/capability-sets").header(TENANT, TENANT_ID)
+      .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)).andExpect(
+      jsonPath("$.capabilitySets[0].id", is(capabilitySet.getId().toString())));
 
     // Trigger replacement of capabilities/capabilitysets
     var capabilitiesReplacementEvent =
@@ -169,16 +170,21 @@ public class PermissionReplacementIT extends BaseIntegrationTest {
           CapabilitySets.class).getCapabilitySets().stream().filter(cap -> cap.getName().equals("newfoo_item.manage"))
         .findAny().get();
 
-    // Verify that user and role have their new capabilities/capabilitysets assigned
+    // Verify that user and role have their new capabilities/capabilitysets assigned - and
+    // old capabilities/capabilitysets were removed
     await().atMost(ONE_MINUTE).pollInterval(ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> doGet(
-      get("/roles/capabilities").param("offset", "0").param("limit", "10")
-        .header(TENANT, TENANT_ID).header(XOkapiHeaders.USER_ID, USER_ID_HEADER)).andExpect(
-        jsonPath("$.roleCapabilities[*].capabilityId", hasItem(newCapability.getId().toString()))).andReturn()
-      .getResponse().getContentAsString());
+      get("/roles/" + role.getId() + "/capabilities").header(TENANT, TENANT_ID)
+        .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)).andExpect(jsonPath("$.capabilities", hasSize(1)))
+      .andExpect(jsonPath("$.capabilities[0].id", is(newCapability.getId().toString()))).andReturn().getResponse()
+      .getContentAsString());
     await().atMost(ONE_MINUTE).pollInterval(ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> doGet(
-      get("/users/capability-sets").param("offset", "0").param("limit", "10")
-        .header(TENANT, TENANT_ID).header(XOkapiHeaders.USER_ID, USER_ID_HEADER)).andExpect(
-      jsonPath("$.userCapabilitySets[*].capabilitySetId", hasItem(newCapabilitySet.getId().toString()))));
+      get("/users/" + userId + "/capability-sets").header(TENANT, TENANT_ID)
+        .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)).andExpect(jsonPath("$.capabilitySets", hasSize(1)))
+      .andExpect(jsonPath("$.capabilitySets[0].id", is(newCapabilitySet.getId().toString()))));
+
+    // Verify that replaced capability and capability set were removed and are no longer present
+    doGet("/capabilities").andExpect(jsonPath("$.capabilities[*].name", not(hasItem("foo_item.view"))));
+    doGet("/capability-sets").andExpect(jsonPath("$.capabilitySets[*].name", not(hasItem("foo_item.manage"))));
   }
 
   protected void createResource(String resourceName, String... scopeNames) {
