@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.common.utils.permission.model.PermissionAction.VIEW;
 import static org.folio.common.utils.permission.model.PermissionType.DATA;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
+import static org.folio.roles.domain.model.event.DomainEventType.DELETE;
 import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -204,8 +205,10 @@ class CapabilityReplacementsServiceTest {
       (CapabilitySetEvent) publishedEvents.stream().filter(e -> e instanceof CapabilitySetEvent).findAny().get();
     assertThat(capEvent.getOldObject().getName()).isEqualTo("oldcap1.view");
     assertThat(capEvent.getOldObject().getId()).isEqualTo(cap1Id);
+    assertThat(capEvent.getType()).isEqualTo(DELETE);
     assertThat(capSetEvent.getOldObject().getName()).isEqualTo("capset1.view");
     assertThat(capSetEvent.getOldObject().getId()).isEqualTo(capSet1Id);
+    assertThat(capSetEvent.getType()).isEqualTo(DELETE);
   }
 
   private Capability createCapability(UUID id, String name) {
