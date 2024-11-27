@@ -43,6 +43,7 @@ import org.folio.roles.utils.CapabilityUtils;
 import org.folio.spring.FolioExecutionContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +70,7 @@ public class CapabilityReplacementsService {
    *
    * @param capabilityReplacements a map of old to new permissions, e.g. {"old" : ["new1", "new2"]}
    */
+  @Transactional
   public void processReplacements(CapabilityReplacements capabilityReplacements) {
     log.info("Processing assignments of replacement capabilities.");
     assignReplacementCapabilities(capabilityReplacements);
