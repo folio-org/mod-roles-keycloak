@@ -1,3 +1,7 @@
+## Version `v2.0.5` (29.11.2024)
+* Revert added technical capability (MODROLESKC-233)
+* Remove replaced capabilities and capability sets (MODROLESKC-234)
+
 ## Version `v2.0.4` (15.11.2024)
 * Added technical capability (MODROLESKC-233)
 
