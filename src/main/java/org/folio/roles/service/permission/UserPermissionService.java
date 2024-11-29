@@ -35,14 +35,14 @@ public class UserPermissionService implements PermissionService {
   @Override
   @Transactional
   public void createPermissions(UUID userId, List<Endpoint> endpoints) {
+    if (isEmpty(endpoints)) {
+      return;
+    }
 
     log.info("Creating permissions for user: id = {}, endpoints = {}", () -> userId, () -> convertToString(endpoints));
     var kcUser = keycloakUserService.getKeycloakUserByUserId(userId);
     var policyName = getPolicyName(getUserId(kcUser));
     var userPolicy = policyService.getOrCreatePolicy(policyName, USER, () -> createNewUserPolicy(userId));
-    if (isEmpty(endpoints)) {
-      return;
-    }
     keycloakAuthService.createPermissions(userPolicy, endpoints, getPermissionNameGenerator(userId));
   }
 

@@ -79,13 +79,7 @@ class UserPermissionServiceTest {
 
     @Test
     void positive_emptyEndpoints() {
-      var policyName = "Policy for user: " + USER_ID;
-      var policy = userPolicy(policyName);
-      when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
-      when(policyService.getOrCreatePolicy(eq(policyName), eq(USER), newPolicyCaptor.capture())).thenReturn(policy);
-      List<Endpoint> endpoints = emptyList();
-
-      userPermissionService.createPermissions(USER_ID, endpoints);
+      userPermissionService.createPermissions(USER_ID, emptyList());
       verifyNoInteractions(keycloakAuthService);
     }
   }
