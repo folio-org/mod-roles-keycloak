@@ -39,7 +39,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 @Log4j2
 @Service
@@ -320,10 +319,6 @@ public class CapabilityService {
       var capabilityEntity = capabilitiesByName.get(updatedCapability.getName());
       var capabilityId = capabilityEntity.getId();
       updatedCapability.setId(capabilityId);
-      if (!StringUtils.hasText(updatedCapability.getDescription())) {
-        //Do not override the description if it does not exist in the new capability.
-        updatedCapability.setDescription(capabilityEntity.getDescription());
-      }
       capabilityEntities.add(capabilityEntityMapper.convert(updatedCapability));
       oldCapabilitiesById.put(capabilityId, capabilityEntityMapper.convert(capabilityEntity));
     }
