@@ -1,6 +1,5 @@
 package org.folio.roles.integration.kafka;
 
-import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.groupingBy;
@@ -11,7 +10,6 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 import static org.folio.common.utils.CollectionUtils.toStream;
-import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 import static org.folio.roles.utils.CollectionUtils.union;
 
@@ -64,17 +62,7 @@ public class CapabilityEventProcessor {
     }
 
     var folioResources = event.getResources();
-    return event.getModuleType() == MODULE
-      ? processModuleResources(event, folioResources)
-      : processUiModuleResources(event, folioResources);
-  }
-
-  private CapabilityResultHolder processModuleResources(CapabilityEvent event, List<FolioResource> resources) {
-    var grouped = groupByHavingSubPermissions(resources);
-    var capabilities = mapItems(grouped.get(FALSE), res -> createCapability(event, res));
-    var capabilitySetDescriptors =
-      mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res));
-    return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
+    return processModuleResources(event, folioResources);
   }
 
   /**
@@ -86,8 +74,9 @@ public class CapabilityEventProcessor {
    * Such Capabilities can be distinguished by the following criteria:
    * the end-points list of the capability must be empty,
    * and the capability name must be equal to the capability set name that it reflects.
+   * Both backend and UI modules are processed in the same way.
    */
-  private CapabilityResultHolder processUiModuleResources(CapabilityEvent event, List<FolioResource> resources) {
+  private CapabilityResultHolder processModuleResources(CapabilityEvent event, List<FolioResource> resources) {
     var grouped = groupByHavingSubPermissions(resources);
     var capabilities = mapItems(resources, res -> createCapability(event, res));
     var capabilitySetDescriptors =
