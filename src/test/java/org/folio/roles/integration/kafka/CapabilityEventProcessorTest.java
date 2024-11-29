@@ -111,7 +111,7 @@ class CapabilityEventProcessorTest {
 
       arguments("module event (permission and permissionSet)",
         event(MODULE, resource(permission), resource(permissionSet)),
-        result(List.of(capability), List.of(capabilitySetDesc))),
+        result(List.of(capability, uiCapability), List.of(capabilitySetDesc))),
 
       arguments("module event (found element endpoints empty)",
         event(MODULE,
@@ -170,16 +170,16 @@ class CapabilityEventProcessorTest {
 
       arguments("module event (permission set)",
         event(MODULE, resource(permissionSet)),
-        result(emptyList(), List.of(capabilitySetDesc))),
+        result(List.of(uiCapability), List.of(capabilitySetDesc))),
 
       arguments("module event (permission set) mapping overrides",
         event(MODULE,
           resource(permission(itemViewPerm, "perm.name").description(csDescription))),
-        result(emptyList(), List.of(capabilitySetDesc))),
+        result(List.of(uiCapability), List.of(capabilitySetDesc))),
 
       arguments("module event (duplicate permission set)",
         event(MODULE, resource(permissionSet), resource(permissionSet)),
-        result(emptyList(), List.of(capabilitySetDesc))),
+        result(List.of(uiCapability), List.of(capabilitySetDesc))),
 
       arguments("ui-module event (permission)",
         event(UI_MODULE, resource(permission)),
