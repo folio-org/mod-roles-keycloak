@@ -10,8 +10,8 @@
       {
         "permission": {
           "permissionName": "foo.item.get",
-          "displayName": "foo.item.get - display name",
-          "description": "foo.item.get - description"
+          "displayName": "foo_item.view - display name",
+          "description": "foo_item.view - description"
         },
         "endpoints": [
           {
@@ -23,8 +23,8 @@
       {
         "permission": {
           "permissionName": "foo.item.put",
-          "displayName": "foo.item.put - display name",
-          "description": "foo.item.put - description"
+          "displayName": "foo_item.edit - display name",
+          "description": "foo_item.edit - description"
         },
         "endpoints": [
           {
@@ -40,8 +40,8 @@
       {
         "permission": {
           "permissionName": "foo.item.post",
-          "displayName": "foo.item.post - display name",
-          "description": "foo.item.post - description"
+          "displayName": "foo_item.create - display name",
+          "description": "foo_item.create - description"
         },
         "endpoints": [
           {
@@ -53,8 +53,8 @@
       {
         "permission": {
           "permissionName": "foo.item.delete",
-          "displayName": "foo.item.delete - display name",
-          "description": "foo.item.delete - description"
+          "displayName": "foo_item.delete - display name",
+          "description": "foo_item.delete - description"
         },
         "endpoints": [
           {

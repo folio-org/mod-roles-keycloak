@@ -1,6 +1,5 @@
 package org.folio.roles.integration.kafka;
 
-import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.groupingBy;
@@ -11,8 +10,6 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
 import static org.folio.common.utils.CollectionUtils.toStream;
-import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
-import static org.folio.roles.integration.kafka.model.ModuleType.UI_MODULE;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 import static org.folio.roles.utils.CollectionUtils.union;
 
@@ -39,7 +36,6 @@ import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.CapabilityResultHolder;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
 import org.folio.roles.integration.kafka.model.FolioResource;
-import org.folio.roles.integration.kafka.model.ModuleType;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.service.permission.FolioPermissionService;
 import org.folio.roles.service.permission.PermissionOverrider;
@@ -66,17 +62,7 @@ public class CapabilityEventProcessor {
     }
 
     var folioResources = event.getResources();
-    return event.getModuleType() == MODULE
-      ? processModuleResources(event, folioResources)
-      : processUiModuleResources(event, folioResources);
-  }
-
-  private CapabilityResultHolder processModuleResources(CapabilityEvent event, List<FolioResource> resources) {
-    var grouped = groupByHavingSubPermissions(resources);
-    var capabilities = mapItems(grouped.get(FALSE), res -> createCapability(event, res));
-    var capabilitySetDescriptors =
-      mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res, MODULE));
-    return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
+    return processModuleResources(event, folioResources);
   }
 
   /**
@@ -88,30 +74,34 @@ public class CapabilityEventProcessor {
    * Such Capabilities can be distinguished by the following criteria:
    * the end-points list of the capability must be empty,
    * and the capability name must be equal to the capability set name that it reflects.
+   * Both backend and UI modules are processed in the same way.
    */
-  private CapabilityResultHolder processUiModuleResources(CapabilityEvent event, List<FolioResource> resources) {
+  private CapabilityResultHolder processModuleResources(CapabilityEvent event, List<FolioResource> resources) {
     var grouped = groupByHavingSubPermissions(resources);
     var capabilities = mapItems(resources, res -> createCapability(event, res));
     var capabilitySetDescriptors =
-      mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res, UI_MODULE));
+      mapItems(grouped.get(TRUE), res -> createCapabilitySetDescriptor(event, res));
     return toCapabilityResultHolder(capabilities, capabilitySetDescriptors);
   }
 
   private Optional<CapabilitySetDescriptor> createCapabilitySetDescriptor(
-    CapabilityEvent event, FolioResource resource, ModuleType moduleType) {
+    CapabilityEvent event, FolioResource resource) {
     var folioPermission = resource.getPermission().getPermissionName();
     var permissionMappingOverrides = permissionOverrider.getPermissionMappings();
     return Optional.of(extractPermissionData(folioPermission, permissionMappingOverrides))
       .filter(CapabilityEventProcessor::hasRequiredFields)
-      .map(raw -> createCapabilitySetDescriptor(event, resource, raw, moduleType));
+      .map(raw -> createCapabilitySetDescriptor(event, resource, raw));
   }
 
   private CapabilitySetDescriptor createCapabilitySetDescriptor(
-    CapabilityEvent event, FolioResource res, PermissionData permissionData, ModuleType moduleType) {
+    CapabilityEvent event, FolioResource res, PermissionData permissionData) {
     var permission = res.getPermission();
-    var subPermissions = moduleType == UI_MODULE
-      ? union(permission.getSubPermissions(), List.of(permission.getPermissionName()))
-      : permission.getSubPermissions();
+    /*
+     * The SubPermissions are handled equally for both module types: MODULE and UI_MODULE.
+     * It is needed to support cases when a PermissionSet defined in BE modules are used in UI modules.
+     * see https://folio-org.atlassian.net/browse/MODROLESKC-240
+     */
+    var subPermissions =  union(permission.getSubPermissions(), List.of(permission.getPermissionName()));
     var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
 
     var capabilities = subPermissionsExpanded.stream()
