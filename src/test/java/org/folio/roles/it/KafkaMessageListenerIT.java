@@ -120,6 +120,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
 
     var expectedCapabilitiesJson = asJsonString(capabilities(
+      fooItemCapability(MANAGE, "foo.item.all", APPLICATION_ID_V2),
       fooItemCapability(CREATE, "foo.item.post", APPLICATION_ID_V2, fooItemPostEndpoint()),
       fooItemCapability(DELETE, "foo.item.delete", APPLICATION_ID_V2, fooItemDeleteEndpoint()),
       fooItemCapability(EDIT, "foo.item.put", APPLICATION_ID_V2, fooItemPutEndpoint(), fooItemPatchEndpoint()),
@@ -140,7 +141,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     assertCapabilityNamesBySetId(capabilitySets.get(0).getId(), "foo_item.create", "foo_item.edit", "foo_item.view");
     assertCapabilityNamesBySetId(capabilitySets.get(1).getId(), "foo_item.edit", "foo_item.view");
     assertCapabilityNamesBySetId(capabilitySets.get(2).getId(),
-      "foo_item.create", "foo_item.delete", "foo_item.edit", "foo_item.view");
+      "foo_item.create", "foo_item.delete", "foo_item.edit", "foo_item.manage", "foo_item.view");
     assertCapabilityNamesBySetId(capabilitySets.get(3).getId(), "foo_item.view");
   }
 
@@ -152,7 +153,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     var uiCapabilityEvent = readValue("json/kafka-events/ui-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, uiCapabilityEvent);
 
-    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(8))));
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(9))));
     await().untilAsserted(() -> doGet("/capability-sets").andExpect(jsonPath("$.totalRecords", is(7))));
 
     var searchResult = doGet(get("/capability-sets")
@@ -175,6 +176,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
 
     var expectedCapabilitiesJson = asJsonString(capabilities(
+      fooItemCapability(MANAGE, "foo.item.all"),
       fooItemCapability(CREATE, "foo.item.post", fooItemPostEndpoint()),
       fooItemCapability(DELETE, "foo.item.delete", fooItemDeleteEndpoint()),
       fooItemCapability(EDIT, "foo.item.put", fooItemPutEndpoint(), fooItemPatchEndpoint()),
@@ -185,7 +187,8 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.capabilities[0].metadata.createdDate", notNullValue()))
       .andExpect(jsonPath("$.capabilities[1].metadata.createdDate", notNullValue()))
       .andExpect(jsonPath("$.capabilities[2].metadata.createdDate", notNullValue()))
-      .andExpect(jsonPath("$.capabilities[3].metadata.createdDate", notNullValue())));
+      .andExpect(jsonPath("$.capabilities[3].metadata.createdDate", notNullValue()))
+      .andExpect(jsonPath("$.capabilities[4].metadata.createdDate", notNullValue())));
 
     var expectedCapabilitySets = asJsonString(capabilitySets(
       fooItemCapabilitySet(CREATE),
@@ -206,7 +209,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     assertCapabilityNamesBySetId(capabilitySets.get(0).getId(), "foo_item.create", "foo_item.edit", "foo_item.view");
     assertCapabilityNamesBySetId(capabilitySets.get(1).getId(), "foo_item.edit", "foo_item.view");
     assertCapabilityNamesBySetId(capabilitySets.get(2).getId(),
-      "foo_item.create", "foo_item.delete", "foo_item.edit", "foo_item.view");
+      "foo_item.create", "foo_item.delete", "foo_item.edit", "foo_item.manage", "foo_item.view");
     assertCapabilityNamesBySetId(capabilitySets.get(3).getId(), "foo_item.view");
   }
 
@@ -214,7 +217,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   void handleCapabilityEvent_positive_eventIsSentWhenTenantIsDisabled() {
     var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
-    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(4))));
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(5))));
     await().untilAsserted(() -> doGet("/capability-sets").andExpect(jsonPath("$.totalRecords", is(4))));
 
     removeTenant(TENANT_ID);
@@ -222,7 +225,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     awaitFor(FIVE_HUNDRED_MILLISECONDS);
 
     enableTenant(TENANT_ID);
-    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(4))));
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(5))));
     await().untilAsserted(() -> doGet("/capability-sets").andExpect(jsonPath("$.totalRecords", is(4))));
   }
 
@@ -311,7 +314,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .applicationId(applicationId)
       .permission(permission)
       .endpoints(Arrays.asList(endpoints))
-      .description(permission + " - description");
+      .description(capabilityName + " - description");
   }
 
   private static CapabilitySet fooItemCapabilitySet(CapabilityAction action) {

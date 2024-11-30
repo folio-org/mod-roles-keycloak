@@ -12,6 +12,7 @@ import static org.folio.roles.support.CapabilitySetUtils.capabilitySets;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
 import static org.folio.roles.support.CapabilityUtils.FOO_CREATE_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_DELETE_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.FOO_EDIT_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.FOO_VIEW_CAPABILITY;
 import static org.folio.roles.support.EndpointUtils.fooItemDeleteEndpoint;
@@ -111,7 +112,7 @@ class RoleCapabilitySetUpdateIT extends BaseIntegrationTest {
     awaitUntilAsserted(() -> doGet(request).andExpect(content().json(asJsonString(capabilitySets()))));
     awaitUntilAsserted(RoleCapabilitySetUpdateIT::assertAssignedCapabilitySets);
     awaitUntilAsserted(() -> assertThat(kcTestClient.getPermissionNames()).isEmpty());
-    doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(9)));
+    doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(8)));
   }
 
   @Test
@@ -175,10 +176,11 @@ class RoleCapabilitySetUpdateIT extends BaseIntegrationTest {
     var request = getFooCreateCapabilitySet();
     awaitUntilAsserted(() -> doGet(request).andExpect(content().json(asJsonString(capabilitySets()))));
 
-    var capabilitySet = capabilitySet(FOO_MANAGE_CAPABILITY_SET, FOO_RESOURCE, MANAGE, FOO_MANAGE_CAPABILITIES);
+    var capabilitySet = capabilitySet(FOO_MANAGE_CAPABILITY_SET, FOO_RESOURCE, MANAGE, List.of(
+      FOO_VIEW_CAPABILITY, FOO_EDIT_CAPABILITY, FOO_DELETE_CAPABILITY));
     awaitUntilAsserted(() -> assertAssignedCapabilitySets(capabilitySet));
     awaitUntilAsserted(() -> assertThat(kcTestClient.getPermissionNames()).containsExactlyInAnyOrder(
-      kcPermissionName(fooItemGetEndpoint()), kcPermissionName(fooItemPostEndpoint()),
+      kcPermissionName(fooItemGetEndpoint()),
       kcPermissionName(fooItemPutEndpoint()), kcPermissionName(fooItemDeleteEndpoint())));
   }
 
@@ -195,7 +197,7 @@ class RoleCapabilitySetUpdateIT extends BaseIntegrationTest {
   void handleCapabilityEvent_positive_updatedCapability() throws Exception {
     var capabilityEvent = readValue("json/kafka-events/be-capability-set-upgrade-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
-    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY);
+    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY, FOO_CREATE_CAPABILITY);
     var updatedCapabilitySet = capabilitySet(FOO_CREATE_CAPABILITY_SET, FOO_RESOURCE, CREATE, newCapabilities)
       .permission("foo.item.create")
       .applicationId(APPLICATION_ID_V2);
@@ -205,7 +207,7 @@ class RoleCapabilitySetUpdateIT extends BaseIntegrationTest {
 
     assertAssignedCapabilitySets(updatedCapabilitySet);
     awaitUntilAsserted(() -> assertThat(kcTestClient.getPermissionNames()).containsExactlyInAnyOrder(
-      kcPermissionName(fooItemGetEndpoint()), kcPermissionName(fooItemDeleteEndpoint())));
+      kcPermissionName(fooItemDeleteEndpoint()), kcPermissionName(fooItemGetEndpoint())));
   }
 
   @Test
@@ -225,7 +227,7 @@ class RoleCapabilitySetUpdateIT extends BaseIntegrationTest {
       kcPermissionName(fooItemGetEndpoint()), kcPermissionName(fooItemPostEndpoint()));
 
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
-    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY);
+    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY, FOO_CREATE_CAPABILITY);
     var updatedCapabilitySet = capabilitySet(FOO_CREATE_CAPABILITY_SET, FOO_RESOURCE, CREATE, newCapabilities)
       .permission("foo.item.create")
       .applicationId(APPLICATION_ID_V2);
@@ -235,8 +237,7 @@ class RoleCapabilitySetUpdateIT extends BaseIntegrationTest {
 
     assertAssignedCapabilitySets(updatedCapabilitySet);
     awaitUntilAsserted(TWO_SECONDS, () -> assertThat(kcTestClient.getPermissionNames()).containsExactlyInAnyOrder(
-      kcPermissionName(fooItemPostEndpoint()), kcPermissionName(fooItemGetEndpoint()),
-      kcPermissionName(fooItemDeleteEndpoint())));
+      kcPermissionName(fooItemGetEndpoint()), kcPermissionName(fooItemDeleteEndpoint())));
   }
 
   @Test
@@ -257,7 +258,7 @@ class RoleCapabilitySetUpdateIT extends BaseIntegrationTest {
       kcPermissionName(fooItemDeleteEndpoint()), kcPermissionName(fooItemPutEndpoint()));
 
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
-    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY);
+    var newCapabilities = List.of(FOO_VIEW_CAPABILITY, FOO_DELETE_CAPABILITY, FOO_CREATE_CAPABILITY);
     var updatedCapabilitySet = capabilitySet(FOO_CREATE_CAPABILITY_SET, FOO_RESOURCE, CREATE, newCapabilities)
       .permission("foo.item.create")
       .applicationId(APPLICATION_ID_V2);
@@ -268,7 +269,7 @@ class RoleCapabilitySetUpdateIT extends BaseIntegrationTest {
     var capabilitySet = capabilitySet(FOO_MANAGE_CAPABILITY_SET, FOO_RESOURCE, MANAGE, FOO_MANAGE_CAPABILITIES);
     assertAssignedCapabilitySets(updatedCapabilitySet, capabilitySet);
     awaitUntilAsserted(TWO_SECONDS, () -> assertThat(kcTestClient.getPermissionNames()).containsExactlyInAnyOrder(
-      kcPermissionName(fooItemGetEndpoint()), kcPermissionName(fooItemPostEndpoint()),
+      kcPermissionName(fooItemGetEndpoint()),
       kcPermissionName(fooItemDeleteEndpoint()), kcPermissionName(fooItemPutEndpoint())));
   }
 
