@@ -33,7 +33,6 @@ import org.folio.roles.domain.dto.CapabilitySets;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
-import org.folio.roles.integration.keyclock.KeycloakClientService;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.test.extensions.KeycloakRealms;
@@ -65,7 +64,6 @@ public class PermissionReplacementIT extends BaseIntegrationTest {
   public static final String TEST_KC_CLIENT_ID = "00000000-0000-0000-0000-000000000010";
   public static final String TEST_KC_REALM_NAME = "test";
 
-  @Autowired private KeycloakClientService keycloakClientService;
   @Autowired private Keycloak keycloak;
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
   @Autowired private ObjectMapper objectMapper;
@@ -103,7 +101,7 @@ public class PermissionReplacementIT extends BaseIntegrationTest {
     var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
     await().atMost(ONE_MINUTE).pollInterval(ONE_HUNDRED_MILLISECONDS)
-      .untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(4))));
+      .untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(5))));
     await().atMost(ONE_MINUTE).pollInterval(ONE_HUNDRED_MILLISECONDS)
       .untilAsserted(() -> doGet("/capability-sets").andExpect(jsonPath("$.totalRecords", is(4))));
 
