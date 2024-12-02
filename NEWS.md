@@ -1,3 +1,6 @@
+## Version `v2.0.5` (02.12.2024)
+* SubPermissions processing for capability sets
+
 ## Version `v2.0.5` (29.11.2024)
 * Revert added technical capability (MODROLESKC-233)
 * Remove replaced capabilities and capability sets (MODROLESKC-234)
