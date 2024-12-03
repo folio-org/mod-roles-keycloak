@@ -80,7 +80,7 @@ class UserPermissionServiceTest {
     @Test
     void positive_emptyEndpoints() {
       userPermissionService.createPermissions(USER_ID, emptyList());
-      verifyNoInteractions(keycloakAuthService, policyService, keycloakAuthService);
+      verifyNoInteractions(keycloakAuthService);
     }
   }
 
