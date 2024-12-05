@@ -1,4 +1,4 @@
-## Version `v2.0.6` (05.12.2024)
+## Version `v2.0.7` (05.12.2024)
 * Update stale permissions versions on module entitlement
 
 ## Version `v2.0.5` (02.12.2024)
