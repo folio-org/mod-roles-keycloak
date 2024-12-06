@@ -10,6 +10,7 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -55,8 +56,14 @@ public class KeycloakAuthorizationService {
     for (var endpoint : endpoints) {
       var resource = getAuthResourceByStaticPath(endpoint.getPath());
       var scope = getScopeByMethod(resource, endpoint.getMethod());
+      if (scope.isEmpty()) {
+        log.warn(
+          "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
+          endpoint.getMethod(), endpoint.getPath());
+        continue;
+      }
       var policyName = nameGenerator.apply(endpoint);
-      var permission = buildPermissionFor(policyName, resource.getId(), scope.getId(), policy.getId());
+      var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policy.getId());
 
       try (var response = scopePermissionsClient.create(permission)) {
         processKeycloakResponse(permission, response);
@@ -99,12 +106,10 @@ public class KeycloakAuthorizationService {
     return resourceRepresentation;
   }
 
-  private static ScopeRepresentation getScopeByMethod(ResourceRepresentation resource, HttpMethod method) {
+  private static Optional<ScopeRepresentation> getScopeByMethod(ResourceRepresentation resource, HttpMethod method) {
     return resource.getScopes().stream()
       .filter(scope -> equalsIgnoreCase(scope.getName(), method.toString()))
-      .findFirst()
-      .orElseThrow(() -> new IllegalStateException(String.format(
-        "Scope '%s' is not found in the resource: %s", method, resource.getName())));
+      .findFirst();
   }
 
   private AuthorizationResource getAuthorizationClient() {
