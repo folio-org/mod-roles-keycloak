@@ -1,0 +1,116 @@
+{
+  "realm": "test",
+  "enabled": true,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": true,
+  "clients": [
+    {
+      "id": "00000000-0000-0000-0000-000000000010",
+      "clientId": "test-login-application",
+      "description": "Client for login operations with assigned capabilities to VIEW and CREATE foo items",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "kc-client-password",
+      "redirectUris": [ "/*" ],
+      "fullScopeAllowed": true,
+      "authorizationSettings": {
+        "allowRemoteResourceManagement": true,
+        "policyEnforcementMode": "ENFORCING",
+        "resources": [
+          {
+            "_id": "994b345b-09b2-416d-ac72-252155be4664",
+            "name": "/foo/items/{id}",
+            "displayName": "/foo/items/{id}",
+            "scopes": [
+              { "name": "DELETE" },
+              { "name": "GET" }
+            ]
+          },
+          {
+            "_id": "44147c30-e76e-4468-adff-e403bd175aca",
+            "name": "/foo/items",
+            "displayName": "/foo/items",
+            "scopes": [
+              { "name": "GET" },
+              { "name": "POST" }
+            ]
+          },
+          {
+            "name": "/bar/items/{id}",
+            "displayName": "/bar/items/{id}",
+            "_id": "25af74c6-913a-4473-997f-9becbafd743b",
+            "scopes": [
+              { "name": "GET" }
+            ]
+          }
+        ],
+        "scopes": [
+          {
+            "id": "fcf915d3-0a7f-4ee1-bb8a-fc60aa93a4d6",
+            "name": "POST"
+          },
+          {
+            "id": "859b3f82-99aa-48d6-b3d6-9b5d222c3c00",
+            "name": "GET"
+          },
+          {
+            "id": "6eeebe31-7d3c-472a-bd2f-072a345f4963",
+            "name": "DELETE"
+          },
+          {
+            "id": "670288d5-e9e0-446f-aa91-5c1f737cb997",
+            "name": "PUT"
+          }
+        ],
+        "policies": [
+          {
+            "id": "dec68c30-4f93-4481-95bd-9ec587b15c1c",
+            "name": "Policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e",
+            "description": "System generated policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "roles": "[{\"id\":\"test-role\",\"required\":false}]"
+            }
+          },
+          {
+            "name": "GET access for role '1e985e76-e9ca-401c-ad8e-0d121a11111e' to '/foo/items/{id}'",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "resources": "[\"/foo/items/{id}\"]",
+              "scopes": "[\"GET\"]",
+              "applyPolicies": "[\"Policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e\"]"
+            }
+          },
+          {
+            "name": "POST access for role '1e985e76-e9ca-401c-ad8e-0d121a11111e' to '/foo/items'",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "resources": "[\"/foo/items\"]",
+              "scopes": "[\"POST\"]",
+              "applyPolicies": "[\"Policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e\"]"
+            }
+          }
+        ],
+        "decisionStrategy": "AFFIRMATIVE"
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "id": "1e985e76-e9ca-401c-ad8e-0d121a11111e",
+        "name": "test-role",
+        "description": "test-role description",
+        "composite": false,
+        "clientRole": false,
+        "attributes": { }
+      }
+    ]
+  }
+}
