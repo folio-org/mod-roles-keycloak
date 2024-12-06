@@ -224,7 +224,7 @@ class KeycloakAuthorizationServiceTest {
     }
 
     @Test
-    void negative_resourceIsFoundWithInvalidScope() {
+    void positive_resourceIsFoundWithInvalidScope() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
@@ -239,9 +239,7 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
 
-      assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage("Scope 'GET' is not found in the resource: /foo/entities");
+      keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
 
       verifyNoInteractions(scopePermissionsClient);
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);

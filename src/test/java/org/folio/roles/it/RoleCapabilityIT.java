@@ -178,6 +178,33 @@ class RoleCapabilityIT extends BaseIntegrationTest {
   }
 
   @Test
+  @KeycloakRealms("/json/keycloak/role-capability-realm-scope-not-found-for-resource.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-role-capability-relations.sql"
+  })
+  void assignCapabilities_positive_notConsistentResourcesStateInKeycloak() throws Exception {
+    var request = roleCapabilitiesRequest(ROLE_ID, FOO_DELETE_CAPABILITY, FOO_EDIT_CAPABILITY);
+    var fooItemDeleteRoleCapability = roleCapability(ROLE_ID, FOO_DELETE_CAPABILITY);
+    var fooItemEditRoleCapability = roleCapability(ROLE_ID, FOO_EDIT_CAPABILITY);
+
+    postRoleCapabilities(request)
+      .andExpect(content().json(asJsonString(roleCapabilities(fooItemDeleteRoleCapability, fooItemEditRoleCapability))))
+      .andExpect(jsonPath("$.roleCapabilities[0].metadata.createdByUserId", is(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.roleCapabilities[0].metadata.createdDate", notNullValue()))
+      .andExpect(jsonPath("$.roleCapabilities[1].metadata.createdByUserId", is(USER_ID_HEADER)))
+      .andExpect(jsonPath("$.roleCapabilities[1].metadata.createdDate", notNullValue()));
+
+    assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
+      kcPermissionName(fooItemGetEndpoint()),
+      kcPermissionName(fooItemPostEndpoint()),
+      kcPermissionName(fooItemDeleteEndpoint())
+    ));
+  }
+
+  @Test
   @KeycloakRealms("/json/keycloak/role-capability-realm.json")
   @Sql(scripts = {
     "classpath:/sql/populate-test-role.sql",
