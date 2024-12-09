@@ -47,7 +47,6 @@ import org.folio.roles.domain.dto.UserCapabilitySetsRequest;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.test.extensions.KeycloakRealms;
-import org.folio.test.extensions.WireMockStub;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -151,7 +150,6 @@ class UserCapabilityUpdateIT extends BaseIntegrationTest {
     "classpath:/sql/capabilities/populate-capabilities.sql",
     "classpath:/sql/capability-sets/populate-capability-sets.sql",
   })
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void handleCapabilityEvent_positive_deprecatedCapabilityInCapabilitySets() throws Exception {
     postUserCapabilitySets(userCapabilitySetsRequest(USER_ID, FOO_CREATE_CAPABILITY_SET, FOO_MANAGE_V2_CAPABILITY_SET));
     var capabilityEvent = readValue("json/kafka-events/be-capability-deprecated-event.json", ResourceEvent.class);
@@ -199,7 +197,6 @@ class UserCapabilityUpdateIT extends BaseIntegrationTest {
   @Test
   @KeycloakRealms("/json/keycloak/user-capability-fresh-realm.json")
   @Sql("classpath:/sql/capabilities/populate-capabilities.sql")
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void handleCapabilityEvent_positive_deprecatedCapabilityWithinComplexCapability() throws Exception {
     postUserCapabilities(userCapabilitiesRequest(USER_ID, FOO_VIEW_CAPABILITY, FOO_MANAGE_CAPABILITY));
     assertThat(kcTestClient.getPermissionNames()).containsExactlyInAnyOrder(
@@ -254,7 +251,6 @@ class UserCapabilityUpdateIT extends BaseIntegrationTest {
   @Test
   @KeycloakRealms("/json/keycloak/user-capability-fresh-realm.json")
   @Sql("classpath:/sql/capabilities/populate-capabilities.sql")
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void handleCapabilityEvent_positive_updatedCapabilityWithinComplexCapability() throws Exception {
     var request = userCapabilitiesRequest(USER_ID, FOO_VIEW_CAPABILITY, FOO_CREATE_CAPABILITY, FOO_MANAGE_CAPABILITY);
     postUserCapabilities(request);
@@ -294,7 +290,6 @@ class UserCapabilityUpdateIT extends BaseIntegrationTest {
     "classpath:/sql/capabilities/populate-capabilities.sql",
     "classpath:/sql/capability-sets/populate-capability-sets.sql"
   })
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void handleCapabilityEvent_positive_updatedCapabilityWithAssignedCapabilitySet() throws Exception {
     postUserCapabilities(userCapabilitiesRequest(USER_ID, FOO_VIEW_CAPABILITY, FOO_CREATE_CAPABILITY));
     postUserCapabilitySets(userCapabilitySetsRequest(USER_ID, FOO_MANAGE_V2_CAPABILITY_SET));
@@ -325,7 +320,6 @@ class UserCapabilityUpdateIT extends BaseIntegrationTest {
     "classpath:/sql/capabilities/populate-capabilities.sql",
     "classpath:/sql/capability-sets/populate-capability-sets.sql"
   })
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void handleCapabilityEvent_positive_updatedCapabilityInCapabilitySet() throws Exception {
     postUserCapabilitySets(userCapabilitySetsRequest(USER_ID, FOO_CREATE_CAPABILITY_SET));
     assertThat(kcTestClient.getPermissionNames()).containsExactlyInAnyOrder(
@@ -369,7 +363,6 @@ class UserCapabilityUpdateIT extends BaseIntegrationTest {
     mockMvc.perform(post("/users/capabilities")
         .header(TENANT, TENANT_ID)
         .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
-        .header(XOkapiHeaders.URL, wmAdminClient.getWireMockUrl())
         .content(asJsonString(request))
         .contentType(APPLICATION_JSON))
       .andExpect(content().contentType(APPLICATION_JSON))
@@ -380,7 +373,6 @@ class UserCapabilityUpdateIT extends BaseIntegrationTest {
     mockMvc.perform(post("/users/capability-sets")
         .header(TENANT, TENANT_ID)
         .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
-        .header(XOkapiHeaders.URL, wmAdminClient.getWireMockUrl())
         .content(asJsonString(request))
         .contentType(APPLICATION_JSON))
       .andExpect(content().contentType(APPLICATION_JSON))

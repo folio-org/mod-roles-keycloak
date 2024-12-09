@@ -47,7 +47,6 @@ import org.folio.roles.domain.dto.UserCapabilitiesRequest;
 import org.folio.roles.support.CapabilityUtils;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.test.extensions.KeycloakRealms;
-import org.folio.test.extensions.WireMockStub;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -145,7 +144,6 @@ class UserCapabilityIT extends BaseIntegrationTest {
     "classpath:/sql/capabilities/populate-capabilities.sql",
     "classpath:/sql/capabilities/populate-user-capability-relations.sql"
   })
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void assignCapabilities_positive() throws Exception {
     var request = userCapabilitiesRequest(USER_ID, FOO_DELETE_CAPABILITY, FOO_EDIT_CAPABILITY);
     var fooItemDeleteUserCapability = userCapability(USER_ID, FOO_DELETE_CAPABILITY);
@@ -170,7 +168,6 @@ class UserCapabilityIT extends BaseIntegrationTest {
   @Test
   @Sql("classpath:/sql/capabilities/populate-capabilities.sql")
   @KeycloakRealms("/json/keycloak/user-capability-fresh-realm.json")
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void assignCapabilities_positive_cleanInstallation() throws Exception {
     var request = userCapabilitiesRequest(USER_ID, FOO_CREATE_CAPABILITY, FOO_EDIT_CAPABILITY);
     var fooItemViewUserCapability = userCapability(USER_ID, FOO_CREATE_CAPABILITY);
@@ -204,7 +201,6 @@ class UserCapabilityIT extends BaseIntegrationTest {
     "classpath:/sql/capabilities/populate-capabilities.sql",
     "classpath:/sql/capabilities/populate-user-capability-relations.sql"
   })
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void assignCapabilities_negative_alreadyAssigned() throws Exception {
     var capabilityIds = List.of(FOO_CREATE_CAPABILITY, FOO_VIEW_CAPABILITY);
     var request = userCapabilitiesRequest(USER_ID, capabilityIds);
@@ -335,7 +331,6 @@ class UserCapabilityIT extends BaseIntegrationTest {
     return mockMvc.perform(post("/users/capabilities")
         .header(TENANT, TENANT_ID)
         .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
-        .header(XOkapiHeaders.URL, wmAdminClient.getWireMockUrl())
         .content(asJsonString(request))
         .contentType(APPLICATION_JSON))
       .andExpect(content().contentType(APPLICATION_JSON));

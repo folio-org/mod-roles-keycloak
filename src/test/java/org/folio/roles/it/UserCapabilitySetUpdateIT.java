@@ -50,7 +50,6 @@ import org.folio.roles.domain.dto.UserCapabilitySetsRequest;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.test.extensions.KeycloakRealms;
-import org.folio.test.extensions.WireMockStub;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -139,7 +138,6 @@ class UserCapabilitySetUpdateIT extends BaseIntegrationTest {
     "classpath:/sql/capability-sets/populate-capability-sets.sql",
     "classpath:/sql/capability-sets/populate-user-capability-set-relations.sql"
   })
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void handleCapabilityEvent_positive_deprecatedCapabilitySetWithAssignedCapability() throws Exception {
     postRoleCapabilities(userCapabilitiesRequest(USER_ID, FOO_VIEW_CAPABILITY));
     assertThat(kcTestClient.getPermissionNames()).containsExactlyInAnyOrder(
@@ -162,7 +160,6 @@ class UserCapabilitySetUpdateIT extends BaseIntegrationTest {
     "classpath:/sql/capability-sets/populate-capability-sets.sql",
     "classpath:/sql/capability-sets/populate-user-capability-set-relations.sql"
   })
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void handleCapabilityEvent_positive_deprecatedCapabilitySetWithAssignedCapabilitySet() throws Exception {
     postUserCapabilitySets(userCapabilitySetsRequest(USER_ID, FOO_MANAGE_CAPABILITY_SET));
     assertThat(kcTestClient.getPermissionNames()).containsExactlyInAnyOrder(
@@ -216,7 +213,6 @@ class UserCapabilitySetUpdateIT extends BaseIntegrationTest {
     "classpath:/sql/capability-sets/populate-capability-sets.sql",
     "classpath:/sql/capability-sets/populate-user-capability-set-relations.sql"
   })
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void handleCapabilityEvent_positive_updatedCapabilitySetWithAssignedCapability() throws Exception {
     var capabilityEvent = readValue("json/kafka-events/be-capability-set-upgrade-event.json", ResourceEvent.class);
     postRoleCapabilities(userCapabilitiesRequest(USER_ID, FOO_CREATE_CAPABILITY));
@@ -246,7 +242,6 @@ class UserCapabilitySetUpdateIT extends BaseIntegrationTest {
     "classpath:/sql/capability-sets/populate-capability-sets.sql",
     "classpath:/sql/capability-sets/populate-user-capability-set-relations.sql"
   })
-  @WireMockStub(scripts = {"/wiremock/stubs/moduserskc/ensure-kc-user.json"})
   void handleCapabilityEvent_positive_updatedCapabilitySetWithAssignedCapabilitySet() throws Exception {
     var capabilityEvent = readValue("json/kafka-events/be-capability-set-upgrade-event.json", ResourceEvent.class);
     postUserCapabilitySets(userCapabilitySetsRequest(USER_ID, FOO_MANAGE_CAPABILITY_SET));
@@ -288,7 +283,6 @@ class UserCapabilitySetUpdateIT extends BaseIntegrationTest {
     mockMvc.perform(post("/users/capabilities")
         .header(TENANT, TENANT_ID)
         .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
-        .header(XOkapiHeaders.URL, wmAdminClient.getWireMockUrl())
         .content(asJsonString(request))
         .contentType(APPLICATION_JSON))
       .andExpect(content().contentType(APPLICATION_JSON))
@@ -299,7 +293,6 @@ class UserCapabilitySetUpdateIT extends BaseIntegrationTest {
     mockMvc.perform(post("/users/capability-sets")
         .header(TENANT, TENANT_ID)
         .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
-        .header(XOkapiHeaders.URL, wmAdminClient.getWireMockUrl())
         .content(asJsonString(request))
         .contentType(APPLICATION_JSON))
       .andExpect(content().contentType(APPLICATION_JSON))
