@@ -26,6 +26,12 @@
   </licenses>
 
   <properties>
+    <!-- remove spring-kafka property after upgrading to Spring Boot 3.4.x;
+         this bumps spring-kafka from 3.2.4 to 3.3.0 to fix security vulnerability in kafka-clients:
+         https://www.cve.org/CVERecord?id=CVE-2024-31141
+    -->
+    <spring-kafka.version>3.3.0</spring-kafka.version>
+
     <java.version>17</java.version>
     <lombok.version>1.18.34</lombok.version>
     <swagger-annotations.version>2.2.25</swagger-annotations.version>
@@ -34,7 +40,7 @@
     <openapi-tools.jackson-databind-nullable.version>0.2.6</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.6.2</mapstruct.version>
     <hypersistence-utils-hibernate-63.version>3.8.3</hypersistence-utils-hibernate-63.version>
-    <folio-spring-support.version>8.2.0</folio-spring-support.version>
+    <folio-spring-support.version>8.2.2</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
     <applications-poc-tools.version>2.0.0</applications-poc-tools.version>
