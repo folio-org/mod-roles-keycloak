@@ -1,7 +1,11 @@
+## Version `v2.0.8` (05.12.2024)
+* Handle scope not found error (MODROLESKC-243)
+* Update dependencies spring-kafka 3.3.0, folio-spring-support 8.2.2 fix vulns (MODROLESKC-248)
+
 ## Version `v2.0.7` (05.12.2024)
 * Update stale permissions versions on module entitlement
 
-## Version `v2.0.5` (02.12.2024)
+## Version `v2.0.6` (02.12.2024)
 * SubPermissions processing for capability sets
 
 ## Version `v2.0.5` (29.11.2024)
