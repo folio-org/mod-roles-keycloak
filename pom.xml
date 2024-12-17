@@ -5,14 +5,14 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.3.4</version>
+    <version>3.3.5</version>
     <relativePath />
   </parent>
 
   <name>mod-roles-keycloak</name>
   <groupId>org.folio</groupId>
   <artifactId>mod-roles-keycloak</artifactId>
-  <version>2.0.9-SNAPSHOT</version>
+  <version>2.0.10-SNAPSHOT</version>
   <description>A roles module which implements the 'roles' interface, using keycloak for authentication and token
     generation
   </description>
@@ -49,14 +49,14 @@
     </mod-roles-keycloak.yaml-file>
 
     <!-- Test dependencies versions -->
-    <testcontainer.version>1.20.2</testcontainer.version>
+    <testcontainer.version>1.20.3</testcontainer.version>
     <instancio.version>5.0.2</instancio.version>
     <kryo.version>5.6.2</kryo.version>
 
     <!-- Plugins versions -->
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    <maven-checkstyle.version>10.18.2</maven-checkstyle.version>
-    <maven-checkstyle-plugin.version>3.5.0</maven-checkstyle-plugin.version>
+    <maven-checkstyle.version>10.20.0</maven-checkstyle.version>
+    <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
     <openapi-generator.version>7.9.0</openapi-generator.version>

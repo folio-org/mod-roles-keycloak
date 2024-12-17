@@ -1,3 +1,6 @@
+## Version `v2.0.9` (18.12.2024)
+* Update to Spring Boot 3.3.5 fixing tomcat request/response mixup between users (MODROLESKC-250)
+
 ## Version `v2.0.8` (13.12.2024)
 * Handle scope not found error (MODROLESKC-243)
 * Update dependencies spring-kafka 3.3.0, folio-spring-support 8.2.2 fix vulns (MODROLESKC-248)
