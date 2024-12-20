@@ -43,7 +43,7 @@
     <folio-spring-support.version>8.2.2</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
-    <applications-poc-tools.version>2.1.0-SNAPSHOT</applications-poc-tools.version>
+    <applications-poc-tools.version>2.2.0-SNAPSHOT</applications-poc-tools.version>
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
     </mod-roles-keycloak.yaml-file>
@@ -60,7 +60,7 @@
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
     <openapi-generator.version>7.10.0</openapi-generator.version>
-    <keycloak-admin-client.version>26.0.0</keycloak-admin-client.version>
+    <keycloak-admin-client.version>26.0.3</keycloak-admin-client.version>
     <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
 
     <sonar.exclusions>
