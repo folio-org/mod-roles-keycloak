@@ -44,6 +44,7 @@
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
     <applications-poc-tools.version>2.2.0-SNAPSHOT</applications-poc-tools.version>
+    <hibernate.version>6.5.3.Final</hibernate.version>
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
     </mod-roles-keycloak.yaml-file>
