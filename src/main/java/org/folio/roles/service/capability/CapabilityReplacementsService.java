@@ -144,8 +144,8 @@ public class CapabilityReplacementsService {
 
   protected String applyFolioPermissionOverrides(String permissionName) {
     var mappedPermission = permissionOverrider.getPermissionMappings().get(permissionName);
-    if (mappedPermission != null && mappedPermission.getPermissionName() != null) {
-      return mappedPermission.getPermissionName();
+    if (mappedPermission != null) {
+      return CapabilityUtils.getCapabilityName(mappedPermission);
     }
     return permissionName;
   }
