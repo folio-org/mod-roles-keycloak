@@ -5,6 +5,8 @@ import static java.util.Map.entry;
 import static java.util.Optional.empty;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
+import static org.folio.common.utils.permission.PermissionUtils.hasRequiredFields;
+import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
 import jakarta.persistence.EntityExistsException;
 import java.util.Collection;
@@ -144,8 +146,8 @@ public class CapabilityReplacementsService {
 
   protected String applyFolioPermissionOverrides(String permissionName) {
     var mappedPermission = permissionOverrider.getPermissionMappings().get(permissionName);
-    if (mappedPermission != null && mappedPermission.getPermissionName() != null) {
-      return mappedPermission.getPermissionName();
+    if (mappedPermission != null && hasRequiredFields(mappedPermission)) {
+      return getCapabilityName(mappedPermission);
     }
     return permissionName;
   }
