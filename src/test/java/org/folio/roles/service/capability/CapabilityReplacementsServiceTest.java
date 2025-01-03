@@ -70,9 +70,9 @@ class CapabilityReplacementsServiceTest {
   @Test
   void testDeduceReplacementsPositive() {
     when(permissionOverrider.getPermissionMappings()).thenReturn(Map.of("old-perm2.get",
-      PermissionData.builder().permissionName("old-perm-two.get").action(VIEW).resource("resource2").type(DATA)
+      PermissionData.builder().permissionName("old-perm-two.get").action(VIEW).resource("old-perm-two").type(DATA)
         .build(), "old-perm.get",
-      PermissionData.builder().action(VIEW).resource("resource").type(DATA)
+      PermissionData.builder().action(VIEW).resource("old-perm").type(DATA)
         .build()));
 
     var testData = new CapabilityEvent();
