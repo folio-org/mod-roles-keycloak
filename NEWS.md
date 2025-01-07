@@ -1,3 +1,6 @@
+## Version `v2.0.10` (07.01.2025)
+* Fix for capability replacements processing for cases, when there is a permission mapping override for a given capability
+
 ## Version `v2.0.9` (18.12.2024)
 * Update to Spring Boot 3.3.5 fixing tomcat request/response mixup between users (MODROLESKC-250)
 
