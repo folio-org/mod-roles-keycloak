@@ -88,6 +88,8 @@ public class CapabilityEventHandler extends AbstractCapabilityEventHandler {
     var capabilityId = deprecatedCapability.getId();
     var deprecatedEndpoints = getCapabilityEndpoints(deprecatedCapability);
 
+    log.info("Deleting capability {} ", deprecatedCapability.getName());
+
     try (var ignored = new FolioExecutionContextSetter(event.getContext())) {
       performActionForPolicies(
         policyService.findRolePoliciesByCapabilityId(capabilityId),
