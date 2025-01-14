@@ -215,6 +215,7 @@ public class CapabilityReplacementsService {
   protected void unassignReplacedCapabilities(CapabilityReplacements capabilityReplacements) {
     var oldCapabilitiesAndSetsToRemove = capabilityReplacements.oldCapabilitiesToNewCapabilities().keySet();
 
+    log.info("Removing old capabilities and capability sets: {}", String.join(", ", oldCapabilitiesAndSetsToRemove));
     var oldCapabilitiesToRemove = capabilityService.findByNames(oldCapabilitiesAndSetsToRemove);
     oldCapabilitiesToRemove.stream().map(
       deprecatedCapability -> org.folio.roles.domain.model.event.CapabilityEvent.deleted(deprecatedCapability)

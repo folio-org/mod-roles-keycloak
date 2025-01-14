@@ -10,13 +10,16 @@ import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.common.utils.Collectors.toLinkedHashMap;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.folio.common.utils.CollectionUtils;
 import org.folio.roles.domain.entity.PermissionEntity;
 import org.folio.roles.integration.kafka.model.Permission;
@@ -27,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class FolioPermissionService {
 
   private final PermissionRepository permissionRepository;
@@ -88,7 +92,23 @@ public class FolioPermissionService {
     }
 
     var newPermissionNames = mapItems(newPermissions, Permission::getPermissionName);
-    var foundEntityIdsMap = permissionRepository.findByPermissionNameIn(newPermissionNames).stream()
+
+    var existingPermissionEntities = permissionRepository.findByPermissionNameIn(newPermissionNames);
+    var existingPermissionEntitiesDeduplicated = new ArrayList<PermissionEntity>(existingPermissionEntities.size());
+    var existingPermissionEntitiesNames = new HashSet<String>();
+    existingPermissionEntities.forEach(existingEntity -> {
+      if (existingPermissionEntitiesNames.contains(existingEntity.getPermissionName())) {
+        // Duplicate found
+        log.info("Removing duplicate permission {} with ID {}", existingEntity.getPermissionName(),
+          existingEntity.getId());
+        permissionRepository.delete(existingEntity);
+      } else {
+        existingPermissionEntitiesNames.add(existingEntity.getPermissionName());
+        existingPermissionEntitiesDeduplicated.add(existingEntity);
+      }
+    });
+
+    var foundEntityIdsMap = existingPermissionEntitiesDeduplicated.stream()
       .collect(toMap(PermissionEntity::getPermissionName, PermissionEntity::getId));
 
     var entitiesToCreate = mapItems(newPermissions, permissionEntityMapper::toEntity);
