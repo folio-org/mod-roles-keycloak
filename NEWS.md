@@ -1,3 +1,6 @@
+## Version `v2.0.11` (14.01.2025)
+* Fix for cached permission lookup logic to avoid errors on capability event processing
+
 ## Version `v2.0.10` (07.01.2025)
 * Fix for capability replacements processing for cases, when there is a permission mapping override for a given capability
 
