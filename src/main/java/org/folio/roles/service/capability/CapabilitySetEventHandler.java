@@ -91,6 +91,8 @@ public class CapabilitySetEventHandler extends AbstractCapabilityEventHandler {
     var deprecatedCapabilitySet = event.getOldObject();
     var capabilitySetId = deprecatedCapabilitySet.getId();
 
+    log.info("Deleting capability set {} ", deprecatedCapabilitySet.getName());
+
     try (var ignored = new FolioExecutionContextSetter(event.getContext())) {
       performActionForPolicies(
         policyService.findRolePoliciesByCapabilitySetId(capabilitySetId),

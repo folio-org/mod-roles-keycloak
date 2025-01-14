@@ -83,19 +83,26 @@ class FolioPermissionServiceTest {
     @Test
     void positive_entityUpdated() {
       var entityId = UUID.randomUUID();
+      var entityId2 = UUID.randomUUID();
       var permission = fooPermission(null);
       var permissionV2 = fooPermissionV2(null);
       var permissionEntity = fooPermissionEntity(entityId);
+      var permissionEntity2 = fooPermissionEntity(entityId2);
       var permissionEntityV2 = fooPermissionEntityV2(null);
       var permissionNames = List.of(permission.getPermissionName());
 
-      when(repository.findByPermissionNameIn(permissionNames)).thenReturn(List.of(permissionEntity));
+      when(repository.findByPermissionNameIn(permissionNames)).thenReturn(List.of(permissionEntity, permissionEntity2));
       when(mapper.toEntity(permissionV2)).thenReturn(permissionEntityV2);
       when(repository.saveAll(List.of(permissionEntityV2))).thenReturn(List.of(fooPermissionEntityV2(entityId)));
 
       service.update(List.of(permissionV2), List.of(permission));
 
       verify(repository).saveAll(List.of(permissionEntityV2));
+      // If we have duplicate permission entries in DB (different IDs, same permission name),
+      // any one of these should be used
+      assertThat(permissionEntityV2.getId()).isIn(entityId, entityId2);
+      // The other one should be deleted
+      verify(repository).delete(permissionEntityV2.getId() == entityId ? permissionEntity2 : permissionEntity);
     }
 
     @Test
