@@ -12,7 +12,7 @@
   <name>mod-roles-keycloak</name>
   <groupId>org.folio</groupId>
   <artifactId>mod-roles-keycloak</artifactId>
-  <version>2.0.12-SNAPSHOT</version>
+  <version>2.0.12</version>
   <description>A roles module which implements the 'roles' interface, using keycloak for authentication and token
     generation
   </description>
@@ -615,7 +615,7 @@
     <url>https://github.com/folio-org/mod-roles-keycloak</url>
     <connection>scm:git:git://github.com:folio-org/mod-roles-keycloak.git</connection>
     <developerConnection>scm:git:git@github.com:folio-org/mod-roles-keycloak.git</developerConnection>
-    <tag>v2.0.0</tag>
+    <tag>v2.0.12</tag>
   </scm>
 
   <profiles>
