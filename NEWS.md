@@ -1,3 +1,6 @@
+## Version `v2.0.12` (15.01.2025)
+* Fix circular dependency (MODROLESKC-239)
+
 ## Version `v2.0.11` (14.01.2025)
 * Fix for cached permission lookup logic to avoid errors on capability event processing
 
