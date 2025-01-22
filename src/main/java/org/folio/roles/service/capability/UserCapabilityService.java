@@ -92,10 +92,9 @@ public class UserCapabilityService {
   @Transactional
   public void update(UUID userId, List<UUID> capabilityIds) {
     keycloakUserService.getKeycloakUserByUserId(userId);
-    var assignedUserCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
-    var assignedCapabilityIds = getCapabilityIds(assignedUserCapabilityEntities);
-    UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "user-capability")
-      .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(userId, newIds, assignedCapabilityIds)))
+
+    UpdateOperationHelper.create(List.of(), capabilityIds, "user-capability")
+      .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(userId, newIds, List.of())))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
   }
 
