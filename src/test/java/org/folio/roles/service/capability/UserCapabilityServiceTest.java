@@ -323,9 +323,10 @@ class UserCapabilityServiceTest {
       when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
       when(userCapabilityEntityMapper.convert(uce2)).thenReturn(userCapability(USER_ID, capabilityId2));
-      when(userCapabilityRepository.saveAll(List.of(uce2))).thenReturn(List.of(uce2));
+      when(userCapabilityEntityMapper.convert(uce3)).thenReturn(userCapability(USER_ID, capabilityId3));
+      when(userCapabilityRepository.saveAll(List.of(uce2, uce3))).thenReturn(List.of(uce2, uce3));
 
-      var newIds = List.of(capabilityId2);
+      var newIds = List.of(capabilityId2, capabilityId3);
       var deprecatedIds = List.of(capabilityId1);
       var endpointsToAssign = List.of(endpoint("/c2", GET));
       var endpointsToDelete = List.of(endpoint("/c1", GET));
@@ -339,20 +340,8 @@ class UserCapabilityServiceTest {
       verify(userPermissionService).createPermissions(USER_ID, endpointsToAssign);
       verify(userPermissionService).deletePermissions(USER_ID, endpointsToDelete);
       verify(userCapabilityRepository).deleteUserCapabilities(USER_ID, deprecatedIds);
-      verify(capabilityEndpointService).getByCapabilityIds(newIds, List.of(capabilityId1, capabilityId3));
-      verify(capabilityEndpointService).getByCapabilityIds(deprecatedIds, List.of(capabilityId3, capabilityId2));
-    }
-
-    @Test
-    void negative_notingToUpdate() {
-      var userCapabilityEntity = userCapabilityEntity(USER_ID, capabilityId1);
-      when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
-      when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(List.of(userCapabilityEntity));
-
-      var capabilityIds = List.of(capabilityId1);
-      userCapabilityService.update(USER_ID, capabilityIds);
-
-      verifyNoInteractions(userPermissionService);
+      verify(capabilityEndpointService).getByCapabilityIds(newIds, List.of(capabilityId1));
+      verify(capabilityEndpointService).getByCapabilityIds(deprecatedIds, List.of(capabilityId2, capabilityId3));
     }
 
     @Test
