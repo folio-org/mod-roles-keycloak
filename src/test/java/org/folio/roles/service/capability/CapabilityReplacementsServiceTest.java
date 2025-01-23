@@ -33,6 +33,7 @@ import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.Permission;
+import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.repository.RoleCapabilityRepository;
 import org.folio.roles.repository.RoleCapabilitySetRepository;
 import org.folio.roles.repository.UserCapabilityRepository;
@@ -66,6 +67,7 @@ class CapabilityReplacementsServiceTest {
   @Mock private CapabilityService capabilityService;
   @Mock private CapabilitySetService capabilitySetService;
   @Mock private CapabilitySetMapper capabilitySetMapper;
+  @Mock private LoadablePermissionRepository loadablePermissionRepository;
 
   @Test
   void testDeduceReplacementsPositive() {

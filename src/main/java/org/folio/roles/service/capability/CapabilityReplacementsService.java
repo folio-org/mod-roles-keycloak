@@ -5,6 +5,7 @@ import static java.util.Map.entry;
 import static java.util.Optional.empty;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.permission.PermissionUtils.hasRequiredFields;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
@@ -26,6 +27,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.common.utils.permission.PermissionUtils;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilitySet;
+import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.RoleCapabilityEntity;
 import org.folio.roles.domain.entity.RoleCapabilitySetEntity;
 import org.folio.roles.domain.entity.UserCapabilityEntity;
@@ -36,6 +38,7 @@ import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.Permission;
+import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.repository.RoleCapabilityRepository;
 import org.folio.roles.repository.RoleCapabilitySetRepository;
 import org.folio.roles.repository.UserCapabilityRepository;
@@ -66,6 +69,7 @@ public class CapabilityReplacementsService {
   private final CapabilityService capabilityService;
   private final CapabilitySetService capabilitySetService;
   private final CapabilitySetMapper capabilitySetMapper;
+  private final LoadablePermissionRepository loadablePermissionRepository;
 
   /**
    * Process permission replacements.
@@ -76,6 +80,8 @@ public class CapabilityReplacementsService {
   public void processReplacements(CapabilityReplacements capabilityReplacements) {
     log.info("Processing assignments of replacement capabilities.");
     assignReplacementCapabilities(capabilityReplacements);
+    log.info("Processing replacement of loadable capabilities.");
+    replaceLoadable(capabilityReplacements);
     log.info("Processing unassigning of replaced capabilities.");
     unassignReplacedCapabilities(capabilityReplacements);
     log.info("Finished processing capability replacements.");
@@ -159,7 +165,7 @@ public class CapabilityReplacementsService {
 
   protected void assignReplacementCapabilities(CapabilityReplacements capabilityReplacements) {
     capabilityReplacements.oldCapabilitiesToNewCapabilities().forEach((oldCapabilityName, replacements) -> {
-      if (replacements != null && !replacements.isEmpty()) {
+      if (isNotEmpty(replacements)) {
         var replacementCapabilities = capabilityService.findByNames(replacements);
         var replacementCapabilitySets = capabilitySetService.findByNames(replacements);
         assignReplacementsToRoles(capabilityReplacements.oldCapabilityRoleAssignments().get(oldCapabilityName),
@@ -172,6 +178,89 @@ public class CapabilityReplacementsService {
           replacementCapabilities, replacementCapabilitySets);
       }
     });
+  }
+
+  protected void replaceLoadable(CapabilityReplacements capabilityReplacements) {
+    if (!capabilityReplacements.oldCapabilitiesToNewCapabilities().isEmpty()) {
+      var oldCapabilities =
+        capabilityService.findByNames(capabilityReplacements.oldCapabilitiesToNewCapabilities().keySet()).stream()
+          .collect(toMap(Capability::getName, cap -> cap));
+      var oldCapabilitySets =
+        capabilitySetService.findByNames(capabilityReplacements.oldCapabilitiesToNewCapabilities().keySet()).stream()
+          .collect(toMap(CapabilitySet::getName, capSet -> capSet));
+
+      for (var oldCapToNewCaps : capabilityReplacements.oldCapabilitiesToNewCapabilities().entrySet()) {
+        var oldCapOrCapSetName = oldCapToNewCaps.getKey();
+        var replacements = oldCapToNewCaps.getValue().stream().toList();
+        if (isNotEmpty(replacements)) {
+          var oldCap = oldCapabilities.get(oldCapOrCapSetName);
+          var oldCapSet = oldCapabilitySets.get(oldCapOrCapSetName);
+
+          if (oldCap != null) {
+            replaceLoadablePermissionsForCapability(oldCap, replacements);
+          }
+          if (oldCapSet != null) {
+            replaceLoadablePermissionsForCapabilitySet(oldCapSet, replacements);
+          }
+        }
+      }
+    }
+  }
+
+  protected void replaceLoadablePermissionsForCapability(Capability oldCap, List<String> replacements) {
+    var loadablePermissions = loadablePermissionRepository.findAllByCapabilityId(oldCap.getId()).toList();
+    if (isNotEmpty(loadablePermissions)) {
+      capabilityService.findByName(replacements.get(0)).ifPresent(capability -> {
+        loadablePermissions.forEach(perm -> {
+          perm.setCapabilityId(capability.getId());
+          perm.setPermissionName(capability.getPermission());
+        });
+        loadablePermissionRepository.saveAll(loadablePermissions);
+      });
+      if (replacements.size() > 1) {
+        replacements.remove(0);
+        for (var replacement : replacements) {
+          capabilityService.findByName(replacement).ifPresent(capability -> {
+            for (var loadablePermission : loadablePermissions) {
+              var newLoadablePermission = new LoadablePermissionEntity();
+              newLoadablePermission.setCapabilityId(capability.getId());
+              newLoadablePermission.setPermissionName(capability.getPermission());
+              newLoadablePermission.setRoleId(loadablePermission.getRoleId());
+              newLoadablePermission.setRole(loadablePermission.getRole());
+              loadablePermissionRepository.save(newLoadablePermission);
+            }
+          });
+        }
+      }
+    }
+  }
+
+  protected void replaceLoadablePermissionsForCapabilitySet(CapabilitySet oldCapSet, List<String> replacements) {
+    var loadablePermissions = loadablePermissionRepository.findAllByCapabilitySetId(oldCapSet.getId()).toList();
+    if (isNotEmpty(loadablePermissions)) {
+      capabilitySetService.findByName(replacements.get(0)).ifPresent(capabilitySet -> {
+        loadablePermissions.forEach(perm -> {
+          perm.setCapabilitySetId(capabilitySet.getId());
+          perm.setPermissionName(capabilitySet.getPermission());
+        });
+        loadablePermissionRepository.saveAll(loadablePermissions);
+      });
+      if (replacements.size() > 1) {
+        replacements.remove(0);
+        for (var replacement : replacements) {
+          capabilitySetService.findByName(replacement).ifPresent(capabilitySet -> {
+            for (var loadablePermission : loadablePermissions) {
+              var newLoadablePermission = new LoadablePermissionEntity();
+              newLoadablePermission.setCapabilitySetId(capabilitySet.getId());
+              newLoadablePermission.setPermissionName(capabilitySet.getPermission());
+              newLoadablePermission.setRoleId(loadablePermission.getRoleId());
+              newLoadablePermission.setRole(loadablePermission.getRole());
+              loadablePermissionRepository.save(newLoadablePermission);
+            }
+          });
+        }
+      }
+    }
   }
 
   protected void assignReplacementsToRoles(Set<UUID> roleIds, List<Capability> replacementCapabilities,
