@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
+import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface LoadablePermissionRepository extends BaseCqlJpaRepository<LoadablePermissionEntity, UUID> {
+public interface LoadablePermissionRepository
+  extends BaseCqlJpaRepository<LoadablePermissionEntity, LoadablePermissionKey> {
 
   List<LoadablePermissionEntity> findAllByPermissionNameIn(Collection<String> permissionNames);
 
