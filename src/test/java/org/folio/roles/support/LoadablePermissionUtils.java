@@ -32,6 +32,13 @@ public class LoadablePermissionUtils {
       .create();
   }
 
+  public static LoadablePermission loadablePermission(UUID roleId, String permissionName) {
+    return Instancio.of(LOADABLE_PERMISSION_MODEL)
+      .set(field(LoadablePermission::getRoleId), roleId)
+      .set(field(LoadablePermission::getPermissionName), permissionName)
+      .create();
+  }
+
   public static List<LoadablePermission> loadablePermissions(int maxSize) {
     return loadablePermissions(1, maxSize);
   }
