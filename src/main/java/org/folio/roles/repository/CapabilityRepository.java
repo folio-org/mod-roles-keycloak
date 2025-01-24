@@ -2,6 +2,7 @@ package org.folio.roles.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.entity.CapabilityEntity;
@@ -100,6 +101,9 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
 
   @Query("select entity from CapabilityEntity entity where entity.name in :names order by entity.name")
   List<CapabilityEntity> findAllByNames(@Param("names") Collection<String> names);
+
+  @Query("select entity from CapabilityEntity entity where entity.name = :name")
+  Optional<CapabilityEntity> findByName(@Param("name") String name);
 
   @Query("select distinct entity.id from CapabilityEntity entity where entity.id in :ids order by entity.id")
   Set<UUID> findCapabilityIdsByIdIn(@Param("ids") Collection<UUID> capabilityIds);

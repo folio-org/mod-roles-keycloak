@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -153,6 +154,18 @@ public class CapabilityService {
   public List<Capability> findByNames(Collection<String> capabilityNames) {
     var capabilityEntities = capabilityRepository.findAllByNames(capabilityNames);
     return capabilityEntityMapper.convert(capabilityEntities);
+  }
+
+  /**
+   * Retrieves capability by capability name.
+   *
+   * @param capabilityName - capability name
+   * @return found {@link Capability} object
+   */
+  @Transactional(readOnly = true)
+  public Optional<Capability> findByName(String capabilityName) {
+    var capabilityEntity = capabilityRepository.findByName(capabilityName);
+    return capabilityEntity.map(capabilityEntityMapper::convert);
   }
 
   /**
