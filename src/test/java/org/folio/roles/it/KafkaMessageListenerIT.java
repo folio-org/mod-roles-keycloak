@@ -75,7 +75,6 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.testcontainers.shaded.org.awaitility.core.ConditionFactory;
 
@@ -85,7 +84,6 @@ import org.testcontainers.shaded.org.awaitility.core.ConditionFactory;
   "classpath:/sql/truncate-permission-table.sql",
   "classpath:/sql/truncate-capability-tables.sql",
 })
-@SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 class KafkaMessageListenerIT extends BaseIntegrationTest {
 
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
