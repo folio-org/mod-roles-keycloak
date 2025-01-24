@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.roles.domain.dto.CapabilityAction.CREATE;
 import static org.folio.roles.domain.dto.CapabilityAction.DELETE;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
+import static org.folio.roles.domain.dto.CapabilityAction.EXECUTE;
 import static org.folio.roles.domain.dto.CapabilityAction.MANAGE;
 import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.domain.dto.CapabilityType.DATA;
+import static org.folio.roles.domain.dto.CapabilityType.PROCEDURAL;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySets;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
@@ -52,6 +54,7 @@ import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.dto.CapabilitySets;
+import org.folio.roles.domain.dto.CapabilityType;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.integration.kafka.CapabilitySetDescriptorService;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
@@ -68,10 +71,11 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.testcontainers.shaded.org.awaitility.core.ConditionFactory;
 
@@ -81,12 +85,13 @@ import org.testcontainers.shaded.org.awaitility.core.ConditionFactory;
   "classpath:/sql/truncate-permission-table.sql",
   "classpath:/sql/truncate-capability-tables.sql",
 })
+@SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 class KafkaMessageListenerIT extends BaseIntegrationTest {
 
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
 
-  @SpyBean private CapabilityService capabilityService;
-  @SpyBean private CapabilitySetDescriptorService capabilitySetDescriptorService;
+  @MockitoSpyBean private CapabilityService capabilityService;
+  @MockitoSpyBean private CapabilitySetDescriptorService capabilitySetDescriptorService;
 
   @BeforeAll
   static void beforeAll() {
@@ -100,24 +105,27 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
 
   @Test
   void handleCapabilityEvent_positive_freshInstallation() throws Exception {
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(0))));
     sendCapabilityEventAndCheckResult();
   }
 
   @Test
   @Sql("classpath:/sql/kafka-message-listener-it/all-capabilities.sql")
   void handleCapabilityEvent_positive_prePopulatedCapabilities() throws Exception {
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(5))));
+    sendCapabilityEventAndCheckResult();
+  }
+
+  @Test
+  @Sql("classpath:/sql/kafka-message-listener-it/partial-capabilities.sql")
+  void handleCapabilityEvent_positive_partiallyPopulatedCapabilities() throws Exception {
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(3))));
     sendCapabilityEventAndCheckResult();
   }
 
   @Test
   @Sql("classpath:/sql/kafka-message-listener-it/all-capabilities.sql")
   void handleCapabilityEvent_positive_applicationVersionUpgradeEvent() throws Exception {
-    sendCapabilityEventAndCheckResult();
-  }
-
-  @Test
-  @Sql("classpath:/sql/kafka-message-listener-it/all-capabilities.sql")
-  void handleCapabilityEvent_positive_partiallyPopulatedCapabilities() throws Exception {
     var capabilityEvent = readValue("json/kafka-events/be-app-upgrade-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
 
@@ -171,6 +179,20 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.capabilities[*].name", containsInAnyOrder("foo_item.create", "foo_item.edit",
         "foo_item.view", "settings_enabled.view", "settings_test_enabled.view", "ui-test_foo.view",
         "ui-test_foo.create")));
+  }
+
+  @Test
+  void handleCapabilityEvent_positive_permissionReplacesSameOverridePermission() {
+    var capabilityEvent =
+      readValue("json/kafka-events/be-capability-event-replaced-perm-is-override.json", ResourceEvent.class);
+    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
+
+    var expectedCapabilitiesJson = asJsonString(capabilities(
+      fooItemCapability(EXECUTE, PROCEDURAL, "foo.item.execute")));
+
+    await().untilAsserted(() -> doGet("/capabilities")
+      .andExpect(content().json(expectedCapabilitiesJson))
+      .andExpect(jsonPath("$.capabilities[0].metadata.createdDate", notNullValue())));
   }
 
   private void sendCapabilityEventAndCheckResult() throws Exception {
@@ -301,10 +323,20 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   }
 
   private static Capability fooItemCapability(CapabilityAction action, String permission, Endpoint... endpoints) {
-    return fooItemCapability(action, permission, APPLICATION_ID, endpoints);
+    return fooItemCapability(action, DATA, permission, APPLICATION_ID, endpoints);
+  }
+
+  private static Capability fooItemCapability(CapabilityAction action, CapabilityType type, String permission,
+    Endpoint... endpoints) {
+    return fooItemCapability(action, type, permission, APPLICATION_ID, endpoints);
   }
 
   private static Capability fooItemCapability(CapabilityAction action, String permission,
+    String applicationId, Endpoint... endpoints) {
+    return fooItemCapability(action, DATA, permission, applicationId, endpoints);
+  }
+
+  private static Capability fooItemCapability(CapabilityAction action, CapabilityType type, String permission,
     String applicationId, Endpoint... endpoints) {
     var capabilityName = getCapabilityName(FOO_RESOURCE, action);
     return new Capability()
@@ -312,7 +344,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .name(capabilityName)
       .resource(FOO_RESOURCE)
       .action(action)
-      .type(DATA)
+      .type(type)
       .applicationId(applicationId)
       .permission(permission)
       .endpoints(Arrays.asList(endpoints))
