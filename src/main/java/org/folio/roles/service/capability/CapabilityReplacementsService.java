@@ -100,6 +100,7 @@ public class CapabilityReplacementsService {
           permission -> getPermissionReplacementsAsCapabilities(permission).map(replacesValue -> entry(replacesValue,
             permissionNameToCapabilityName(applyFolioPermissionOverrides(permission.getPermissionName())))))
         .filter(entry -> entry.getValue().isPresent()).map(entry -> entry(entry.getKey(), entry.getValue().get()))
+        .filter(entry -> !entry.getKey().equals(entry.getValue()))
         .collect(groupingBy(Entry::getKey, Collectors.mapping(Entry::getValue, Collectors.toSet())));
 
       if (capabilityReplacements.isEmpty()) {

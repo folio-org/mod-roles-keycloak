@@ -1068,5 +1068,10 @@
     "resource": "UI-Finance encumbrance unrelease",
     "action": "execute",
     "type": "procedural"
+  },
+  "foo.item.doSomething": {
+    "resource": "Foo Item",
+    "action": "execute",
+    "type": "procedural"
   }
 }

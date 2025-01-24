@@ -7,6 +7,7 @@ import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.test.TestUtils.asJsonString;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS;
+import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -38,6 +39,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -50,6 +52,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @ActiveProfiles("it")
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = AFTER_CLASS)
+@SqlMergeMode(MERGE)
 @Import(BaseIntegrationTest.TopicConfiguration.class)
 @TestExecutionListeners(listeners = {WireMockExecutionListener.class, KeycloakExecutionListener.class},
   mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
