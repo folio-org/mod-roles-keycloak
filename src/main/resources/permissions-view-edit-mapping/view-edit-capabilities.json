@@ -1,0 +1,45 @@
+{
+  "capabilities": {
+    "view": [
+      "user-capabilities_collection.view",
+      "user_capabilities_collection.view",
+      "user-capability-sets_collection.view",
+      "user_capability-sets_collection.view",
+      "roles_users_item.view",
+      "roles_users_collection.view",
+      "role-capabilities_collection.view",
+      "role-capability-sets_collection.view",
+      "role_capability-sets_collection.view",
+      "roles_item.view",
+      "roles_collection.view",
+      "capabilities_item.view",
+      "capabilities_collection.view",
+      "capability-sets_capabilities_collection.view",
+      "capability-sets_item.view",
+      "capability-sets_collection.view",
+      "ui-authorization-roles_users_settings.view"
+    ],
+    "edit": [
+      "user-capabilities_collection.execute",
+      "user-capabilities_collection.edit",
+      "user-capabilities_collection.delete",
+      "user-capability-sets_collection.execute",
+      "user-capability-sets_collection.edit",
+      "user-capability-sets_collection.delete",
+      "roles_users_item.edit",
+      "roles_users_item.delete",
+      "roles_users_item.create",
+      "role-capabilities_collection.execute",
+      "role-capabilities_collection.edit",
+      "role-capabilities_collection.delete",
+      "role-capability-sets_collection.execute",
+      "role-capability-sets_collection.edit",
+      "role-capability-sets_collection.delete",
+      "roles_item.edit",
+      "roles_item.delete",
+      "roles_item.create",
+      "roles_collection.execute",
+      "ui-authorization-roles_users_settings.manage"
+    ]
+  }
+}
