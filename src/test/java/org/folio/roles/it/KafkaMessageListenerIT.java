@@ -71,9 +71,9 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.testcontainers.shaded.org.awaitility.core.ConditionFactory;
@@ -88,8 +88,8 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
 
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
 
-  @MockitoSpyBean private CapabilityService capabilityService;
-  @MockitoSpyBean private CapabilitySetDescriptorService capabilitySetDescriptorService;
+  @SpyBean private CapabilityService capabilityService;
+  @SpyBean private CapabilitySetDescriptorService capabilitySetDescriptorService;
 
   @BeforeAll
   static void beforeAll() {
