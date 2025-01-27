@@ -45,7 +45,6 @@ folio:
     enabled: false
     username: test
     password: test
-
 logging:
   level:
     org.springframework.test.context.jdbc: debug
