@@ -1,3 +1,8 @@
+## Version `v2.0.13` (27.01.2025)
+* Update User Capability logic to update permission for user in the Keycloak for existing capabilities (MODROLESKC-233)
+* Fix replacement of loadable permissions (MODROLESKC-254)
+* Filter replacing override permissions (MODROLESKC-262)
+
 ## Version `v2.0.12` (15.01.2025)
 * Fix circular dependency (MODROLESKC-239)
 
