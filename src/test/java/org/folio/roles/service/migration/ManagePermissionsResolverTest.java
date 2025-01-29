@@ -29,7 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-public class ManagePermissionsResolverTest {
+class ManagePermissionsResolverTest {
 
   @InjectMocks private ManagePermissionsResolver managePermissionsResolver;
 
@@ -53,10 +53,10 @@ public class ManagePermissionsResolverTest {
     var managedCapabilities = managePermissionsResolver.getCapabilitiesToManageCapabilities();
     var managedPermissions = managePermissionsResolver.getPermissionsToManagePermissions();
 
-    assertThat(managedCapabilities.getViewCapabilities().size()).isEqualTo(17);
-    assertThat(managedCapabilities.getEditCapabilities().size()).isEqualTo(20);
-    assertThat(managedPermissions.getViewPermissions().size()).isEqualTo(4);
-    assertThat(managedPermissions.getEditPermissions().size()).isEqualTo(12);
+    assertThat(managedCapabilities.getViewCapabilities()).hasSize(17);
+    assertThat(managedCapabilities.getEditCapabilities()).hasSize(20);
+    assertThat(managedPermissions.getViewPermissions()).hasSize(4);
+    assertThat(managedPermissions.getEditPermissions()).hasSize(12);
   }
 
   @Test
@@ -75,8 +75,8 @@ public class ManagePermissionsResolverTest {
     managePermissionsResolver.addManageCapabilities(List.of(userPermissions));
     var userManageCapabilities = userPermissions.getManageCapabilities();
     assertThat(userManageCapabilities.size()).isEqualTo(2);
-    assertThat(userManageCapabilities.contains(editCapability)).isTrue();
-    assertThat(userManageCapabilities.contains(viewCapability)).isTrue();
+    assertThat(userManageCapabilities).contains(editCapability);
+    assertThat(userManageCapabilities).contains(viewCapability);
   }
 
   @Test
@@ -94,8 +94,8 @@ public class ManagePermissionsResolverTest {
 
     managePermissionsResolver.addManageCapabilities(List.of(userPermissions));
     var userManageCapabilities = userPermissions.getManageCapabilities();
-    assertThat(userManageCapabilities.size()).isEqualTo(1);
-    assertThat(userManageCapabilities.contains(viewCapability)).isTrue();
+    assertThat(userManageCapabilities).hasSize(1);
+    assertThat(userManageCapabilities).contains(viewCapability);
   }
 
   @Test
