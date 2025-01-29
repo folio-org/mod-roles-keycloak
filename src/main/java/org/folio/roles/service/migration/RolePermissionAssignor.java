@@ -3,6 +3,7 @@ package org.folio.roles.service.migration;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.utils.CollectionUtils.difference;
+import static org.folio.roles.utils.CollectionUtils.union;
 import static org.folio.roles.utils.CollectionUtils.unionUniqueValues;
 
 import java.util.HashSet;
@@ -42,16 +43,17 @@ public class RolePermissionAssignor {
         continue;
       }
 
-      assignCapabilitiesAndSets(roleId, userPermission.getPermissions());
+      assignCapabilitiesAndSets(roleId, userPermission);
       visitedRoleIds.add(roleId);
     }
   }
 
-  private void assignCapabilitiesAndSets(UUID roleId, List<String> permissions) {
+  private void assignCapabilitiesAndSets(UUID roleId, UserPermissions userPermissions) {
     log.debug("Assigning capabilities/capability sets for role: roleId = {}", roleId);
-
-    var capabilities = capabilityService.findByPermissionNames(permissions);
-    var notFoundPermissions = difference(permissions, mapItems(capabilities, Capability::getPermission));
+    var permissions = userPermissions.getPermissions();
+    var capabilitiesByPermissions = capabilityService.findByPermissionNames(permissions);
+    var notFoundPermissions = difference(permissions, mapItems(capabilitiesByPermissions, Capability::getPermission));
+    var capabilities = union(capabilitiesByPermissions, userPermissions.getManageCapabilities());
     if (isNotEmpty(capabilities)) {
       roleCapabilityService.create(roleId, mapItems(capabilities, Capability::getId), true);
     }

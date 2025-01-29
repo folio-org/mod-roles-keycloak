@@ -1,0 +1,22 @@
+{
+  "viewPermissions": [
+    "perms.users.get",
+    "perms.permissions.collection.get",
+    "perms.permissions.item.get",
+    "ui-users.perms.view"
+  ],
+  "editPermissions": [
+    "perms.users.item.post",
+    "perms.users.item.put",
+    "perms.users.item.id.delete",
+    "perms.users.item.perm.delete",
+    "perms.permissions.item.put",
+    "perms.permissions.item.post",
+    "perms.permissions.item.delete",
+    "perms.permissions.purge-deprecated.post",
+    "perms.users.assign.okapi",
+    "perms.users.assign.immutable",
+    "perms.users.assign.mutable",
+    "ui-users.perms.edit"
+  ]
+}

@@ -27,6 +27,7 @@ public class PermissionMigrationService {
   private final MigrationRoleCreator migrationRoleCreator;
   private final UserPermissionsLoader userPermissionsLoader;
   private final RolePermissionAssignor rolePermissionAssignor;
+  private final ManagePermissionsResolver managePermissionsResolver;
 
   /**
    * Runs permission migration.
@@ -47,6 +48,7 @@ public class PermissionMigrationService {
     userPermissions = validateAndGetUserPermissionsWithRoles(userPermissions, createdRoles);
 
     migrationRoleCreator.assignUsers(userPermissions);
+    managePermissionsResolver.addManageCapabilities(userPermissions);
     rolePermissionAssignor.assignPermissions(userPermissions);
 
     log.info("Migration of permissions is finished: jobId = {}", jobId);
