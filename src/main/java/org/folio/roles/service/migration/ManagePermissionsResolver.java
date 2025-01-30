@@ -42,6 +42,12 @@ public class ManagePermissionsResolver {
       .orElse(new CapabilitiesToManageCapabilities());
   }
 
+  /**
+   * Add to user capabilities to edit and view other capabilities
+   * if user has permission to edit and view other permissions.
+   *
+   * @param userPermissions - user permissions list
+   */
   public void addManageCapabilities(List<UserPermissions> userPermissions) {
     var existCapabilitiesToView = getExistCapabilitiesToView();
     var existCapabilitiesToEdit = getExistCapabilitiesToEdit();
