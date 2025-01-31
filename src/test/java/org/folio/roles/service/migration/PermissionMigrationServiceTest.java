@@ -2,6 +2,8 @@ package org.folio.roles.service.migration;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.TestConstants.USER_ID;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +32,7 @@ class PermissionMigrationServiceTest {
   @Mock private MigrationRoleCreator migrationRoleCreator;
   @Mock private UserPermissionsLoader userPermissionsLoader;
   @Mock private RolePermissionAssignor rolePermissionAssignor;
+  @Mock private ManagePermissionsResolver managePermissionsResolver;
 
   @AfterEach
   void tearDown() {
@@ -47,11 +50,13 @@ class PermissionMigrationServiceTest {
     var roles = List.of(new Role().id(UUID.randomUUID()).name("test"));
     when(userPermissionsLoader.loadUserPermissions()).thenReturn(userPermissionsList);
     when(migrationRoleCreator.createRoles(userPermissionsList)).thenReturn(roles);
+    doNothing().when(managePermissionsResolver).addManageCapabilities(any());
 
     permissionMigrationService.migratePermissions(MIGRATION_ID);
 
     verify(migrationRoleCreator).assignUsers(userPermissionsList);
     verify(rolePermissionAssignor).assignPermissions(userPermissionsList);
+    verify(managePermissionsResolver).addManageCapabilities(any());
   }
 
   @Test
@@ -65,6 +70,6 @@ class PermissionMigrationServiceTest {
     assertThatThrownBy(() -> permissionMigrationService.migratePermissions(MIGRATION_ID))
       .isInstanceOf(MigrationException.class)
       .hasMessage("Roles are not created for user permissions: [UserPermissions("
-        + "userId=%s, role=null, roleName=test, permissions=%s)]", USER_ID, permissions);
+        + "userId=%s, role=null, roleName=test, permissions=%s, manageCapabilities=[])]", USER_ID, permissions);
   }
 }

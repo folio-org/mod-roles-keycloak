@@ -70,7 +70,8 @@ public class UserPermissionsLoader {
     }
 
     log.debug("User permissions are loaded: userId = {}, totalRecords = {}", userId, permissionNames.size());
-    var userPermissions = UserPermissions.of(userId, null, getPermissionsHash(permissionNames), permissionNames);
+    var userPermissions = UserPermissions.of(userId, null, getPermissionsHash(permissionNames),
+      permissionNames, new ArrayList<>());
     return Optional.of(userPermissions);
   }
 
