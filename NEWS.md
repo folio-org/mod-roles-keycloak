@@ -1,3 +1,6 @@
+## Version `v2.0.14` (31.01.2025)
+* Update Keycloak to 26.* version (MODROLESKC-252)
+
 ## Version `v2.0.13` (27.01.2025)
 * Update User Capability logic to update permission for user in the Keycloak for existing capabilities (MODROLESKC-233)
 * Fix replacement of loadable permissions (MODROLESKC-254)
