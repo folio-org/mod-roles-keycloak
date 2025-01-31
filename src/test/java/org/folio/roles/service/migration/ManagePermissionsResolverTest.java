@@ -74,8 +74,7 @@ class ManagePermissionsResolverTest {
 
     managePermissionsResolver.addManageCapabilities(List.of(userPermissions));
     var userManageCapabilities = userPermissions.getManageCapabilities();
-    assertThat(userManageCapabilities).hasSize(2);
-    assertThat(userManageCapabilities).contains(editCapability).contains(viewCapability);
+    assertThat(userManageCapabilities).hasSize(2).contains(editCapability).contains(viewCapability);
   }
 
   @Test
