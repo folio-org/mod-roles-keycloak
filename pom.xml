@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.4.1</version>
+    <version>3.4.2</version>
     <relativePath />
   </parent>
 
@@ -43,7 +43,7 @@
     <folio-spring-support.version>8.3.0-SNAPSHOT</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
-    <applications-poc-tools.version>2.2.0-SNAPSHOT</applications-poc-tools.version>
+    <applications-poc-tools.version>2.3.0-SNAPSHOT</applications-poc-tools.version>
     <hibernate.version>6.5.3.Final</hibernate.version>
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
@@ -51,17 +51,17 @@
 
     <!-- Test dependencies versions -->
     <testcontainer.version>1.20.4</testcontainer.version>
-    <instancio.version>5.2.1</instancio.version>
+    <instancio.version>5.3.0</instancio.version>
     <kryo.version>5.6.2</kryo.version>
 
     <!-- Plugins versions -->
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    <maven-checkstyle.version>10.21.1</maven-checkstyle.version>
+    <maven-checkstyle.version>10.21.2</maven-checkstyle.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
-    <openapi-generator.version>7.10.0</openapi-generator.version>
-    <keycloak-admin-client.version>26.0.0</keycloak-admin-client.version>
+    <openapi-generator.version>7.11.0</openapi-generator.version>
+    <keycloak-admin-client.version>26.0.4</keycloak-admin-client.version>
     <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
 
     <sonar.exclusions>
