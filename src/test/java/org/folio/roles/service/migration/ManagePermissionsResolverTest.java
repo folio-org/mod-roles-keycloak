@@ -66,8 +66,8 @@ class ManagePermissionsResolverTest {
     editCapability.setName("user-capabilities_collection.execute");
     var viewCapability = new Capability();
     viewCapability.setName("user-capabilities_collection.view");
-    var permissionNames = List.of("perms.users.item.post");
-    var userPermissions = UserPermissions.of(UUID.randomUUID(), null, "permissionsHash", permissionNames, null);
+    var permissionEditNames = List.of("perms.users.item.post");
+    var userPermissions = UserPermissions.of(UUID.randomUUID(), null, "permissionsHash", permissionEditNames, null);
 
     when(capabilityService.findByNames(manageCapabilities.getEditCapabilities())).thenReturn(List.of(editCapability));
     when(capabilityService.findByNames(manageCapabilities.getViewCapabilities())).thenReturn(List.of(viewCapability));
@@ -85,8 +85,8 @@ class ManagePermissionsResolverTest {
     editCapability.setName("user-capabilities_collection.execute");
     var viewCapability = new Capability();
     viewCapability.setName("user-capabilities_collection.view");
-    var permissionNames = List.of("perms.users.get");
-    var userPermissions = UserPermissions.of(UUID.randomUUID(), null, "permissionsHash", permissionNames, null);
+    var permissionViewNames = List.of("perms.users.get");
+    var userPermissions = UserPermissions.of(UUID.randomUUID(), null, "permissionsHash", permissionViewNames, null);
 
     when(capabilityService.findByNames(manageCapabilities.getEditCapabilities())).thenReturn(List.of(editCapability));
     when(capabilityService.findByNames(manageCapabilities.getViewCapabilities())).thenReturn(List.of(viewCapability));

@@ -31,7 +31,7 @@ public class ManagePermissionsResolver {
   private CapabilitiesToManageCapabilities capabilitiesToManageCapabilities;
 
   @PostConstruct
-  protected void loadPermissionsAndCapabilities() {
+  void loadPermissionsAndCapabilities() {
     this.permissionsToManagePermissions = resourceHelper
       .readObjectsFromDirectory(PERMISSIONS_VIEW_EDIT_DIR, PermissionsToManagePermissions.class)
       .findFirst()
