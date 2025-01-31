@@ -13,10 +13,10 @@ import org.folio.roles.domain.model.PermissionsToManagePermissions;
 import org.folio.roles.domain.model.UserPermissions;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.utils.ResourceHelper;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 @Log4j2
-@Service
+@Component
 @RequiredArgsConstructor
 public class ManagePermissionsResolver {
 
