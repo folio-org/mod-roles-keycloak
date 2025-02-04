@@ -278,7 +278,7 @@ class CapabilityKafkaEventHandlerTest {
       .moduleType(MODULE)
       .moduleId(moduleId)
       .applicationId(APPLICATION_ID)
-      .resources(List.of(folioResources));
+      .resources(folioResources.length != 0 ? List.of(folioResources) : null);
   }
 
   private static FolioResource folioResource() {
