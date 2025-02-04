@@ -1,3 +1,6 @@
+## Version `v1.4.7` (04.02.2025)
+* KEYCLOAK-37 Add support for Keycloak v26.1.0 ([KEYCLOAK-37](https://issues.folio.org/browse/KEYCLOAK-37))
+
 ## Version `v1.4.6` (24.09.2024)
 * Added dynamic permission mapping (MODROLESKC-210)
 * Extend Okapi mapping overrides (MODOKAPFAC-4)
