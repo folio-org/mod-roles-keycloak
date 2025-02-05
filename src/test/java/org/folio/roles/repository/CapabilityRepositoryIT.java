@@ -37,5 +37,6 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     assertThat(stored.getCreatedByUserId()).isEqualTo(USER_ID);
     assertThat(stored.getUpdatedDate()).isCloseTo(now, within(1, MINUTES));
     assertThat(stored.getUpdatedByUserId()).isEqualTo(USER_ID);
+    assertThat(stored.isDummyCapability()).isFalse();
   }
 }
