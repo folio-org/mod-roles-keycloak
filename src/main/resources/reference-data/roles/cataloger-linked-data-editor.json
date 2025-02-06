@@ -1,0 +1,11 @@
+{
+  "roles": [
+    {
+      "name": "Cataloger - Linked Data Editor",
+      "description": "Role for Linked Data Editor Cataloger",
+      "permissions": [
+        "ui-linked-data.all"
+      ]
+    }
+  ]
+}
