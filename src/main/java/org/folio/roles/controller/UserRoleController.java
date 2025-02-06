@@ -33,12 +33,6 @@ public class UserRoleController implements RolesUsersApi {
   }
 
   @Override
-  public ResponseEntity<UserRoles> findUserRoles(String query, Integer limit, Integer offset) {
-    var rolesUsers = userRoleService.findByQuery(query, offset, limit);
-    return ResponseEntity.ok(rolesUsers);
-  }
-
-  @Override
   public ResponseEntity<UserRoles> getUserRoles(UUID userId) {
     var rolesUser = userRoleService.findById(userId);
     return ResponseEntity.ok(rolesUser);
