@@ -574,7 +574,7 @@
       "description": "Delete all assigned capability-sets for role"
     },
     {
-      "permissionName": "role-capability-sets.item.get",
+      "permissionName": "role-capability-sets.collection.get",
 	  "replaces": ["role.capability-sets.collection.get"],
       "displayName": "Role-Capability-Sets - Get capability-sets assigned to role",
       "description": "Retrieve capability-sets assigned to role"
