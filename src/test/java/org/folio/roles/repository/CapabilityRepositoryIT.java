@@ -162,10 +162,10 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     entityManager.persistAndFlush(roleEntity);
     entityManager.persistAndFlush(roleCapabilityEntity(roleId, capabilityEntity.getId()));
     entityManager.persistAndFlush(roleCapabilityEntity(roleId, dummyCapabilityEntity.getId()));
-    var capabilityCapabilitySetEntity = capabilityEntity(null);
-    capabilityCapabilitySetEntity.setName(capabilityEntity.getName() + "_" + capabilityEntity.getId());
-    capabilityCapabilitySetEntity = entityManager.persistAndFlush(capabilityCapabilitySetEntity);
-    var capabilitySetEntity = capabilitySetEntity(null, List.of(capabilityCapabilitySetEntity.getId()));
+    var capabilityForCapabilitySetEntity = capabilityEntity(null);
+    capabilityForCapabilitySetEntity.setName(capabilityEntity.getName() + "_" + capabilityEntity.getId());
+    capabilityForCapabilitySetEntity = entityManager.persistAndFlush(capabilityForCapabilitySetEntity);
+    var capabilitySetEntity = capabilitySetEntity(null, List.of(capabilityForCapabilitySetEntity.getId()));
     entityManager.persistAndFlush(capabilitySetEntity);
     var roleCapabilitySet = roleCapabilitySetEntity(roleId, capabilitySetEntity.getId());
     entityManager.persistAndFlush(roleCapabilitySet);
@@ -222,8 +222,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
 
     var capabilityEntities = capabilityRepository.findCapabilityIdsByIdIn(List.of(capabilityEntity.getId(),
       dummyCapabilityEntity.getId()));
-    assertThat(capabilityEntities).hasSize(1);
-    assertThat(capabilityEntities).contains(capabilityEntity.getId());
+    assertThat(capabilityEntities).hasSize(1).contains(capabilityEntity.getId());
   }
 
   @Test
@@ -246,11 +245,11 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   @Test
   void findPermissionsByPrefixes_positive_excludeDummy() {
     var capabilityEntity = capabilityEntity(null);
-    capabilityEntity.setPermission("permission-not-for-dummy");
+    capabilityEntity.setPermission("permission_not_for_dummy");
     var dummyCapabilityEntity = capabilityEntity(null);
     dummyCapabilityEntity.setDummyCapability(true);
     dummyCapabilityEntity.setName("dummy_" + UUID.randomUUID());
-    dummyCapabilityEntity.setPermission("permission-for-dummy");
+    dummyCapabilityEntity.setPermission("permission_for_dummy");
     var userId = UUID.randomUUID();
     entityManager.persistAndFlush(capabilityEntity);
     entityManager.persistAndFlush(dummyCapabilityEntity);
@@ -264,17 +263,17 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
 
     var permissions = capabilityRepository.findPermissionsByPrefixes(userId, "{permission}");
     assertThat(permissions).hasSize(1);
-    assertThat(permissions.get(0)).isEqualTo("permission-not-for-dummy");
+    assertThat(permissions.get(0)).isEqualTo("permission_not_for_dummy");
   }
 
   @Test
   void findAllFolioPermissions_positive_excludeDummy() {
     var capabilityEntity = capabilityEntity(null);
-    capabilityEntity.setPermission("permission-not-for-dummy");
+    capabilityEntity.setPermission("permission_not_for_dummy");
     var dummyCapabilityEntity = capabilityEntity(null);
     dummyCapabilityEntity.setDummyCapability(true);
     dummyCapabilityEntity.setName("dummy_" + UUID.randomUUID());
-    dummyCapabilityEntity.setPermission("permission-for-dummy");
+    dummyCapabilityEntity.setPermission("permission_for_dummy");
     var userId = UUID.randomUUID();
     entityManager.persistAndFlush(capabilityEntity);
     entityManager.persistAndFlush(dummyCapabilityEntity);
@@ -288,22 +287,22 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
 
     var permissions = capabilityRepository.findAllFolioPermissions(userId);
     assertThat(permissions).hasSize(1);
-    assertThat(permissions.get(0)).isEqualTo("permission-not-for-dummy");
+    assertThat(permissions.get(0)).isEqualTo("permission_not_for_dummy");
   }
 
   @Test
   void findAllByPermissionName_positive_excludeDummy() {
     var capabilityEntity = capabilityEntity(null);
-    capabilityEntity.setPermission("permission-not-for-dummy");
+    capabilityEntity.setPermission("permission_not_for_dummy");
     var dummyCapabilityEntity = capabilityEntity(null);
     dummyCapabilityEntity.setDummyCapability(true);
     dummyCapabilityEntity.setName("dummy_" + UUID.randomUUID());
-    dummyCapabilityEntity.setPermission("permission-for-dummy");
+    dummyCapabilityEntity.setPermission("permission_for_dummy");
     entityManager.persistAndFlush(capabilityEntity);
     entityManager.persistAndFlush(dummyCapabilityEntity);
 
     var capabilityEntities = capabilityRepository
-      .findAllByPermissionNames(List.of("permission-not-for-dummy", "permission-for-dummy"));
+      .findAllByPermissionNames(List.of("permission_not_for_dummy", "permission_for_dummy"));
     assertThat(capabilityEntities).hasSize(1);
     assertThat(capabilityEntities.get(0).isDummyCapability()).isFalse();
   }
@@ -311,11 +310,11 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   @Test
   void findPermissionsByPrefixesAndPermissionNames_positive_excludeDummy() {
     var capabilityEntity = capabilityEntity(null);
-    capabilityEntity.setPermission("permission-not-for-dummy");
+    capabilityEntity.setPermission("permission_not_for_dummy");
     var dummyCapabilityEntity = capabilityEntity(null);
     dummyCapabilityEntity.setDummyCapability(true);
     dummyCapabilityEntity.setName("dummy_" + UUID.randomUUID());
-    dummyCapabilityEntity.setPermission("permission-for-dummy");
+    dummyCapabilityEntity.setPermission("permission_for_dummy");
     var userId = UUID.randomUUID();
     entityManager.persistAndFlush(capabilityEntity);
     entityManager.persistAndFlush(dummyCapabilityEntity);
@@ -329,8 +328,8 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
 
     var permissions = capabilityRepository
       .findPermissionsByPrefixesAndPermissionNames(userId,
-        "{permission-not-for-dummy, permission-for-dummy}", "{permission}");
+        "{permission_not_for_dummy, permission_for_dummy}", "{permission}");
     assertThat(permissions).hasSize(1);
-    assertThat(permissions.get(0)).isEqualTo("permission-not-for-dummy");
+    assertThat(permissions.get(0)).isEqualTo("permission_not_for_dummy");
   }
 }

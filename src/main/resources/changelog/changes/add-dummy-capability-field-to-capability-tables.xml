@@ -8,4 +8,10 @@
       <column name="dummy_capability" type="boolean" defaultValueBoolean="false"/>
     </addColumn>
   </changeSet>
+
+  <changeSet id="add-dummy-capability-field-to-capability-set-table" author="Aliaksei Harbuz">
+    <addColumn tableName="capability_set">
+      <column name="dummy_capability" type="boolean" defaultValueBoolean="false"/>
+    </addColumn>
+  </changeSet>
 </databaseChangeLog>

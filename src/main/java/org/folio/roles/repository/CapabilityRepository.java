@@ -32,11 +32,11 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     value = """
       SELECT c.* FROM capability c
       INNER JOIN capability_set_capability csc
-      ON c.id = csc.capability_id AND csc.capability_set_id = :capabilitySetId WHERE c.dummy_capability = false""",
+      ON c.id = csc.capability_id AND csc.capability_set_id = :capabilitySetId AND c.dummy_capability = false""",
     countQuery = """
       SELECT COUNT(c.*) FROM capability c
       JOIN capability_set_capability csc
-      ON c.id = csc.capability_id AND csc.capability_set_id = :capabilitySetId WHERE c.dummy_capability = false""")
+      ON c.id = csc.capability_id AND csc.capability_set_id = :capabilitySetId AND c.dummy_capability = false""")
   Page<CapabilityEntity> findByCapabilitySetId(@Param("capabilitySetId") UUID capabilitySetId, Pageable pageable);
 
   @Query(nativeQuery = true,
@@ -52,11 +52,11 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     value = """
       SELECT c.* FROM capability c
       INNER JOIN user_capability uc ON c.id = uc.capability_id AND uc.user_id = :userId
-      WHERE c.dummy_capability = false""",
+      AND c.dummy_capability = false""",
     countQuery = """
       SELECT COUNT(c.*) FROM capability c
       INNER JOIN user_capability uc ON c.id = uc.capability_id AND uc.user_id = :userId
-      WHERE c.dummy_capability = false""")
+      AND c.dummy_capability = false""")
   Page<CapabilityEntity> findByUserId(@Param("userId") UUID userId, Pageable pageable);
 
   @Query(nativeQuery = true,
@@ -126,11 +126,11 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     value = """
       SELECT c.* FROM capability c
       INNER JOIN role_capability rc ON c.id = rc.capability_id AND rc.role_id = :roleId
-      WHERE c.dummy_capability = false""",
+      AND c.dummy_capability = false""",
     countQuery = """
       SELECT COUNT(c.*) FROM capability c
       INNER JOIN role_capability rc ON c.id = rc.capability_id AND rc.role_id = :roleId
-      WHERE c.dummy_capability = false""")
+      AND c.dummy_capability = false""")
   Page<CapabilityEntity> findByRoleId(@Param("roleId") UUID roleId, Pageable pageable);
 
   @Query(nativeQuery = true,
@@ -203,7 +203,7 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
   @Query(nativeQuery = true, value = """
     SELECT c.* FROM capability c
       INNER JOIN capability_set_capability csc
-      ON c.id = csc.capability_id AND csc.capability_set_id IN (:ids) WHERE c.dummy_capability = false""")
+      ON c.id = csc.capability_id AND csc.capability_set_id IN (:ids) AND c.dummy_capability = false""")
   List<CapabilityEntity> findByCapabilitySetIds(@Param("ids") Collection<UUID> capabilitySetIds);
 
   @Query(nativeQuery = true, value = """
