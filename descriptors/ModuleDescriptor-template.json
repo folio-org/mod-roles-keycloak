@@ -171,17 +171,12 @@
     },
     {
       "id": "role-capabilities",
-      "version": "1.0",
+      "version": "1.1",
       "handlers": [
         {
           "methods": [ "POST" ],
           "pathPattern": "/roles/capabilities",
           "permissionsRequired": [ "role-capabilities.collection.post" ]
-        },
-        {
-          "methods": [ "GET" ],
-          "pathPattern": "/roles/capabilities",
-          "permissionsRequired": [ "role-capabilities.collection.get" ]
         },
         {
           "methods": [ "GET" ],
@@ -202,17 +197,12 @@
     },
     {
       "id": "role-capability-sets",
-      "version": "1.1",
+      "version": "1.2",
       "handlers": [
         {
           "methods": [ "POST" ],
           "pathPattern": "/roles/capability-sets",
           "permissionsRequired": [ "role-capability-sets.collection.post" ]
-        },
-        {
-          "methods": [ "GET" ],
-          "pathPattern": "/roles/capability-sets",
-          "permissionsRequired": [ "role-capability-sets.collection.get" ]
         },
         {
           "methods": [ "GET" ],
@@ -233,17 +223,12 @@
     },
     {
       "id": "user-capabilities",
-      "version": "1.0",
+      "version": "1.1",
       "handlers": [
         {
           "methods": [ "POST" ],
           "pathPattern": "/users/capabilities",
           "permissionsRequired": [ "user-capabilities.collection.post" ]
-        },
-        {
-          "methods": [ "GET" ],
-          "pathPattern": "/users/capabilities",
-          "permissionsRequired": [ "user-capabilities.collection.get" ]
         },
         {
           "methods": [ "GET" ],
@@ -264,17 +249,12 @@
     },
     {
       "id": "user-capability-sets",
-      "version": "1.0",
+      "version": "1.1",
       "handlers": [
         {
           "methods": [ "POST" ],
           "pathPattern": "/users/capability-sets",
           "permissionsRequired": [ "user-capability-sets.collection.post" ]
-        },
-        {
-          "methods": [ "GET" ],
-          "pathPattern": "/users/capability-sets",
-          "permissionsRequired": [ "user-capability-sets.collection.get" ]
         },
         {
           "methods": [ "GET" ],
@@ -536,11 +516,6 @@
       "description": "Delete all assigned capabilities for role"
     },
     {
-      "permissionName": "role.capabilities.collection.get",
-      "displayName": "Role-Capabilities - Find records by the query",
-      "description": "Retrieve role-capability items by CQL query"
-    },
-    {
       "permissionName": "role-capabilities.all",
       "displayName": "Role-Capabilities - all permissions",
       "description": "All permissions for role-capability management",
@@ -556,11 +531,6 @@
       "permissionName": "role-capability-sets.collection.post",
       "displayName": "Role-Capability-Sets - Create record",
       "description": "Create a record associating one or more capabilities with role"
-    },
-    {
-      "permissionName": "role-capability-sets.collection.get",
-      "displayName": "Role-Capability-Sets - Find records by the query",
-      "description": "Retrieve role-capability items by CQL query"
     },
     {
       "permissionName": "role-capability-sets.collection.put",
@@ -583,7 +553,6 @@
       "description": "All permissions for role-capability set management",
       "subPermissions": [
         "role-capability-sets.collection.put",
-        "role-capability-sets.collection.get",
         "role-capability-sets.collection.post",
         "role-capability-sets.collection.delete",
         "role.capability-sets.collection.get"
@@ -595,7 +564,7 @@
       "description": "Create a record associating one or more capabilities with user"
     },
     {
-      "permissionName": "user-capabilities.collection.get",
+      "permissionName": "user.capabilities.collection.get",
       "displayName": "Role-Capabilities - Get capabilities assigned to user",
       "description": "Retrieve capabilities assigned to user"
     },
@@ -610,11 +579,6 @@
       "description": "Delete all assigned capabilities for user"
     },
     {
-      "permissionName": "user.capabilities.collection.get",
-      "displayName": "User-Capabilities - Find records by query",
-      "description": "Retrieve user-capability items by CQL query"
-    },
-    {
       "permissionName": "user-capabilities.all",
       "displayName": "User-Capabilities - all permissions",
       "description": "All permissions for user-capability management",
@@ -622,7 +586,6 @@
         "user-capabilities.collection.put",
         "user-capabilities.collection.post",
         "user-capabilities.collection.delete",
-        "user-capabilities.collection.get",
         "user.capabilities.collection.get"
       ]
     },
@@ -630,11 +593,6 @@
       "permissionName": "user-capability-sets.collection.post",
       "displayName": "User-Capability-Sets - Create record",
       "description": "Create a record associating one or more capabilities with user"
-    },
-    {
-      "permissionName": "user-capability-sets.collection.get",
-      "displayName": "User-Capability-Sets - Find records by the query",
-      "description": "Retrieve role-capability items by CQL query"
     },
     {
       "permissionName": "user-capability-sets.collection.put",
@@ -657,7 +615,6 @@
       "description": "All permissions for user-capability set management",
       "subPermissions": [
         "user-capability-sets.collection.put",
-        "user-capability-sets.collection.get",
         "user-capability-sets.collection.post",
         "user-capability-sets.collection.delete",
         "user.capability-sets.collection.get"

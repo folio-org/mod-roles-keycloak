@@ -36,6 +36,7 @@ import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.test.TestUtils.asJsonString;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -99,60 +100,6 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
   @BeforeEach
   void setUp() {
     keycloak.tokenManager().grantToken();
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:/sql/populate-test-role.sql",
-    "classpath:/sql/populate-role-policy.sql",
-    "classpath:/sql/capabilities/populate-capabilities.sql",
-    "classpath:/sql/capability-sets/populate-capability-sets.sql",
-    "classpath:/sql/capability-sets/populate-role-capability-set-relations.sql"
-  })
-  void findCapabilitySets_positive() throws Exception {
-    doGet(get("/roles/capability-sets")
-      .header(TENANT, TENANT_ID)
-      .header(XOkapiHeaders.USER_ID, USER_ID_HEADER))
-      .andExpect(content().json(asJsonString(roleCapabilitySets(
-        roleCapabilitySet(ROLE_ID, FOO_CREATE_CAPABILITY_SET)))
-      ));
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:/sql/populate-test-role.sql",
-    "classpath:/sql/populate-role-policy.sql",
-    "classpath:/sql/capabilities/populate-capabilities.sql",
-    "classpath:/sql/capability-sets/populate-capability-sets.sql",
-    "classpath:/sql/capability-sets/populate-many-role-capability-set-relations.sql"
-  })
-  void findCapabilitySets_positive_offsetAndLimit() throws Exception {
-    doGet(get("/roles/capability-sets")
-      .param("offset", "1")
-      .param("limit", "1")
-      .header(TENANT, TENANT_ID)
-      .header(XOkapiHeaders.USER_ID, USER_ID_HEADER))
-      .andExpect(content().json(asJsonString(
-        roleCapabilitySets(2L, roleCapabilitySet(ROLE_ID, FOO_EDIT_CAPABILITY_SET)))
-      ));
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:/sql/populate-test-role.sql",
-    "classpath:/sql/populate-role-policy.sql",
-    "classpath:/sql/capabilities/populate-capabilities.sql",
-    "classpath:/sql/capability-sets/populate-capability-sets.sql",
-    "classpath:/sql/capability-sets/populate-many-role-capability-set-relations.sql"
-  })
-  void findCapabilitySets_positive_cqlQuery() throws Exception {
-    doGet(get("/roles/capability-sets")
-      .param("query", "capabilitySetId==\"" + FOO_CREATE_CAPABILITY_SET + "\"")
-      .header(TENANT, TENANT_ID)
-      .header(XOkapiHeaders.USER_ID, USER_ID_HEADER))
-      .andExpect(content().json(asJsonString(roleCapabilitySets(
-        roleCapabilitySet(ROLE_ID, FOO_CREATE_CAPABILITY_SET)))
-      ));
   }
 
   @Test
@@ -318,9 +265,9 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
     var request = capabilitySetsUpdateRequest(FOO_EDIT_CAPABILITY_SET);
     updateRoleCapabilitySets(request);
 
-    var fooItemEditCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_EDIT_CAPABILITY_SET);
-    doGet("/roles/capability-sets")
-      .andExpect(content().json(asJsonString(roleCapabilitySets(fooItemEditCapabilitySet))));
+    doGet("/roles/{id}/capability-sets", ROLE_ID)
+      .andExpect(jsonPath("$.capabilitySets[*].id").value(
+        containsInAnyOrder(FOO_EDIT_CAPABILITY_SET.toString())));
 
     assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
       kcPermissionName(fooItemGetEndpoint()),
@@ -341,11 +288,9 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
     var request = capabilitySetsUpdateRequest(FOO_CREATE_CAPABILITY_SET_NAME, FOO_EDIT_CAPABILITY_SET_NAME);
     updateRoleCapabilitySets(request);
 
-    var fooItemCreateCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_CREATE_CAPABILITY_SET);
-    var fooItemEditCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_EDIT_CAPABILITY_SET);
-    var expected = roleCapabilitySets(fooItemCreateCapabilitySet, fooItemEditCapabilitySet);
-    doGet("/roles/capability-sets")
-      .andExpect(content().json(asJsonString(expected)));
+    doGet("/roles/{id}/capability-sets", ROLE_ID)
+      .andExpect(jsonPath("$.capabilitySets[*].id").value(
+        containsInAnyOrder(FOO_CREATE_CAPABILITY_SET.toString(), FOO_EDIT_CAPABILITY_SET.toString())));
 
     assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
       kcPermissionName(fooItemPostEndpoint()),
@@ -366,11 +311,9 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
     var request1 = capabilitySetsUpdateRequest(FOO_CREATE_CAPABILITY_SET_NAME, FOO_EDIT_CAPABILITY_SET_NAME);
     updateRoleCapabilitySets(request1);
 
-    var fooItemCreateCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_CREATE_CAPABILITY_SET);
-    var fooItemEditCapabilitySet = roleCapabilitySet(ROLE_ID, FOO_EDIT_CAPABILITY_SET);
-    var expected1 = roleCapabilitySets(fooItemCreateCapabilitySet, fooItemEditCapabilitySet);
-    doGet("/roles/capability-sets")
-      .andExpect(content().json(asJsonString(expected1)));
+    doGet("/roles/{id}/capability-sets", ROLE_ID)
+      .andExpect(jsonPath("$.capabilitySets[*].id").value(
+        containsInAnyOrder(FOO_CREATE_CAPABILITY_SET.toString(), FOO_EDIT_CAPABILITY_SET.toString())));
 
     assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
       kcPermissionName(fooItemPostEndpoint()),
@@ -380,9 +323,8 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
     var request2 = new CapabilitySetsUpdateRequest();
     updateRoleCapabilitySets(request2);
 
-    var emptyResponse = roleCapabilitySets();
-    doGet("/roles/capability-sets")
-      .andExpect(content().json(asJsonString(emptyResponse)));
+    doGet("/roles/{id}/capability-sets", ROLE_ID)
+      .andExpect(content().json(asJsonString(capabilitySets())));
 
     assertThat(kcTestClient.getPermissionNames()).isEmpty();
   }
@@ -415,8 +357,8 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
         .header(XOkapiHeaders.USER_ID, USER_ID_HEADER))
       .andExpect(status().isNoContent());
 
-    doGet("/roles/capability-sets")
-      .andExpect(content().json(asJsonString(roleCapabilitySets())));
+    doGet("/roles/{id}/capability-sets", ROLE_ID)
+      .andExpect(content().json(asJsonString(capabilitySets())));
 
     assertThat(kcTestClient.getPermissionNames()).isEmpty();
   }
@@ -457,14 +399,12 @@ class RoleCapabilitySetIT extends BaseIntegrationTest {
         .header(XOkapiHeaders.USER_ID, USER_ID_HEADER))
       .andExpect(status().isNoContent());
 
-    doGet("/roles/capability-sets")
+    doGet("/roles/{id}/capability-sets", ROLE_ID)
       .andExpect(content().json(asJsonString(roleCapabilitySets())));
 
-    doGet("/roles/capabilities")
-      .andExpect(content().json(asJsonString(roleCapabilities(
-        roleCapability(ROLE_ID, FOO_VIEW_CAPABILITY),
-        roleCapability(ROLE_ID, FOO_CREATE_CAPABILITY)
-      ))));
+    doGet("/roles/{id}/capabilities", ROLE_ID)
+      .andExpect(jsonPath("$.capabilities[*].id").value(
+        containsInAnyOrder(FOO_VIEW_CAPABILITY.toString(), FOO_CREATE_CAPABILITY.toString())));
 
     assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
       kcPermissionName(fooItemGetEndpoint()),
