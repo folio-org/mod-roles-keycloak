@@ -117,21 +117,6 @@ class UserRoleControllerTest {
   }
 
   @Nested
-  @DisplayName("findUserRoles")
-  class FindUserRoles {
-
-    @Test
-    void positive() throws Exception {
-      var userRoles = userRoles(List.of(userRole(ROLE_ID)));
-      when(service.findByQuery(null, 0, 10)).thenReturn(userRoles);
-      mockMvc.perform(get("/roles/users"))
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(APPLICATION_JSON))
-        .andExpect(content().json(asJsonString(userRoles)));
-    }
-  }
-
-  @Nested
   @DisplayName("updateUserRoles")
   class UpdateUserRoles {
 

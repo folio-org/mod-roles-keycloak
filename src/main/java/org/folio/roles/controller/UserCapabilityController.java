@@ -42,14 +42,6 @@ public class UserCapabilityController implements UserCapabilityApi {
   }
 
   @Override
-  public ResponseEntity<UserCapabilities> getUserCapabilities(String query, Integer limit, Integer offset) {
-    var pageResult = userCapabilityService.find(query, limit, offset);
-    return ResponseEntity.ok(new UserCapabilities()
-      .userCapabilities(pageResult.getRecords())
-      .totalRecords(pageResult.getTotalRecords()));
-  }
-
-  @Override
   public ResponseEntity<Void> updateUserCapabilities(UUID userId, CapabilitiesUpdateRequest request) {
     userCapabilityService.update(userId, request.getCapabilityIds());
     return ResponseEntity.noContent().build();
