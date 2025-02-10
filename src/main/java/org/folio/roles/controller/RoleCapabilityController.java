@@ -44,14 +44,6 @@ public class RoleCapabilityController implements RoleCapabilityApi {
   }
 
   @Override
-  public ResponseEntity<RoleCapabilities> getRoleCapabilities(String query, Integer limit, Integer offset) {
-    var pageResult = roleCapabilityService.find(query, limit, offset);
-    return ResponseEntity.ok(new RoleCapabilities()
-      .roleCapabilities(pageResult.getRecords())
-      .totalRecords(pageResult.getTotalRecords()));
-  }
-
-  @Override
   public ResponseEntity<Void> updateRoleCapabilities(UUID roleId, CapabilitiesUpdateRequest request) {
     roleCapabilityService.update(roleId, request);
     return ResponseEntity.noContent().build();

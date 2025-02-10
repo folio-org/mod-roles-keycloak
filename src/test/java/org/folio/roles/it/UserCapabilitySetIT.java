@@ -33,6 +33,7 @@ import static org.folio.roles.support.UserCapabilityUtils.userCapabilitiesReques
 import static org.folio.roles.support.UserCapabilityUtils.userCapability;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.test.TestUtils.asJsonString;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -326,15 +327,13 @@ class UserCapabilitySetIT extends BaseIntegrationTest {
         .header(XOkapiHeaders.USER_ID, USER_ID_HEADER))
       .andExpect(status().isNoContent());
 
-    doGet("/users/capability-sets")
+    doGet("/users/{id}/capability-sets", USER_ID)
       .andExpect(content().json(asJsonString(userCapabilitySets())));
 
-    doGet("/users/capabilities")
-      .andExpect(content().json(asJsonString(userCapabilities(
-        userCapability(USER_ID, FOO_VIEW_CAPABILITY),
-        userCapability(USER_ID, FOO_CREATE_CAPABILITY)
-      ))));
-
+    doGet("/users/{id}/capabilities", USER_ID)
+      .andExpect(
+        jsonPath("$.capabilities[*].id").value(
+          containsInAnyOrder(FOO_CREATE_CAPABILITY.toString(), FOO_VIEW_CAPABILITY.toString())));
     assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
       kcPermissionName(fooItemGetEndpoint()),
       kcPermissionName(fooItemPostEndpoint())
