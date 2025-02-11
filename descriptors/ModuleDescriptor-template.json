@@ -171,12 +171,17 @@
     },
     {
       "id": "role-capabilities",
-      "version": "1.1",
+      "version": "1.0",
       "handlers": [
         {
           "methods": [ "POST" ],
           "pathPattern": "/roles/capabilities",
           "permissionsRequired": [ "role-capabilities.collection.post" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/roles/capabilities",
+          "permissionsRequired": [ "role-capabilities.collection.get" ]
         },
         {
           "methods": [ "GET" ],
@@ -197,12 +202,17 @@
     },
     {
       "id": "role-capability-sets",
-      "version": "1.2",
+      "version": "1.1",
       "handlers": [
         {
           "methods": [ "POST" ],
           "pathPattern": "/roles/capability-sets",
           "permissionsRequired": [ "role-capability-sets.collection.post" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/roles/capability-sets",
+          "permissionsRequired": [ "role-capability-sets.collection.get" ]
         },
         {
           "methods": [ "GET" ],
@@ -223,12 +233,17 @@
     },
     {
       "id": "user-capabilities",
-      "version": "1.1",
+      "version": "1.0",
       "handlers": [
         {
           "methods": [ "POST" ],
           "pathPattern": "/users/capabilities",
           "permissionsRequired": [ "user-capabilities.collection.post" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/users/capabilities",
+          "permissionsRequired": [ "user-capabilities.collection.get" ]
         },
         {
           "methods": [ "GET" ],
@@ -249,12 +264,17 @@
     },
     {
       "id": "user-capability-sets",
-      "version": "1.1",
+      "version": "1.0",
       "handlers": [
         {
           "methods": [ "POST" ],
           "pathPattern": "/users/capability-sets",
           "permissionsRequired": [ "user-capability-sets.collection.post" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/users/capability-sets",
+          "permissionsRequired": [ "user-capability-sets.collection.get" ]
         },
         {
           "methods": [ "GET" ],

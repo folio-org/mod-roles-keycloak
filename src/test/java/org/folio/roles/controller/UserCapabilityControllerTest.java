@@ -62,6 +62,36 @@ class UserCapabilityControllerTest {
   }
 
   @Test
+  void searchUserCapabilities_positive() throws Exception {
+    var query = "cql.allRecords=1";
+    var userCapability = userCapability();
+    when(userCapabilityService.find(query, 100, 20)).thenReturn(asSinglePage(userCapability));
+
+    mockMvc.perform(get("/users/capabilities")
+        .contentType(APPLICATION_JSON)
+        .param("query", query)
+        .param("limit", "100")
+        .param("offset", "20")
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(userCapabilities(1, userCapability)), true));
+  }
+
+  @Test
+  void searchUserCapabilities_positive_defaultQueryAndPageParameters() throws Exception {
+    var userCapability = userCapability();
+    when(userCapabilityService.find(null, 10, 0)).thenReturn(asSinglePage(userCapability));
+
+    mockMvc.perform(get("/users/capabilities")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(userCapabilities(1, userCapability)), true));
+  }
+
+  @Test
   void findByUserId_positive() throws Exception {
     var foundCapability = capability();
     when(capabilityService.findByUserId(USER_ID, false, 100, 20)).thenReturn(asSinglePage(foundCapability));

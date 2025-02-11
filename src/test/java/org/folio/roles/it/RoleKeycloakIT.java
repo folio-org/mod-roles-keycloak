@@ -3,6 +3,7 @@ package org.folio.roles.it;
 import static java.time.ZoneId.systemDefault;
 import static java.util.UUID.fromString;
 import static org.apache.commons.collections4.IterableUtils.find;
+import static org.folio.roles.support.RoleCapabilitySetUtils.roleCapabilitySets;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
 import static org.folio.roles.support.UserRoleTestUtils.userRoles;
@@ -195,11 +196,8 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(asJsonString(userRoles())));
 
-    attemptGet("/roles/{id}/capability-sets", ROLE_1.getId())
-      .andExpect(status().isNotFound())
-      .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
-      .andExpect(jsonPath("$.errors[0].code", is("not_found_error")));
+    doGet("/roles/capability-sets")
+      .andExpect(content().json(asJsonString(roleCapabilitySets())));
   }
 
   @Test
