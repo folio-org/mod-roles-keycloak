@@ -1,6 +1,7 @@
 package org.folio.roles.repository;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySetEntity;
@@ -47,8 +48,8 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
 
   @Test
   void existsByName_positive_excludeDummy() {
-    var capabilitySetEntity = capabilitySetEntity(null, List.of());
-    var dummyCapabilitySetEntity = capabilitySetEntity(null, List.of());
+    var capabilitySetEntity = capabilitySetEntity(null, emptyList());
+    var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
     entityManager.persistAndFlush(capabilitySetEntity);
@@ -60,8 +61,8 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
 
   @Test
   void findByUserId_positive_includeAndExcludeDummy() {
-    var capabilitySetEntity = capabilitySetEntity(null, List.of());
-    var dummyCapabilitySetEntity = capabilitySetEntity(null, List.of());
+    var capabilitySetEntity = capabilitySetEntity(null, emptyList());
+    var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
     entityManager.persistAndFlush(capabilitySetEntity);
@@ -86,8 +87,8 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
     var roleId = UUID.randomUUID();
     var roleEntity = roleEntity();
     roleEntity.setId(roleId);
-    var capabilitySetEntity = capabilitySetEntity(null, List.of());
-    var dummyCapabilitySetEntity = capabilitySetEntity(null, List.of());
+    var capabilitySetEntity = capabilitySetEntity(null, emptyList());
+    var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
     entityManager.persistAndFlush(roleEntity);
@@ -109,8 +110,8 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
 
   @Test
   void findCapabilitySetIdsByIdIn_positive_excludeDummy() {
-    var capabilitySetEntity = capabilitySetEntity(null, List.of());
-    var dummyCapabilitySetEntity = capabilitySetEntity(null, List.of());
+    var capabilitySetEntity = capabilitySetEntity(null, emptyList());
+    var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
     entityManager.persistAndFlush(capabilitySetEntity);
@@ -139,8 +140,8 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
 
   @Test
   void findByNameIn_positive_excludeDummy() {
-    var capabilitySetEntity = capabilitySetEntity(null, List.of());
-    var dummyCapabilitySetEntity = capabilitySetEntity(null, List.of());
+    var capabilitySetEntity = capabilitySetEntity(null, emptyList());
+    var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
     entityManager.persistAndFlush(capabilitySetEntity);
@@ -153,9 +154,9 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
 
   @Test
   void findByPermissionNames_positive_excludeDummy() {
-    var capabilitySetEntity = capabilitySetEntity(null, List.of());
+    var capabilitySetEntity = capabilitySetEntity(null, emptyList());
     capabilitySetEntity.setPermission("permission_for_capabilitySet");
-    var dummyCapabilitySetEntity = capabilitySetEntity(null, List.of());
+    var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
     dummyCapabilitySetEntity.setPermission("permission_for_dummyCapabilitySet");

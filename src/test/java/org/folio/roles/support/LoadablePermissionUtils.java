@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 import lombok.experimental.UtilityClass;
 import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
+import org.folio.roles.domain.entity.LoadableRoleEntity;
 import org.instancio.Instancio;
 import org.instancio.Model;
 
@@ -63,6 +64,15 @@ public class LoadablePermissionUtils {
     populateAuditable(entity, perm.getMetadata());
 
     return entity;
+  }
+
+  public static LoadableRoleEntity loadableRoleEntity() {
+    var roleId = UUID.randomUUID();
+    var loadableRole = new LoadableRoleEntity();
+    loadableRole.setId(roleId);
+    loadableRole.setName("roleName");
+    loadableRole.setDescription("roleDescription");
+    return loadableRole;
   }
 
   private static Supplier<String> generatePermName() {

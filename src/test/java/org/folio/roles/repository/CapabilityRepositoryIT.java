@@ -70,7 +70,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     capabilityEntity.setDummyCapability(true);
     entityManager.flush();
     page = capabilityRepository.findByCapabilitySetId(capabilitySetEntity.getId(), offsetRequest);
-    assertThat(page.getTotalElements()).isEqualTo(0);
+    assertThat(page.getTotalElements()).isZero();
 
     page = capabilityRepository.findByCapabilitySetIdIncludeDummy(capabilitySetEntity.getId(), offsetRequest);
     assertThat(page.getTotalElements()).isEqualTo(2);
@@ -264,7 +264,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     capabilitySetEntity.setDummyCapability(true);
     entityManager.flush();
     capabilityEntities = capabilityRepository.findByCapabilitySetIds(List.of(capabilitySetEntity.getId()));
-    assertThat(capabilityEntities).hasSize(0);
+    assertThat(capabilityEntities).isEmpty();
   }
 
   @Test
@@ -309,7 +309,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     userCapabilityEntity.setDummyCapability(true);
     entityManager.flush();
     permissions = capabilityRepository.findPermissionsByPrefixes(userId, "{permission}");
-    assertThat(permissions).hasSize(0);
+    assertThat(permissions).isEmpty();
   }
 
   @Test
@@ -354,7 +354,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     userCapabilityEntity.setDummyCapability(true);
     entityManager.flush();
     permissions = capabilityRepository.findAllFolioPermissions(userId);
-    assertThat(permissions).hasSize(0);
+    assertThat(permissions).isEmpty();
   }
 
   @Test
@@ -423,6 +423,6 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
       .findPermissionsByPrefixesAndPermissionNames(userId,
         "{permission_for_userCapability, permission_for_capabilityForCapabilitySet, "
           + "permission_for_capabilityForRoleCapabilitySet}", "{permission}");
-    assertThat(permissions).hasSize(0);
+    assertThat(permissions).isEmpty();
   }
 }
