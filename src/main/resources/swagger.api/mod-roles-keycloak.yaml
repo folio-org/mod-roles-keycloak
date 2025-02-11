@@ -169,6 +169,28 @@ paths:
           $ref: '#/components/responses/badRequestResponse'
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
+    get:
+      description: Search user-role relations by CQL query
+      operationId: findUserRoles
+      tags:
+        - roles-users
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: Array of roles users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userRoles'
+              example:
+                $ref: '#/components/examples/userRolesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
 
   /roles/users/{id}:
     get:
@@ -241,6 +263,28 @@ paths:
       responses:
         '201':
           description: Assigned roles to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roleCapabilities'
+              example:
+                $ref: '#/components/examples/roleCapabilitiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    get:
+      description: Get role-capability relation items by CQL query and pagination parameters
+      operationId: getRoleCapabilities
+      tags:
+        - role-capability
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '201':
+          description: Array of roles users
           content:
             application/json:
               schema:
@@ -330,6 +374,28 @@ paths:
       responses:
         '201':
           description: Assigned roles to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/roleCapabilitySets'
+              example:
+                $ref: '#/components/examples/roleCapabilitySetsResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    get:
+      description: Get role-capability-set relation items by CQL query
+      operationId: getRoleCapabilitySets
+      tags:
+        - role-capability-set
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '201':
+          description: Array of roles users
           content:
             application/json:
               schema:
@@ -738,6 +804,28 @@ paths:
       responses:
         '201':
           description: Capabilities user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userCapabilities'
+              example:
+                $ref: '#/components/examples/userCapabilitiesResponse'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+    get:
+      description: Search user capabilities by CQL query
+      operationId: getUserCapabilities
+      tags:
+        - user-capability
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: A collection of capabilities users
           content:
             application/json:
               schema:

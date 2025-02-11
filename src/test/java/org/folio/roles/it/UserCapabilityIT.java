@@ -24,7 +24,6 @@ import static org.folio.roles.support.UserCapabilityUtils.userCapabilitiesReques
 import static org.folio.roles.support.UserCapabilityUtils.userCapability;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.test.TestUtils.asJsonString;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -88,6 +87,54 @@ class UserCapabilityIT extends BaseIntegrationTest {
   @BeforeEach
   void setUp() {
     keycloak.tokenManager().grantToken();
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:/sql/populate-user-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-user-capability-relations.sql"
+  })
+  void findCapabilities_positive() throws Exception {
+    doGet(get("/users/capabilities")
+      .header(TENANT, TENANT_ID)
+      .header(XOkapiHeaders.USER_ID, USER_ID_HEADER))
+      .andExpect(content().json(asJsonString(userCapabilities(
+        userCapability(USER_ID, FOO_CREATE_CAPABILITY), userCapability(USER_ID, FOO_VIEW_CAPABILITY)))
+      ));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:/sql/populate-user-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-user-capability-relations.sql"
+  })
+  void findCapabilities_positive_offsetAndLimit() throws Exception {
+    doGet(get("/users/capabilities")
+      .param("offset", "1")
+      .param("limit", "1")
+      .header(TENANT, TENANT_ID)
+      .header(XOkapiHeaders.USER_ID, USER_ID_HEADER))
+      .andExpect(content().json(asJsonString(
+        userCapabilities(2L, userCapability(USER_ID, FOO_VIEW_CAPABILITY)))
+      ));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:/sql/populate-user-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-user-capability-relations.sql"
+  })
+  void findCapabilities_positive_cqlQuery() throws Exception {
+    doGet(get("/users/capabilities")
+      .param("query", "capabilityId==\"" + FOO_CREATE_CAPABILITY + "\"")
+      .header(TENANT, TENANT_ID)
+      .header(XOkapiHeaders.USER_ID, USER_ID_HEADER))
+      .andExpect(content().json(asJsonString(
+        userCapabilities(userCapability(USER_ID, FOO_CREATE_CAPABILITY)))
+      ));
   }
 
   @Test
@@ -218,9 +265,11 @@ class UserCapabilityIT extends BaseIntegrationTest {
 
     updateUserCapabilities(request);
 
-    doGet("/users/{id}/capabilities", USER_ID).andExpect(jsonPath("$.capabilities[*].id").value(
-      containsInAnyOrder(FOO_VIEW_CAPABILITY.toString(), FOO_EDIT_CAPABILITY.toString(),
-        FOO_DELETE_CAPABILITY.toString())));
+    doGet("/users/capabilities")
+      .andExpect(content().json(asJsonString(userCapabilities(
+        userCapability(USER_ID, FOO_VIEW_CAPABILITY),
+        userCapability(USER_ID, FOO_EDIT_CAPABILITY),
+        userCapability(USER_ID, FOO_DELETE_CAPABILITY)))));
 
     assertThat(kcTestClient.getPermissionNames()).containsAll(List.of(
       kcPermissionName(fooItemGetEndpoint()),
@@ -242,7 +291,7 @@ class UserCapabilityIT extends BaseIntegrationTest {
         .header(XOkapiHeaders.USER_ID, USER_ID_HEADER))
       .andExpect(status().isNoContent());
 
-    doGet("/users/{id}/capabilities", USER_ID).andExpect(content().json(asJsonString(capabilities())));
+    doGet("/users/capabilities").andExpect(content().json(asJsonString(userCapabilities())));
 
     assertThat(kcTestClient.getPermissionNames()).isEmpty();
   }

@@ -86,6 +86,36 @@ class RoleCapabilityControllerTest {
   }
 
   @Test
+  void searchRoleCapabilities_positive() throws Exception {
+    var query = "cql.allRecords=1";
+    var roleCapability = roleCapability();
+    when(roleCapabilityService.find(query, 100, 20)).thenReturn(asSinglePage(roleCapability));
+
+    mockMvc.perform(get("/roles/capabilities")
+        .contentType(APPLICATION_JSON)
+        .param("query", query)
+        .param("limit", "100")
+        .param("offset", "20")
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(roleCapabilities(1, roleCapability)), true));
+  }
+
+  @Test
+  void searchRoleCapabilities_positive_defaultQueryAndPageParameters() throws Exception {
+    var roleCapability = roleCapability();
+    when(roleCapabilityService.find(null, 10, 0)).thenReturn(asSinglePage(roleCapability));
+
+    mockMvc.perform(get("/roles/capabilities")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(roleCapabilities(1, roleCapability)), true));
+  }
+
+  @Test
   void findByRoleId_positive() throws Exception {
     var foundCapability = capability();
     when(capabilityService.findByRoleId(ROLE_ID, false, 100, 20)).thenReturn(asSinglePage(foundCapability));
