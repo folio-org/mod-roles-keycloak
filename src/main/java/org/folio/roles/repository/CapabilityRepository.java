@@ -32,11 +32,17 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     value = """
       SELECT c.* FROM capability c
       INNER JOIN capability_set_capability csc
-      ON c.id = csc.capability_id AND csc.capability_set_id = :capabilitySetId AND c.dummy_capability = false""",
+      ON c.id = csc.capability_id AND csc.capability_set_id = :capabilitySetId
+      INNER JOIN capability_set cs ON csc.capability_set_id = cs.id
+      WHERE c.dummy_capability = false AND cs.dummy_capability = false
+      """,
     countQuery = """
       SELECT COUNT(c.*) FROM capability c
       JOIN capability_set_capability csc
-      ON c.id = csc.capability_id AND csc.capability_set_id = :capabilitySetId AND c.dummy_capability = false""")
+      ON c.id = csc.capability_id AND csc.capability_set_id = :capabilitySetId
+      INNER JOIN capability_set cs ON csc.capability_set_id = cs.id
+      WHERE c.dummy_capability = false AND cs.dummy_capability = false
+      """)
   Page<CapabilityEntity> findByCapabilitySetId(@Param("capabilitySetId") UUID capabilitySetId, Pageable pageable);
 
   @Query(nativeQuery = true,
@@ -91,6 +97,7 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
       SELECT DISTINCT capability.* FROM (
         SELECT c.* FROM capability c
         INNER JOIN user_capability uc ON c.id = uc.capability_id AND uc.user_id = :userId
+        WHERE c.dummy_capability = false
 
         UNION
 
@@ -98,11 +105,13 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
         INNER JOIN user_capability_set ucs ON cs.id = ucs.capability_set_id AND ucs.user_id = :userId
         INNER JOIN capability_set_capability csc ON cs.id = csc.capability_set_id
         INNER JOIN capability c ON csc.capability_id = c.id
-      ) capability WHERE capability.dummy_capability = false""",
+        WHERE cs.dummy_capability = false AND c.dummy_capability = false
+      ) capability""",
     countQuery = """
       SELECT COUNT(DISTINCT capability.*) FROM (
         SELECT c.* FROM capability c
         INNER JOIN user_capability uc ON c.id = uc.capability_id AND uc.user_id = :userId
+        WHERE c.dummy_capability = false
 
         UNION
 
@@ -110,7 +119,8 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
         INNER JOIN user_capability_set ucs ON cs.id = ucs.capability_set_id AND ucs.user_id = :userId
         INNER JOIN capability_set_capability csc ON cs.id = csc.capability_set_id
         INNER JOIN capability c ON csc.capability_id = c.id
-      ) capability WHERE capability.dummy_capability = false""")
+        WHERE cs.dummy_capability = false AND c.dummy_capability = false
+      ) capability""")
   Page<CapabilityEntity> findAllByUserId(@Param("userId") UUID userId, Pageable pageable);
 
   @Query(nativeQuery = true,
@@ -165,6 +175,7 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
       SELECT DISTINCT capability.* FROM (
         SELECT c.* FROM capability c
           INNER JOIN role_capability rc ON c.id = rc.capability_id AND rc.role_id = :roleId
+          WHERE c.dummy_capability = false
 
         UNION
 
@@ -172,11 +183,13 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
           INNER JOIN role_capability_set rcs ON cs.id = rcs.capability_set_id AND rcs.role_id = :roleId
           INNER JOIN capability_set_capability csc ON cs.id = csc.capability_set_id
           INNER JOIN capability c ON csc.capability_id = c.id
-      ) capability WHERE capability.dummy_capability = false""",
+          WHERE cs.dummy_capability = false AND c.dummy_capability = false
+      ) capability""",
     countQuery = """
       SELECT COUNT(DISTINCT capability.*) FROM (
         SELECT c.* FROM capability c
           INNER JOIN role_capability rc ON c.id = rc.capability_id AND rc.role_id = :roleId
+          WHERE c.dummy_capability = false
 
         UNION
 
@@ -184,7 +197,8 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
           INNER JOIN role_capability_set rcs ON cs.id = rcs.capability_set_id AND rcs.role_id = :roleId
           INNER JOIN capability_set_capability csc ON cs.id = csc.capability_set_id
           INNER JOIN capability c ON csc.capability_id = c.id
-      ) capability WHERE capability.dummy_capability = false""")
+          WHERE cs.dummy_capability = false AND c.dummy_capability = false
+      ) capability""")
   Page<CapabilityEntity> findAllByRoleId(@Param("roleId") UUID roleId, Pageable pageable);
 
   @Query("""
@@ -203,7 +217,10 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
   @Query(nativeQuery = true, value = """
     SELECT c.* FROM capability c
       INNER JOIN capability_set_capability csc
-      ON c.id = csc.capability_id AND csc.capability_set_id IN (:ids) AND c.dummy_capability = false""")
+      ON c.id = csc.capability_id AND csc.capability_set_id IN (:ids)
+      INNER JOIN capability_set cs
+      ON csc.capability_set_id = cs.id
+      WHERE cs.dummy_capability = false AND c.dummy_capability = false""")
   List<CapabilityEntity> findByCapabilitySetIds(@Param("ids") Collection<UUID> capabilitySetIds);
 
   @Query(nativeQuery = true, value = """
@@ -221,6 +238,8 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
         FROM user_capability_set ucs
         INNER JOIN capability_set_capability csc
             ON ucs.capability_set_id = csc.capability_set_id
+        INNER JOIN capability_set cs
+           ON csc.capability_set_id = cs.id AND cs.dummy_capability = false
 
         UNION ALL
 
@@ -236,6 +255,8 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
             FROM role_capability_set rcs
             INNER JOIN capability_set_capability csc
                 ON rcs.capability_set_id = csc.capability_set_id
+            INNER JOIN capability_set cs
+                ON csc.capability_set_id = cs.id AND cs.dummy_capability = false
         ) rc ON rc.role_id = ur.role_id
     ),
     user_permissions AS (
@@ -278,6 +299,8 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
         FROM user_capability_set ucs
         INNER JOIN capability_set_capability csc
           ON ucs.capability_set_id = csc.capability_set_id
+        INNER JOIN capability_set cs
+           ON csc.capability_set_id = cs.id AND cs.dummy_capability = false
 
         UNION ALL
 
@@ -293,6 +316,8 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
           FROM role_capability_set rcs
           INNER JOIN capability_set_capability csc
             ON rcs.capability_set_id = csc.capability_set_id
+          INNER JOIN capability_set cs
+            ON csc.capability_set_id = cs.id AND cs.dummy_capability = false
         ) rc
           ON rc.role_id = ur.role_id
       ) uc
@@ -353,6 +378,8 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
       FROM user_capability_set ucs
       INNER JOIN capability_set_capability csc
         ON ucs.capability_set_id = csc.capability_set_id
+      INNER JOIN capability_set cs
+        ON csc.capability_set_id = cs.id AND cs.dummy_capability = false
 
       UNION ALL
 
@@ -367,6 +394,8 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
         FROM role_capability_set rcs
         INNER JOIN capability_set_capability csc
           ON rcs.capability_set_id = csc.capability_set_id
+        INNER JOIN capability_set cs
+          ON csc.capability_set_id = cs.id AND cs.dummy_capability = false
       ) rc ON rc.role_id = ur.role_id
     ),
     user_permissions AS (

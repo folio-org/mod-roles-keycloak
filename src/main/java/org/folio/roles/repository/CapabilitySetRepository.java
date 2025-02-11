@@ -39,7 +39,11 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
     nativeQuery = true)
   List<CapabilitySetEntity> findCapabilitiesForUser(@Param("userId") UUID userId);
 
-  boolean existsByName(String name);
+  default boolean existsByName(String name) {
+    return existsByNameAndDummyCapability(name, false);
+  }
+
+  boolean existsByNameAndDummyCapability(String name, boolean dummyCapability);
 
   @Query(nativeQuery = true,
     value = """
@@ -81,8 +85,8 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
       AND cs.dummy_capability = false""")
   Page<CapabilitySetEntity> findByRoleId(@Param("role_id") UUID roleId, OffsetRequest offsetRequest);
 
-  @Query("select distinct entity.id from CapabilitySetEntity entity where entity.id in :ids " +
-    "and entity.dummyCapability = false order by entity.id")
+  @Query("select distinct entity.id from CapabilitySetEntity entity where entity.id in :ids "
+    + "and entity.dummyCapability = false order by entity.id")
   Set<UUID> findCapabilitySetIdsByIdIn(@Param("ids") Collection<UUID> capabilitySetIds);
 
   default Optional<CapabilitySetEntity> findByName(String capabilitySetName) {
@@ -95,10 +99,11 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
     return findByNameInAndDummyCapability(capabilitySetNames, false);
   }
 
-  List<CapabilitySetEntity> findByNameInAndDummyCapability(Collection<String> capabilitySetNames, boolean dummyCapability);
+  List<CapabilitySetEntity> findByNameInAndDummyCapability(Collection<String> capabilitySetNames,
+                                                           boolean dummyCapability);
 
-  @Query("select entity from CapabilitySetEntity entity where entity.permission in :names " +
-    "and entity.dummyCapability = false order by entity.name")
+  @Query("select entity from CapabilitySetEntity entity where entity.permission in :names "
+    + "and entity.dummyCapability = false order by entity.name")
   List<CapabilitySetEntity> findByPermissionNames(@Param("names") Collection<String> names);
 
   @Modifying
