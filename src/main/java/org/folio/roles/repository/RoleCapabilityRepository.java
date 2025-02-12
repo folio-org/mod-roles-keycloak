@@ -14,13 +14,28 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RoleCapabilityRepository extends BaseCqlJpaRepository<RoleCapabilityEntity, RoleCapabilityKey> {
 
+  @Query("""
+    select rce from RoleCapabilityEntity rce
+    inner join CapabilityEntity ce on ce.id = rce.capabilityId and ce.dummyCapability = false
+    where rce.roleId = :roleId""")
   List<RoleCapabilityEntity> findAllByRoleId(UUID roleId);
 
+  @Query("""
+    select rce from RoleCapabilityEntity rce
+    inner join CapabilityEntity ce on ce.id = rce.capabilityId and ce.dummyCapability = false
+    where rce.capabilityId = :capabilityId""")
   List<RoleCapabilityEntity> findAllByCapabilityId(UUID capabilityId);
 
+  @Query("""
+    select rce from RoleCapabilityEntity rce
+    inner join CapabilityEntity ce on ce.id = rce.capabilityId and ce.dummyCapability = false
+    where rce.roleId = :roleId""")
   Page<RoleCapabilityEntity> findByRoleId(UUID roleId, Pageable pageable);
 
-  @Query("select rce from RoleCapabilityEntity rce where rce.roleId = :roleId and rce.capabilityId in :ids")
+  @Query("""
+    select rce from RoleCapabilityEntity rce
+    inner join CapabilityEntity ce on ce.id = rce.capabilityId and ce.dummyCapability = false
+    where rce.roleId = :roleId and rce.capabilityId in :ids""")
   List<RoleCapabilityEntity> findRoleCapabilities(@Param("roleId") UUID roleId, @Param("ids") List<UUID> ids);
 
   @Modifying

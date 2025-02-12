@@ -15,13 +15,28 @@ import org.springframework.stereotype.Repository;
 public interface RoleCapabilitySetRepository
   extends BaseCqlJpaRepository<RoleCapabilitySetEntity, RoleCapabilitySetKey> {
 
+  @Query("""
+    select rcse from RoleCapabilitySetEntity rcse
+    inner join CapabilitySetEntity cse on cse.id = rcse.capabilitySetId and cse.dummyCapability = false
+    where rcse.roleId = :roleId""")
   List<RoleCapabilitySetEntity> findAllByRoleId(UUID roleId);
 
+  @Query("""
+    select rcse from RoleCapabilitySetEntity rcse
+    inner join CapabilitySetEntity cse on cse.id = rcse.capabilitySetId and cse.dummyCapability = false
+    where rcse.capabilitySetId = :capabilitySetId""")
   List<RoleCapabilitySetEntity> findAllByCapabilitySetId(UUID capabilitySetId);
 
-  @Query("select e from RoleCapabilitySetEntity e where e.roleId = :roleId and e.capabilitySetId in (:ids)")
+  @Query("""
+    select rcse from RoleCapabilitySetEntity rcse
+    inner join CapabilitySetEntity cse on cse.id = rcse.capabilitySetId and cse.dummyCapability = false
+    where rcse.roleId = :roleId and rcse.capabilitySetId in (:ids)""")
   List<RoleCapabilitySetEntity> findRoleCapabilitySets(@Param("roleId") UUID roleId, @Param("ids") List<UUID> ids);
 
+  @Query("""
+    select rcse from RoleCapabilitySetEntity rcse
+    inner join CapabilitySetEntity cse on cse.id = rcse.capabilitySetId and cse.dummyCapability = false
+    where rcse.roleId = :roleId""")
   Page<RoleCapabilitySetEntity> findByRoleId(UUID roleId, Pageable pageable);
 
   @Modifying
