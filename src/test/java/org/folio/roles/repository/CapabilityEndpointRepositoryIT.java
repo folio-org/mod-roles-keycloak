@@ -17,7 +17,7 @@ import org.folio.roles.domain.entity.CapabilityEndpointEntity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class CapabilityEndpointRepositoryIT extends BaseRepositoryTest {
+class CapabilityEndpointRepositoryIT extends BaseRepositoryTest {
 
   @Autowired
   private CapabilityEndpointRepository capabilityEndpointRepository;

@@ -18,7 +18,7 @@ public interface PolicyEntityRepository extends JpaCqlRepository<BasePolicyEntit
 
   @Query(nativeQuery = true, value = """
     SELECT DISTINCT p.* FROM capability_set cs
-      JOIN role_capability_set rcs ON rcs.capability_set_id = cs.id
+      JOIN role_capability_set rcs ON rcs.capability_set_id = cs.id AND cs.dummy_capability = false
       JOIN policy_roles pr ON pr.role_id = rcs.role_id
       JOIN policy p ON pr.policy_id = p.id AND p.type = 'ROLE'
     WHERE cs.id = :capability_set_id""")
@@ -26,7 +26,7 @@ public interface PolicyEntityRepository extends JpaCqlRepository<BasePolicyEntit
 
   @Query(nativeQuery = true, value = """
     SELECT DISTINCT p.* FROM capability_set cs
-      JOIN user_capability_set ucs ON ucs.capability_set_id = cs.id
+      JOIN user_capability_set ucs ON ucs.capability_set_id = cs.id AND cs.dummy_capability = false
       JOIN policy_users pu ON pu.user_id = ucs.user_id
       JOIN policy p ON pu.policy_id = p.id AND p.type = 'USER'
     WHERE cs.id = :capability_set_id""")
@@ -38,17 +38,18 @@ public interface PolicyEntityRepository extends JpaCqlRepository<BasePolicyEntit
         JOIN role_capability rc ON rc.capability_id = c.id
         JOIN policy_roles pr ON pr.role_id = rc.role_id
         JOIN policy p ON pr.policy_id = p.id AND p.type = 'ROLE'
-      WHERE c.id = :capabilityId
+      WHERE c.id = :capabilityId AND c.dummy_capability = false
 
       UNION
 
       SELECT DISTINCT p.* FROM capability c
       JOIN capability_set_capability csc ON c.id = csc.capability_id
+        JOIN capability_set cs ON cs.id = csc.capability_set_id AND cs.dummy_capability = false
         JOIN role_capability_set rcs ON rcs.capability_set_id = csc.capability_set_id
         JOIN policy_roles pr ON pr.role_id = rcs.role_id
         JOIN policy p ON pr.policy_id = p.id AND p.type = 'ROLE'
-      WHERE c.id = :capabilityId) policy""")
-  List<RolePolicyEntity> findRolePoliciesByCapabilityId(@Param("capabilityId") UUID capabilitySetId);
+      WHERE c.id = :capabilityId AND c.dummy_capability = false) policy""")
+  List<RolePolicyEntity> findRolePoliciesByCapabilityId(@Param("capabilityId") UUID capabilityId);
 
   @Query(nativeQuery = true, value = """
     SELECT DISTINCT policy.* FROM (
@@ -56,15 +57,16 @@ public interface PolicyEntityRepository extends JpaCqlRepository<BasePolicyEntit
         JOIN user_capability uc ON uc.capability_id = c.id
         JOIN policy_users pu ON pu.user_id = uc.user_id
         JOIN policy p ON pu.policy_id = p.id AND p.type = 'USER'
-      WHERE c.id = :capabilityId
+      WHERE c.id = :capabilityId AND c.dummy_capability = false
 
       UNION
 
       SELECT DISTINCT p.* FROM capability c
       JOIN capability_set_capability csc ON c.id = csc.capability_id
+        JOIN capability_set cs ON cs.id = csc.capability_set_id AND cs.dummy_capability = false
         JOIN user_capability_set ucs ON ucs.capability_set_id = csc.capability_set_id
         JOIN policy_users pu ON pu.user_id = ucs.user_id
         JOIN policy p ON pu.policy_id = p.id AND p.type = 'USER'
-      WHERE c.id = :capabilityId) policy""")
-  List<UserPolicyEntity> findUserPoliciesByCapabilityId(@Param("capabilityId") UUID capabilitySetId);
+      WHERE c.id = :capabilityId AND c.dummy_capability = false) policy""")
+  List<UserPolicyEntity> findUserPoliciesByCapabilityId(@Param("capabilityId") UUID capabilityId);
 }

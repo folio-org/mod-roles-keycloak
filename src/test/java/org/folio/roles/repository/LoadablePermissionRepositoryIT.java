@@ -96,7 +96,8 @@ class LoadablePermissionRepositoryIT extends BaseRepositoryTest {
 
     capabilitySetEntity.setDummyCapability(true);
     entityManager.flush();
-    loadablePermissions = loadablePermissionRepository.findAllByCapabilitySetId(capabilitySetEntity.getId())
+    loadablePermissions = loadablePermissionRepository
+      .findAllByCapabilitySetId(capabilitySetEntity.getId())
       .toList();
     assertThat(loadablePermissions).isEmpty();
   }
