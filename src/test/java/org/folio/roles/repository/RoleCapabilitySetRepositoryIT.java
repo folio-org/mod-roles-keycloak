@@ -63,7 +63,7 @@ class RoleCapabilitySetRepositoryIT extends BaseRepositoryTest {
     entityManager.persistAndFlush(roleCapabilitySetEntity(roleId, dummyCapabilitySetEntity.getId()));
 
     var roleCapabilityEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
-    assertThat(roleCapabilityEntities).hasSize(1).contains(roleCapabilitySetEntity);
+    assertThat(roleCapabilityEntities).containsOnly(roleCapabilitySetEntity);
   }
 
   @Test
@@ -83,7 +83,7 @@ class RoleCapabilitySetRepositoryIT extends BaseRepositoryTest {
     entityManager.persistAndFlush(roleCapabilitySetEntity(roleId, dummyCapabilitySetEntity.getId()));
 
     var roleCapabilityEntities = roleCapabilitySetRepository.findAllByCapabilitySetId(capabilitySetEntity.getId());
-    assertThat(roleCapabilityEntities).hasSize(1).contains(roleCapabilitySetEntity);
+    assertThat(roleCapabilityEntities).containsOnly(roleCapabilitySetEntity);
     roleCapabilityEntities = roleCapabilitySetRepository.findAllByCapabilitySetId(dummyCapabilitySetEntity.getId());
     assertThat(roleCapabilityEntities).isEmpty();
   }
@@ -106,7 +106,7 @@ class RoleCapabilitySetRepositoryIT extends BaseRepositoryTest {
 
     var roleCapabilitySetEntities = roleCapabilitySetRepository.findRoleCapabilitySets(roleId,
       List.of(capabilitySetEntity.getId(), dummyCapabilitySetEntity.getId()));
-    assertThat(roleCapabilitySetEntities).hasSize(1).contains(roleCapabilitySetEntity);
+    assertThat(roleCapabilitySetEntities).containsOnly(roleCapabilitySetEntity);
   }
 
   @Test
