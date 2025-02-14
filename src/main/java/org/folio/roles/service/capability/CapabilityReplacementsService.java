@@ -1,13 +1,17 @@
 package org.folio.roles.service.capability;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.Map.entry;
 import static java.util.Optional.empty;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
-import static org.folio.common.utils.permission.PermissionUtils.hasRequiredFields;
-import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
+import static org.folio.common.utils.CollectionUtils.toStream;
+import static org.folio.roles.domain.model.event.CapabilitySetEvent.deleted;
 
 import jakarta.persistence.EntityExistsException;
 import java.util.Collection;
@@ -25,7 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.common.utils.permission.PermissionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
@@ -35,7 +39,7 @@ import org.folio.roles.domain.entity.UserCapabilityEntity;
 import org.folio.roles.domain.entity.UserCapabilitySetEntity;
 import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.folio.roles.domain.model.CapabilityReplacements;
-import org.folio.roles.domain.model.event.CapabilitySetEvent;
+import org.folio.roles.domain.model.event.DomainEvent;
 import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.FolioResource;
@@ -45,8 +49,6 @@ import org.folio.roles.repository.RoleCapabilityRepository;
 import org.folio.roles.repository.RoleCapabilitySetRepository;
 import org.folio.roles.repository.UserCapabilityRepository;
 import org.folio.roles.repository.UserCapabilitySetRepository;
-import org.folio.roles.service.permission.PermissionOverrider;
-import org.folio.roles.utils.CapabilityUtils;
 import org.folio.spring.FolioExecutionContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -58,7 +60,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class CapabilityReplacementsService {
 
   private final FolioExecutionContext folioExecutionContext;
-  private final PermissionOverrider permissionOverrider;
   private final RoleCapabilityRepository roleCapabilityRepository;
   private final RoleCapabilitySetRepository roleCapabilitySetRepository;
   private final UserCapabilityRepository userCapabilityRepository;
@@ -90,49 +91,46 @@ public class CapabilityReplacementsService {
   }
 
   public Optional<CapabilityReplacements> deduceReplacements(CapabilityEvent newValue) {
-    if (newValue != null && newValue.getResources() != null) {
-      var permissionsWithReplacements =
-        newValue.getResources().stream().map(FolioResource::getPermission).filter(Objects::nonNull)
-          .filter(p -> p.getReplaces() != null && !p.getReplaces().isEmpty());
-
-      // Create a map of replaced (old) capabilities to list of replacing (new) capabilities
-      var capabilityReplacements = permissionsWithReplacements.flatMap(
-          permission -> getPermissionReplacementsAsCapabilities(permission).map(replacesValue -> entry(replacesValue,
-            permissionNameToCapabilityName(applyFolioPermissionOverrides(permission.getPermissionName())))))
-        .filter(entry -> entry.getValue().isPresent()).map(entry -> entry(entry.getKey(), entry.getValue().get()))
-        .filter(entry -> !entry.getKey().equals(entry.getValue()))
-        .collect(groupingBy(Entry::getKey, Collectors.mapping(Entry::getValue, Collectors.toSet())));
-
-      if (capabilityReplacements.isEmpty()) {
-        return empty();
-      }
-
-      var oldCapabilities = capabilityService.findByNames(capabilityReplacements.keySet());
-      var oldCapabilitySets = capabilitySetService.findByNames(capabilityReplacements.keySet());
-
-      // Determine which users and roles have assignments of old (replaced) capabilities/capability-sets
-      var capabilityRoleAssignments = extractAssignments(oldCapabilities,
-        capability -> roleCapabilityRepository.findAllByCapabilityId(capability.getId()), Capability::getName,
-        RoleCapabilityEntity::getRoleId);
-
-      var capabilitySetRoleAssignments = extractAssignments(oldCapabilitySets,
-        capabilitySet -> roleCapabilitySetRepository.findAllByCapabilitySetId(capabilitySet.getId()),
-        CapabilitySet::getName, RoleCapabilitySetEntity::getRoleId);
-
-      var capabilityUserAssignments = extractAssignments(oldCapabilities,
-        capability -> userCapabilityRepository.findAllByCapabilityId(capability.getId()), Capability::getName,
-        UserCapabilityEntity::getUserId);
-
-      var capabilitySetUserAssignments = extractAssignments(oldCapabilitySets,
-        capabilitySet -> userCapabilitySetRepository.findAllByCapabilitySetId(capabilitySet.getId()),
-        CapabilitySet::getName, UserCapabilitySetEntity::getUserId);
-
-      log.info("Found capability replacements for {} capabilities and capability sets", capabilityReplacements.size());
-      return Optional.of(
-        new CapabilityReplacements(capabilityReplacements, capabilityRoleAssignments, capabilityUserAssignments,
-          capabilitySetRoleAssignments, capabilitySetUserAssignments));
+    if (newValue == null || newValue.getResources() == null) {
+      return empty();
     }
-    return empty();
+
+    var permissionReplacements =
+      newValue.getResources().stream()
+        .map(FolioResource::getPermission)
+        .filter(Objects::nonNull)
+        .flatMap(CapabilityReplacementsService::mapToReplacesByPermission)
+        .filter(entry -> !entry.getKey().equals(entry.getValue()))
+        .collect(groupingBy(Entry::getKey, mapping(Entry::getValue, toSet())));
+
+    if (permissionReplacements.isEmpty()) {
+      return empty();
+    }
+
+    var oldCapabilities = capabilityService.findByPermissionNames(permissionReplacements.keySet());
+    var oldCapabilitySets = capabilitySetService.findByPermissionNames(permissionReplacements.keySet());
+
+    // Determine which users and roles have assignments of old (replaced) capabilities/capability-sets
+    var capabilityRoleAssignments = extractAssignments(oldCapabilities,
+      capability -> roleCapabilityRepository.findAllByCapabilityId(capability.getId()), Capability::getPermission,
+      RoleCapabilityEntity::getRoleId);
+
+    var capabilitySetRoleAssignments = extractAssignments(oldCapabilitySets,
+      capabilitySet -> roleCapabilitySetRepository.findAllByCapabilitySetId(capabilitySet.getId()),
+      CapabilitySet::getPermission, RoleCapabilitySetEntity::getRoleId);
+
+    var capabilityUserAssignments = extractAssignments(oldCapabilities,
+      capability -> userCapabilityRepository.findAllByCapabilityId(capability.getId()), Capability::getPermission,
+      UserCapabilityEntity::getUserId);
+
+    var capabilitySetUserAssignments = extractAssignments(oldCapabilitySets,
+      capabilitySet -> userCapabilitySetRepository.findAllByCapabilitySetId(capabilitySet.getId()),
+      CapabilitySet::getPermission, UserCapabilitySetEntity::getUserId);
+
+    log.info("Found capability replacements for {} capabilities and capability sets", permissionReplacements.size());
+    return Optional.of(
+      new CapabilityReplacements(permissionReplacements, capabilityRoleAssignments, capabilityUserAssignments,
+        capabilitySetRoleAssignments, capabilitySetUserAssignments));
   }
 
   protected <S, A> Map<String, Set<UUID>> extractAssignments(List<S> capabilityOrCapabilitySet,
@@ -143,131 +141,126 @@ public class CapabilityReplacementsService {
       return Map.of();
     }
 
-    return capabilityOrCapabilitySet.stream().map(capability -> entry(sourceToName.apply(capability),
-        assignmentsLookup.apply(capability).stream().map(assignmentToTargetUuid).collect(Collectors.toSet())))
+    return capabilityOrCapabilitySet.stream().map(capability ->
+        entry(sourceToName.apply(capability), assignmentsLookup.apply(capability).stream()
+          .map(assignmentToTargetUuid)
+          .collect(toSet())))
       .collect(toMap(Entry::getKey, Entry::getValue));
   }
 
-  protected Stream<String> getPermissionReplacementsAsCapabilities(Permission permission) {
-    return permission.getReplaces().stream().filter(Objects::nonNull).map(this::applyFolioPermissionOverrides)
-      .map(this::permissionNameToCapabilityName).filter(Optional::isPresent).map(Optional::get);
-  }
-
-  protected String applyFolioPermissionOverrides(String permissionName) {
-    var mappedPermission = permissionOverrider.getPermissionMappings().get(permissionName);
-    if (mappedPermission != null && hasRequiredFields(mappedPermission)) {
-      return getCapabilityName(mappedPermission);
-    }
-    return permissionName;
-  }
-
-  protected Optional<String> permissionNameToCapabilityName(String permissionName) {
-    return Optional.of(permissionName).map(PermissionUtils::extractPermissionData)
-      .filter(PermissionUtils::hasRequiredFields).map(CapabilityUtils::getCapabilityName);
-  }
-
   protected void assignReplacementCapabilities(CapabilityReplacements capabilityReplacements) {
-    capabilityReplacements.oldCapabilitiesToNewCapabilities().forEach((oldCapabilityName, replacements) -> {
+    capabilityReplacements.oldPermissionsToNewPermissions().forEach((oldPermissionName, replacements) -> {
       if (isNotEmpty(replacements)) {
-        var replacementCapabilities = capabilityService.findByNames(replacements);
-        var replacementCapabilitySets = capabilitySetService.findByNames(replacements);
-        assignReplacementsToRoles(capabilityReplacements.oldCapabilityRoleAssignments().get(oldCapabilityName),
+        var replacementCapabilities = capabilityService.findByPermissionNames(replacements);
+        var replacementCapabilitySets = capabilitySetService.findByPermissionNames(replacements);
+        assignReplacementsToRoles(capabilityReplacements.oldRoleCapabByPermission().get(oldPermissionName),
           replacementCapabilities, replacementCapabilitySets);
-        assignReplacementsToRoles(capabilityReplacements.oldCapabilitySetRoleAssignments().get(oldCapabilityName),
+        assignReplacementsToRoles(capabilityReplacements.oldRoleCapabSetByPermission().get(oldPermissionName),
           replacementCapabilities, replacementCapabilitySets);
-        assignReplacementsToUsers(capabilityReplacements.oldCapabilityUserAssignments().get(oldCapabilityName),
+        assignReplacementsToUsers(capabilityReplacements.oldUserCapabByPermission().get(oldPermissionName),
           replacementCapabilities, replacementCapabilitySets);
-        assignReplacementsToUsers(capabilityReplacements.oldCapabilitySetUserAssignments().get(oldCapabilityName),
+        assignReplacementsToUsers(capabilityReplacements.oldUserCapabSetByPermission().get(oldPermissionName),
           replacementCapabilities, replacementCapabilitySets);
       }
     });
   }
 
   protected void replaceLoadable(CapabilityReplacements capabilityReplacements) {
-    if (!capabilityReplacements.oldCapabilitiesToNewCapabilities().isEmpty()) {
-      var oldCapabilities =
-        capabilityService.findByNames(capabilityReplacements.oldCapabilitiesToNewCapabilities().keySet()).stream()
-          .collect(toMap(Capability::getName, cap -> cap));
-      var oldCapabilitySets =
-        capabilitySetService.findByNames(capabilityReplacements.oldCapabilitiesToNewCapabilities().keySet()).stream()
-          .collect(toMap(CapabilitySet::getName, capSet -> capSet));
+    if (MapUtils.isEmpty(capabilityReplacements.oldPermissionsToNewPermissions())) {
+      return;
+    }
 
-      for (var oldCapToNewCaps : capabilityReplacements.oldCapabilitiesToNewCapabilities().entrySet()) {
-        var oldCapOrCapSetName = oldCapToNewCaps.getKey();
-        var replacements = oldCapToNewCaps.getValue().stream().toList();
-        if (isNotEmpty(replacements)) {
-          log.info("Processing loadable permissions replacements for {}", oldCapOrCapSetName);
+    var oldCapabilities =
+      capabilityService.findByPermissionNames(capabilityReplacements.oldPermissionsToNewPermissions().keySet()).stream()
+        .collect(toMap(Capability::getPermission, cap -> cap));
+    var oldCapabilitySets =
+      capabilitySetService.findByPermissionNames(capabilityReplacements.oldPermissionsToNewPermissions().keySet())
+        .stream()
+        .collect(toMap(CapabilitySet::getPermission, capSet -> capSet));
 
-          var oldCap = oldCapabilities.get(oldCapOrCapSetName);
-          var oldCapSet = oldCapabilitySets.get(oldCapOrCapSetName);
+    for (var oldPermToNewPerms : capabilityReplacements.oldPermissionsToNewPermissions().entrySet()) {
+      var oldPermission = oldPermToNewPerms.getKey();
+      var newPermissions = oldPermToNewPerms.getValue().stream().toList();
+      if (isNotEmpty(newPermissions)) {
+        log.info("Processing loadable permissions replacements for old permission: {}", oldPermission);
 
-          var replacedLoadablePermissionIds = new HashSet<LoadablePermissionKey>();
-          if (oldCap != null) {
-            replacedLoadablePermissionIds.addAll(replaceLoadablePermissionsForCapability(oldCap, replacements));
-          }
-          if (oldCapSet != null) {
-            replacedLoadablePermissionIds.addAll(replaceLoadablePermissionsForCapabilitySet(oldCapSet, replacements));
-          }
-          if (!replacedLoadablePermissionIds.isEmpty()) {
-            loadablePermissionRepository.deleteAllById(replacedLoadablePermissionIds);
-          }
+        var oldCap = oldCapabilities.get(oldPermission);
+        var oldCapSet = oldCapabilitySets.get(oldPermission);
+
+        var replacedLoadablePermissionIds = new HashSet<LoadablePermissionKey>();
+        if (oldCap != null) {
+          replacedLoadablePermissionIds.addAll(replaceLoadablePermissionsForCapability(oldCap, newPermissions));
+        }
+        if (oldCapSet != null) {
+          replacedLoadablePermissionIds.addAll(replaceLoadablePermissionsForCapabilitySet(oldCapSet, newPermissions));
+        }
+        if (!replacedLoadablePermissionIds.isEmpty()) {
+          loadablePermissionRepository.deleteAllById(replacedLoadablePermissionIds);
         }
       }
     }
   }
 
   protected Set<LoadablePermissionKey> replaceLoadablePermissionsForCapability(Capability oldCap,
-    List<String> replacements) {
-    var replacedLoadablePermissionIds = new HashSet<LoadablePermissionKey>();
+    List<String> newPermissions) {
     var loadablePermissions = loadablePermissionRepository.findAllByCapabilityId(oldCap.getId()).toList();
-    if (isNotEmpty(loadablePermissions)) {
-      for (var loadablePermission : loadablePermissions) {
-        for (var replacement : replacements) {
-          capabilityService.findByName(replacement).ifPresent(capability -> {
-            var newLoadablePermission = new LoadablePermissionEntity();
-            newLoadablePermission.setCapabilityId(capability.getId());
-            newLoadablePermission.setPermissionName(capability.getPermission());
-            newLoadablePermission.setRoleId(loadablePermission.getRoleId());
-            newLoadablePermission.setRole(loadablePermission.getRole());
+    if (isEmpty(loadablePermissions)) {
+      log.debug("No loadable permissions found for capability, capabilityId = {}, permission = {}",
+        oldCap.getId(), oldCap.getPermission());
+      return emptySet();
+    }
 
-            log.info("Storing capability replacement {} for loadable permission {} of role {}",
-              capability.getPermission(), loadablePermission.getPermissionName(), loadablePermission.getRoleId());
+    var replacedLoadablePermissionIds = new HashSet<LoadablePermissionKey>();
+    for (var loadablePermission : loadablePermissions) {
+      for (var permission : newPermissions) {
+        capabilityService.findByPermissionName(permission).ifPresent(capability -> {
+          var newLoadablePermission = new LoadablePermissionEntity();
+          newLoadablePermission.setCapabilityId(capability.getId());
+          newLoadablePermission.setPermissionName(capability.getPermission());
+          newLoadablePermission.setRoleId(loadablePermission.getRoleId());
+          newLoadablePermission.setRole(loadablePermission.getRole());
 
-            loadablePermissionRepository.save(newLoadablePermission);
-          });
-        }
-        log.info("Removing replaced loadable permission {} of role {}", loadablePermission.getPermissionName(),
-          loadablePermission.getRoleId());
-        replacedLoadablePermissionIds.add(loadablePermission.getId());
+          log.info("Storing capability replacement {} for loadable permission {} of role {}",
+            capability.getPermission(), loadablePermission.getPermissionName(), loadablePermission.getRoleId());
+
+          loadablePermissionRepository.save(newLoadablePermission);
+        });
       }
+      log.info("Removing replaced loadable permission {} of role {}", loadablePermission.getPermissionName(),
+        loadablePermission.getRoleId());
+      replacedLoadablePermissionIds.add(loadablePermission.getId());
     }
     return replacedLoadablePermissionIds;
   }
 
-  protected HashSet<LoadablePermissionKey> replaceLoadablePermissionsForCapabilitySet(CapabilitySet oldCapSet,
-    List<String> replacements) {
-    var replacedLoadablePermissionIds = new HashSet<LoadablePermissionKey>();
+  protected Set<LoadablePermissionKey> replaceLoadablePermissionsForCapabilitySet(CapabilitySet oldCapSet,
+    List<String> newPermissions) {
     var loadablePermissions = loadablePermissionRepository.findAllByCapabilitySetId(oldCapSet.getId()).toList();
-    if (isNotEmpty(loadablePermissions)) {
-      for (var loadablePermission : loadablePermissions) {
-        for (var replacement : replacements) {
-          capabilitySetService.findByName(replacement).ifPresent(capabilitySet -> {
-            var newLoadablePermission = new LoadablePermissionEntity();
-            newLoadablePermission.setCapabilitySetId(capabilitySet.getId());
-            newLoadablePermission.setPermissionName(capabilitySet.getPermission());
-            newLoadablePermission.setRoleId(loadablePermission.getRoleId());
-            newLoadablePermission.setRole(loadablePermission.getRole());
+    if (isEmpty(loadablePermissions)) {
+      log.debug("No loadable permissions found for capability set: capabilitySetId = {}, permission = {}",
+        oldCapSet.getId(), oldCapSet.getPermission());
+      return emptySet();
+    }
 
-            log.info("Storing capability set replacement {} for loadable permission {} of role {}",
-              capabilitySet.getPermission(), loadablePermission.getPermissionName(), loadablePermission.getRoleId());
+    var replacedLoadablePermissionIds = new HashSet<LoadablePermissionKey>();
+    for (var loadablePermission : loadablePermissions) {
+      for (var permission : newPermissions) {
+        capabilitySetService.findByPermissionName(permission).ifPresent(capabilitySet -> {
+          var newLoadablePermission = new LoadablePermissionEntity();
+          newLoadablePermission.setCapabilitySetId(capabilitySet.getId());
+          newLoadablePermission.setPermissionName(capabilitySet.getPermission());
+          newLoadablePermission.setRoleId(loadablePermission.getRoleId());
+          newLoadablePermission.setRole(loadablePermission.getRole());
 
-            loadablePermissionRepository.save(newLoadablePermission);
-          });
-        }
-        log.info("Removing replaced loadable permission {} of role {}", loadablePermission.getPermissionName(),
-          loadablePermission.getRoleId());
-        replacedLoadablePermissionIds.add(loadablePermission.getId());
+          log.info("Storing capability set replacement {} for loadable permission {} of role {}",
+            capabilitySet.getPermission(), loadablePermission.getPermissionName(), loadablePermission.getRoleId());
+
+          loadablePermissionRepository.save(newLoadablePermission);
+        });
       }
+      log.info("Removing replaced loadable permission {} of role {}", loadablePermission.getPermissionName(),
+        loadablePermission.getRoleId());
+      replacedLoadablePermissionIds.add(loadablePermission.getId());
     }
     return replacedLoadablePermissionIds;
   }
@@ -311,17 +304,19 @@ public class CapabilityReplacementsService {
   }
 
   protected void unassignReplacedCapabilities(CapabilityReplacements capabilityReplacements) {
-    var oldCapabilitiesAndSetsToRemove = capabilityReplacements.oldCapabilitiesToNewCapabilities().keySet();
+    var oldPermissionsToRemove = capabilityReplacements.oldPermissionsToNewPermissions().keySet();
 
-    log.info("Removing old capabilities and capability sets: {}", String.join(", ", oldCapabilitiesAndSetsToRemove));
-    var oldCapabilitiesToRemove = capabilityService.findByNames(oldCapabilitiesAndSetsToRemove);
-    oldCapabilitiesToRemove.stream().map(
-      deprecatedCapability -> org.folio.roles.domain.model.event.CapabilityEvent.deleted(deprecatedCapability)
-        .withContext(folioExecutionContext)).forEach(applicationEventPublisher::publishEvent);
+    log.info("Removing old capabilities and capability sets by permission names: {}",
+      String.join(", ", oldPermissionsToRemove));
+    var oldCapabilitiesToRemove = capabilityService.findByPermissionNames(oldPermissionsToRemove);
+    oldCapabilitiesToRemove.stream()
+      .map(mapToDeleteCapabilityAppEvent())
+      .forEach(applicationEventPublisher::publishEvent);
 
-    var oldCapabilitySetsToRemove = capabilitySetService.findByNames(oldCapabilitiesAndSetsToRemove);
-    oldCapabilitySetsToRemove.stream().map(capSet -> capabilitySetMapper.toExtendedCapabilitySet(capSet, emptyList()))
-      .map(capSetExt -> CapabilitySetEvent.deleted(capSetExt).withContext(folioExecutionContext))
+    var oldCapabilitySetsToRemove = capabilitySetService.findByPermissionNames(oldPermissionsToRemove);
+    oldCapabilitySetsToRemove.stream()
+      .map(capSet -> capabilitySetMapper.toExtendedCapabilitySet(capSet, emptyList()))
+      .map(capSetExt -> deleted(capSetExt).withContext(folioExecutionContext))
       .forEach(applicationEventPublisher::publishEvent);
   }
 
@@ -333,5 +328,14 @@ public class CapabilityReplacementsService {
         // Ignore case when user/role to capability relation already exists
       }
     };
+  }
+
+  private static Stream<Entry<String, String>> mapToReplacesByPermission(Permission perm) {
+    return toStream(perm.getReplaces()).map(replacesValue -> entry(replacesValue, perm.getPermissionName()));
+  }
+
+  private Function<Capability, DomainEvent<Capability>> mapToDeleteCapabilityAppEvent() {
+    return deprecatedCapability -> org.folio.roles.domain.model.event.CapabilityEvent.deleted(deprecatedCapability)
+      .withContext(folioExecutionContext);
   }
 }

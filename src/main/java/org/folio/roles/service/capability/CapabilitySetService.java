@@ -253,6 +253,17 @@ public class CapabilitySetService {
   }
 
   /**
+   * Finds capability set by permission name.
+   *
+   * @param permissionName - permission name as {@link String}
+   * @return {@link Optional} of {@link CapabilitySet} object, {@link Optional#empty()} otherwise
+   */
+  @Transactional(readOnly = true)
+  public Optional<CapabilitySet> findByPermissionName(String permissionName) {
+    return repository.findByPermission(permissionName).map(capabilitySetEntityMapper::convert);
+  }
+
+  /**
    * Checks existing capability ids.
    *
    * @param capabilitySetIds - collection with capability {@link UUID} identifiers
