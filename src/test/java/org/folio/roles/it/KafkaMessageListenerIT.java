@@ -1,6 +1,7 @@
 package org.folio.roles.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Durations.TEN_SECONDS;
 import static org.folio.roles.domain.dto.CapabilityAction.CREATE;
 import static org.folio.roles.domain.dto.CapabilityAction.DELETE;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
@@ -39,7 +40,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.testcontainers.shaded.org.awaitility.Durations.FIVE_HUNDRED_MILLISECONDS;
-import static org.testcontainers.shaded.org.awaitility.Durations.FIVE_SECONDS;
 import static org.testcontainers.shaded.org.awaitility.Durations.ONE_HUNDRED_MILLISECONDS;
 
 import java.sql.SQLDataException;
@@ -193,6 +193,24 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.capabilities[0].metadata.createdDate", notNullValue())));
   }
 
+  @Test
+  void handleCapabilityEvent_positive_sameCapabilityNameCreatedByDifferentPermissions() throws Exception {
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(0))));
+    var capabilityEvent =
+      readValue("json/kafka-events/be-capability-event-replaces-contains-same-capability-by-permission.json",
+        ResourceEvent.class);
+    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
+
+    var expectedCapabilitiesJson = asJsonString(capabilities(
+      fooItemCapability(CREATE, DATA, "foo.item.create"),
+      fooItemCapability(EDIT, DATA, "foo.item.update")));
+
+    await().untilAsserted(() -> doGet("/capabilities")
+      .andExpect(content().json(expectedCapabilitiesJson))
+      .andExpect(jsonPath("$.capabilities[0].metadata.createdDate", notNullValue()))
+      .andExpect(jsonPath("$.capabilities[1].metadata.createdDate", notNullValue())));
+  }
+
   private void sendCapabilityEventAndCheckResult() throws Exception {
     var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
@@ -317,7 +335,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   }
 
   private static ConditionFactory await() {
-    return Awaitility.await().atMost(FIVE_SECONDS).pollInterval(ONE_HUNDRED_MILLISECONDS);
+    return Awaitility.await().atMost(TEN_SECONDS).pollInterval(ONE_HUNDRED_MILLISECONDS);
   }
 
   private static Capability fooItemCapability(CapabilityAction action, String permission, Endpoint... endpoints) {

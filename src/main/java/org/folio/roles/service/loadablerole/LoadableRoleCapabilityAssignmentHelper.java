@@ -61,7 +61,7 @@ public class LoadableRoleCapabilityAssignmentHelper {
 
     var permsByName = permissionsByName(permissions);
 
-    var capabilities = capabilityService.findByPermissionNames(permsByName.keySet());
+    var capabilities = capabilityService.findByPermissionNamesNoTechnical(permsByName.keySet());
 
     if (isNotEmpty(capabilities)) {
       roleCapabilityService.create(roleId, mapItems(capabilities, Capability::getId), false);
