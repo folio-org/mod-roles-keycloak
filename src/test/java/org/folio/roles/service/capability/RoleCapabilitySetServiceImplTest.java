@@ -133,7 +133,7 @@ class RoleCapabilitySetServiceImplTest {
       when(roleCapabilitySetEntityMapper.convert(roleCapabilityEntity2)).thenReturn(roleCapability2);
       when(roleCapabilitySetRepository.findRoleCapabilitySets(ROLE_ID, capabilitySetIds)).thenReturn(emptyList());
       when(roleCapabilitySetRepository.saveAll(entities)).thenReturn(entities);
-      when(capabilityService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0)).thenReturn(empty());
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
       doNothing().when(rolePermissionService).createPermissions(ROLE_ID, endpoints);
 
@@ -159,7 +159,7 @@ class RoleCapabilitySetServiceImplTest {
       when(roleCapabilitySetEntityMapper.convert(roleCapabilityEntity)).thenReturn(roleCapability);
       when(roleCapabilitySetRepository.findRoleCapabilitySets(ROLE_ID, capabilitySetIds)).thenReturn(emptyList());
       when(roleCapabilitySetRepository.saveAll(entities)).thenReturn(entities);
-      when(capabilityService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0)).thenReturn(empty());
       when(capabilitySetService.findByNames(capabilitySetNames)).thenReturn(capabilitySets);
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
       doNothing().when(rolePermissionService).createPermissions(ROLE_ID, endpoints);
@@ -246,7 +246,7 @@ class RoleCapabilitySetServiceImplTest {
 
       when(roleService.getById(ROLE_ID)).thenReturn(role());
       when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(expectedEntities);
-      when(capabilityService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0)).thenReturn(empty());
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
 
       roleCapabilitySetService.deleteAll(ROLE_ID);
@@ -288,7 +288,7 @@ class RoleCapabilitySetServiceImplTest {
 
       when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
       when(roleCapabilitySetRepository.findById(entityKey)).thenReturn(Optional.of(existingEntity));
-      when(capabilityService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0)).thenReturn(empty());
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
 
       roleCapabilitySetService.delete(ROLE_ID, CAPABILITY_SET_ID);
@@ -305,7 +305,7 @@ class RoleCapabilitySetServiceImplTest {
       var endpoints = List.of(endpoint());
 
       when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
-      when(capabilityService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0)).thenReturn(empty());
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
 
       roleCapabilitySetService.delete(ROLE_ID, List.of(CAPABILITY_SET_ID));
@@ -375,7 +375,7 @@ class RoleCapabilitySetServiceImplTest {
       when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
       when(roleCapabilitySetEntityMapper.convert(ucse2)).thenReturn(roleCapabilitySet(ROLE_ID, capabilitySetId2));
       when(roleCapabilitySetRepository.saveAll(List.of(ucse2))).thenReturn(List.of(ucse2));
-      when(capabilityService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilityService.findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
 
       var newIds = List.of(capabilitySetId2);
       var deprecatedIds = List.of(capabilitySetId1);
@@ -394,7 +394,7 @@ class RoleCapabilitySetServiceImplTest {
       verify(rolePermissionService).createPermissions(ROLE_ID, endpointsToAssign);
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpointsToDel);
       verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, deprecatedIds);
-      verify(capabilityService, times(2)).findByRoleId(ROLE_ID, false, MAX_VALUE, 0);
+      verify(capabilityService, times(2)).findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0);
     }
 
     @Test
@@ -414,7 +414,7 @@ class RoleCapabilitySetServiceImplTest {
       when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
       when(roleCapabilitySetEntityMapper.convert(ucse2)).thenReturn(roleCapabilitySet(ROLE_ID, capabilitySetId2));
       when(roleCapabilitySetRepository.saveAll(List.of(ucse2))).thenReturn(List.of(ucse2));
-      when(capabilityService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilityService.findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
 
       var newIds = List.of(capabilitySetId2);
       var deprecatedIds = List.of(capabilitySetId1);
@@ -433,7 +433,7 @@ class RoleCapabilitySetServiceImplTest {
       verify(rolePermissionService).createPermissions(ROLE_ID, endpointsToAssign);
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpointsToDel);
       verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, deprecatedIds);
-      verify(capabilityService, times(2)).findByRoleId(ROLE_ID, false, MAX_VALUE, 0);
+      verify(capabilityService, times(2)).findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0);
     }
 
     @Test

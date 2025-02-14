@@ -151,6 +151,7 @@ class UserCapabilityControllerTest {
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
+    verify(capabilityService).findByUserId(USER_ID, true, true, 10, 0);
   }
 
   @Test

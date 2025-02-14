@@ -255,7 +255,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   }
 
   private List<Endpoint> getChangedEndpoints(UUID roleId, List<UUID> deprecatedIds, Collection<UUID> assignedIds) {
-    var directlyAssignedCapabilities = capabilityService.findByRoleId(roleId, false, MAX_VALUE, 0);
+    var directlyAssignedCapabilities = capabilityService.findByRoleId(roleId, false, false, MAX_VALUE, 0);
     var excludedEndpoints = getCapabilityEndpoints(directlyAssignedCapabilities.getRecords());
     return capabilityEndpointService.getByCapabilitySetIds(deprecatedIds, assignedIds, excludedEndpoints);
   }

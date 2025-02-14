@@ -263,7 +263,7 @@ class CapabilityServiceTest {
     private final OffsetRequest offsetRequest = OffsetRequest.of(0, 10, DEFAULT_CAPABILITY_SORT);
 
     @Test
-    void positive_expandIsFalseAndDummyIsFalse() {
+    void positive_expandIsFalseAndIncludeDummyIsFalse() {
       var capability = capability();
       var capabilityEntity = capabilityEntity();
       var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
@@ -278,7 +278,7 @@ class CapabilityServiceTest {
     }
 
     @Test
-    void positive_expandIsFalseAndDummyIsTrue() {
+    void positive_expandIsFalseAndIncludeDummyIsTrue() {
       var capability = capability();
       var capabilityEntity = capabilityEntity();
       var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
@@ -338,13 +338,29 @@ class CapabilityServiceTest {
       when(capabilityRepository.findByRoleId(ROLE_ID, offsetRequest)).thenReturn(capabilityEntityPage);
       when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
 
-      var result = capabilityService.findByRoleId(ROLE_ID, false, 10, 0);
+      var result = capabilityService.findByRoleId(ROLE_ID, false, false, 10, 0);
 
       assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      verify(capabilityRepository).findByRoleId(ROLE_ID, offsetRequest);
     }
 
     @Test
-    void positive_expandIsTrue() {
+    void positive_expandIsFalseAndIncludeDummyIsFalse() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
+
+      when(capabilityRepository.findByRoleIdIncludeDummy(ROLE_ID, offsetRequest)).thenReturn(capabilityEntityPage);
+      when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+
+      var result = capabilityService.findByRoleId(ROLE_ID, false, true, 10, 0);
+
+      assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      verify(capabilityRepository).findByRoleIdIncludeDummy(ROLE_ID, offsetRequest);
+    }
+
+    @Test
+    void positive_expandIsTrueAndIncludeDummyIsFalse() {
       var capability = capability();
       var capabilityEntity = capabilityEntity();
       var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
@@ -352,9 +368,25 @@ class CapabilityServiceTest {
       when(capabilityRepository.findAllByRoleId(ROLE_ID, offsetRequest)).thenReturn(capabilityEntityPage);
       when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
 
-      var result = capabilityService.findByRoleId(ROLE_ID, true, 10, 0);
+      var result = capabilityService.findByRoleId(ROLE_ID, true, false, 10, 0);
 
       assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      verify(capabilityRepository).findAllByRoleId(ROLE_ID, offsetRequest);
+    }
+
+    @Test
+    void positive_expandIsTrueAndIncludeDummyIsTrue() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
+
+      when(capabilityRepository.findAllByRoleIdIncludeDummy(ROLE_ID, offsetRequest)).thenReturn(capabilityEntityPage);
+      when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+
+      var result = capabilityService.findByRoleId(ROLE_ID, true, true, 10, 0);
+
+      assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      verify(capabilityRepository).findAllByRoleIdIncludeDummy(ROLE_ID, offsetRequest);
     }
   }
 

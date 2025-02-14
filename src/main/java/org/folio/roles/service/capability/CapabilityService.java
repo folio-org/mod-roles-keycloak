@@ -131,16 +131,17 @@ public class CapabilityService {
    *
    * @param roleId - role identifier as {@link UUID} object
    * @param expand - defines if capability sets myst be expanded
+   * @param includeDummy  - defines if capability set should include dummy capabilities
    * @param limit - a number of results in response
    * @param offset - offset in pagination from first record
    * @return list with {@link Capability} objects
    */
   @Transactional(readOnly = true)
-  public PageResult<Capability> findByRoleId(UUID roleId, boolean expand, int limit, int offset) {
+  public PageResult<Capability> findByRoleId(UUID roleId, boolean expand, boolean includeDummy, int limit, int offset) {
     var offsetRequest = OffsetRequest.of(offset, limit, CapabilityEntity.DEFAULT_CAPABILITY_SORT);
     var capabilityEntitiesPage = expand
-      ? capabilityRepository.findAllByRoleId(roleId, offsetRequest)
-      : capabilityRepository.findByRoleId(roleId, offsetRequest);
+      ? findAllCapabilityEntitiesByRoleId(includeDummy, roleId, offsetRequest)
+      : findCapabilityEntitiesByRoleId(includeDummy, roleId, offsetRequest);
 
     var capabilitiesPage = capabilityEntitiesPage.map(capabilityEntityMapper::convert);
     return PageResult.fromPage(capabilitiesPage);
@@ -315,11 +316,25 @@ public class CapabilityService {
       : capabilityRepository.findAllByUserId(userId, offsetRequest);
   }
 
-  private Page<CapabilityEntity> findCapabilityEntitiesByUserId(boolean includeDumme, UUID userId,
+  private Page<CapabilityEntity> findCapabilityEntitiesByUserId(boolean includeDummy, UUID userId,
                                                                 OffsetRequest offsetRequest) {
-    return includeDumme
+    return includeDummy
       ? capabilityRepository.findByUserIdIncludeDummy(userId, offsetRequest)
       : capabilityRepository.findByUserId(userId, offsetRequest);
+  }
+
+  private Page<CapabilityEntity> findAllCapabilityEntitiesByRoleId(boolean includeDummy, UUID roleId,
+                                                                   OffsetRequest offsetRequest) {
+    return includeDummy
+      ? capabilityRepository.findAllByRoleIdIncludeDummy(roleId, offsetRequest)
+      : capabilityRepository.findAllByRoleId(roleId, offsetRequest);
+  }
+
+  private Page<CapabilityEntity> findCapabilityEntitiesByRoleId(boolean includeDummy, UUID roleId,
+                                                                   OffsetRequest offsetRequest) {
+    return includeDummy
+      ? capabilityRepository.findByRoleIdIncludeDummy(roleId, offsetRequest)
+      : capabilityRepository.findByRoleId(roleId, offsetRequest);
   }
 
   private static String trimWildcard(String param) {

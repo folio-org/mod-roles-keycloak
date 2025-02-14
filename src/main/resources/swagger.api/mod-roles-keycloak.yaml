@@ -305,6 +305,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/pathRoleId'
         - $ref: '#/components/parameters/expand-capabilities'
+        - $ref: '#/components/parameters/includeDummy'
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
       responses:
@@ -1213,15 +1214,6 @@ components:
         type: boolean
         default: false
       example: false
-    includeDummy:
-      in: query
-      name: includeDummy
-      description: Include dummy capabilities.
-      required: false
-      schema:
-        type: boolean
-        default: false
-      example: false
     onlyVisible:
       in: query
       name: onlyVisible
@@ -1259,6 +1251,15 @@ components:
       schema:
         type: boolean
         default: false
+    includeDummy:
+      in: query
+      name: includeDummy
+      description: Include dummy capabilities.
+      required: false
+      schema:
+        type: boolean
+        default: false
+      example: false
     desiredPermissions:
       in: query
       name: desiredPermissions

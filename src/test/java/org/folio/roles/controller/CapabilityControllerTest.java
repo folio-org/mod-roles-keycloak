@@ -77,7 +77,6 @@ class CapabilityControllerTest {
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
-
     verify(capabilityService).findByCapabilitySetId(CAPABILITY_SET_ID, false, 10, 15);
   }
 
