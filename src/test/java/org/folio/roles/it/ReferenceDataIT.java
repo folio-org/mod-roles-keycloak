@@ -52,7 +52,7 @@ class ReferenceDataIT extends BaseIntegrationTest {
         .header(USER_ID, USER_ID_HEADER)
         .queryParam("limit", valueOf(MAX_VALUE)))
       .andExpect(status().isOk())
-      .andExpect(jsonPath("$.totalRecords").value(29));
+      .andExpect(jsonPath("$.totalRecords").value(30));
 
     mockMvc.perform(get("/policies")
         .header(TENANT, TENANT_ID)
