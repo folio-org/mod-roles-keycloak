@@ -263,7 +263,7 @@ class CapabilityServiceTest {
     private final OffsetRequest offsetRequest = OffsetRequest.of(0, 10, DEFAULT_CAPABILITY_SORT);
 
     @Test
-    void positive_expandIsFalse() {
+    void positive_expandIsFalseAndDummyIsFalse() {
       var capability = capability();
       var capabilityEntity = capabilityEntity();
       var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
@@ -271,13 +271,29 @@ class CapabilityServiceTest {
       when(capabilityRepository.findByUserId(USER_ID, offsetRequest)).thenReturn(capabilityEntityPage);
       when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
 
-      var result = capabilityService.findByUserId(USER_ID, false, 10, 0);
+      var result = capabilityService.findByUserId(USER_ID, false, false, 10, 0);
 
       assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      verify(capabilityRepository).findByUserId(USER_ID, offsetRequest);
     }
 
     @Test
-    void positive_expandIsTrue() {
+    void positive_expandIsFalseAndDummyIsTrue() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
+
+      when(capabilityRepository.findByUserIdIncludeDummy(USER_ID, offsetRequest)).thenReturn(capabilityEntityPage);
+      when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+
+      var result = capabilityService.findByUserId(USER_ID, false, true, 10, 0);
+
+      assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      verify(capabilityRepository).findByUserIdIncludeDummy(USER_ID, offsetRequest);
+    }
+
+    @Test
+    void positive_expandIsTrueAndIncludeDummyIsFalse() {
       var capability = capability();
       var capabilityEntity = capabilityEntity();
       var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
@@ -285,9 +301,25 @@ class CapabilityServiceTest {
       when(capabilityRepository.findAllByUserId(USER_ID, offsetRequest)).thenReturn(capabilityEntityPage);
       when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
 
-      var result = capabilityService.findByUserId(USER_ID, true, 10, 0);
+      var result = capabilityService.findByUserId(USER_ID, true, false, 10, 0);
 
       assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      verify(capabilityRepository).findAllByUserId(USER_ID, offsetRequest);
+    }
+
+    @Test
+    void positive_expandIsTrueAndIncludeDummyIsTrue() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
+
+      when(capabilityRepository.findAllByUserIdIncludeDummy(USER_ID, offsetRequest)).thenReturn(capabilityEntityPage);
+      when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+
+      var result = capabilityService.findByUserId(USER_ID, true, true, 10, 0);
+
+      assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      verify(capabilityRepository).findAllByUserIdIncludeDummy(USER_ID, offsetRequest);
     }
   }
 
@@ -361,15 +393,33 @@ class CapabilityServiceTest {
       when(capabilityRepository.findByCapabilitySetId(CAPABILITY_SET_ID, offsetRequest)).thenReturn(entityPage);
       when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
 
-      var result = capabilityService.findByCapabilitySetId(CAPABILITY_SET_ID, 10, 0);
+      var result = capabilityService.findByCapabilitySetId(CAPABILITY_SET_ID, false, 10, 0);
 
       assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      verify(capabilityRepository).findByCapabilitySetId(CAPABILITY_SET_ID, offsetRequest);
+    }
+
+    @Test
+    void positive_includeDummyIsTrue() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      var entityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
+
+      when(capabilitySetService.get(CAPABILITY_SET_ID)).thenReturn(capabilitySet());
+      when(capabilityRepository
+        .findByCapabilitySetIdIncludeDummy(CAPABILITY_SET_ID, offsetRequest)).thenReturn(entityPage);
+      when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+
+      var result = capabilityService.findByCapabilitySetId(CAPABILITY_SET_ID, true, 10, 0);
+
+      assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      verify(capabilityRepository).findByCapabilitySetIdIncludeDummy(CAPABILITY_SET_ID, offsetRequest);
     }
 
     @Test
     void negative_capabilitySetIsNotFound() {
       when(capabilitySetService.get(CAPABILITY_SET_ID)).thenThrow(EntityNotFoundException.class);
-      assertThatThrownBy(() -> capabilityService.findByCapabilitySetId(CAPABILITY_SET_ID, 10, 0))
+      assertThatThrownBy(() -> capabilityService.findByCapabilitySetId(CAPABILITY_SET_ID, false, 10, 0))
         .isInstanceOf(EntityNotFoundException.class);
     }
   }

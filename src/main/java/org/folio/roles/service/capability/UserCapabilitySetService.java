@@ -162,7 +162,7 @@ public class UserCapabilitySetService {
   }
 
   private List<Endpoint> getChangedEndpoints(UUID userId, List<UUID> deprecatedIds, Collection<UUID> assignedIds) {
-    var directlyAssignedCapabilities = capabilityService.findByUserId(userId, false, MAX_VALUE, 0);
+    var directlyAssignedCapabilities = capabilityService.findByUserId(userId, false, false, MAX_VALUE, 0);
     var excludedEndpoints = getCapabilityEndpoints(directlyAssignedCapabilities.getRecords());
     return capabilityEndpointService.getByCapabilitySetIds(deprecatedIds, assignedIds, excludedEndpoints);
   }

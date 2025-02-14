@@ -8,6 +8,7 @@ import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.test.TestUtils.asJsonString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 
 @UnitTest
@@ -63,18 +65,37 @@ class CapabilityControllerTest {
 
   @Test
   void getCapabilitiesByCapabilitySetId_positive() throws Exception {
-    var query = "cql.allRecords = 1";
     var capability = capability();
-    when(capabilityService.findByCapabilitySetId(CAPABILITY_SET_ID, 10, 15)).thenReturn(asSinglePage(capability));
+    when(capabilityService.findByCapabilitySetId(CAPABILITY_SET_ID, false, 10, 15))
+      .thenReturn(asSinglePage(capability));
 
     mockMvc.perform(get("/capability-sets/{id}/capabilities", CAPABILITY_SET_ID)
-        .queryParam("query", query)
         .queryParam("offset", "15")
         .queryParam("limit", "10")
         .contentType(APPLICATION_JSON)
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilities(capability)), true));
+      .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
+
+    verify(capabilityService).findByCapabilitySetId(CAPABILITY_SET_ID, false, 10, 15);
+  }
+
+  @Test
+  void getCapabilitiesByCapabilitySetId_positive_includeDummy() throws Exception {
+    var capability = capability();
+    when(capabilityService.findByCapabilitySetId(CAPABILITY_SET_ID, true, 10, 15))
+      .thenReturn(asSinglePage(capability));
+
+    mockMvc.perform(get("/capability-sets/{id}/capabilities", CAPABILITY_SET_ID)
+        .queryParam("offset", "15")
+        .queryParam("limit", "10")
+        .queryParam("includeDummy", "true")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
+    verify(capabilityService).findByCapabilitySetId(CAPABILITY_SET_ID, true, 10, 15);
   }
 }
