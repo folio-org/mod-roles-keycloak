@@ -39,7 +39,7 @@
     <apache-commons-collections4.version>4.4</apache-commons-collections4.version>
     <openapi-tools.jackson-databind-nullable.version>0.2.6</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.6.3</mapstruct.version>
-    <hypersistence-utils-hibernate-63.version>3.9.1</hypersistence-utils-hibernate-63.version>
+    <hypersistence-utils-hibernate-63.version>3.9.2</hypersistence-utils-hibernate-63.version>
     <folio-spring-support.version>8.3.0-SNAPSHOT</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
