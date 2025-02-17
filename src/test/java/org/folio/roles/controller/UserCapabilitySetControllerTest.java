@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 
 @UnitTest
@@ -58,7 +59,7 @@ class UserCapabilitySetControllerTest {
         .content(asJsonString(request)))
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -75,7 +76,7 @@ class UserCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -88,13 +89,13 @@ class UserCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
   void findByUserId_positive() throws Exception {
     var foundCapabilitySet = capabilitySet();
-    when(capabilitySetService.findByUserId(USER_ID, 100, 20)).thenReturn(asSinglePage(foundCapabilitySet));
+    when(capabilitySetService.findByUserId(USER_ID, false, 100, 20)).thenReturn(asSinglePage(foundCapabilitySet));
 
     mockMvc.perform(get("/users/{id}/capability-sets", USER_ID)
         .param("limit", "100")
@@ -103,21 +104,40 @@ class UserCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), JsonCompareMode.STRICT));
+    verify(capabilitySetService).findByUserId(USER_ID, false, 100, 20);
+  }
+
+  @Test
+  void findByUserId_positive_includeDummyIsTrue() throws Exception {
+    var foundCapabilitySet = capabilitySet();
+    when(capabilitySetService.findByUserId(USER_ID, true, 100, 20))
+      .thenReturn(asSinglePage(foundCapabilitySet));
+
+    mockMvc.perform(get("/users/{id}/capability-sets", USER_ID)
+        .param("limit", "100")
+        .param("offset", "20")
+        .param("includeDummy", "true")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), JsonCompareMode.STRICT));
+    verify(capabilitySetService).findByUserId(USER_ID, true, 100, 20);
   }
 
   @Test
   void findByUserId_positive_defaultPageParameters() throws Exception {
     var capabilitySet = capabilitySet();
     when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
-    when(capabilitySetService.findByUserId(USER_ID, 10, 0)).thenReturn(asSinglePage(capabilitySet));
+    when(capabilitySetService.findByUserId(USER_ID, false, 10, 0)).thenReturn(asSinglePage(capabilitySet));
 
     mockMvc.perform(get("/users/{id}/capability-sets", USER_ID)
         .contentType(APPLICATION_JSON)
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), true));
+      .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test

@@ -128,7 +128,7 @@ class UserCapabilityServiceTest {
       when(userCapabilityEntityMapper.convert(userCapabilityEntity1)).thenReturn(userCapability1);
       when(userCapabilityEntityMapper.convert(userCapabilityEntity2)).thenReturn(userCapability2);
       when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
-      when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilitySetService.findByUserId(USER_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(capabilityEndpointService.getByCapabilityIds(capabilityIds, emptyList())).thenReturn(endpoints);
 
       var result = userCapabilityService.create(USER_ID, capabilityIds);
@@ -155,7 +155,7 @@ class UserCapabilityServiceTest {
       when(userCapabilityRepository.findUserCapabilities(USER_ID, capabilityIds)).thenReturn(emptyList());
       when(userCapabilityEntityMapper.convert(userCapabilityEntity1)).thenReturn(userCapability1);
       when(userCapabilityEntityMapper.convert(userCapabilityEntity2)).thenReturn(userCapability2);
-      when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
+      when(capabilitySetService.findByUserId(USER_ID, false, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
       when(capabilityEndpointService.getByCapabilityIds(capabilityIds, assignedCapabilityIds)).thenReturn(endpoints);
 
       var result = userCapabilityService.create(USER_ID, capabilityIds);
@@ -210,7 +210,7 @@ class UserCapabilityServiceTest {
       var endpoints = List.of(endpoint("/c1", GET));
       when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
       when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(expectedEntities);
-      when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilitySetService.findByUserId(USER_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(capabilityEndpointService.getByCapabilityIds(List.of(capabilityId1), emptyList())).thenReturn(endpoints);
 
       userCapabilityService.deleteAll(USER_ID);
@@ -229,7 +229,7 @@ class UserCapabilityServiceTest {
 
       when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
       when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(expectedEntities);
-      when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
+      when(capabilitySetService.findByUserId(USER_ID, false, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
       when(capabilityEndpointService.getByCapabilityIds(deprecatedIds, assignedIds)).thenReturn(endpoints);
 
       userCapabilityService.deleteAll(USER_ID);
@@ -271,7 +271,7 @@ class UserCapabilityServiceTest {
 
       when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
       when(userCapabilityRepository.findById(entityKey)).thenReturn(Optional.of(existingEntity));
-      when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilitySetService.findByUserId(USER_ID, false, MAX_VALUE, 0)).thenReturn(empty());
       when(capabilityEndpointService.getByCapabilityIds(capabilitySetIds, emptyList())).thenReturn(endpoints);
 
       userCapabilityService.delete(USER_ID, CAPABILITY_ID);
@@ -320,7 +320,7 @@ class UserCapabilityServiceTest {
       var existingEntities = List.of(uce1, uce3);
 
       when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
-      when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilitySetService.findByUserId(USER_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
       when(userCapabilityEntityMapper.convert(uce2)).thenReturn(userCapability(USER_ID, capabilityId2));
       when(userCapabilityEntityMapper.convert(uce3)).thenReturn(userCapability(USER_ID, capabilityId3));

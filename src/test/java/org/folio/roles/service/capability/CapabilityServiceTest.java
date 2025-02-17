@@ -330,7 +330,7 @@ class CapabilityServiceTest {
     private final OffsetRequest offsetRequest = OffsetRequest.of(0, 10, DEFAULT_CAPABILITY_SORT);
 
     @Test
-    void positive_expandIsFalse() {
+    void positive_expandIsFalseAndIncludeDummyIsFalse() {
       var capability = capability();
       var capabilityEntity = capabilityEntity();
       var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
@@ -345,7 +345,7 @@ class CapabilityServiceTest {
     }
 
     @Test
-    void positive_expandIsFalseAndIncludeDummyIsFalse() {
+    void positive_expandIsFalseAndIncludeDummyIsTrue() {
       var capability = capability();
       var capabilityEntity = capabilityEntity();
       var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);

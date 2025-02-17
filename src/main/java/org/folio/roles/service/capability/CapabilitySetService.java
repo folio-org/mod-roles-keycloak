@@ -204,9 +204,11 @@ public class CapabilitySetService {
    * @return list with {@link Capability} objects
    */
   @Transactional(readOnly = true)
-  public PageResult<CapabilitySet> findByUserId(UUID userId, int limit, int offset) {
+  public PageResult<CapabilitySet> findByUserId(UUID userId, boolean includeDummy, int limit, int offset) {
     var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_CAPABILITY_SET_SORT);
-    var capabilityEntitiesPage = repository.findByUserId(userId, offsetRequest);
+    var capabilityEntitiesPage = includeDummy
+      ? repository.findByUserIdIncludeDummy(userId, offsetRequest)
+      : repository.findByUserId(userId, offsetRequest);
     var capabilitiesPage = capabilityEntitiesPage.map(capabilitySetEntityMapper::convert);
     return PageResult.fromPage(capabilitiesPage);
   }
