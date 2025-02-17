@@ -135,7 +135,7 @@ class RoleCapabilityServiceImplTest {
       when(roleCapabilityEntityMapper.convert(roleCapabilityEntity1)).thenReturn(roleCapability1);
       when(roleCapabilityEntityMapper.convert(roleCapabilityEntity2)).thenReturn(roleCapability2);
       when(roleService.getById(ROLE_ID)).thenReturn(role());
-      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilitySetService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(capabilityEndpointService.getByCapabilityIds(capabilityIds, emptyList())).thenReturn(endpoints);
 
       var result = roleCapabilityService.create(ROLE_ID, capabilityIds, false);
@@ -161,7 +161,7 @@ class RoleCapabilityServiceImplTest {
       when(roleCapabilityRepository.findRoleCapabilities(ROLE_ID, capabilityIds)).thenReturn(emptyList());
       when(roleCapabilityEntityMapper.convert(roleCapabilityEntity1)).thenReturn(roleCapability);
       when(roleService.getById(ROLE_ID)).thenReturn(role());
-      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilitySetService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(capabilityService.findByNames(capabilityNames)).thenReturn(capabilities);
       when(capabilityEndpointService.getByCapabilityIds(capabilityIds, emptyList())).thenReturn(endpoints);
 
@@ -189,7 +189,7 @@ class RoleCapabilityServiceImplTest {
       when(roleCapabilityRepository.findRoleCapabilities(ROLE_ID, capabilityIds)).thenReturn(emptyList());
       when(roleCapabilityEntityMapper.convert(roleCapabilityEntity1)).thenReturn(roleCapability1);
       when(roleCapabilityEntityMapper.convert(roleCapabilityEntity2)).thenReturn(roleCapability2);
-      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
+      when(capabilitySetService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
       when(capabilityEndpointService.getByCapabilityIds(capabilityIds, assignedCapabilityIds)).thenReturn(endpoints);
 
       var result = roleCapabilityService.create(ROLE_ID, capabilityIds, false);
@@ -274,7 +274,7 @@ class RoleCapabilityServiceImplTest {
       var endpoints = List.of(endpoint("/c1", GET));
       when(roleService.getById(ROLE_ID)).thenReturn(role());
       when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(expectedEntities);
-      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilitySetService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(capabilityEndpointService.getByCapabilityIds(List.of(capabilityId1), emptyList())).thenReturn(endpoints);
 
       roleCapabilityService.deleteAll(ROLE_ID);
@@ -293,7 +293,7 @@ class RoleCapabilityServiceImplTest {
 
       when(roleService.getById(ROLE_ID)).thenReturn(role());
       when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(expectedEntities);
-      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
+      when(capabilitySetService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
       when(capabilityEndpointService.getByCapabilityIds(deprecatedIds, assignedIds)).thenReturn(endpoints);
 
       roleCapabilityService.deleteAll(ROLE_ID);
@@ -335,7 +335,7 @@ class RoleCapabilityServiceImplTest {
 
       when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
       when(roleCapabilityRepository.findById(entityKey)).thenReturn(Optional.of(existingEntity));
-      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilitySetService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(empty());
       when(capabilityEndpointService.getByCapabilityIds(capabilitySetIds, emptyList())).thenReturn(endpoints);
 
       roleCapabilityService.delete(ROLE_ID, CAPABILITY_ID);
@@ -384,7 +384,7 @@ class RoleCapabilityServiceImplTest {
       var existingEntities = List.of(uce1, uce3);
 
       when(roleService.getById(ROLE_ID)).thenReturn(role());
-      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilitySetService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
       when(roleCapabilityEntityMapper.convert(uce2)).thenReturn(roleCapability(ROLE_ID, capabilityId2));
       when(roleCapabilityRepository.saveAll(List.of(uce2))).thenReturn(List.of(uce2));
@@ -421,7 +421,7 @@ class RoleCapabilityServiceImplTest {
 
       when(roleService.getById(ROLE_ID)).thenReturn(role());
       when(capabilityService.findByNames(capabilityNames)).thenReturn(capabilities);
-      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilitySetService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
       when(roleCapabilityEntityMapper.convert(uce2)).thenReturn(roleCapability(ROLE_ID, capabilityId2));
       when(roleCapabilityRepository.saveAll(List.of(uce2))).thenReturn(List.of(uce2));
@@ -491,11 +491,12 @@ class RoleCapabilityServiceImplTest {
       var capabilityId = UUID.randomUUID();
       var assignedIds = List.of(capabilityId);
       var capabilitySet = capabilitySet(assignedIds);
-      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
+      when(capabilitySetService.findByRoleId(ROLE_ID, false, MAX_VALUE, 0)).thenReturn(asSinglePage(capabilitySet));
 
       var result = roleCapabilityService.getCapabilitySetCapabilityIds(ROLE_ID);
 
       assertThat(result).containsExactly(capabilityId);
+      verify(capabilitySetService).findByRoleId(ROLE_ID, false, MAX_VALUE, 0);
     }
   }
 }

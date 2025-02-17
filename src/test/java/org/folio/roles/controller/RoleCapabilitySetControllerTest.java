@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 
 @UnitTest
@@ -62,7 +63,7 @@ class RoleCapabilitySetControllerTest {
         .content(asJsonString(request)))
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -81,7 +82,7 @@ class RoleCapabilitySetControllerTest {
         .content(asJsonString(request)))
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -98,7 +99,7 @@ class RoleCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -111,13 +112,13 @@ class RoleCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
   void findByRoleId_positive() throws Exception {
     var foundCapabilitySet = capabilitySet();
-    when(capabilitySetService.findByRoleId(ROLE_ID, 100, 20)).thenReturn(asSinglePage(foundCapabilitySet));
+    when(capabilitySetService.findByRoleId(ROLE_ID, false, 100, 20)).thenReturn(asSinglePage(foundCapabilitySet));
 
     mockMvc.perform(get("/roles/{id}/capability-sets", ROLE_ID)
         .param("limit", "100")
@@ -126,21 +127,37 @@ class RoleCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
   void findByRoleId_positive_defaultPageParameters() throws Exception {
     var capabilitySet = capabilitySet();
     when(roleService.getById(ROLE_ID)).thenReturn(role());
-    when(capabilitySetService.findByRoleId(ROLE_ID, 10, 0)).thenReturn(asSinglePage(capabilitySet));
+    when(capabilitySetService.findByRoleId(ROLE_ID, false, 10, 0)).thenReturn(asSinglePage(capabilitySet));
 
     mockMvc.perform(get("/roles/{id}/capability-sets", ROLE_ID)
         .contentType(APPLICATION_JSON)
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), true));
+      .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), JsonCompareMode.STRICT));
+  }
+
+  @Test
+  void findByRoleId_positive_includeDummyIsTrue() throws Exception {
+    var capabilitySet = capabilitySet();
+    when(roleService.getById(ROLE_ID)).thenReturn(role());
+    when(capabilitySetService.findByRoleId(ROLE_ID, true, 10, 0)).thenReturn(asSinglePage(capabilitySet));
+
+    mockMvc.perform(get("/roles/{id}/capability-sets", ROLE_ID)
+        .param("includeDummy", "true")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), JsonCompareMode.STRICT));
+    verify(capabilitySetService).findByRoleId(ROLE_ID, true, 10, 0);
   }
 
   @Test

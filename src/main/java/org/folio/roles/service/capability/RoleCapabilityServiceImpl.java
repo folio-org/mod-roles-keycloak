@@ -269,7 +269,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   }
 
   private List<UUID> getAssignedCapabilityIds(UUID roleId) {
-    var capabilitySets = capabilitySetService.findByRoleId(roleId, MAX_VALUE, 0);
+    var capabilitySets = capabilitySetService.findByRoleId(roleId, false, MAX_VALUE, 0);
     return CapabilityUtils.getCapabilitySetIds(capabilitySets);
   }
 }

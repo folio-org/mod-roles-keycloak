@@ -416,6 +416,7 @@ paths:
         - role-capability-set
       parameters:
         - $ref: '#/components/parameters/pathRoleId'
+        - $ref: '#/components/parameters/includeDummy'
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
       responses:
