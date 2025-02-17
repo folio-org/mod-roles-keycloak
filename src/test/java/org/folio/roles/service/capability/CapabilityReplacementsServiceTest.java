@@ -10,6 +10,7 @@ import static org.folio.roles.support.LoadablePermissionUtils.loadablePermission
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -252,6 +253,22 @@ class CapabilityReplacementsServiceTest {
       .filter(id -> roleId.equals(id.getRoleId()) && id.getPermissionName().equals("oldperm1"))).hasSize(1);
     assertThat(deletedIds.stream().filter(
       id -> roleId.equals(id.getRoleId()) && id.getPermissionName().equals("oldset1"))).hasSize(1);
+  }
+
+  @Test
+  void deduceReplacements_positive_emptyIfNothingToDeduce() {
+    var testData = new CapabilityEvent();
+
+    var replacements = unit.deduceReplacements(testData);
+    assertThat(replacements).isEmpty();
+  }
+
+  @Test
+  void replaceLoadable_positive_emptyPermissionMappingData() {
+    var capabilityReplacements = new CapabilityReplacements(Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+    unit.replaceLoadable(capabilityReplacements);
+
+    verifyNoInteractions(loadablePermissionRepository);
   }
 
   private static Capability capability(UUID id, String name) {

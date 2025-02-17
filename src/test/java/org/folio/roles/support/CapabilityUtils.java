@@ -73,8 +73,12 @@ public class CapabilityUtils {
       .description(String.format("Capability to %s a %s", action.getValue(), resource.toLowerCase()))
       .resource(resource)
       .permission(permission)
-      .endpoints(Arrays.asList(endpoints))
+      .endpoints(endpoints == null ? null : Arrays.asList(endpoints))
       .action(action);
+  }
+
+  public static Capability technicalCapability() {
+    return capability(CAPABILITY_ID, RESOURCE_NAME, CREATE, PERMISSION_NAME, null);
   }
 
   public static Capabilities capabilities(Capability... capabilities) {

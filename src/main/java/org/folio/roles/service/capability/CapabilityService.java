@@ -1,5 +1,6 @@
 package org.folio.roles.service.capability;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
@@ -202,6 +203,9 @@ public class CapabilityService {
    */
   @Transactional(readOnly = true)
   public List<Capability> findByPermissionNames(Collection<String> permissionNames) {
+    if (isEmpty(permissionNames)) {
+      return emptyList();
+    }
     var capabilityEntities = capabilityRepository.findAllByPermissionNames(permissionNames);
     return capabilityEntityMapper.convert(capabilityEntities);
   }
