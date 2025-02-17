@@ -194,7 +194,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   }
 
   @Test
-  void handleCapabilityEvent_positive_sameCapabilityNameCreatedByDifferentPermissions() throws Exception {
+  void handleCapabilityEvent_positive_sameCapabilityNameCreatedByDifferentPermissions() {
     await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(0))));
     var capabilityEvent =
       readValue("json/kafka-events/be-capability-event-replaces-contains-same-capability-by-permission.json",
