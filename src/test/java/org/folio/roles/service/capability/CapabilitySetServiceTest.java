@@ -13,6 +13,7 @@ import static org.folio.roles.support.CapabilitySetUtils.capabilitySetEntity;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
+import static org.folio.roles.support.CapabilityUtils.PERMISSION_NAME;
 import static org.folio.roles.support.CapabilityUtils.RESOURCE_NAME;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.TestConstants.USER_ID;
@@ -551,6 +552,23 @@ class CapabilitySetServiceTest {
       var moduleId = "mod-test-1.0.0";
       capabilitySetService.updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
       verify(capabilitySetRepository).updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
+    }
+  }
+
+  @Nested
+  @DisplayName("findByPermissionName")
+  class FindByPermissionName {
+
+    @Test
+    void positive() {
+      var capability = capabilitySet();
+      var capabilityEntity = capabilitySetEntity();
+      when(capabilitySetRepository.findByPermission(PERMISSION_NAME)).thenReturn(Optional.of(capabilityEntity));
+      when(mapper.convert(capabilityEntity)).thenReturn(capability);
+
+      var result = capabilitySetService.findByPermissionName(PERMISSION_NAME);
+
+      assertThat(result).contains(capability);
     }
   }
 }
