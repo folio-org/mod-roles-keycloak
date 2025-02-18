@@ -394,35 +394,6 @@ class CapabilitySetServiceTest {
   }
 
   @Nested
-  @DisplayName("findUserCapabilities")
-  class FindUserCapabilities {
-
-    @Test
-    void positive_expandIsTrue() {
-      var foundEntity = capabilitySetEntity();
-      var expectedCapability = capabilitySet();
-      when(capabilitySetRepository.findCapabilitiesForUser(USER_ID)).thenReturn(List.of(foundEntity));
-      when(mapper.convert(List.of(foundEntity))).thenReturn(List.of(expectedCapability));
-
-      var result = capabilitySetService.findUserCapabilities(USER_ID, false);
-
-      assertThat(result).containsExactly(expectedCapability);
-    }
-
-    @Test
-    void positive_expandIsFalse() {
-      var foundEntity = capabilitySetEntity();
-      var expectedCapabilitySet = capabilitySet();
-      when(capabilitySetRepository.findExpandedCapabilitiesForUser(USER_ID)).thenReturn(List.of(foundEntity));
-      when(mapper.convert(List.of(foundEntity))).thenReturn(List.of(expectedCapabilitySet));
-
-      var result = capabilitySetService.findUserCapabilities(USER_ID, true);
-
-      assertThat(result).containsExactly(expectedCapabilitySet);
-    }
-  }
-
-  @Nested
   @DisplayName("findByUserId")
   class FindByUserId {
 

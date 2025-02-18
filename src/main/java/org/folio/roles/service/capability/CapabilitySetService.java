@@ -183,21 +183,6 @@ public class CapabilitySetService {
   }
 
   /**
-   * Searches for user assigned capabilities using user identifier and expand parameter.
-   *
-   * @param userId - user identifier
-   * @param expand - whether capabilities must be expanded or not
-   * @return {@link List} with found {@link Capability} values
-   */
-  @Transactional(readOnly = true)
-  public List<CapabilitySet> findUserCapabilities(UUID userId, boolean expand) {
-    var capabilityEntities = expand
-      ? repository.findExpandedCapabilitiesForUser(userId)
-      : repository.findCapabilitiesForUser(userId);
-    return capabilitySetEntityMapper.convert(capabilityEntities);
-  }
-
-  /**
    * Retrieves capabilities by user id.
    *
    * @param userId - user identifier as {@link UUID} object
