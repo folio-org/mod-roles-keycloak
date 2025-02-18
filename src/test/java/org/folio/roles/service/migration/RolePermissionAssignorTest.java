@@ -57,7 +57,7 @@ class RolePermissionAssignorTest {
   void assignPermissions_positive() {
     var permissions = List.of("foo.item.get", "foo.item.post", "foo.item.all");
     var userPermissions = new UserPermissions().userId(USER_ID).role(role()).permissions(permissions);
-    when(capabilityService.findByPermissionNames(permissions)).thenReturn(List.of(
+    when(capabilityService.findByPermissionNamesNoTechnical(permissions)).thenReturn(List.of(
       fooItemCapability(FOO_VIEW_CAPABILITY, VIEW, "foo.item.get", fooItemGetEndpoint()),
       fooItemCapability(FOO_CREATE_CAPABILITY, CREATE, "foo.item.post", fooItemPostEndpoint())));
 
@@ -74,7 +74,7 @@ class RolePermissionAssignorTest {
   void assignPermissions_positive_capabilitiesAndCapabilitySetsNotFound() {
     var permissions = List.of("foo.item.get", "foo.item.post", "foo.item.all");
     var userPermissions = new UserPermissions().userId(USER_ID).role(role()).permissions(permissions);
-    when(capabilityService.findByPermissionNames(permissions)).thenReturn(emptyList());
+    when(capabilityService.findByPermissionNamesNoTechnical(permissions)).thenReturn(emptyList());
     when(capabilitySetService.findByPermissionNames(permissions)).thenReturn(emptyList());
 
     rolePermissionAssignor.assignPermissions(List.of(userPermissions));

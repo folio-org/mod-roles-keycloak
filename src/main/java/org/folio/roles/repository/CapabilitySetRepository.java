@@ -69,6 +69,8 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
   @Query("select entity from CapabilitySetEntity entity where entity.permission in :names order by entity.name")
   List<CapabilitySetEntity> findByPermissionNames(@Param("names") Collection<String> names);
 
+  Optional<CapabilitySetEntity> findByPermission(String permissionName);
+
   @Modifying
   @Query(nativeQuery = true, value = "DELETE FROM capability_set_capability WHERE capability_id = :capabilityId")
   void deleteCapabilityCapabilitySetLinks(@Param("capabilityId") UUID capabilityId);

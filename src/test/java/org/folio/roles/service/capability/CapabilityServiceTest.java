@@ -18,6 +18,7 @@ import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.CapabilityUtils.PERMISSION_NAME;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.CapabilityUtils.capabilityEntity;
+import static org.folio.roles.support.CapabilityUtils.technicalCapability;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -504,6 +506,90 @@ class CapabilityServiceTest {
       var moduleId = "mod-test-1.0.0";
       capabilityService.updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
       verify(capabilityRepository).updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
+    }
+  }
+
+  @Nested
+  @DisplayName("findByPermissionNames")
+  class FindByPermissionNames {
+
+    @Test
+    void positive() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      var permissionNames = List.of("test_resource.create");
+      when(capabilityRepository.findAllByPermissionNames(permissionNames)).thenReturn(List.of(capabilityEntity));
+      when(capabilityEntityMapper.convert(List.of(capabilityEntity))).thenReturn(List.of(capability));
+
+      var result = capabilityService.findByPermissionNames(permissionNames);
+
+      assertThat(result).containsExactly(capability);
+      verify(capabilityRepository).findAllByPermissionNames(permissionNames);
+    }
+
+    @Test
+    void positive_emptyInput() {
+      var result = capabilityService.findByPermissionNames(emptyList());
+      assertThat(result).isEmpty();
+      verifyNoInteractions(capabilityRepository);
+    }
+  }
+
+  @Nested
+  @DisplayName("findByPermissionName")
+  class FindByPermissionName {
+
+    @Test
+    void positive() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      when(capabilityRepository.findByPermission(PERMISSION_NAME)).thenReturn(Optional.of(capabilityEntity));
+      when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+
+      var result = capabilityService.findByPermissionName(PERMISSION_NAME);
+
+      assertThat(result).contains(capability);
+    }
+
+    @Test
+    void negative_permissionNotFound() {
+      when(capabilityRepository.findByPermission(PERMISSION_NAME)).thenReturn(Optional.empty());
+
+      var result = capabilityService.findByPermissionName(PERMISSION_NAME);
+
+      assertThat(result).isEmpty();
+    }
+  }
+
+  @Nested
+  @DisplayName("findByPermissionNamesNoTechnical")
+  class FindByPermissionNamesNoTechnical {
+
+    @Test
+    void positive() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      var permissionNames = List.of(PERMISSION_NAME);
+      when(capabilityRepository.findAllByPermissionNames(permissionNames)).thenReturn(List.of(capabilityEntity));
+      when(capabilityEntityMapper.convert(List.of(capabilityEntity))).thenReturn(List.of(capability));
+
+      var result = capabilityService.findByPermissionNamesNoTechnical(permissionNames);
+
+      assertThat(result).containsExactly(capability);
+      verify(capabilityRepository).findAllByPermissionNames(permissionNames);
+    }
+
+    @Test
+    void positive_noTechnicalCapabilities() {
+      var capabilityEntity = capabilityEntity();
+      var permissionNames = List.of(PERMISSION_NAME);
+      when(capabilityRepository.findAllByPermissionNames(permissionNames)).thenReturn(List.of(capabilityEntity));
+      when(capabilityEntityMapper.convert(List.of(capabilityEntity))).thenReturn(List.of(technicalCapability()));
+
+      var result = capabilityService.findByPermissionNamesNoTechnical(permissionNames);
+
+      assertThat(result).isEmpty();
+      verify(capabilityRepository).findAllByPermissionNames(permissionNames);
     }
   }
 }

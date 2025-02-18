@@ -189,7 +189,8 @@ class LoadableRoleCapabilityAssignmentHelperTest {
 
   private void mockAssignmentCalls(LoadablePermissionEntity perm1, LoadablePermissionEntity perm2, Capability cap,
     CapabilitySet capSet) {
-    when(capabilityService.findByPermissionNames(Set.of(perm1.getPermissionName(), perm2.getPermissionName())))
+    when(
+      capabilityService.findByPermissionNamesNoTechnical(Set.of(perm1.getPermissionName(), perm2.getPermissionName())))
       .thenReturn(cap != null ? List.of(cap) : emptyList());
     if (cap != null) {
       when(roleCapabilityService.create(perm1.getRoleId(), List.of(cap.getId()), false))
