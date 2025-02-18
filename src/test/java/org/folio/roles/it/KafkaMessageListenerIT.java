@@ -1,7 +1,6 @@
 package org.folio.roles.it;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Durations.TEN_SECONDS;
 import static org.folio.roles.domain.dto.CapabilityAction.CREATE;
 import static org.folio.roles.domain.dto.CapabilityAction.DELETE;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
@@ -40,6 +39,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.testcontainers.shaded.org.awaitility.Durations.FIVE_HUNDRED_MILLISECONDS;
+import static org.testcontainers.shaded.org.awaitility.Durations.FIVE_SECONDS;
 import static org.testcontainers.shaded.org.awaitility.Durations.ONE_HUNDRED_MILLISECONDS;
 
 import java.sql.SQLDataException;
@@ -335,7 +335,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   }
 
   private static ConditionFactory await() {
-    return Awaitility.await().atMost(TEN_SECONDS).pollInterval(ONE_HUNDRED_MILLISECONDS);
+    return Awaitility.await().atMost(FIVE_SECONDS).pollInterval(ONE_HUNDRED_MILLISECONDS);
   }
 
   private static Capability fooItemCapability(CapabilityAction action, String permission, Endpoint... endpoints) {
