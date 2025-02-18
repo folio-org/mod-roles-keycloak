@@ -429,4 +429,6 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     """)
   List<String> findPermissionsByPrefixesAndPermissionNames(@Param("user_id") UUID userId,
     @Param("permission_names") String permissionNames, @Param("prefixes") String prefixes);
+
+  Optional<CapabilityEntity> findByPermission(String permissionName);
 }

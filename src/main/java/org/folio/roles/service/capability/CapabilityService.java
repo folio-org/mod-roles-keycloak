@@ -1,5 +1,6 @@
 package org.folio.roles.service.capability;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
@@ -172,6 +173,32 @@ public class CapabilityService {
   }
 
   /**
+   * Retrieves capability by permission name.
+   *
+   * @param permissionName - permission name
+   * @return found {@link Capability} object
+   */
+  @Transactional(readOnly = true)
+  public Optional<Capability> findByPermissionName(String permissionName) {
+    var capabilityEntity = capabilityRepository.findByPermission(permissionName);
+    return capabilityEntity.map(capabilityEntityMapper::convert);
+  }
+
+  /**
+   * Retrieves capabilities by permission names no technical capabilities included.
+   *
+   * @param permissionNames - list of {@link String} permission names
+   * @return list with {@link Capability} objects
+   */
+  @Transactional(readOnly = true)
+  public List<Capability> findByPermissionNamesNoTechnical(Collection<String> permissionNames) {
+    var capabilityEntities = capabilityRepository.findAllByPermissionNames(permissionNames);
+    return toStream(capabilityEntityMapper.convert(capabilityEntities))
+      .filter(not(CapabilityUtils::isTechnicalCapability))
+      .toList();
+  }
+
+  /**
    * Retrieves capabilities by permission names.
    *
    * @param permissionNames - list of {@link String} permission names
@@ -179,10 +206,11 @@ public class CapabilityService {
    */
   @Transactional(readOnly = true)
   public List<Capability> findByPermissionNames(Collection<String> permissionNames) {
+    if (isEmpty(permissionNames)) {
+      return emptyList();
+    }
     var capabilityEntities = capabilityRepository.findAllByPermissionNames(permissionNames);
-    return toStream(capabilityEntityMapper.convert(capabilityEntities))
-      .filter(not(CapabilityUtils::isTechnicalCapability))
-      .toList();
+    return capabilityEntityMapper.convert(capabilityEntities);
   }
 
   /**

@@ -193,6 +193,24 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.capabilities[0].metadata.createdDate", notNullValue())));
   }
 
+  @Test
+  void handleCapabilityEvent_positive_sameCapabilityNameCreatedByDifferentPermissions() {
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(0))));
+    var capabilityEvent =
+      readValue("json/kafka-events/be-capability-event-replaces-contains-same-capability-by-permission.json",
+        ResourceEvent.class);
+    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
+
+    var expectedCapabilitiesJson = asJsonString(capabilities(
+      fooItemCapability(CREATE, DATA, "foo.item.create"),
+      fooItemCapability(EDIT, DATA, "foo.item.update")));
+
+    await().untilAsserted(() -> doGet("/capabilities")
+      .andExpect(content().json(expectedCapabilitiesJson))
+      .andExpect(jsonPath("$.capabilities[0].metadata.createdDate", notNullValue()))
+      .andExpect(jsonPath("$.capabilities[1].metadata.createdDate", notNullValue())));
+  }
+
   private void sendCapabilityEventAndCheckResult() throws Exception {
     var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
