@@ -42,7 +42,7 @@ public class UserCapabilitySetController implements UserCapabilitySetApi {
 
   @Override
   public ResponseEntity<CapabilitySets> getCapabilitySetsByUserId(UUID userId, Boolean includeDummy, Integer limit,
-                                                                  Integer offset) {
+    Integer offset) {
     keycloakUserService.getKeycloakUserByUserId(userId);
     var capabilities = capabilitySetService.findByUserId(userId, TRUE.equals(includeDummy), limit, offset);
     return ResponseEntity.ok(new CapabilitySets()

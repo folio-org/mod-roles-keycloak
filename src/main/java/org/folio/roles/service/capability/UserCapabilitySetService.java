@@ -103,8 +103,8 @@ public class UserCapabilitySetService {
   /**
    * Removes user assigned capability set using user identifier and capability set id.
    *
-   * @param userId  - role identifier as {@link UUID}
-   * @param capabilitySetId  - capability set identifier as {@link UUID}
+   * @param userId - role identifier as {@link UUID}
+   * @param capabilitySetId - capability set identifier as {@link UUID}
    */
   @Transactional
   public void delete(UUID userId, UUID capabilitySetId) {

@@ -118,7 +118,7 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
     entityManager.persistAndFlush(dummyCapabilitySetEntity);
     var capabilitySetIds = List.of(capabilitySetEntity.getId(), dummyCapabilitySetEntity.getId());
 
-    var actualCapabilitySetIds  = capabilitySetRepository.findCapabilitySetIdsByIdIn(capabilitySetIds);
+    var actualCapabilitySetIds = capabilitySetRepository.findCapabilitySetIdsByIdIn(capabilitySetIds);
     assertThat(actualCapabilitySetIds).hasSize(1).contains(capabilitySetEntity.getId());
   }
 

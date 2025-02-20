@@ -35,6 +35,24 @@ class BasePolicyEntityRepositoryIT extends BaseRepositoryTest {
   @Autowired
   private PolicyEntityRepository policyEntityRepository;
 
+  private RolePolicyEntity getRolePolicyRoleEntity(UUID roleId) {
+    var rolePoliceRoleEntity = new RolePolicyRoleEntity();
+    rolePoliceRoleEntity.setId(roleId);
+    var rolePolicyEntity = new RolePolicyEntity();
+    rolePolicyEntity.setRoles(List.of(rolePoliceRoleEntity));
+    rolePolicyEntity.setName("rolePolicyName");
+    rolePolicyEntity.setSource(SourceType.USER);
+    return rolePolicyEntity;
+  }
+
+  private UserPolicyEntity getUserPolicyEntity(UUID userId) {
+    var userPolicyEntity = new UserPolicyEntity();
+    userPolicyEntity.setName("userPolicyName");
+    userPolicyEntity.setSource(SourceType.USER);
+    userPolicyEntity.setUsers(List.of(userId));
+    return userPolicyEntity;
+  }
+
   @BeforeEach
   void returnTestUserIdFromFolioExecutionContext() {
     when(folioExecutionContext.getUserId()).thenReturn(USER_ID);
@@ -170,23 +188,5 @@ class BasePolicyEntityRepositoryIT extends BaseRepositoryTest {
     entityManager.flush();
     userPolicies = policyEntityRepository.findUserPoliciesByCapabilityId(capabilityForCapabilitySetEntity.getId());
     assertThat(userPolicies).isEmpty();
-  }
-
-  private RolePolicyEntity getRolePolicyRoleEntity(UUID roleId) {
-    var rolePoliceRoleEntity = new RolePolicyRoleEntity();
-    rolePoliceRoleEntity.setId(roleId);
-    var rolePolicyEntity = new RolePolicyEntity();
-    rolePolicyEntity.setRoles(List.of(rolePoliceRoleEntity));
-    rolePolicyEntity.setName("rolePolicyName");
-    rolePolicyEntity.setSource(SourceType.USER);
-    return rolePolicyEntity;
-  }
-
-  private UserPolicyEntity getUserPolicyEntity(UUID userId) {
-    var userPolicyEntity = new UserPolicyEntity();
-    userPolicyEntity.setName("userPolicyName");
-    userPolicyEntity.setSource(SourceType.USER);
-    userPolicyEntity.setUsers(List.of(userId));
-    return userPolicyEntity;
   }
 }

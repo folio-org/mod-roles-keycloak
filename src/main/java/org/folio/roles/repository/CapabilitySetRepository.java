@@ -77,7 +77,7 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
   }
 
   List<CapabilitySetEntity> findByNameInAndDummyCapability(Collection<String> capabilitySetNames,
-                                                           boolean dummyCapability);
+    boolean dummyCapability);
 
   @Query("select entity from CapabilitySetEntity entity where entity.permission in :names "
     + "and entity.dummyCapability = false order by entity.name")

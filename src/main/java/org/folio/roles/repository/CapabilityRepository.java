@@ -26,7 +26,7 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
       JOIN capability_set_capability csc
       ON c.id = csc.capability_id AND csc.capability_set_id = :capabilitySetId""")
   Page<CapabilityEntity> findByCapabilitySetIdIncludeDummy(@Param("capabilitySetId") UUID capabilitySetId,
-                                                           Pageable pageable);
+    Pageable pageable);
 
   @Query(nativeQuery = true,
     value = """

@@ -22,6 +22,14 @@ class CapabilityEndpointRepositoryIT extends BaseRepositoryTest {
   @Autowired
   private CapabilityEndpointRepository capabilityEndpointRepository;
 
+  private CapabilityEndpointEntity getCapabilityEndpointEntity(UUID capabilityEntityId) {
+    var capabilityEndpointEntity = new CapabilityEndpointEntity();
+    capabilityEndpointEntity.setCapabilityId(capabilityEntityId);
+    capabilityEndpointEntity.setPath("path");
+    capabilityEndpointEntity.setMethod(HttpMethod.GET);
+    return capabilityEndpointEntity;
+  }
+
   @Test
   void getByRoleId_positive_excludeDummyAndByCapabilitiesIds() {
     var capabilityEntity = capabilityEntity(null);
@@ -110,13 +118,5 @@ class CapabilityEndpointRepositoryIT extends BaseRepositoryTest {
     entityManager.flush();
     capabilitiesEndpoints = capabilityEndpointRepository.getByUserId(userId, null, null);
     assertThat(capabilitiesEndpoints).isEmpty();
-  }
-
-  private CapabilityEndpointEntity getCapabilityEndpointEntity(UUID capabilityEntityId) {
-    var capabilityEndpointEntity = new CapabilityEndpointEntity();
-    capabilityEndpointEntity.setCapabilityId(capabilityEntityId);
-    capabilityEndpointEntity.setPath("path");
-    capabilityEndpointEntity.setMethod(HttpMethod.GET);
-    return capabilityEndpointEntity;
   }
 }

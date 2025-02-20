@@ -34,7 +34,7 @@ public class UserCapabilityController implements UserCapabilityApi {
 
   @Override
   public ResponseEntity<Capabilities> findCapabilitiesByUserId(UUID id, Boolean expand,
-                                                               Boolean includeDummy, Integer limit, Integer offset) {
+    Boolean includeDummy, Integer limit, Integer offset) {
     keycloakUserService.getKeycloakUserByUserId(id);
     var capabilities = capabilityService.findByUserId(id, TRUE.equals(expand),
       TRUE.equals(includeDummy), limit, offset);

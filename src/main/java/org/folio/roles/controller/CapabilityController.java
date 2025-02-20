@@ -33,7 +33,7 @@ public class CapabilityController implements CapabilityApi {
 
   @Override
   public ResponseEntity<Capabilities> findCapabilitiesByCapabilitySetId(UUID id, Boolean includeDummy, Integer limit,
-                                                                        Integer offset) {
+    Integer offset) {
     var pageResult = capabilityService.findByCapabilitySetId(id, TRUE.equals(includeDummy), limit, offset);
     return ResponseEntity.ok(new Capabilities()
       .capabilities(pageResult.getRecords())

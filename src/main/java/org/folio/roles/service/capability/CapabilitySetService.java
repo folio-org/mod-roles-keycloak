@@ -186,7 +186,7 @@ public class CapabilitySetService {
    * Retrieves capabilities by user id.
    *
    * @param userId - user identifier as {@link UUID} object
-   * @param includeDummy -  defines if should include dummy capability sets
+   * @param includeDummy - defines if should include dummy capability sets
    * @return list with {@link Capability} objects
    */
   @Transactional(readOnly = true)

@@ -91,6 +91,13 @@ class CapabilityServiceTest {
   @DisplayName("update")
   class Update {
 
+    private void verifyCapturedEvents(CapabilityEvent... expectedEvents) {
+      assertThat(eventCaptor.getAllValues())
+        .usingRecursiveComparison()
+        .ignoringFields("timestamp", "context")
+        .isEqualTo(List.of(expectedEvents));
+    }
+
     @Test
     void positive() {
       var capability = capability().id(null);
@@ -188,13 +195,6 @@ class CapabilityServiceTest {
     void positive_emptyNewAndOldCapabilities() {
       capabilityService.update(CREATE, emptyList(), emptyList());
       Mockito.verifyNoInteractions(capabilityRepository, capabilityEntityMapper);
-    }
-
-    private void verifyCapturedEvents(CapabilityEvent... expectedEvents) {
-      assertThat(eventCaptor.getAllValues())
-        .usingRecursiveComparison()
-        .ignoringFields("timestamp", "context")
-        .isEqualTo(List.of(expectedEvents));
     }
   }
 
@@ -531,6 +531,19 @@ class CapabilityServiceTest {
   @DisplayName("getUserPermissions")
   class GetUserPermissions {
 
+    //request : prefixes from request : permission names from request : resolved permissions
+    static Stream<Arguments> permissionsProvider() {
+      return Stream.of(
+        Arguments.of(of("ui.all", "be.all"), of("ui.all", "be.all"), emptyList(), of("ui.all")),
+        Arguments.of(of("be.*"), emptyList(), of("be."), emptyList()),
+        Arguments.of(of("be.it.*", "ui.all"), of("ui.all"), of("be.it."), emptyList()),
+        Arguments.of(of("be.it.*", "ui.*"), emptyList(), of("be.it.", "ui."), emptyList()),
+        Arguments.of(of("be.it.view.*", "ui.all"), of("ui.all"), of("be.it.view."), emptyList()),
+        Arguments.of(of("be.it.*", "ui.all"), of("ui.all"), of("be.it."),
+          of("be.all", "ui.all", "replaced.ui.all.view"))
+      );
+    }
+
     @Test
     void positive() {
       when(capabilityRepository.findAllFolioPermissions(USER_ID)).thenReturn(List.of(PERMISSION_NAME));
@@ -563,19 +576,6 @@ class CapabilityServiceTest {
 
       assertThat(result).containsExactlyInAnyOrderElementsOf(resolvedPerms);
       verify(capabilityRepository).findPermissionsByPrefixesAndPermissionNames(USER_ID, names, prefs);
-    }
-
-    //request : prefixes from request : permission names from request : resolved permissions
-    static Stream<Arguments> permissionsProvider() {
-      return Stream.of(
-        Arguments.of(of("ui.all", "be.all"), of("ui.all", "be.all"), emptyList(), of("ui.all")),
-        Arguments.of(of("be.*"), emptyList(), of("be."), emptyList()),
-        Arguments.of(of("be.it.*", "ui.all"), of("ui.all"), of("be.it."), emptyList()),
-        Arguments.of(of("be.it.*", "ui.*"), emptyList(), of("be.it.", "ui."), emptyList()),
-        Arguments.of(of("be.it.view.*", "ui.all"), of("ui.all"), of("be.it.view."), emptyList()),
-        Arguments.of(of("be.it.*", "ui.all"), of("ui.all"), of("be.it."),
-          of("be.all", "ui.all", "replaced.ui.all.view"))
-      );
     }
   }
 

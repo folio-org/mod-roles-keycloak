@@ -36,7 +36,7 @@ public class RoleCapabilitySetController implements RoleCapabilitySetApi {
 
   @Override
   public ResponseEntity<CapabilitySets> getCapabilitySetsByRoleId(UUID roleId, Boolean includeDummy,
-                                                                  Integer limit, Integer offset) {
+    Integer limit, Integer offset) {
     roleService.getById(roleId);
     var pageResult = capabilitySetService.findByRoleId(roleId, TRUE.equals(includeDummy), limit, offset);
     return ResponseEntity.ok(new CapabilitySets()

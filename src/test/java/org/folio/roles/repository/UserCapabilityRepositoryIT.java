@@ -93,7 +93,7 @@ class UserCapabilityRepositoryIT extends BaseRepositoryTest {
     entityManager.persistAndFlush(userCapabilityEntity(userId, dummyCapabilityEntity.getId()));
 
     var userCapabilities = userCapabilityRepository.findUserCapabilities(userId,
-        List.of(capabilityEntity.getId(), dummyCapabilityEntity.getId()));
+      List.of(capabilityEntity.getId(), dummyCapabilityEntity.getId()));
     assertThat(userCapabilities).containsOnly(userCapabilityEntity);
   }
 }

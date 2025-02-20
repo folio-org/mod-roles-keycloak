@@ -36,7 +36,7 @@ public class RoleCapabilityController implements RoleCapabilityApi {
 
   @Override
   public ResponseEntity<Capabilities> findCapabilitiesByRoleId(UUID id, Boolean expand, Boolean includeDummy,
-                                                               Integer limit, Integer offset) {
+    Integer limit, Integer offset) {
     roleEntityService.getById(id);
     var pageResult = capabilityService.findByRoleId(id, TRUE.equals(expand),
       TRUE.equals(includeDummy), limit, offset);
