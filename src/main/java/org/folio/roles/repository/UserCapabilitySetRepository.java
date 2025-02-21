@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.roles.domain.entity.UserCapabilitySetEntity;
 import org.folio.roles.domain.entity.key.UserCapabilitySetKey;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,11 +13,9 @@ import org.springframework.stereotype.Repository;
 public interface UserCapabilitySetRepository
   extends BaseCqlJpaRepository<UserCapabilitySetEntity, UserCapabilitySetKey> {
 
-  Page<UserCapabilitySetEntity> findByUserId(UUID userId, Pageable pageable);
+  List<UserCapabilitySetEntity> findAllByUserId(@Param("userId") UUID userId);
 
-  List<UserCapabilitySetEntity> findAllByUserId(UUID userId);
-
-  List<UserCapabilitySetEntity> findAllByCapabilitySetId(UUID capabilitySetId);
+  List<UserCapabilitySetEntity> findAllByCapabilitySetId(@Param("capabilitySetId") UUID capabilitySetId);
 
   @Query("""
     select entity from UserCapabilitySetEntity entity

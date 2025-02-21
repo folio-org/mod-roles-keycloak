@@ -69,7 +69,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   /**
    * Create a record(s) associating one or moe capabilities with role.
    *
-   * @param request    - request that contains roleId, capabilityIds or capabilityNames
+   * @param request - request that contains roleId, capabilityIds or capabilityNames
    * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
    * @return {@link RoleCapability} object with created role-capability relations
    */
@@ -115,7 +115,8 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
    * Updates role-capability relations.
    *
    * @param roleId - role identifier as {@link UUID} object
-   * @param request - CapabilitiesUpdateRequest that contains either capability IDs or names, to be assigned to a role
+   * @param request - CapabilitiesUpdateRequest that contains either capability IDs or names, to be assigned to a
+   *   role
    */
   @Override
   @Transactional

@@ -34,4 +34,5 @@
   <include file="changes/update-policy-replace-system-with-source.xml" relativeToChangelogFile="true"/>
   <include file="changes/create-permission-migration-schema.xml" relativeToChangelogFile="true"/>
   <include file="changes/update-role-with-type-from-loadable-roles.xml" relativeToChangelogFile="true"/>
+  <include file="changes/add-dummy-capability-field-to-capability-table.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

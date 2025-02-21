@@ -46,6 +46,10 @@
         "$ref": "endpoint.json"
       }
     },
+    "dummyCapability": {
+      "description": "Is capability dummy",
+      "type": "boolean"
+    },
     "type": {
       "description": "The type of capability",
       "$ref": "capabilityType.json"

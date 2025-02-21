@@ -69,4 +69,7 @@ public class CapabilityEntity extends Auditable {
   @ElementCollection(fetch = EAGER, targetClass = EmbeddableEndpoint.class)
   @CollectionTable(name = "capability_endpoint", joinColumns = @JoinColumn(name = "capability_id"))
   private List<EmbeddableEndpoint> endpoints;
+
+  @Column(name = "dummy_capability")
+  private boolean dummyCapability;
 }

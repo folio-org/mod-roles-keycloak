@@ -103,8 +103,8 @@ public class UserCapabilitySetService {
   /**
    * Removes user assigned capability set using user identifier and capability set id.
    *
-   * @param userId  - role identifier as {@link UUID}
-   * @param capabilitySetId  - capability set identifier as {@link UUID}
+   * @param userId - role identifier as {@link UUID}
+   * @param capabilitySetId - capability set identifier as {@link UUID}
    */
   @Transactional
   public void delete(UUID userId, UUID capabilitySetId) {
@@ -162,7 +162,7 @@ public class UserCapabilitySetService {
   }
 
   private List<Endpoint> getChangedEndpoints(UUID userId, List<UUID> deprecatedIds, Collection<UUID> assignedIds) {
-    var directlyAssignedCapabilities = capabilityService.findByUserId(userId, false, MAX_VALUE, 0);
+    var directlyAssignedCapabilities = capabilityService.findByUserId(userId, false, false, MAX_VALUE, 0);
     var excludedEndpoints = getCapabilityEndpoints(directlyAssignedCapabilities.getRecords());
     return capabilityEndpointService.getByCapabilitySetIds(deprecatedIds, assignedIds, excludedEndpoints);
   }
