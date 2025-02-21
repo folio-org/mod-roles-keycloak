@@ -401,7 +401,7 @@ class CapabilitySetServiceTest {
     private final OffsetRequest offsetRequest = OffsetRequest.of(0, 100, DEFAULT_CAPABILITY_SET_SORT);
 
     @Test
-    void positive_includeDummyIsFalse() {
+    void positive() {
       var userCapabilitySetEntity = capabilitySetEntity();
       var pageResult = new PageImpl<>(List.of(userCapabilitySetEntity));
       var expectedCapabilitySet = capabilitySet();
@@ -409,25 +409,8 @@ class CapabilitySetServiceTest {
       when(capabilitySetRepository.findByUserId(USER_ID, offsetRequest)).thenReturn(pageResult);
       when(mapper.convert(userCapabilitySetEntity)).thenReturn(expectedCapabilitySet);
 
-      var result = capabilitySetService.findByUserId(USER_ID, false, 100, 0);
-
+      var result = capabilitySetService.findByUserId(USER_ID, 100, 0);
       assertThat(result).isEqualTo(asSinglePage(expectedCapabilitySet));
-      verify(capabilitySetRepository).findByUserId(USER_ID, offsetRequest);
-    }
-
-    @Test
-    void positive_includeDummyIsTrue() {
-      var userCapabilitySetEntity = capabilitySetEntity();
-      var pageResult = new PageImpl<>(List.of(userCapabilitySetEntity));
-      var expectedCapabilitySet = capabilitySet();
-
-      when(capabilitySetRepository.findByUserIdIncludeDummy(USER_ID, offsetRequest)).thenReturn(pageResult);
-      when(mapper.convert(userCapabilitySetEntity)).thenReturn(expectedCapabilitySet);
-
-      var result = capabilitySetService.findByUserId(USER_ID, true, 100, 0);
-
-      assertThat(result).isEqualTo(asSinglePage(expectedCapabilitySet));
-      verify(capabilitySetRepository).findByUserIdIncludeDummy(USER_ID, offsetRequest);
     }
   }
 
@@ -438,7 +421,7 @@ class CapabilitySetServiceTest {
     private final OffsetRequest offsetRequest = OffsetRequest.of(0, 15, DEFAULT_CAPABILITY_SET_SORT);
 
     @Test
-    void positive_includeDummyIsFalse() {
+    void positive() {
       var userCapabilitySetEntity = capabilitySetEntity();
       var pageResult = new PageImpl<>(List.of(userCapabilitySetEntity));
       var expectedCapabilitySet = capabilitySet();
@@ -446,25 +429,10 @@ class CapabilitySetServiceTest {
       when(capabilitySetRepository.findByRoleId(ROLE_ID, offsetRequest)).thenReturn(pageResult);
       when(mapper.convert(userCapabilitySetEntity)).thenReturn(expectedCapabilitySet);
 
-      var result = capabilitySetService.findByRoleId(ROLE_ID, false, 15, 0);
+      var result = capabilitySetService.findByRoleId(ROLE_ID, 15, 0);
 
       assertThat(result).isEqualTo(asSinglePage(expectedCapabilitySet));
       verify(capabilitySetRepository).findByRoleId(ROLE_ID, offsetRequest);
-    }
-
-    @Test
-    void positive_includeDummyIsTrue() {
-      var userCapabilitySetEntity = capabilitySetEntity();
-      var pageResult = new PageImpl<>(List.of(userCapabilitySetEntity));
-      var expectedCapabilitySet = capabilitySet();
-
-      when(capabilitySetRepository.findByRoleIdIncludeDummy(ROLE_ID, offsetRequest)).thenReturn(pageResult);
-      when(mapper.convert(userCapabilitySetEntity)).thenReturn(expectedCapabilitySet);
-
-      var result = capabilitySetService.findByRoleId(ROLE_ID, true, 15, 0);
-
-      assertThat(result).isEqualTo(asSinglePage(expectedCapabilitySet));
-      verify(capabilitySetRepository).findByRoleIdIncludeDummy(ROLE_ID, offsetRequest);
     }
   }
 

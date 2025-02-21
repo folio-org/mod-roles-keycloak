@@ -48,17 +48,6 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
     countQuery = """
       SELECT COUNT(cs.*) FROM capability_set cs
       INNER JOIN user_capability_set ucs ON cs.id = ucs.capability_set_id AND ucs.user_id = :user_id""")
-  Page<CapabilitySetEntity> findByUserIdIncludeDummy(@Param("user_id") UUID userId, OffsetRequest offsetRequest);
-
-  @Query(nativeQuery = true,
-    value = """
-      SELECT cs.* FROM capability_set cs
-      INNER JOIN user_capability_set ucs ON cs.id = ucs.capability_set_id AND ucs.user_id = :user_id
-      AND cs.dummy_capability = false""",
-    countQuery = """
-      SELECT COUNT(cs.*) FROM capability_set cs
-      INNER JOIN user_capability_set ucs ON cs.id = ucs.capability_set_id AND ucs.user_id = :user_id
-      AND cs.dummy_capability = false""")
   Page<CapabilitySetEntity> findByUserId(@Param("user_id") UUID userId, OffsetRequest offsetRequest);
 
   @Query(nativeQuery = true,
@@ -68,37 +57,16 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
     countQuery = """
       SELECT COUNT(cs.*) FROM capability_set cs
       INNER JOIN role_capability_set rcs ON cs.id = rcs.capability_set_id AND rcs.role_id = :role_id""")
-  Page<CapabilitySetEntity> findByRoleIdIncludeDummy(@Param("role_id") UUID roleId, OffsetRequest offsetRequest);
-
-  @Query(nativeQuery = true,
-    value = """
-      SELECT cs.* FROM capability_set cs
-      INNER JOIN role_capability_set rcs ON cs.id = rcs.capability_set_id AND rcs.role_id = :role_id
-      AND cs.dummy_capability = false""",
-    countQuery = """
-      SELECT COUNT(cs.*) FROM capability_set cs
-      INNER JOIN role_capability_set rcs ON cs.id = rcs.capability_set_id AND rcs.role_id = :role_id
-      AND cs.dummy_capability = false""")
   Page<CapabilitySetEntity> findByRoleId(@Param("role_id") UUID roleId, OffsetRequest offsetRequest);
 
-  @Query("select distinct entity.id from CapabilitySetEntity entity where entity.id in :ids " +
-    "and entity.dummyCapability = false order by entity.id")
+  @Query("select distinct entity.id from CapabilitySetEntity entity where entity.id in :ids order by entity.id")
   Set<UUID> findCapabilitySetIdsByIdIn(@Param("ids") Collection<UUID> capabilitySetIds);
 
-  default Optional<CapabilitySetEntity> findByName(String capabilitySetName) {
-    return findByNameAndDummyCapability(capabilitySetName, false);
-  }
+  Optional<CapabilitySetEntity> findByName(String capabilitySetName);
 
-  Optional<CapabilitySetEntity> findByNameAndDummyCapability(String capabilitySetName, boolean dummyCapability);
+  List<CapabilitySetEntity> findByNameIn(Collection<String> capabilitySetNames);
 
-  default List<CapabilitySetEntity> findByNameIn(Collection<String> capabilitySetNames) {
-    return findByNameInAndDummyCapability(capabilitySetNames, false);
-  }
-
-  List<CapabilitySetEntity> findByNameInAndDummyCapability(Collection<String> capabilitySetNames, boolean dummyCapability);
-
-  @Query("select entity from CapabilitySetEntity entity where entity.permission in :names " +
-    "and entity.dummyCapability = false order by entity.name")
+  @Query("select entity from CapabilitySetEntity entity where entity.permission in :names order by entity.name")
   List<CapabilitySetEntity> findByPermissionNames(@Param("names") Collection<String> names);
 
   Optional<CapabilitySetEntity> findByPermission(String permissionName);

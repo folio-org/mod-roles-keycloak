@@ -70,12 +70,6 @@ class CapabilityEndpointRepositoryIT extends BaseRepositoryTest {
     entityManager.flush();
     capabilitiesEndpoints = capabilityEndpointRepository.getByRoleId(roleId, null, null);
     assertThat(capabilitiesEndpoints).isEmpty();
-
-    capabilityEntity.setDummyCapability(false);
-    capabilitySetEntity.setDummyCapability(true);
-    entityManager.flush();
-    capabilitiesEndpoints = capabilityEndpointRepository.getByRoleId(roleId, null, null);
-    assertThat(capabilitiesEndpoints).isEmpty();
   }
 
   @Test
@@ -109,12 +103,6 @@ class CapabilityEndpointRepositoryIT extends BaseRepositoryTest {
     assertThat(capabilitiesEndpoints).hasSize(1);
 
     capabilityEntity.setDummyCapability(true);
-    entityManager.flush();
-    capabilitiesEndpoints = capabilityEndpointRepository.getByUserId(userId, null, null);
-    assertThat(capabilitiesEndpoints).isEmpty();
-
-    capabilityEntity.setDummyCapability(false);
-    capabilitySetEntity.setDummyCapability(true);
     entityManager.flush();
     capabilitiesEndpoints = capabilityEndpointRepository.getByUserId(userId, null, null);
     assertThat(capabilitiesEndpoints).isEmpty();

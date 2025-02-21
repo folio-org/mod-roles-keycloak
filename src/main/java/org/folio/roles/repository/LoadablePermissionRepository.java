@@ -23,11 +23,5 @@ public interface LoadablePermissionRepository
       AND c.dummy_capability = false""")
   Stream<LoadablePermissionEntity> findAllByCapabilityId(UUID capabilityId);
 
-  @Query(nativeQuery = true,
-    value = """
-      SELECT rlp.* FROM role_loadable_permission rlp
-      INNER JOIN capability_set cs
-      ON cs.id = rlp.capability_set_id AND rlp.capability_set_id = :capabilitySetId
-      AND cs.dummy_capability = false""")
   Stream<LoadablePermissionEntity> findAllByCapabilitySetId(UUID capabilitySetId);
 }

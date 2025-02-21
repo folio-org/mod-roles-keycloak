@@ -1,10 +1,8 @@
 package org.folio.roles.repository;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.folio.roles.support.CapabilitySetUtils.capabilitySetEntity;
 import static org.folio.roles.support.CapabilityUtils.capabilityEntity;
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermission;
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissionEntity;
@@ -72,32 +70,6 @@ class LoadablePermissionRepositoryIT extends BaseRepositoryTest {
     entityManager.flush();
     loadablePermissions = loadablePermissionRepository
       .findAllByCapabilityId(capabilityEntity.getId())
-      .toList();
-    assertThat(loadablePermissions).isEmpty();
-  }
-
-  @Test
-  void findAllByCapabilitySetId_excludeDummy() {
-    var capabilitySetEntity = capabilitySetEntity(null, emptyList());
-    entityManager.persistAndFlush(capabilitySetEntity);
-    var perm = loadablePermission();
-    perm.setMetadata(null);
-    var loadableRole = loadableRoleEntity();
-    entityManager.persistAndFlush(loadableRole);
-    var loadablePermissionEntity = loadablePermissionEntity(loadableRole.getId(), perm);
-    loadablePermissionEntity.setCapabilityId(null);
-    loadablePermissionEntity.setCapabilitySetId(capabilitySetEntity.getId());
-    entityManager.persistAndFlush(loadablePermissionEntity);
-
-    var loadablePermissions = loadablePermissionRepository
-      .findAllByCapabilitySetId(capabilitySetEntity.getId())
-      .toList();
-    assertThat(loadablePermissions).hasSize(1);
-
-    capabilitySetEntity.setDummyCapability(true);
-    entityManager.flush();
-    loadablePermissions = loadablePermissionRepository
-      .findAllByCapabilitySetId(capabilitySetEntity.getId())
       .toList();
     assertThat(loadablePermissions).isEmpty();
   }

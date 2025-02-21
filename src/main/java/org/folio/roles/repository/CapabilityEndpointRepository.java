@@ -28,7 +28,6 @@ public interface CapabilityEndpointRepository
       JOIN capability_set_capability csc ON csc.capability_id = ce.capability_id
       JOIN capability c ON c.id = ce.capability_id AND c.dummy_capability = false
       JOIN role_capability_set rcs ON csc.capability_set_id = rcs.capability_set_id AND rcs.role_id = :roleId
-      JOIN capability_set cs ON cs.id = csc.capability_set_id AND cs.dummy_capability = false
     WHERE (:capabilityIds IS NULL
         OR ce.capability_id NOT IN (SELECT * FROM UNNEST(CAST(STRING_TO_ARRAY(:capabilityIds, ',') AS UUID[]))))
       AND (:capabilitySetIds IS NULL
@@ -52,7 +51,6 @@ public interface CapabilityEndpointRepository
       JOIN capability_set_capability csc ON csc.capability_id = ce.capability_id
       JOIN capability c ON c.id = ce.capability_id AND c.dummy_capability = false
       JOIN user_capability_set ucs ON csc.capability_set_id = ucs.capability_set_id AND ucs.user_id = :userId
-      JOIN capability_set cs ON cs.id = csc.capability_set_id AND cs.dummy_capability = false
     WHERE (:capabilityIds IS NULL
         OR ce.capability_id NOT IN (SELECT * FROM UNNEST(CAST(STRING_TO_ARRAY(:capabilityIds, ',') AS UUID[]))))
       AND (:capabilitySetIds IS NULL

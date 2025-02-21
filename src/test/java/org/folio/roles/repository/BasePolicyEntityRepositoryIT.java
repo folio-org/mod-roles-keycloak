@@ -89,11 +89,6 @@ class BasePolicyEntityRepositoryIT extends BaseRepositoryTest {
 
     var rolePolicies = policyEntityRepository.findRolePoliciesByCapabilitySetId(capabilitySetEntity.getId());
     assertThat(rolePolicies).hasSize(1);
-
-    capabilitySetEntity.setDummyCapability(true);
-    entityManager.flush();
-    rolePolicies = policyEntityRepository.findRolePoliciesByCapabilitySetId(capabilitySetEntity.getId());
-    assertThat(rolePolicies).isEmpty();
   }
 
   @Test
@@ -106,11 +101,6 @@ class BasePolicyEntityRepositoryIT extends BaseRepositoryTest {
 
     var userPolicies = policyEntityRepository.findUserPoliciesByCapabilitySetId(capabilitySetEntity.getId());
     assertThat(userPolicies).hasSize(1);
-
-    capabilitySetEntity.setDummyCapability(true);
-    entityManager.flush();
-    userPolicies = policyEntityRepository.findUserPoliciesByCapabilitySetId(capabilitySetEntity.getId());
-    assertThat(userPolicies).isEmpty();
   }
 
   @Test
@@ -141,12 +131,6 @@ class BasePolicyEntityRepositoryIT extends BaseRepositoryTest {
     userPolicies = policyEntityRepository.findRolePoliciesByCapabilityId(capabilityForRoleEntity.getId());
     assertThat(userPolicies).isEmpty();
 
-    capabilitySetEntity.setDummyCapability(true);
-    entityManager.flush();
-    userPolicies = policyEntityRepository.findRolePoliciesByCapabilityId(capabilityForCapabilitySetEntity.getId());
-    assertThat(userPolicies).isEmpty();
-
-    capabilitySetEntity.setDummyCapability(false);
     capabilityForCapabilitySetEntity.setDummyCapability(true);
     entityManager.flush();
     userPolicies = policyEntityRepository.findRolePoliciesByCapabilityId(capabilityForCapabilitySetEntity.getId());
@@ -178,12 +162,6 @@ class BasePolicyEntityRepositoryIT extends BaseRepositoryTest {
     userPolicies = policyEntityRepository.findUserPoliciesByCapabilityId(capabilityForUserEntity.getId());
     assertThat(userPolicies).isEmpty();
 
-    capabilitySetEntity.setDummyCapability(true);
-    entityManager.flush();
-    userPolicies = policyEntityRepository.findUserPoliciesByCapabilityId(capabilityForCapabilitySetEntity.getId());
-    assertThat(userPolicies).isEmpty();
-
-    capabilitySetEntity.setDummyCapability(false);
     capabilityForCapabilitySetEntity.setDummyCapability(true);
     entityManager.flush();
     userPolicies = policyEntityRepository.findUserPoliciesByCapabilityId(capabilityForCapabilitySetEntity.getId());

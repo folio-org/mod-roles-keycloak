@@ -13,21 +13,12 @@ import org.springframework.stereotype.Repository;
 public interface UserCapabilitySetRepository
   extends BaseCqlJpaRepository<UserCapabilitySetEntity, UserCapabilitySetKey> {
 
-  @Query("""
-    select entity from UserCapabilitySetEntity entity
-      inner join CapabilitySetEntity cse on cse.id = entity.capabilitySetId and cse.dummyCapability = false
-      where entity.userId = :userId""")
   List<UserCapabilitySetEntity> findAllByUserId(@Param("userId") UUID userId);
 
-  @Query("""
-    select entity from UserCapabilitySetEntity entity
-      inner join CapabilitySetEntity cse on cse.id = entity.capabilitySetId and cse.dummyCapability = false
-      where entity.capabilitySetId = :capabilitySetId""")
   List<UserCapabilitySetEntity> findAllByCapabilitySetId(@Param("capabilitySetId") UUID capabilitySetId);
 
   @Query("""
     select entity from UserCapabilitySetEntity entity
-      inner join CapabilitySetEntity cse on cse.id = entity.capabilitySetId and cse.dummyCapability = false
       where entity.userId = :userId
       and entity.capabilitySetId in (:capabilitySetIds)""")
   List<UserCapabilitySetEntity> findUserCapabilitySets(

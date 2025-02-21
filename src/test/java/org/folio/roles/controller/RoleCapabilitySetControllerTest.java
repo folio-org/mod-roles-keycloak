@@ -118,7 +118,7 @@ class RoleCapabilitySetControllerTest {
   @Test
   void findByRoleId_positive() throws Exception {
     var foundCapabilitySet = capabilitySet();
-    when(capabilitySetService.findByRoleId(ROLE_ID, false, 100, 20)).thenReturn(asSinglePage(foundCapabilitySet));
+    when(capabilitySetService.findByRoleId(ROLE_ID, 100, 20)).thenReturn(asSinglePage(foundCapabilitySet));
 
     mockMvc.perform(get("/roles/{id}/capability-sets", ROLE_ID)
         .param("limit", "100")
@@ -134,7 +134,7 @@ class RoleCapabilitySetControllerTest {
   void findByRoleId_positive_defaultPageParameters() throws Exception {
     var capabilitySet = capabilitySet();
     when(roleService.getById(ROLE_ID)).thenReturn(role());
-    when(capabilitySetService.findByRoleId(ROLE_ID, false, 10, 0)).thenReturn(asSinglePage(capabilitySet));
+    when(capabilitySetService.findByRoleId(ROLE_ID, 10, 0)).thenReturn(asSinglePage(capabilitySet));
 
     mockMvc.perform(get("/roles/{id}/capability-sets", ROLE_ID)
         .contentType(APPLICATION_JSON)
@@ -142,22 +142,6 @@ class RoleCapabilitySetControllerTest {
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), JsonCompareMode.STRICT));
-  }
-
-  @Test
-  void findByRoleId_positive_includeDummyIsTrue() throws Exception {
-    var capabilitySet = capabilitySet();
-    when(roleService.getById(ROLE_ID)).thenReturn(role());
-    when(capabilitySetService.findByRoleId(ROLE_ID, true, 10, 0)).thenReturn(asSinglePage(capabilitySet));
-
-    mockMvc.perform(get("/roles/{id}/capability-sets", ROLE_ID)
-        .param("includeDummy", "true")
-        .contentType(APPLICATION_JSON)
-        .header(TENANT, TENANT_ID))
-      .andExpect(status().isOk())
-      .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), JsonCompareMode.STRICT));
-    verify(capabilitySetService).findByRoleId(ROLE_ID, true, 10, 0);
   }
 
   @Test

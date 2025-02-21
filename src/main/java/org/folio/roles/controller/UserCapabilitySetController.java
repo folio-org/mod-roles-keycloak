@@ -1,6 +1,5 @@
 package org.folio.roles.controller;
 
-import static java.lang.Boolean.TRUE;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import java.util.UUID;
@@ -41,10 +40,9 @@ public class UserCapabilitySetController implements UserCapabilitySetApi {
   }
 
   @Override
-  public ResponseEntity<CapabilitySets> getCapabilitySetsByUserId(UUID userId, Boolean includeDummy, Integer limit,
-    Integer offset) {
+  public ResponseEntity<CapabilitySets> getCapabilitySetsByUserId(UUID userId, Integer limit, Integer offset) {
     keycloakUserService.getKeycloakUserByUserId(userId);
-    var capabilities = capabilitySetService.findByUserId(userId, TRUE.equals(includeDummy), limit, offset);
+    var capabilities = capabilitySetService.findByUserId(userId, limit, offset);
     return ResponseEntity.ok(new CapabilitySets()
       .capabilitySets(capabilities.getRecords())
       .totalRecords(capabilities.getTotalRecords()));

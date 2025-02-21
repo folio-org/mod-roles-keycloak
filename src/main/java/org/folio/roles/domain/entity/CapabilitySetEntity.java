@@ -70,7 +70,4 @@ public class CapabilitySetEntity extends Auditable {
   @CollectionTable(name = "capability_set_capability", joinColumns = @JoinColumn(name = "capability_set_id"))
   @Column(name = "capability_id", nullable = false)
   private List<UUID> capabilities;
-
-  @Column(name = "dummy_capability")
-  private boolean dummyCapability;
 }

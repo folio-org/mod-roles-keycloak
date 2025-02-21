@@ -186,15 +186,12 @@ public class CapabilitySetService {
    * Retrieves capabilities by user id.
    *
    * @param userId - user identifier as {@link UUID} object
-   * @param includeDummy - defines if should include dummy capability sets
    * @return list with {@link Capability} objects
    */
   @Transactional(readOnly = true)
-  public PageResult<CapabilitySet> findByUserId(UUID userId, boolean includeDummy, int limit, int offset) {
+  public PageResult<CapabilitySet> findByUserId(UUID userId, int limit, int offset) {
     var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_CAPABILITY_SET_SORT);
-    var capabilityEntitiesPage = includeDummy
-      ? repository.findByUserIdIncludeDummy(userId, offsetRequest)
-      : repository.findByUserId(userId, offsetRequest);
+    var capabilityEntitiesPage = repository.findByUserId(userId, offsetRequest);
     var capabilitiesPage = capabilityEntitiesPage.map(capabilitySetEntityMapper::convert);
     return PageResult.fromPage(capabilitiesPage);
   }
@@ -206,11 +203,9 @@ public class CapabilitySetService {
    * @return list with {@link Capability} objects
    */
   @Transactional(readOnly = true)
-  public PageResult<CapabilitySet> findByRoleId(UUID roleId, boolean includeDummy, int limit, int offset) {
+  public PageResult<CapabilitySet> findByRoleId(UUID roleId, int limit, int offset) {
     var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_CAPABILITY_SET_SORT);
-    var capabilityEntitiesPage = includeDummy
-      ? repository.findByRoleIdIncludeDummy(roleId, offsetRequest)
-      : repository.findByRoleId(roleId, offsetRequest);
+    var capabilityEntitiesPage = repository.findByRoleId(roleId, offsetRequest);
     var capabilitiesPage = capabilityEntitiesPage.map(capabilitySetEntityMapper::convert);
     return PageResult.fromPage(capabilitiesPage);
   }

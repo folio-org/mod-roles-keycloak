@@ -95,7 +95,7 @@ class UserCapabilitySetControllerTest {
   @Test
   void findByUserId_positive() throws Exception {
     var foundCapabilitySet = capabilitySet();
-    when(capabilitySetService.findByUserId(USER_ID, false, 100, 20)).thenReturn(asSinglePage(foundCapabilitySet));
+    when(capabilitySetService.findByUserId(USER_ID, 100, 20)).thenReturn(asSinglePage(foundCapabilitySet));
 
     mockMvc.perform(get("/users/{id}/capability-sets", USER_ID)
         .param("limit", "100")
@@ -105,32 +105,13 @@ class UserCapabilitySetControllerTest {
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), JsonCompareMode.STRICT));
-    verify(capabilitySetService).findByUserId(USER_ID, false, 100, 20);
-  }
-
-  @Test
-  void findByUserId_positive_includeDummyIsTrue() throws Exception {
-    var foundCapabilitySet = capabilitySet();
-    when(capabilitySetService.findByUserId(USER_ID, true, 100, 20))
-      .thenReturn(asSinglePage(foundCapabilitySet));
-
-    mockMvc.perform(get("/users/{id}/capability-sets", USER_ID)
-        .param("limit", "100")
-        .param("offset", "20")
-        .param("includeDummy", "true")
-        .contentType(APPLICATION_JSON)
-        .header(TENANT, TENANT_ID))
-      .andExpect(status().isOk())
-      .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), JsonCompareMode.STRICT));
-    verify(capabilitySetService).findByUserId(USER_ID, true, 100, 20);
   }
 
   @Test
   void findByUserId_positive_defaultPageParameters() throws Exception {
     var capabilitySet = capabilitySet();
     when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
-    when(capabilitySetService.findByUserId(USER_ID, false, 10, 0)).thenReturn(asSinglePage(capabilitySet));
+    when(capabilitySetService.findByUserId(USER_ID, 10, 0)).thenReturn(asSinglePage(capabilitySet));
 
     mockMvc.perform(get("/users/{id}/capability-sets", USER_ID)
         .contentType(APPLICATION_JSON)

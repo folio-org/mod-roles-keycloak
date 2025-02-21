@@ -1,6 +1,5 @@
 package org.folio.roles.controller;
 
-import static java.lang.Boolean.TRUE;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import java.util.UUID;
@@ -35,10 +34,9 @@ public class RoleCapabilitySetController implements RoleCapabilitySetApi {
   }
 
   @Override
-  public ResponseEntity<CapabilitySets> getCapabilitySetsByRoleId(UUID roleId, Boolean includeDummy,
-    Integer limit, Integer offset) {
+  public ResponseEntity<CapabilitySets> getCapabilitySetsByRoleId(UUID roleId, Integer limit, Integer offset) {
     roleService.getById(roleId);
-    var pageResult = capabilitySetService.findByRoleId(roleId, TRUE.equals(includeDummy), limit, offset);
+    var pageResult = capabilitySetService.findByRoleId(roleId, limit, offset);
     return ResponseEntity.ok(new CapabilitySets()
       .capabilitySets(pageResult.getRecords())
       .totalRecords(pageResult.getTotalRecords()));
