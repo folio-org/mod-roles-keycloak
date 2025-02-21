@@ -16,11 +16,30 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CapabilitySetRepository extends BaseCqlJpaRepository<CapabilitySetEntity, UUID> {
 
-  default boolean existsByName(String name) {
-    return existsByNameAndDummyCapability(name, false);
-  }
+  @Query(value = """
+    SELECT DISTINCT c2.*
+    FROM user_role ur
+      LEFT JOIN user_capability uc ON uc.user_id = ur.user_id
+      LEFT JOIN role_capability rc ON rc.role_id = ur.role_id
+      LEFT JOIN capability_set c ON c.id = rc.capability_id OR uc.capability_id = c.id
+      LEFT JOIN capability_set c2 ON c.id = ANY (c2.all_parent_ids) OR c2.id = c.id
+    WHERE ur.user_id = :userId AND c2.id IS NOT NULL
+    """,
+    nativeQuery = true)
+  List<CapabilitySetEntity> findExpandedCapabilitiesForUser(@Param("userId") UUID userId);
 
-  boolean existsByNameAndDummyCapability(String name, boolean dummyCapability);
+  @Query(value = """
+    SELECT DISTINCT c.*
+    FROM user_role ur
+      LEFT JOIN user_capability uc ON uc.user_id = ur.user_id
+      LEFT JOIN role_capability rc ON rc.role_id = ur.role_id
+      LEFT JOIN capability_set c ON c.id = rc.capability_id OR uc.capability_id = c.id
+    WHERE ur.user_id = :userId AND c.id IS NOT NULL
+    """,
+    nativeQuery = true)
+  List<CapabilitySetEntity> findCapabilitiesForUser(@Param("userId") UUID userId);
+
+  boolean existsByName(String name);
 
   @Query(nativeQuery = true,
     value = """
@@ -62,8 +81,8 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
       AND cs.dummy_capability = false""")
   Page<CapabilitySetEntity> findByRoleId(@Param("role_id") UUID roleId, OffsetRequest offsetRequest);
 
-  @Query("select distinct entity.id from CapabilitySetEntity entity where entity.id in :ids "
-    + "and entity.dummyCapability = false order by entity.id")
+  @Query("select distinct entity.id from CapabilitySetEntity entity where entity.id in :ids " +
+    "and entity.dummyCapability = false order by entity.id")
   Set<UUID> findCapabilitySetIdsByIdIn(@Param("ids") Collection<UUID> capabilitySetIds);
 
   default Optional<CapabilitySetEntity> findByName(String capabilitySetName) {
@@ -76,11 +95,10 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
     return findByNameInAndDummyCapability(capabilitySetNames, false);
   }
 
-  List<CapabilitySetEntity> findByNameInAndDummyCapability(Collection<String> capabilitySetNames,
-    boolean dummyCapability);
+  List<CapabilitySetEntity> findByNameInAndDummyCapability(Collection<String> capabilitySetNames, boolean dummyCapability);
 
-  @Query("select entity from CapabilitySetEntity entity where entity.permission in :names "
-    + "and entity.dummyCapability = false order by entity.name")
+  @Query("select entity from CapabilitySetEntity entity where entity.permission in :names " +
+    "and entity.dummyCapability = false order by entity.name")
   List<CapabilitySetEntity> findByPermissionNames(@Param("names") Collection<String> names);
 
   Optional<CapabilitySetEntity> findByPermission(String permissionName);

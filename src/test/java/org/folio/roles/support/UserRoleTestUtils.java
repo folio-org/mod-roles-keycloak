@@ -11,7 +11,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.folio.roles.domain.dto.UserRole;
 import org.folio.roles.domain.dto.UserRoles;
 import org.folio.roles.domain.dto.UserRolesRequest;
-import org.folio.roles.domain.entity.UserRoleEntity;
 
 @UtilityClass
 public class UserRoleTestUtils {
@@ -62,12 +61,5 @@ public class UserRoleTestUtils {
     userRole.setUserId(userId);
     userRole.setRoleId(roleId);
     return userRole;
-  }
-
-  public static UserRoleEntity userRoleEntity(UUID userId, UUID roleId) {
-    var userRoleEntity = new UserRoleEntity();
-    userRoleEntity.setUserId(userId);
-    userRoleEntity.setRoleId(roleId);
-    return userRoleEntity;
   }
 }

@@ -47,26 +47,13 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void existsByName_positive_excludeDummy() {
-    var capabilitySetEntity = capabilitySetEntity(null, emptyList());
-    var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
-    dummyCapabilitySetEntity.setDummyCapability(true);
-    dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
-    entityManager.persistAndFlush(capabilitySetEntity);
-    entityManager.persistAndFlush(dummyCapabilitySetEntity);
-
-    assertThat(capabilitySetRepository.existsByName(capabilitySetEntity.getName())).isTrue();
-    assertThat(capabilitySetRepository.existsByName(dummyCapabilitySetEntity.getName())).isFalse();
-  }
-
-  @Test
   void findByUserId_positive_includeAndExcludeDummy() {
     var capabilitySetEntity = capabilitySetEntity(null, emptyList());
     var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
-    entityManager.persistAndFlush(capabilitySetEntity);
-    entityManager.persistAndFlush(dummyCapabilitySetEntity);
+    capabilitySetEntity = entityManager.persistAndFlush(capabilitySetEntity);
+    dummyCapabilitySetEntity = entityManager.persistAndFlush(dummyCapabilitySetEntity);
     var userId = UUID.randomUUID();
     var userCapabilitySetEntity = userCapabilitySetEntity(userId, capabilitySetEntity.getId());
     var userDummyCapabilitySetEntity = userCapabilitySetEntity(userId, dummyCapabilitySetEntity.getId());
@@ -114,8 +101,8 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
     var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
-    entityManager.persistAndFlush(capabilitySetEntity);
-    entityManager.persistAndFlush(dummyCapabilitySetEntity);
+    capabilitySetEntity = entityManager.persistAndFlush(capabilitySetEntity);
+    dummyCapabilitySetEntity = entityManager.persistAndFlush(dummyCapabilitySetEntity);
     var capabilitySetIds = List.of(capabilitySetEntity.getId(), dummyCapabilitySetEntity.getId());
 
     var actualCapabilitySetIds = capabilitySetRepository.findCapabilitySetIdsByIdIn(capabilitySetIds);
@@ -128,7 +115,7 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
     var dummyCapabilitySetEntity = capabilitySetEntity(null, List.of());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
-    entityManager.persistAndFlush(capabilitySetEntity);
+    capabilitySetEntity = entityManager.persistAndFlush(capabilitySetEntity);
     entityManager.persistAndFlush(dummyCapabilitySetEntity);
 
     var actual = capabilitySetRepository.findByName(dummyCapabilitySetEntity.getName());
@@ -144,7 +131,7 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
     var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
-    entityManager.persistAndFlush(capabilitySetEntity);
+    capabilitySetEntity = entityManager.persistAndFlush(capabilitySetEntity);
     entityManager.persistAndFlush(dummyCapabilitySetEntity);
     var capabilitySetNames = List.of(capabilitySetEntity.getName(), capabilitySetEntity.getName());
 
@@ -154,16 +141,17 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
 
   @Test
   void findByPermissionNames_positive_excludeDummy() {
-    var capabilitySetEntity = capabilitySetEntity(null, emptyList());
-    capabilitySetEntity.setPermission("permission_for_capabilitySet");
-    var dummyCapabilitySetEntity = capabilitySetEntity(null, emptyList());
+
+    var capabilitySetEntity = capabilitySetEntity(null, List.of());
+    capabilitySetEntity.setPermission("permission_not_for_dummy");
+    var dummyCapabilitySetEntity = capabilitySetEntity(null, List.of());
     dummyCapabilitySetEntity.setDummyCapability(true);
     dummyCapabilitySetEntity.setName("dummy_" + UUID.randomUUID());
-    dummyCapabilitySetEntity.setPermission("permission_for_dummyCapabilitySet");
-    entityManager.persistAndFlush(capabilitySetEntity);
+    dummyCapabilitySetEntity.setPermission("permission_for_dummy");
+    capabilitySetEntity = entityManager.persistAndFlush(capabilitySetEntity);
     entityManager.persistAndFlush(dummyCapabilitySetEntity);
 
-    var permissionNames = List.of("permission_for_capabilitySet", "permission_for_dummyCapabilitySet");
+    var permissionNames = List.of("permission_not_for_dummy", "permission_for_dummy");
     var actual = capabilitySetRepository.findByPermissionNames(permissionNames);
     assertThat(actual).hasSize(1).contains(capabilitySetEntity);
   }
