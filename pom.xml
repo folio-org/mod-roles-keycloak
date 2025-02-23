@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.4.2</version>
+    <version>3.4.3</version>
     <relativePath />
   </parent>
 
@@ -50,13 +50,13 @@
     </mod-roles-keycloak.yaml-file>
 
     <!-- Test dependencies versions -->
-    <testcontainer.version>1.20.4</testcontainer.version>
+    <testcontainer.version>1.20.5</testcontainer.version>
     <instancio.version>5.4.0</instancio.version>
     <kryo.version>5.6.2</kryo.version>
 
     <!-- Plugins versions -->
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    <maven-checkstyle.version>10.21.2</maven-checkstyle.version>
+    <maven-checkstyle.version>10.21.3</maven-checkstyle.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
