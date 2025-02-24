@@ -55,11 +55,6 @@ public class CapabilitySetDescriptor {
   private Map<String, List<CapabilityAction>> capabilities;
 
   /**
-   * Is capability dummy.
-   */
-  private boolean dummyCapability;
-
-  /**
    * Sets resource field and returns {@link CapabilitySetDescriptor}.
    *
    * @return modified {@link CapabilitySetDescriptor} value

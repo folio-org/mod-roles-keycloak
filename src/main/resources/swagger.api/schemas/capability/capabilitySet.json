@@ -53,10 +53,6 @@
         "format": "uuid"
       }
     },
-    "dummyCapability": {
-      "description": "Is capability set dummy",
-      "type": "boolean"
-    },
     "metadata": {
       "$ref": "../common/metadata.json",
       "readOnly": true

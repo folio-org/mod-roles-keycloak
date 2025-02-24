@@ -16,29 +16,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CapabilitySetRepository extends BaseCqlJpaRepository<CapabilitySetEntity, UUID> {
 
-  @Query(value = """
-    SELECT DISTINCT c2.*
-    FROM user_role ur
-      LEFT JOIN user_capability uc ON uc.user_id = ur.user_id
-      LEFT JOIN role_capability rc ON rc.role_id = ur.role_id
-      LEFT JOIN capability_set c ON c.id = rc.capability_id OR uc.capability_id = c.id
-      LEFT JOIN capability_set c2 ON c.id = ANY (c2.all_parent_ids) OR c2.id = c.id
-    WHERE ur.user_id = :userId AND c2.id IS NOT NULL
-    """,
-    nativeQuery = true)
-  List<CapabilitySetEntity> findExpandedCapabilitiesForUser(@Param("userId") UUID userId);
-
-  @Query(value = """
-    SELECT DISTINCT c.*
-    FROM user_role ur
-      LEFT JOIN user_capability uc ON uc.user_id = ur.user_id
-      LEFT JOIN role_capability rc ON rc.role_id = ur.role_id
-      LEFT JOIN capability_set c ON c.id = rc.capability_id OR uc.capability_id = c.id
-    WHERE ur.user_id = :userId AND c.id IS NOT NULL
-    """,
-    nativeQuery = true)
-  List<CapabilitySetEntity> findCapabilitiesForUser(@Param("userId") UUID userId);
-
   boolean existsByName(String name);
 
   @Query(nativeQuery = true,
