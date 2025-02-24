@@ -189,15 +189,15 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
 
   @Query("""
     select entity from CapabilityEntity entity where entity.name in :names
-    and dummyCapability = false order by entity.name""")
+    and entity.dummyCapability = false order by entity.name""")
   List<CapabilityEntity> findAllByNames(@Param("names") Collection<String> names);
 
-  @Query("select entity from CapabilityEntity entity where entity.name = :name and dummyCapability=false")
+  @Query("select entity from CapabilityEntity entity where entity.name = :name and entity.dummyCapability=false")
   Optional<CapabilityEntity> findByName(@Param("name") String name);
 
   @Query("""
     select distinct entity.id from CapabilityEntity entity where entity.id in :ids
-    and dummyCapability = false order by entity.id""")
+    and entity.dummyCapability = false order by entity.id""")
   Set<UUID> findCapabilityIdsByIdIn(@Param("ids") Collection<UUID> capabilityIds);
 
   @Query(nativeQuery = true, value = """

@@ -227,8 +227,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
 
     var capabilityEntities = capabilityRepository.findCapabilityIdsByIdIn(List.of(capabilityEntity.getId(),
       dummyCapabilityEntity.getId()));
-    assertThat(capabilityEntities).hasSize(1);
-    assertThat(capabilityEntities).contains(capabilityEntity.getId());
+    assertThat(capabilityEntities).hasSize(1).contains(capabilityEntity.getId());
   }
 
   @Test
