@@ -217,7 +217,7 @@
         {
           "methods": [ "GET" ],
           "pathPattern": "/roles/{id}/capability-sets",
-          "permissionsRequired": [ "role.capability-sets.collection.get" ]
+          "permissionsRequired": [ "role-capability-sets.collection.get" ]
         },
         {
           "methods": [ "PUT" ],
@@ -248,7 +248,7 @@
         {
           "methods": [ "GET" ],
           "pathPattern": "/users/{id}/capabilities",
-          "permissionsRequired": [ "user.capabilities.collection.get" ]
+          "permissionsRequired": [ "user-capabilities.collection.get" ]
         },
         {
           "methods": [ "PUT" ],
@@ -279,7 +279,7 @@
         {
           "methods": [ "GET" ],
           "pathPattern": "/users/{id}/capability-sets",
-          "permissionsRequired": [ "user.capability-sets.collection.get" ]
+          "permissionsRequired": [ "user-capability-sets.collection.get" ]
         },
         {
           "methods": [ "PUT" ],
@@ -563,7 +563,8 @@
       "description": "Delete all assigned capability-sets for role"
     },
     {
-      "permissionName": "role.capability-sets.collection.get",
+      "permissionName": "role-capability-sets.collection.get",
+      "replaces": ["role.capability-sets.collection.get"],
       "displayName": "Role-Capability-Sets - Get capability-sets assigned to role",
       "description": "Retrieve capability-sets assigned to role"
     },
@@ -575,7 +576,7 @@
         "role-capability-sets.collection.put",
         "role-capability-sets.collection.post",
         "role-capability-sets.collection.delete",
-        "role.capability-sets.collection.get"
+        "role-capability-sets.collection.get"
       ]
     },
     {
@@ -584,7 +585,8 @@
       "description": "Create a record associating one or more capabilities with user"
     },
     {
-      "permissionName": "user.capabilities.collection.get",
+      "permissionName": "user-capabilities.collection.get",
+      "replaces": ["user.capabilities.collection.get"],
       "displayName": "Role-Capabilities - Get capabilities assigned to user",
       "description": "Retrieve capabilities assigned to user"
     },
@@ -606,7 +608,7 @@
         "user-capabilities.collection.put",
         "user-capabilities.collection.post",
         "user-capabilities.collection.delete",
-        "user.capabilities.collection.get"
+        "user-capabilities.collection.get"
       ]
     },
     {
@@ -625,7 +627,8 @@
       "description": "Delete all assigned capability-sets for user"
     },
     {
-      "permissionName": "user.capability-sets.collection.get",
+      "permissionName": "user-capability-sets.collection.get",
+      "replaces": ["user.capability-sets.collection"],
       "displayName": "User-Capability-Sets - Get capability-sets assigned to user",
       "description": "Retrieve capability-sets assigned to user"
     },
@@ -637,7 +640,7 @@
         "user-capability-sets.collection.put",
         "user-capability-sets.collection.post",
         "user-capability-sets.collection.delete",
-        "user.capability-sets.collection.get"
+        "user-capability-sets.collection.get"
       ]
     },
     {
