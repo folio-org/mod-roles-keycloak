@@ -1,3 +1,6 @@
+## Version `v2.0.15` (26.02.2025)
+* Fix capability loss due to permissions overlap (MODROLESKC-273)
+
 ## Version `v2.0.14` (31.01.2025)
 * Update Keycloak to 26.* version (MODROLESKC-252)
 
