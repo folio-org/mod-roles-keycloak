@@ -217,7 +217,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void findCapabilityIdsByIdIn_positive_excludeDummy() {
+  void findCapabilityIdsByIdIn_positive_includeDummy() {
     var capabilityEntity = capabilityEntity(null);
     var dummyCapabilityEntity = capabilityEntity(null);
     dummyCapabilityEntity.setDummyCapability(true);
@@ -225,9 +225,9 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     capabilityEntity = entityManager.persistAndFlush(capabilityEntity);
     dummyCapabilityEntity = entityManager.persistAndFlush(dummyCapabilityEntity);
 
-    var capabilityEntities = capabilityRepository.findCapabilityIdsByIdIn(List.of(capabilityEntity.getId(),
+    var capabilityEntities = capabilityRepository.findCapabilityIdsByIdIncludeDummy(List.of(capabilityEntity.getId(),
       dummyCapabilityEntity.getId()));
-    assertThat(capabilityEntities).hasSize(1).contains(capabilityEntity.getId());
+    assertThat(capabilityEntities).hasSize(2);
   }
 
   @Test
