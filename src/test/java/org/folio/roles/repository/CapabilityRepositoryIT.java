@@ -206,6 +206,20 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
+  void findAllByNamesIncludeDummy_positive_includeDummy() {
+    var capabilityEntity = capabilityEntity(null);
+    var dummyCapabilityEntity = capabilityEntity(null);
+    dummyCapabilityEntity.setDummyCapability(true);
+    dummyCapabilityEntity.setName("dummy_" + UUID.randomUUID());
+    entityManager.persistAndFlush(capabilityEntity);
+    entityManager.persistAndFlush(dummyCapabilityEntity);
+
+    var capabilityEntities = capabilityRepository.findAllByNamesIncludeDummy(List.of(capabilityEntity.getName(),
+      dummyCapabilityEntity.getName()));
+    assertThat(capabilityEntities).hasSize(2);
+  }
+
+  @Test
   void findByName_positive_excludeDummy() {
     var dummyCapabilityEntity = capabilityEntity(null);
     dummyCapabilityEntity.setDummyCapability(true);
