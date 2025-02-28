@@ -496,6 +496,7 @@ class RoleCapabilityServiceImplTest {
       var result = roleCapabilityService.getCapabilitySetCapabilityIds(ROLE_ID);
 
       assertThat(result).containsExactly(capabilityId);
+      verify(capabilitySetService).findByRoleId(ROLE_ID, MAX_VALUE, 0);
     }
   }
 }

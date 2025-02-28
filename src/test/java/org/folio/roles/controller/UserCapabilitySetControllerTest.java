@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 
 @UnitTest
@@ -58,7 +59,7 @@ class UserCapabilitySetControllerTest {
         .content(asJsonString(request)))
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -75,7 +76,7 @@ class UserCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -88,7 +89,7 @@ class UserCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(userCapabilitySets(1, userCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -103,7 +104,7 @@ class UserCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -117,7 +118,7 @@ class UserCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), true));
+      .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test

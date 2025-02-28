@@ -126,7 +126,7 @@ class UserCapabilitySetServiceTest {
       when(userCapabilitySetEntityMapper.convert(userCapabilityEntity2)).thenReturn(userCapability2);
       when(userCapabilitySetRepository.findUserCapabilitySets(USER_ID, capabilitySetIds)).thenReturn(emptyList());
       when(userCapabilitySetRepository.saveAll(entities)).thenReturn(entities);
-      when(capabilityService.findByUserId(USER_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByUserId(USER_ID, false,  false, MAX_VALUE, 0)).thenReturn(empty());
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
       doNothing().when(userPermissionService).createPermissions(USER_ID, endpoints);
 
@@ -183,7 +183,7 @@ class UserCapabilitySetServiceTest {
 
       when(userCapabilitySetRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
       when(userCapabilitySetRepository.findById(entityKey)).thenReturn(Optional.of(existingEntity));
-      when(capabilityService.findByUserId(USER_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByUserId(USER_ID, false,  false, MAX_VALUE, 0)).thenReturn(empty());
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
 
       userCapabilitySetService.delete(USER_ID, CAPABILITY_SET_ID);
@@ -228,7 +228,7 @@ class UserCapabilitySetServiceTest {
 
       when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
       when(userCapabilitySetRepository.findAllByUserId(USER_ID)).thenReturn(expectedEntities);
-      when(capabilityService.findByUserId(USER_ID, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByUserId(USER_ID, false,  false, MAX_VALUE, 0)).thenReturn(empty());
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
 
       userCapabilitySetService.deleteAll(USER_ID);
@@ -275,7 +275,7 @@ class UserCapabilitySetServiceTest {
       when(userCapabilitySetRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
       when(userCapabilitySetEntityMapper.convert(ucse2)).thenReturn(userCapabilitySet(USER_ID, capabilitySetId2));
       when(userCapabilitySetRepository.saveAll(List.of(ucse2))).thenReturn(List.of(ucse2));
-      when(capabilityService.findByUserId(USER_ID, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(capabilityService.findByUserId(USER_ID, false, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
 
       var newIds = List.of(capabilitySetId2);
       var deprecatedIds = List.of(capabilitySetId1);
@@ -294,7 +294,7 @@ class UserCapabilitySetServiceTest {
       verify(userPermissionService).createPermissions(USER_ID, endpointsToAssign);
       verify(userPermissionService).deletePermissions(USER_ID, endpointsToDel);
       verify(userCapabilitySetRepository).deleteUserCapabilitySets(USER_ID, deprecatedIds);
-      verify(capabilityService, times(2)).findByUserId(USER_ID, false, MAX_VALUE, 0);
+      verify(capabilityService, times(2)).findByUserId(USER_ID, false, false, MAX_VALUE, 0);
     }
 
     @Test

@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 
 @UnitTest
@@ -62,7 +63,7 @@ class RoleCapabilitySetControllerTest {
         .content(asJsonString(request)))
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -81,7 +82,7 @@ class RoleCapabilitySetControllerTest {
         .content(asJsonString(request)))
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -98,7 +99,7 @@ class RoleCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -111,7 +112,7 @@ class RoleCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(roleCapabilitySets(1, roleCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -126,7 +127,7 @@ class RoleCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), true));
+      .andExpect(content().json(asJsonString(capabilitySets(foundCapabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -140,7 +141,7 @@ class RoleCapabilitySetControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), true));
+      .andExpect(content().json(asJsonString(capabilitySets(capabilitySet)), JsonCompareMode.STRICT));
   }
 
   @Test

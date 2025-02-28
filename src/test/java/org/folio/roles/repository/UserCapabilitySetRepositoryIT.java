@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 class UserCapabilitySetRepositoryIT extends BaseRepositoryTest {
 
   @Autowired
-  private UserCapabilitySetRepository repository;
+  private UserCapabilitySetRepository userCapabilitySetRepository;
 
   @BeforeEach
   void returnTestUserIdFromFolioExecutionContext() {
@@ -30,7 +30,7 @@ class UserCapabilitySetRepositoryIT extends BaseRepositoryTest {
     var entity = userCapabilitySetEntity();
     var now = OffsetDateTime.now();
 
-    repository.save(entity);
+    userCapabilitySetRepository.save(entity);
 
     var stored = entityManager.find(UserCapabilitySetEntity.class,
       UserCapabilitySetKey.of(entity.getUserId(), entity.getCapabilitySetId()));

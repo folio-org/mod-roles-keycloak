@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 
 @UnitTest
@@ -58,7 +59,7 @@ class UserCapabilityControllerTest {
         .content(asJsonString(request)))
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(userCapabilities(1, userCapability)), true));
+      .andExpect(content().json(asJsonString(userCapabilities(1, userCapability)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -75,7 +76,7 @@ class UserCapabilityControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(userCapabilities(1, userCapability)), true));
+      .andExpect(content().json(asJsonString(userCapabilities(1, userCapability)), JsonCompareMode.STRICT));
   }
 
   @Test
@@ -88,13 +89,13 @@ class UserCapabilityControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(userCapabilities(1, userCapability)), true));
+      .andExpect(content().json(asJsonString(userCapabilities(1, userCapability)), JsonCompareMode.STRICT));
   }
 
   @Test
   void findByUserId_positive() throws Exception {
     var foundCapability = capability();
-    when(capabilityService.findByUserId(USER_ID, false, 100, 20)).thenReturn(asSinglePage(foundCapability));
+    when(capabilityService.findByUserId(USER_ID, false, false, 100, 20)).thenReturn(asSinglePage(foundCapability));
 
     mockMvc.perform(get("/users/{id}/capabilities", USER_ID)
         .param("limit", "100")
@@ -103,28 +104,29 @@ class UserCapabilityControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilities(foundCapability)), true));
+      .andExpect(content().json(asJsonString(capabilities(foundCapability)), JsonCompareMode.STRICT));
   }
 
   @Test
   void findByUserId_positive_defaultPageParameters() throws Exception {
     var capability = capability();
     when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
-    when(capabilityService.findByUserId(USER_ID, false, 10, 0)).thenReturn(asSinglePage(capability));
+    when(capabilityService.findByUserId(USER_ID, false, false, 10, 0)).thenReturn(asSinglePage(capability));
 
     mockMvc.perform(get("/users/{id}/capabilities", USER_ID)
         .contentType(APPLICATION_JSON)
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilities(capability)), true));
+      .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
+    verify(capabilityService).findByUserId(USER_ID, false, false, 10, 0);
   }
 
   @Test
   void findByUserId_positive_expandCapabilities() throws Exception {
     var capability = capability();
     when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
-    when(capabilityService.findByUserId(USER_ID, true, 10, 0)).thenReturn(asSinglePage(capability));
+    when(capabilityService.findByUserId(USER_ID, true, false, 10, 0)).thenReturn(asSinglePage(capability));
 
     mockMvc.perform(get("/users/{id}/capabilities", USER_ID)
         .queryParam("expand", "true")
@@ -132,7 +134,24 @@ class UserCapabilityControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(capabilities(capability)), true));
+      .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
+  }
+
+  @Test
+  void findByUserId_positive_expandCapabilitiesAndIncludeDummy() throws Exception {
+    var capability = capability();
+    when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
+    when(capabilityService.findByUserId(USER_ID, true, true, 10, 0)).thenReturn(asSinglePage(capability));
+
+    mockMvc.perform(get("/users/{id}/capabilities", USER_ID)
+        .queryParam("expand", "true")
+        .queryParam("includeDummy", "true")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
+    verify(capabilityService).findByUserId(USER_ID, true, true, 10, 0);
   }
 
   @Test

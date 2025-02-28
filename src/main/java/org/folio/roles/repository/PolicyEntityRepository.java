@@ -38,7 +38,7 @@ public interface PolicyEntityRepository extends JpaCqlRepository<BasePolicyEntit
         JOIN role_capability rc ON rc.capability_id = c.id
         JOIN policy_roles pr ON pr.role_id = rc.role_id
         JOIN policy p ON pr.policy_id = p.id AND p.type = 'ROLE'
-      WHERE c.id = :capabilityId
+      WHERE c.id = :capabilityId AND c.dummy_capability = false
 
       UNION
 
@@ -47,8 +47,8 @@ public interface PolicyEntityRepository extends JpaCqlRepository<BasePolicyEntit
         JOIN role_capability_set rcs ON rcs.capability_set_id = csc.capability_set_id
         JOIN policy_roles pr ON pr.role_id = rcs.role_id
         JOIN policy p ON pr.policy_id = p.id AND p.type = 'ROLE'
-      WHERE c.id = :capabilityId) policy""")
-  List<RolePolicyEntity> findRolePoliciesByCapabilityId(@Param("capabilityId") UUID capabilitySetId);
+      WHERE c.id = :capabilityId AND c.dummy_capability = false) policy""")
+  List<RolePolicyEntity> findRolePoliciesByCapabilityId(@Param("capabilityId") UUID capabilityId);
 
   @Query(nativeQuery = true, value = """
     SELECT DISTINCT policy.* FROM (
@@ -56,7 +56,7 @@ public interface PolicyEntityRepository extends JpaCqlRepository<BasePolicyEntit
         JOIN user_capability uc ON uc.capability_id = c.id
         JOIN policy_users pu ON pu.user_id = uc.user_id
         JOIN policy p ON pu.policy_id = p.id AND p.type = 'USER'
-      WHERE c.id = :capabilityId
+      WHERE c.id = :capabilityId AND c.dummy_capability = false
 
       UNION
 
@@ -65,6 +65,6 @@ public interface PolicyEntityRepository extends JpaCqlRepository<BasePolicyEntit
         JOIN user_capability_set ucs ON ucs.capability_set_id = csc.capability_set_id
         JOIN policy_users pu ON pu.user_id = ucs.user_id
         JOIN policy p ON pu.policy_id = p.id AND p.type = 'USER'
-      WHERE c.id = :capabilityId) policy""")
-  List<UserPolicyEntity> findUserPoliciesByCapabilityId(@Param("capabilityId") UUID capabilitySetId);
+      WHERE c.id = :capabilityId AND c.dummy_capability = false) policy""")
+  List<UserPolicyEntity> findUserPoliciesByCapabilityId(@Param("capabilityId") UUID capabilityId);
 }

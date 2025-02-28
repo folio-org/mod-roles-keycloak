@@ -3,6 +3,7 @@ package org.folio.roles.support;
 import java.util.UUID;
 import lombok.experimental.UtilityClass;
 import org.folio.roles.domain.dto.Role;
+import org.folio.roles.domain.entity.RoleEntity;
 import org.keycloak.representations.idm.RoleRepresentation;
 
 @UtilityClass
@@ -30,6 +31,14 @@ public class RoleUtils {
     role.setName(ROLE_NAME_2);
     role.setDescription(ROLE_DESCRIPTION_2);
     return role;
+  }
+
+  public static RoleEntity roleEntity() {
+    var roleEntity = new RoleEntity();
+    roleEntity.setId(ROLE_ID_2);
+    roleEntity.setName(ROLE_NAME_2);
+    roleEntity.setDescription(ROLE_DESCRIPTION_2);
+    return roleEntity;
   }
 
   public static RoleRepresentation keycloakRole() {
