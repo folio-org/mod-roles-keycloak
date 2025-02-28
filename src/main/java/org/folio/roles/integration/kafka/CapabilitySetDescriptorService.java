@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.CapabilitySet;
@@ -234,7 +235,7 @@ public class CapabilitySetDescriptorService {
         dummyCapability.setType(capabilitySetDescriptor.getType());
         dummyCapability.setApplicationId(capabilitySetDescriptor.getApplicationId());
         dummyCapability.setModuleId(capabilitySetDescriptor.getModuleId());
-        dummyCapability.setPermission(capabilitySetDescriptor.getPermission());
+        dummyCapability.setPermission(StringUtils.EMPTY);
         dummyCapability.setName(capabilityName);
         capabilityId = capabilityService.save(dummyCapability);
         log.info("Created dummy capability with name: {}", capabilityName);

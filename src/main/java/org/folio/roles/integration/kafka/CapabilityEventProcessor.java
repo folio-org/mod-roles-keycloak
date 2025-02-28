@@ -102,10 +102,11 @@ public class CapabilityEventProcessor {
      * see https://folio-org.atlassian.net/browse/MODROLESKC-240
      */
     var subPermissions =  union(permission.getSubPermissions(), List.of(permission.getPermissionName()));
-    var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
-
+    var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions)
+      .stream()
+      .map(Permission::getPermissionName).toList();
+    subPermissionsExpanded = union(subPermissionsExpanded, subPermissions);
     var capabilities = subPermissionsExpanded.stream()
-      .map(Permission::getPermissionName)
       .map(permissionName -> extractPermissionData(permissionName, permissionOverrider.getPermissionMappings()))
       .filter(CapabilityEventProcessor::hasRequiredFields)
       .map(data -> createCapability(event, res, data))
