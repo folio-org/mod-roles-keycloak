@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.4.2</version>
+    <version>3.4.3</version>
     <relativePath />
   </parent>
 
@@ -32,7 +32,9 @@
     -->
     <spring-kafka.version>3.3.0</spring-kafka.version>
 
-    <java.version>17</java.version>
+    <java.version>21</java.version>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
     <lombok.version>1.18.36</lombok.version>
     <swagger-annotations.version>2.2.28</swagger-annotations.version>
     <commons-lang3.version>3.17.0</commons-lang3.version>
@@ -40,7 +42,7 @@
     <openapi-tools.jackson-databind-nullable.version>0.2.6</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.6.3</mapstruct.version>
     <hypersistence-utils-hibernate-63.version>3.9.2</hypersistence-utils-hibernate-63.version>
-    <folio-spring-support.version>8.3.0-SNAPSHOT</folio-spring-support.version>
+    <folio-spring-support.version>9.0.0</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.0.1</folio-java-checkstyle.version>
     <applications-poc-tools.version>2.4.0-SNAPSHOT</applications-poc-tools.version>
@@ -50,17 +52,17 @@
     </mod-roles-keycloak.yaml-file>
 
     <!-- Test dependencies versions -->
-    <testcontainer.version>1.20.4</testcontainer.version>
-    <instancio.version>5.3.0</instancio.version>
+    <testcontainer.version>1.20.5</testcontainer.version>
+    <instancio.version>5.4.0</instancio.version>
     <kryo.version>5.6.2</kryo.version>
 
     <!-- Plugins versions -->
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-    <maven-checkstyle.version>10.21.2</maven-checkstyle.version>
+    <maven-checkstyle.version>10.21.3</maven-checkstyle.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
-    <openapi-generator.version>7.11.0</openapi-generator.version>
+    <openapi-generator.version>7.12.0</openapi-generator.version>
     <keycloak-admin-client.version>26.0.4</keycloak-admin-client.version>
     <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
 
