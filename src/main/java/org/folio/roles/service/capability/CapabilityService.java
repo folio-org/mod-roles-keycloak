@@ -71,13 +71,11 @@ public class CapabilityService {
 
     var capabilityNames = toSet(newCapabilities, Capability::getName);
     var foundAllCapabilitiesByName = findExistingCapabilitiesByNames(capabilityNames);
-    var foundDummyCapabilitiesByName = foundAllCapabilitiesByName
-      .entrySet()
+    var foundDummyCapabilitiesByName = foundAllCapabilitiesByName.entrySet()
       .stream()
       .filter(entry -> entry.getValue().isDummyCapability())
       .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-    var foundNotDummyCapabilitiesByName = foundAllCapabilitiesByName
-      .entrySet()
+    var foundNotDummyCapabilitiesByName = foundAllCapabilitiesByName.entrySet()
       .stream()
       .filter(entry -> !entry.getValue().isDummyCapability())
       .collect(Collectors.toMap(Entry::getKey, Entry::getValue));

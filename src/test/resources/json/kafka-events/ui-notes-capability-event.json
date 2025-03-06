@@ -17,9 +17,6 @@
       {
         "permission": {
           "permissionName": "settings.notes.enabled",
-          "subPermissions": [
-            "settings.enabled"
-          ],
           "visible": false
         }
       },
