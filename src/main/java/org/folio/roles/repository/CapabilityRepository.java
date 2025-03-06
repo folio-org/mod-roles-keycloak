@@ -192,13 +192,18 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     and entity.dummyCapability = false order by entity.name""")
   List<CapabilityEntity> findAllByNames(@Param("names") Collection<String> names);
 
+  @Query("""
+    select entity from CapabilityEntity entity where entity.name in :names
+    order by entity.name""")
+  List<CapabilityEntity> findAllByNamesIncludeDummy(@Param("names") Collection<String> names);
+
   @Query("select entity from CapabilityEntity entity where entity.name = :name and entity.dummyCapability=false")
   Optional<CapabilityEntity> findByName(@Param("name") String name);
 
   @Query("""
     select distinct entity.id from CapabilityEntity entity where entity.id in :ids
-    and entity.dummyCapability = false order by entity.id""")
-  Set<UUID> findCapabilityIdsByIdIn(@Param("ids") Collection<UUID> capabilityIds);
+    order by entity.id""")
+  Set<UUID> findCapabilityIdsByIdIncludeDummy(@Param("ids") Collection<UUID> capabilityIds);
 
   @Query(nativeQuery = true, value = """
     SELECT c.* FROM capability c
