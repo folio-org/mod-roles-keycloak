@@ -23,12 +23,12 @@ public class KeycloakUserService {
   private final Keycloak keycloak;
   private final FolioExecutionContext context;
 
-  @Cacheable(cacheNames = "keycloak-user-id", key = "#userId")
+  @Cacheable(cacheNames = "keycloak-user-id", key = "#userId + ':' + @folioExecutionContext.tenantId")
   public String findKeycloakIdByUserId(UUID userId) {
     return getKeycloakUserByUserId(userId).getId();
   }
 
-  @Cacheable(cacheNames = "keycloak-users", key = "#userId")
+  @Cacheable(cacheNames = "keycloak-users", key = "#userId + ':' + @folioExecutionContext.tenantId")
   public UserRepresentation getKeycloakUserByUserId(UUID userId) {
     var query = USER_ID_ATTR + ":" + userId;
     var realmResource = keycloak.realm(context.getTenantId());
