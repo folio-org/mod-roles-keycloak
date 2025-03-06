@@ -104,7 +104,7 @@ class CapabilityServiceTest {
       var savedCapability = capability();
       var capabilityEntity = capabilityEntity(null);
       var savedCapabilityEntity = capabilityEntity();
-      when(capabilityRepository.findAllByNames(Set.of("test_resource.create"))).thenReturn(emptyList());
+      when(capabilityRepository.findAllByNamesIncludeDummy(Set.of("test_resource.create"))).thenReturn(emptyList());
       when(capabilityEntityMapper.convert(capability)).thenReturn(capabilityEntity);
       when(capabilityRepository.saveAll(List.of(capabilityEntity))).thenReturn(List.of(savedCapabilityEntity));
       when(capabilityEntityMapper.convert(savedCapabilityEntity)).thenReturn(savedCapability);
@@ -120,7 +120,8 @@ class CapabilityServiceTest {
     void positive_capabilityByNameExists(CapturedOutput output) {
       var existingCapability = capability();
       var existingEntity = capabilityEntity();
-      when(capabilityRepository.findAllByNames(Set.of("test_resource.create"))).thenReturn(List.of(existingEntity));
+      when(capabilityRepository.findAllByNamesIncludeDummy(Set.of("test_resource.create")))
+        .thenReturn(List.of(existingEntity));
       when(capabilityEntityMapper.convert(existingEntity)).thenReturn(existingCapability);
 
       var updatedCapabilityEntity = capabilityEntity();
@@ -144,7 +145,8 @@ class CapabilityServiceTest {
     void positive_capabilityByNameExistsForUpgrade() {
       var existingCapability = capability();
       var existingEntity = capabilityEntity();
-      when(capabilityRepository.findAllByNames(Set.of("test_resource.create"))).thenReturn(List.of(existingEntity));
+      when(capabilityRepository.findAllByNamesIncludeDummy(Set.of("test_resource.create")))
+        .thenReturn(List.of(existingEntity));
       when(capabilityEntityMapper.convert(existingEntity)).thenReturn(existingCapability);
 
       var updatedCapabilityEntity = capabilityEntity();
