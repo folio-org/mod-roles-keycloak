@@ -1,6 +1,7 @@
 package org.folio.roles.it;
 
 import static java.util.UUID.fromString;
+import static org.folio.roles.support.TestConstants.MEMBER_TENANT_ID;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
 import static org.folio.roles.support.UserRoleTestUtils.userRole;
@@ -46,17 +47,20 @@ class UserRolesIT extends BaseIntegrationTest {
   public static final UUID USER_UUID = fromString("61893f40-4739-49fc-bf07-daeff3021f90");
   public static final UUID ROLE_UUID_1 = fromString("5f2492dd-adcd-445b-9118-bcfa9b406c95");
   public static final UUID ROLE_UUID_2 = fromString("5f2492dd-adcd-445b-9118-bcfa9b406c22");
+  public static final UUID MEMBER_ROLE_UUID_2 = fromString("00000000-0000-0000-0002-000000000002");
 
   @Autowired private Keycloak keycloak;
 
   @BeforeAll
   static void beforeAll() {
     enableTenant(TENANT_ID);
+    enableTenant(MEMBER_TENANT_ID);
   }
 
   @AfterAll
   static void afterAll() {
     removeTenant(TENANT_ID);
+    removeTenant(MEMBER_TENANT_ID);
   }
 
   @BeforeEach
@@ -180,5 +184,27 @@ class UserRolesIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
       .andExpect(jsonPath("$.errors[0].code", is("not_found_error")))
       .andExpect(jsonPath("$.errors[0].message", matchesPattern("Roles are not found for ids: \\[.*]")));
+  }
+
+  @Test
+  @Sql("classpath:/sql/populate-roles-user-tables.sql")
+  @Sql("classpath:/sql/populate-roles-user-tables-member-tenant.sql")
+  @Sql(scripts = "classpath:/sql/truncate-roles-user-related-tables-member-tenant.sql",
+    executionPhase = AFTER_TEST_METHOD)
+  @KeycloakRealms(realms = "classpath:json/keycloak/test-realm-roles-users-member-tenant.json")
+  void updateRolesUser_positive_sameUserIdInDifferentTenants() throws Exception {
+    mockMvc.perform(put("/roles/users/{userId}", USER_UUID)
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .content(asJsonString(new UserRolesRequest().userId(USER_UUID).roleIds(List.of(ROLE_UUID_2))))
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
+
+    mockMvc.perform(put("/roles/users/{userId}", USER_UUID)
+        .header(TENANT, MEMBER_TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .content(asJsonString(new UserRolesRequest().userId(USER_UUID).roleIds(List.of(MEMBER_ROLE_UUID_2))))
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
   }
 }

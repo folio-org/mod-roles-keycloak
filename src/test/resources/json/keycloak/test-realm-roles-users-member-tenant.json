@@ -1,0 +1,39 @@
+{
+  "realm": "member",
+  "enabled": true,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": true,
+  "users": [
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "username": "user1-for-user-policy",
+      "enabled": true,
+      "attributes": {
+        "user_id": [
+          "61893f40-4739-49fc-bf07-daeff3021f90"
+        ]
+      }
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "id": "00000000-0000-0000-0001-000000000002",
+        "name": "role-1",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {}
+      },
+      {
+        "id": "00000000-0000-0000-0002-000000000002",
+        "name": "role-2",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "attributes": {}
+      }
+    ]
+  }
+}
