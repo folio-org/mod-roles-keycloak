@@ -198,6 +198,32 @@ class CapabilityServiceTest {
       capabilityService.update(CREATE, emptyList(), emptyList());
       Mockito.verifyNoInteractions(capabilityRepository, capabilityEntityMapper);
     }
+
+    @Test
+    void positive_updateDummyCapabilities() {
+      var capability = capability().id(null);
+      var capabilityEntity = capabilityEntity(null);
+      var dummyCapability = capability().id(null);
+      dummyCapability.setDummyCapability(true);
+      var dummyCapabilityEntity = capabilityEntity();
+      dummyCapabilityEntity.setDummyCapability(true);
+      var savedCapability = capability();
+      savedCapability.setDummyCapability(false);
+      var savedCapabilityEntity = capabilityEntity();
+
+      when(capabilityRepository.findAllByNamesIncludeDummy(Set.of("test_resource.create")))
+        .thenReturn(List.of(dummyCapabilityEntity));
+      when(capabilityEntityMapper.convert(capability)).thenReturn(capabilityEntity);
+      when(capabilityRepository.saveAll(List.of(capabilityEntity))).thenReturn(List.of(savedCapabilityEntity));
+      when(capabilityEntityMapper.convert(savedCapabilityEntity)).thenReturn(savedCapability);
+      when(capabilityEntityMapper.convert(dummyCapabilityEntity)).thenReturn(dummyCapability);
+      doNothing().when(applicationEventPublisher).publishEvent(eventCaptor.capture());
+
+      capabilityService.update(ResourceEventType.CREATE, List.of(capability), emptyList());
+
+      verify(capabilityRepository).saveAll(List.of(capabilityEntity));
+      verifyCapturedEvents(CapabilityEvent.updated(savedCapability, dummyCapability));
+    }
   }
 
   @Nested

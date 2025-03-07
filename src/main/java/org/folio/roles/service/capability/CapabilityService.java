@@ -87,13 +87,7 @@ public class CapabilityService {
       .collect(groupingBy(capability -> foundNotDummyCapabilitiesByName.containsKey(capability.getName())));
 
     handleNewCapabilities(groupedExcludeDummyCapabilities.get(Boolean.FALSE));
-    if (!foundDummyCapabilitiesByName.isEmpty()) {
-      var dummyCapabilities = newCapabilities
-        .stream()
-        .filter(capability -> dummyCapabilityNames.contains(capability.getName()))
-        .toList();
-      handleUpdatedDummyCapabilities(eventType, dummyCapabilities, foundDummyCapabilitiesByName);
-    }
+    handleUpdatedDummyCapabilities(eventType, newCapabilities, foundDummyCapabilitiesByName);
     handleUpdatedCapabilities(eventType, groupedExcludeDummyCapabilities.get(Boolean.TRUE),
       foundNotDummyCapabilitiesByName);
     capabilityNames.removeAll(dummyCapabilityNames);
@@ -472,15 +466,16 @@ public class CapabilityService {
   }
 
   private void handleUpdatedDummyCapabilities(ResourceEventType type,
-    List<Capability> capabilities, Map<String, CapabilityEntity> capabilitiesByName) {
-    var dummyCapabilityEntities = capabilitiesByName.values();
-    dummyCapabilityEntities.forEach(capabilityEntity -> {
-      capabilityEntity.setDummyCapability(false);
-    });
-    capabilityRepository.saveAll(dummyCapabilityEntities);
-    log.info("Dummy capabilities updated to not dummy {}", () ->
-      mapItems(dummyCapabilityEntities, CapabilityEntity::getName));
-    handleUpdatedCapabilities(type, capabilities, capabilitiesByName);
+    List<Capability> newCapabilities, Map<String, CapabilityEntity> foundDummyCapabilitiesByName) {
+    if (!foundDummyCapabilitiesByName.isEmpty()) {
+      var newCapabilitiesForDummy = newCapabilities
+        .stream()
+        .filter(capability -> foundDummyCapabilitiesByName.containsKey(capability.getName()))
+        .toList();
+      log.info("Dummy capabilities updated to not dummy {}", () ->
+        mapItems(newCapabilitiesForDummy, Capability::getName));
+      handleUpdatedCapabilities(type, newCapabilitiesForDummy, foundDummyCapabilitiesByName);
+    }
   }
 
   private void handleDeprecatedCapabilities(List<Capability> oldCapabilities, Set<String> capabilityNames) {
