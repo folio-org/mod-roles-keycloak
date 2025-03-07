@@ -472,7 +472,7 @@ public class CapabilityService {
         .stream()
         .filter(capability -> foundDummyCapabilitiesByName.containsKey(capability.getName()))
         .toList();
-      log.info("Dummy capabilities updated to not dummy {}", () ->
+      log.info("Updating dummy capabilities to not dummy {}", () ->
         mapItems(newCapabilitiesForDummy, Capability::getName));
       handleUpdatedCapabilities(type, newCapabilitiesForDummy, foundDummyCapabilitiesByName);
     }
