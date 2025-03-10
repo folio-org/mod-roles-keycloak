@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -69,12 +70,27 @@ public class CapabilityService {
     log.info("Capabilities received: new = {}, old = {}", newCapabilities.size(), oldCapabilities.size());
 
     var capabilityNames = toSet(newCapabilities, Capability::getName);
-    var foundCapabilitiesByName = findExistingCapabilitiesByNames(capabilityNames);
-    var groupedCapabilities = newCapabilities.stream()
-      .collect(groupingBy(capability -> foundCapabilitiesByName.containsKey(capability.getName())));
+    var foundAllCapabilitiesByName = findExistingCapabilitiesByNames(capabilityNames);
+    var foundDummyCapabilitiesByName = foundAllCapabilitiesByName.entrySet()
+      .stream()
+      .filter(entry -> entry.getValue().isDummyCapability())
+      .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    var foundNotDummyCapabilitiesByName = foundAllCapabilitiesByName.entrySet()
+      .stream()
+      .filter(entry -> !entry.getValue().isDummyCapability())
+      .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    var dummyCapabilityNames = foundDummyCapabilitiesByName.keySet();
 
-    handleNewCapabilities(groupedCapabilities.get(Boolean.FALSE));
-    handleUpdatedCapabilities(eventType, groupedCapabilities.get(Boolean.TRUE), foundCapabilitiesByName);
+    var groupedExcludeDummyCapabilities = newCapabilities
+      .stream()
+      .filter(capability -> !dummyCapabilityNames.contains(capability.getName()))
+      .collect(groupingBy(capability -> foundNotDummyCapabilitiesByName.containsKey(capability.getName())));
+
+    handleNewCapabilities(groupedExcludeDummyCapabilities.get(Boolean.FALSE));
+    handleUpdatedDummyCapabilities(eventType, newCapabilities, foundDummyCapabilitiesByName);
+    handleUpdatedCapabilities(eventType, groupedExcludeDummyCapabilities.get(Boolean.TRUE),
+      foundNotDummyCapabilitiesByName);
+    capabilityNames.removeAll(dummyCapabilityNames);
     handleDeprecatedCapabilities(oldCapabilities, capabilityNames);
   }
 
@@ -400,7 +416,7 @@ public class CapabilityService {
       return emptyMap();
     }
 
-    return capabilityRepository.findAllByNames(capabilityNames).stream()
+    return capabilityRepository.findAllByNamesIncludeDummy(capabilityNames).stream()
       .collect(toLinkedHashMap(CapabilityEntity::getName));
   }
 
@@ -446,6 +462,19 @@ public class CapabilityService {
       var oldCapability = oldCapabilitiesById.get(newCapability.getId());
       var event = CapabilityEvent.updated(newCapability, oldCapability).withContext(folioExecutionContext);
       applicationEventPublisher.publishEvent(event);
+    }
+  }
+
+  private void handleUpdatedDummyCapabilities(ResourceEventType type,
+    List<Capability> newCapabilities, Map<String, CapabilityEntity> foundDummyCapabilitiesByName) {
+    if (!foundDummyCapabilitiesByName.isEmpty()) {
+      var newCapabilitiesForDummy = newCapabilities
+        .stream()
+        .filter(capability -> foundDummyCapabilitiesByName.containsKey(capability.getName()))
+        .toList();
+      log.info("Updating dummy capabilities to not dummy {}", () ->
+        mapItems(newCapabilitiesForDummy, Capability::getName));
+      handleUpdatedCapabilities(type, newCapabilitiesForDummy, foundDummyCapabilitiesByName);
     }
   }
 
