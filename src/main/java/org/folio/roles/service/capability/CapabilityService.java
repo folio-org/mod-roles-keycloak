@@ -161,6 +161,18 @@ public class CapabilityService {
   }
 
   /**
+   * Retrieves capabilities by capability names including dummy.
+   *
+   * @param capabilityNames - list of {@link String} capability names
+   * @return found {@link Capability} object
+   */
+  @Transactional(readOnly = true)
+  public List<Capability> findByNamesIncludeDummy(Collection<String> capabilityNames) {
+    var capabilityEntities = capabilityRepository.findAllByNamesIncludeDummy(capabilityNames);
+    return capabilityEntityMapper.convert(capabilityEntities);
+  }
+
+  /**
    * Retrieves capability by capability name.
    *
    * @param capabilityName - capability name
@@ -259,7 +271,7 @@ public class CapabilityService {
     }
 
     var capabilityIdsToCheck = new LinkedHashSet<>(capabilityIds);
-    var foundCapabilityIds = capabilityRepository.findCapabilityIdsByIdIn(capabilityIdsToCheck);
+    var foundCapabilityIds = capabilityRepository.findCapabilityIdsByIdIncludeDummy(capabilityIdsToCheck);
     if (foundCapabilityIds.size() != capabilityIdsToCheck.size()) {
       var notFoundCapabilityIds = CollectionUtils.subtract(capabilityIdsToCheck, foundCapabilityIds);
       throw new EntityNotFoundException("Capabilities not found by ids: " + notFoundCapabilityIds);
@@ -335,6 +347,16 @@ public class CapabilityService {
     String newApplicationId, String newModuleId) {
     capabilityRepository.updateAppAndModuleVersionByAppAndModuleName(applicationName, moduleName, newApplicationId,
       newModuleId);
+  }
+
+  /**
+   * Save capability.
+   *
+   * @param capability - capability to save.
+   */
+  public Capability save(Capability capability) {
+    var saved = capabilityRepository.saveAndFlush(capabilityEntityMapper.convert(capability));
+    return capabilityEntityMapper.convert(saved);
   }
 
   private Page<CapabilityEntity> findAllCapabilityEntitiesByUserId(boolean includeDummy, UUID userId,

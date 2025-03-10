@@ -17,9 +17,6 @@
       {
         "permission": {
           "permissionName": "settings.notes.enabled",
-          "subPermissions": [
-            "settings.enabled"
-          ],
           "visible": false
         }
       },
@@ -29,7 +26,6 @@
           "displayName": "Settings (Notes): Edit and View General settings",
           "subPermissions": [
             "settings.notes.enabled",
-            "settings.notes.view",
             "note.types.item.post",
             "note.types.item.put",
             "note.types.item.delete",
