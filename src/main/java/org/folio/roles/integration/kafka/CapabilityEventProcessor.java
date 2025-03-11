@@ -66,15 +66,12 @@ public class CapabilityEventProcessor {
   }
 
   /**
-   * Here, the capabilities will be created for all permissions, even those that are
-   * so-called "PermissionSets" and include "SubPermissions."
-   * It is needed to support "FOLIO PermissionSets" using plain Eureka CapabilitySets.
-   * The Capabilities created to reflect the CapabilitySets are called "Technical Capabilities" and do not refer
-   * to any actual permissions/access grants that can be available to users.
-   * Such Capabilities can be distinguished by the following criteria:
-   * the end-points list of the capability must be empty,
-   * and the capability name must be equal to the capability set name that it reflects.
-   * Both backend and UI modules are processed in the same way.
+   * Here, the capabilities will be created for all permissions, even those that are so-called "PermissionSets" and
+   * include "SubPermissions." It is needed to support "FOLIO PermissionSets" using plain Eureka CapabilitySets. The
+   * Capabilities created to reflect the CapabilitySets are called "Technical Capabilities" and do not refer to any
+   * actual permissions/access grants that can be available to users. Such Capabilities can be distinguished by the
+   * following criteria: the end-points list of the capability must be empty, and the capability name must be equal to
+   * the capability set name that it reflects. Both backend and UI modules are processed in the same way.
    */
   private CapabilityResultHolder processModuleResources(CapabilityEvent event, List<FolioResource> resources) {
     var grouped = groupByHavingSubPermissions(resources);
@@ -101,11 +98,12 @@ public class CapabilityEventProcessor {
      * It is needed to support cases when a PermissionSet defined in BE modules are used in UI modules.
      * see https://folio-org.atlassian.net/browse/MODROLESKC-240
      */
-    var subPermissions =  union(permission.getSubPermissions(), List.of(permission.getPermissionName()));
-    var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
-
+    var subPermissions = union(permission.getSubPermissions(), List.of(permission.getPermissionName()));
+    var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions)
+      .stream()
+      .map(Permission::getPermissionName).toList();
+    subPermissionsExpanded = union(subPermissionsExpanded, subPermissions);
     var capabilities = subPermissionsExpanded.stream()
-      .map(Permission::getPermissionName)
       .map(permissionName -> extractPermissionData(permissionName, permissionOverrider.getPermissionMappings()))
       .filter(CapabilityEventProcessor::hasRequiredFields)
       .map(data -> createCapability(event, res, data))

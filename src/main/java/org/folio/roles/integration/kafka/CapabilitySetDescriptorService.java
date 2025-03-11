@@ -221,13 +221,23 @@ public class CapabilitySetDescriptorService {
     }
 
     var capabilityIds = new ArrayList<Capability>();
-    var capabilities = capabilityService.findByNames(requiredCapabilityNames);
+    var capabilities = capabilityService.findByNamesIncludeDummy(requiredCapabilityNames);
     var capabilityIdsByNames = capabilities.stream().collect(toMap(Capability::getName, Function.identity()));
     for (var capabilityName : requiredCapabilityNames) {
       var capabilityId = capabilityIdsByNames.get(capabilityName);
       if (capabilityId == null) {
         log.warn("Capability id is not found by capability name: {}", capabilityName);
-        continue;
+        var dummyCapability = new Capability();
+        dummyCapability.setDummyCapability(true);
+        dummyCapability.setResource(capabilitySetDescriptor.getResource());
+        dummyCapability.setAction(capabilitySetDescriptor.getAction());
+        dummyCapability.setType(capabilitySetDescriptor.getType());
+        dummyCapability.setApplicationId(capabilitySetDescriptor.getApplicationId());
+        dummyCapability.setModuleId(capabilitySetDescriptor.getModuleId());
+        dummyCapability.setPermission(capabilitySetDescriptor.getPermission());
+        dummyCapability.setName(capabilityName);
+        capabilityId = capabilityService.save(dummyCapability);
+        log.info("Created dummy capability with name: {}", capabilityName);
       }
 
       capabilityIds.add(capabilityId);

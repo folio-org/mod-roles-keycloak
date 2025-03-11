@@ -206,6 +206,20 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
+  void findAllByNamesIncludeDummy_positive_includeDummy() {
+    var capabilityEntity = capabilityEntity(null);
+    var dummyCapabilityEntity = capabilityEntity(null);
+    dummyCapabilityEntity.setDummyCapability(true);
+    dummyCapabilityEntity.setName("dummy_" + UUID.randomUUID());
+    entityManager.persistAndFlush(capabilityEntity);
+    entityManager.persistAndFlush(dummyCapabilityEntity);
+
+    var capabilityEntities = capabilityRepository.findAllByNamesIncludeDummy(List.of(capabilityEntity.getName(),
+      dummyCapabilityEntity.getName()));
+    assertThat(capabilityEntities).hasSize(2);
+  }
+
+  @Test
   void findByName_positive_excludeDummy() {
     var dummyCapabilityEntity = capabilityEntity(null);
     dummyCapabilityEntity.setDummyCapability(true);
@@ -217,7 +231,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void findCapabilityIdsByIdIn_positive_excludeDummy() {
+  void findCapabilityIdsByIdIn_positive_includeDummy() {
     var capabilityEntity = capabilityEntity(null);
     var dummyCapabilityEntity = capabilityEntity(null);
     dummyCapabilityEntity.setDummyCapability(true);
@@ -225,9 +239,9 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     capabilityEntity = entityManager.persistAndFlush(capabilityEntity);
     dummyCapabilityEntity = entityManager.persistAndFlush(dummyCapabilityEntity);
 
-    var capabilityEntities = capabilityRepository.findCapabilityIdsByIdIn(List.of(capabilityEntity.getId(),
+    var capabilityEntities = capabilityRepository.findCapabilityIdsByIdIncludeDummy(List.of(capabilityEntity.getId(),
       dummyCapabilityEntity.getId()));
-    assertThat(capabilityEntities).hasSize(1).contains(capabilityEntity.getId());
+    assertThat(capabilityEntities).hasSize(2);
   }
 
   @Test

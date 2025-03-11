@@ -14,6 +14,7 @@ import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.CapabilityUtils.RESOURCE_NAME;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.model.event.CapabilitySetEvent;
 import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
@@ -82,7 +84,7 @@ class CapabilitySetDescriptorServiceTest {
 
     when(capabilitySetService.findByNames(Set.of(CAPABILITY_SET_NAME))).thenReturn(emptyList());
     when(mapper.convert(capabilitySetDescriptor)).thenReturn(capabilitySet((UUID) null));
-    when(capabilityService.findByNames(List.of("foo.create"))).thenReturn(capabilities);
+    when(capabilityService.findByNamesIncludeDummy(List.of("foo.create"))).thenReturn(capabilities);
     when(capabilitySetService.createAll(capabilitySetsToSave)).thenReturn(List.of(savedSet));
     when(mapper.toExtendedCapabilitySet(savedSet, capabilities)).thenReturn(extendedCapabilitySet);
     doNothing().when(applicationEventPublisher).publishEvent(eventCaptor.capture());
@@ -113,7 +115,7 @@ class CapabilitySetDescriptorServiceTest {
 
     when(mapper.convert(capabilitySetDescriptor)).thenReturn(capabilitySet((UUID) null));
     when(capabilitySetService.findByNames(Set.of(CAPABILITY_SET_NAME))).thenReturn(List.of(existingCapabilitySet));
-    when(capabilityService.findByNames(List.of("foo.create"))).thenReturn(newCapabilities);
+    when(capabilityService.findByNamesIncludeDummy(List.of("foo.create"))).thenReturn(newCapabilities);
     when(capabilityService.findByIds(List.of(CAPABILITY_ID))).thenReturn(capabilities);
     when(mapper.toExtendedCapabilitySet(existingCapabilitySet, capabilities)).thenReturn(extendedCapabilitySet);
     when(capabilitySetService.createAll(capabilitySets)).thenReturn(capabilitySets);
@@ -168,22 +170,28 @@ class CapabilitySetDescriptorServiceTest {
 
   @Test
   void update_positive_capabilitySetWithNotFoundCapability(CapturedOutput output) {
-    var capabilitySetsToSave = List.of(capabilitySet(null, emptyList()));
+    var dummyCapability = new Capability();
+    dummyCapability.setId(UUID.randomUUID());
+    dummyCapability.setName("foo.create");
+    dummyCapability.setDummyCapability(true);
+    var capabilitySetsToSave = List.of(capabilitySet(null, List.of(dummyCapability.getId())));
     var savedCapabilitySet = capabilitySet(emptyList());
     var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", List.of(CREATE)));
     var extendedCapabilitySet = extendedCapabilitySet(savedCapabilitySet, emptyList());
 
     when(capabilitySetService.findByNames(Set.of(CAPABILITY_SET_NAME))).thenReturn(emptyList());
     when(mapper.convert(capabilitySetDescriptor)).thenReturn(capabilitySet((UUID) null));
-    when(capabilityService.findByNames(List.of("foo.create"))).thenReturn(emptyList());
+    when(capabilityService.findByNamesIncludeDummy(List.of("foo.create"))).thenReturn(emptyList());
     when(capabilitySetService.createAll(capabilitySetsToSave)).thenReturn(List.of(savedCapabilitySet));
     when(mapper.toExtendedCapabilitySet(savedCapabilitySet, emptyList())).thenReturn(extendedCapabilitySet);
+    when(capabilityService.save(isA(Capability.class))).thenReturn(dummyCapability);
     doNothing().when(applicationEventPublisher).publishEvent(eventCaptor.capture());
 
     capabilitySetDescriptorService.update(ResourceEventType.CREATE, List.of(capabilitySetDescriptor), emptyList());
 
     verifyCapturedEvents(CapabilitySetEvent.created(extendedCapabilitySet));
     assertThat(output.getAll()).contains("Capability id is not found by capability name: foo.create");
+    assertThat(output.getAll()).contains("Created dummy capability with name: foo.create");
   }
 
   @Test
@@ -201,7 +209,7 @@ class CapabilitySetDescriptorServiceTest {
 
     when(mapper.convert(capabilitySetDescriptor)).thenReturn(capabilitySet((UUID) null));
     when(capabilitySetService.findByNames(Set.of(CAPABILITY_SET_NAME))).thenReturn(List.of(existingCapabilitySet));
-    when(capabilityService.findByNames(List.of("foo.create"))).thenReturn(newCapabilities);
+    when(capabilityService.findByNamesIncludeDummy(List.of("foo.create"))).thenReturn(newCapabilities);
     when(capabilityService.findByIds(List.of(CAPABILITY_ID))).thenReturn(capabilities);
     when(mapper.toExtendedCapabilitySet(existingCapabilitySet, capabilities)).thenReturn(extendedCapabilitySet);
     when(capabilitySetService.createAll(capabilitySets)).thenReturn(capabilitySets);
