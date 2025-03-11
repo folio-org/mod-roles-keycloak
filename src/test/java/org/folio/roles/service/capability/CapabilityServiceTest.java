@@ -104,7 +104,7 @@ class CapabilityServiceTest {
       var savedCapability = capability();
       var capabilityEntity = capabilityEntity(null);
       var savedCapabilityEntity = capabilityEntity();
-      when(capabilityRepository.findAllByNames(Set.of("test_resource.create"))).thenReturn(emptyList());
+      when(capabilityRepository.findAllByNamesIncludeDummy(Set.of("test_resource.create"))).thenReturn(emptyList());
       when(capabilityEntityMapper.convert(capability)).thenReturn(capabilityEntity);
       when(capabilityRepository.saveAll(List.of(capabilityEntity))).thenReturn(List.of(savedCapabilityEntity));
       when(capabilityEntityMapper.convert(savedCapabilityEntity)).thenReturn(savedCapability);
@@ -120,7 +120,8 @@ class CapabilityServiceTest {
     void positive_capabilityByNameExists(CapturedOutput output) {
       var existingCapability = capability();
       var existingEntity = capabilityEntity();
-      when(capabilityRepository.findAllByNames(Set.of("test_resource.create"))).thenReturn(List.of(existingEntity));
+      when(capabilityRepository.findAllByNamesIncludeDummy(Set.of("test_resource.create")))
+        .thenReturn(List.of(existingEntity));
       when(capabilityEntityMapper.convert(existingEntity)).thenReturn(existingCapability);
 
       var updatedCapabilityEntity = capabilityEntity();
@@ -144,7 +145,8 @@ class CapabilityServiceTest {
     void positive_capabilityByNameExistsForUpgrade() {
       var existingCapability = capability();
       var existingEntity = capabilityEntity();
-      when(capabilityRepository.findAllByNames(Set.of("test_resource.create"))).thenReturn(List.of(existingEntity));
+      when(capabilityRepository.findAllByNamesIncludeDummy(Set.of("test_resource.create")))
+        .thenReturn(List.of(existingEntity));
       when(capabilityEntityMapper.convert(existingEntity)).thenReturn(existingCapability);
 
       var updatedCapabilityEntity = capabilityEntity();
@@ -195,6 +197,33 @@ class CapabilityServiceTest {
     void positive_emptyNewAndOldCapabilities() {
       capabilityService.update(CREATE, emptyList(), emptyList());
       Mockito.verifyNoInteractions(capabilityRepository, capabilityEntityMapper);
+    }
+
+    @Test
+    void positive_updateDummyCapabilities() {
+      var capability = capability().id(null);
+      var capabilityEntity = capabilityEntity(null);
+      var dummyCapability = capability().id(null);
+      dummyCapability.setDummyCapability(true);
+      dummyCapability.setEndpoints(null);
+      var dummyCapabilityEntity = capabilityEntity();
+      dummyCapabilityEntity.setDummyCapability(true);
+      var savedCapabilityForDummy = capability();
+      savedCapabilityForDummy.setDummyCapability(false);
+      var savedCapabilityEntity = capabilityEntity();
+
+      when(capabilityRepository.findAllByNamesIncludeDummy(Set.of("test_resource.create")))
+        .thenReturn(List.of(dummyCapabilityEntity));
+      when(capabilityEntityMapper.convert(capability)).thenReturn(capabilityEntity);
+      when(capabilityRepository.saveAll(List.of(capabilityEntity))).thenReturn(List.of(savedCapabilityEntity));
+      when(capabilityEntityMapper.convert(savedCapabilityEntity)).thenReturn(savedCapabilityForDummy);
+      when(capabilityEntityMapper.convert(dummyCapabilityEntity)).thenReturn(dummyCapability);
+      doNothing().when(applicationEventPublisher).publishEvent(eventCaptor.capture());
+
+      capabilityService.update(ResourceEventType.CREATE, List.of(capability), emptyList());
+
+      verify(capabilityRepository).saveAll(List.of(capabilityEntity));
+      verifyCapturedEvents(CapabilityEvent.updated(savedCapabilityForDummy, dummyCapability));
     }
   }
 
@@ -485,11 +514,11 @@ class CapabilityServiceTest {
     void positive() {
       var capabilityIds = List.of(CAPABILITY_ID);
       var capabilityIdsSet = Set.of(CAPABILITY_ID);
-      when(capabilityRepository.findCapabilityIdsByIdIn(capabilityIdsSet)).thenReturn(capabilityIdsSet);
+      when(capabilityRepository.findCapabilityIdsByIdIncludeDummy(capabilityIdsSet)).thenReturn(capabilityIdsSet);
 
       capabilityService.checkIds(capabilityIds);
 
-      verify(capabilityRepository).findCapabilityIdsByIdIn(capabilityIdsSet);
+      verify(capabilityRepository).findCapabilityIdsByIdIncludeDummy(capabilityIdsSet);
     }
 
     @Test
@@ -500,7 +529,7 @@ class CapabilityServiceTest {
 
     @Test
     void negative_capabilityNotFoundById() {
-      when(capabilityRepository.findCapabilityIdsByIdIn(Set.of(CAPABILITY_ID))).thenReturn(emptySet());
+      when(capabilityRepository.findCapabilityIdsByIdIncludeDummy(Set.of(CAPABILITY_ID))).thenReturn(emptySet());
 
       var capabilityIds = List.of(CAPABILITY_ID);
       assertThatThrownBy(() -> capabilityService.checkIds(capabilityIds))
