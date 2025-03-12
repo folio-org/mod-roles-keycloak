@@ -100,6 +100,23 @@ class RoleServiceTest {
     }
 
     @Test
+    void positive_roleExistsInKeycloak() {
+      var role = role();
+      var roles = List.of(role);
+
+      when(keycloakService.createSafe(role)).thenReturn(Optional.empty());
+      when(keycloakService.findByName(role.getName())).thenReturn(Optional.of(role));
+      when(entityService.create(role)).thenReturn(role);
+
+      var result = facade.create(roles);
+      facade.create(roles);
+
+      assertTrue(result.getRoles().isEmpty());
+      verify(keycloakService, times(2)).createSafe(role);
+      verify(entityService, times(2)).create(role);
+    }
+
+    @Test
     void positive_returnsEmpty() {
       var role = role();
 
