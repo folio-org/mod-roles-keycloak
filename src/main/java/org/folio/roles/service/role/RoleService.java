@@ -167,16 +167,23 @@ public class RoleService {
   private Optional<Role> createSafe(Role role) {
     var createdRoleOpt = keycloakService.createSafe(role);
     if (createdRoleOpt.isEmpty()) {
-      // Create role entity in DB if it doesn't exist
+      // Create role entity in DB if it doesn't exist, but exists in Keycloak
       if (entityService.findByName(role.getName()).isEmpty()) {
-        keycloakService.findByName(role.getName()).ifPresent(entityService::create);
+        keycloakService.findByName(role.getName()).ifPresent(existingKeycloakRole -> {
+          existingKeycloakRole.setType(role.getType());
+          getOrCreateRoleEntitySafe(existingKeycloakRole);
+        });
       }
       return empty();
     }
     var createdRole = createdRoleOpt.get();
+    createdRole.setType(role.getType());
+    return getOrCreateRoleEntitySafe(createdRole);
+  }
+
+  private Optional<Role> getOrCreateRoleEntitySafe(Role role) {
     try {
-      createdRole.setType(role.getType());
-      return of(entityService.create(createdRole));
+      return of(entityService.findByName(role.getName()).orElseGet(() -> entityService.create(role)));
     } catch (Exception e) {
       log.warn("Role entity creation failed for role name = {}", role.getName(), e);
       return empty();
