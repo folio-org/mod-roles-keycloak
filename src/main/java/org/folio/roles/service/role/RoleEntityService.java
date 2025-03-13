@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -69,6 +70,10 @@ public class RoleEntityService {
       : repository.findAll(offsetRequest);
     log.debug("Roles have been found: count = {}", roleEntities.getTotalElements());
     return mapper.toRole(roleEntities.getContent());
+  }
+
+  public Optional<Role> findByName(String roleName) {
+    return repository.findByName(roleName).map(mapper::toRole);
   }
 
   private void checkIfRoleExists(UUID id) {

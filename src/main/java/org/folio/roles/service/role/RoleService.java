@@ -165,16 +165,27 @@ public class RoleService {
   }
 
   private Optional<Role> createSafe(Role role) {
-    var createdRole = keycloakService.createSafe(role);
-    if (createdRole.isEmpty()) {
+    var createdRoleOpt = keycloakService.createSafe(role);
+    if (createdRoleOpt.isEmpty()) {
+      // Create role entity in DB if it doesn't exist, but exists in Keycloak
+      if (entityService.findByName(role.getName()).isEmpty()) {
+        keycloakService.findByName(role.getName()).ifPresent(existingKeycloakRole -> {
+          existingKeycloakRole.setType(role.getType());
+          getOrCreateRoleEntitySafe(existingKeycloakRole);
+        });
+      }
       return empty();
     }
+    var createdRole = createdRoleOpt.get();
+    createdRole.setType(role.getType());
+    return getOrCreateRoleEntitySafe(createdRole);
+  }
+
+  private Optional<Role> getOrCreateRoleEntitySafe(Role role) {
     try {
-      createdRole.get().setType(role.getType());
-      return of(entityService.create(createdRole.get()));
+      return of(entityService.findByName(role.getName()).orElseGet(() -> entityService.create(role)));
     } catch (Exception e) {
-      keycloakService.deleteById(createdRole.get().getId());
-      log.debug("Rollback created in Keycloak role: name = {}", createdRole.get().getName(), e);
+      log.warn("Role entity creation failed for role name = {}", role.getName(), e);
       return empty();
     }
   }
