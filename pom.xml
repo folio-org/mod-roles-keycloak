@@ -12,7 +12,7 @@
   <name>mod-roles-keycloak</name>
   <groupId>org.folio</groupId>
   <artifactId>mod-roles-keycloak</artifactId>
-  <version>3.0.0</version>
+  <version>3.0.1-SNAPSHOT</version>
   <description>A roles module which implements the 'roles' interface, using keycloak for authentication and token
     generation
   </description>
