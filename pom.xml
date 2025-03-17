@@ -36,12 +36,12 @@
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <lombok.version>1.18.36</lombok.version>
-    <swagger-annotations.version>2.2.28</swagger-annotations.version>
+    <swagger-annotations.version>2.2.29</swagger-annotations.version>
     <commons-lang3.version>3.17.0</commons-lang3.version>
     <apache-commons-collections4.version>4.4</apache-commons-collections4.version>
     <openapi-tools.jackson-databind-nullable.version>0.2.6</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.6.3</mapstruct.version>
-    <hypersistence-utils-hibernate-63.version>3.9.3</hypersistence-utils-hibernate-63.version>
+    <hypersistence-utils-hibernate-63.version>3.9.5</hypersistence-utils-hibernate-63.version>
     <folio-spring-support.version>9.0.0</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.1.0</folio-java-checkstyle.version>
