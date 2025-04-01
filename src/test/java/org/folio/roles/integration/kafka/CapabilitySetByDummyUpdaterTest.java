@@ -1,0 +1,77 @@
+package org.folio.roles.integration.kafka;
+
+import static java.util.Collections.emptyList;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import org.folio.roles.domain.dto.Capability;
+import org.folio.roles.domain.dto.CapabilitySet;
+import org.folio.roles.domain.entity.CapabilitySetEntity;
+import org.folio.roles.domain.model.ExtendedCapabilitySet;
+import org.folio.roles.domain.model.event.CapabilitySetEvent;
+import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
+import org.folio.roles.mapper.entity.CapabilitySetEntityMapper;
+import org.folio.roles.service.capability.CapabilityService;
+import org.folio.roles.service.capability.CapabilitySetService;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.test.types.UnitTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
+
+@UnitTest
+@ExtendWith(MockitoExtension.class)
+class CapabilitySetByDummyUpdaterTest {
+
+  @Mock private CapabilitySetService capabilitySetService;
+  @Mock private CapabilityService capabilityService;
+  @Mock private FolioExecutionContext folioExecutionContext;
+  @Mock private ApplicationEventPublisher applicationEventPublisher;
+  @Spy private CapabilitySetMapper capabilitySetMapper;
+  @Spy private CapabilitySetEntityMapper capabilitySetEntityMapper;
+  @InjectMocks private CapabilitySetByDummyUpdater capabilitySetByDummyUpdater;
+
+  @Test
+  void update_positive() {
+    var capabilitySet = new CapabilitySet().name("dummy").id(UUID.randomUUID());
+    var capabilitySetOpt = Optional.of(capabilitySet);
+    var capability1 = new Capability().name("dummy").id(UUID.randomUUID());
+    var capability2 = new Capability().name("capability2").id(UUID.randomUUID());
+    var relatedCapabilitySetEntity =  new CapabilitySetEntity();
+    relatedCapabilitySetEntity.setName("relatedCapabilitySet");
+    relatedCapabilitySetEntity.setId(UUID.randomUUID());
+    var relatedCapabilitySet =  new CapabilitySet()
+      .name(relatedCapabilitySetEntity.getName())
+      .id(relatedCapabilitySetEntity.getId());
+    var extendedCapabilitySet = new ExtendedCapabilitySet();
+    var capabilitiesToAdd = List.of(capability1, capability2);
+
+    when(capabilitySetService.findByName("dummy")).thenReturn(capabilitySetOpt);
+    when(capabilityService.findByCapabilitySetIds(Set.of(capabilitySet.getId()))).thenReturn(capabilitiesToAdd);
+    when(capabilityService.findByCapabilitySetIds(Set.of(relatedCapabilitySet.getId()))).thenReturn(new ArrayList<>());
+    when(capabilitySetService.findByCapabilityName("dummy")).thenReturn(List.of(relatedCapabilitySetEntity));
+    when(capabilityService.findByCapabilitySetIds(Set.of(relatedCapabilitySetEntity.getId())))
+      .thenReturn(emptyList());
+    when(capabilitySetEntityMapper.convert(relatedCapabilitySetEntity)).thenReturn(relatedCapabilitySet);
+    when(capabilitySetMapper
+      .toExtendedCapabilitySet(relatedCapabilitySet, emptyList())).thenReturn(extendedCapabilitySet);
+    when(capabilitySetMapper
+      .toExtendedCapabilitySet(relatedCapabilitySet, capabilitiesToAdd)).thenReturn(extendedCapabilitySet);
+
+    capabilitySetByDummyUpdater.update(List.of("dummy"));
+
+    var capabilityIdsToAdd = List.of(capability1.getId(), capability2.getId());
+    verify(capabilitySetService).addCapabilitiesById(capabilityIdsToAdd, relatedCapabilitySetEntity.getId());
+    verify(applicationEventPublisher).publishEvent(isA(CapabilitySetEvent.class));
+  }
+}

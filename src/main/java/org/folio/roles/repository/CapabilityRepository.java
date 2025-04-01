@@ -407,4 +407,7 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     @Param("permission_names") String permissionNames, @Param("prefixes") String prefixes);
 
   Optional<CapabilityEntity> findByPermission(String permissionName);
+
+  @Query("select entity.name from CapabilityEntity entity where entity.name in :names and dummyCapability=true")
+  List<String> findDummyCapabilitiesByNames(@Param("names") Collection<String> names);
 }

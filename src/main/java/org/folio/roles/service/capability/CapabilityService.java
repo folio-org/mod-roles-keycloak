@@ -335,6 +335,11 @@ public class CapabilityService {
     return capabilityRepository.findAllFolioPermissions(userId);
   }
 
+  @Transactional(readOnly = true)
+  public List<String> findDummyCapabilitiesByNames(Collection<String> names) {
+    return capabilityRepository.findDummyCapabilitiesByNames(names);
+  }
+
   @Transactional
   public void deleteById(UUID capabilityId) {
     capabilityRepository.deleteById(capabilityId);

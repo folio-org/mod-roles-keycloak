@@ -48,6 +48,14 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
 
   Optional<CapabilitySetEntity> findByPermission(String permissionName);
 
+  @Query(nativeQuery = true,
+    value = """
+      SELECT cs.* FROM capability_set cs
+      INNER JOIN capability_set_capability csc ON cs.id = csc.capability_set_id
+      INNER JOIN capability c ON c.id = csc.capability_id
+      WHERE c.name = :capabilityName""")
+  List<CapabilitySetEntity> findByCapabilityName(@Param("capabilityName") String capabilityName);
+
   @Modifying
   @Query(nativeQuery = true, value = "DELETE FROM capability_set_capability WHERE capability_id = :capabilityId")
   void deleteCapabilityCapabilitySetLinks(@Param("capabilityId") UUID capabilityId);
@@ -64,4 +72,11 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
   void updateAppAndModuleVersionByAppAndModuleName(@Param("applicationName") String applicationName,
     @Param("moduleName") String moduleName, @Param("newApplicationId") String newApplicationId,
     @Param("newModuleId") String newModuleId);
+
+  @Modifying
+  @Query(nativeQuery = true,
+    value = """
+      INSERT INTO capability_set_capability (capability_set_id, capability_id)
+      VALUES (:capabilitySetId, :capabilityId) ON CONFLICT DO NOTHING""")
+  void addCapabilityById(@Param("capabilitySetId") UUID capabilitySetId, @Param("capabilityId") UUID capabilityId);
 }
