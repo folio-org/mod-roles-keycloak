@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.entity.CapabilitySetEntity;
@@ -36,7 +37,10 @@ public class CapabilitySetByDummyUpdater {
       var capabilitySetOpt = capabilitySetService.findByName(dummyCapabilityName);
       capabilitySetOpt.ifPresent(capabilitySet -> {
         log.info("Found capability set by dummy name {}", dummyCapabilityName);
-        var capabilitiesToAdd = capabilityService.findByCapabilitySetIds(Set.of(capabilitySet.getId()));
+        var capabilitiesToAdd = capabilityService.findByCapabilitySetIds(Set.of(capabilitySet.getId()))
+          .stream()
+          .filter(capability -> !StringUtils.equals(capability.getName(), dummyCapabilityName))
+          .toList();
         var relatedCapabilitySets = getRelatedCapabilitySets(dummyCapabilityName);
         for (var relatedCapabilitySet : relatedCapabilitySets) {
           if (!capabilitySet.getId().equals(relatedCapabilitySet.getId())) {
@@ -50,17 +54,17 @@ public class CapabilitySetByDummyUpdater {
   }
 
   private List<CapabilitySet> getRelatedCapabilitySets(String dummyCapabilityName) {
-    var checkedCapabilityNames = new HashSet<String>();
+    var retrievedNames = new HashSet<String>();
     var queue = new LinkedList<String>();
     queue.add(dummyCapabilityName);
     var capabilitySets = new HashSet<CapabilitySetEntity>();
-    while (queue.size() > 0) {
-      var dummy = queue.poll();
-      if (!checkedCapabilityNames.contains(dummy)) {
-        var capabilitySetsByCapability = capabilitySetService.findByCapabilityName(dummy);
+    while (!queue.isEmpty()) {
+      var capabilitySetCapabilityName = queue.poll();
+      if (!retrievedNames.contains(capabilitySetCapabilityName)) {
+        var capabilitySetsByCapability = capabilitySetService.findByCapabilityName(capabilitySetCapabilityName);
         capabilitySetsByCapability.forEach(capabilitySetEntity -> queue.add(capabilitySetEntity.getName()));
         capabilitySets.addAll(capabilitySetsByCapability);
-        checkedCapabilityNames.add(dummy);
+        retrievedNames.add(capabilitySetCapabilityName);
       }
     }
     return capabilitySets
