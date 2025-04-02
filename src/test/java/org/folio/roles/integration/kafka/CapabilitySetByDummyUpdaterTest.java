@@ -48,21 +48,23 @@ class CapabilitySetByDummyUpdaterTest {
     capabilitySetEntity.setName(capabilitySet.getName());
     var capabilitySetOpt = Optional.of(capabilitySet);
     var capabilityToAdd = new Capability().name("capabilityToAdd").id(UUID.randomUUID());
-    var relatedCapabilitySetEntity =  new CapabilitySetEntity();
+    var relatedCapabilitySetEntity = new CapabilitySetEntity();
     relatedCapabilitySetEntity.setName("relatedCapabilitySet");
     relatedCapabilitySetEntity.setId(UUID.randomUUID());
-    var relatedCapabilitySet =  new CapabilitySet()
+    var relatedCapabilitySet = new CapabilitySet()
       .name(relatedCapabilitySetEntity.getName())
       .id(relatedCapabilitySetEntity.getId());
     var extendedCapabilitySet = new ExtendedCapabilitySet();
     var capabilitiesToAdd = List.of(capabilityToAdd);
 
     when(capabilitySetService.findByName("dummy")).thenReturn(capabilitySetOpt);
-    when(capabilityService.findByCapabilitySetIds(Set.of(capabilitySet.getId()))).thenReturn(capabilitiesToAdd);
-    when(capabilityService.findByCapabilitySetIds(Set.of(relatedCapabilitySet.getId()))).thenReturn(new ArrayList<>());
+    when(capabilityService.findByCapabilitySetIdsIncludeDummy(Set.of(capabilitySet.getId())))
+      .thenReturn(capabilitiesToAdd);
+    when(capabilityService.findByCapabilitySetIdsIncludeDummy(Set.of(relatedCapabilitySet.getId())))
+      .thenReturn(new ArrayList<>());
     when(capabilitySetService.findByCapabilityName("dummy"))
       .thenReturn(List.of(relatedCapabilitySetEntity, capabilitySetEntity));
-    when(capabilityService.findByCapabilitySetIds(Set.of(relatedCapabilitySetEntity.getId())))
+    when(capabilityService.findByCapabilitySetIdsIncludeDummy(Set.of(relatedCapabilitySetEntity.getId())))
       .thenReturn(emptyList());
     when(capabilitySetEntityMapper.convert(relatedCapabilitySetEntity)).thenReturn(relatedCapabilitySet);
     when(capabilitySetEntityMapper.convert(capabilitySetEntity)).thenReturn(capabilitySet);
@@ -74,7 +76,7 @@ class CapabilitySetByDummyUpdaterTest {
     capabilitySetByDummyUpdater.update(List.of("dummy"));
 
     var capabilityIdsToAdd = List.of(capabilityToAdd.getId());
-    verify(capabilitySetService).addCapabilitiesById(capabilityIdsToAdd, relatedCapabilitySetEntity.getId());
+    verify(capabilitySetService).addCapabilitiesById(relatedCapabilitySetEntity.getId(), capabilityIdsToAdd);
     verify(applicationEventPublisher).publishEvent(isA(CapabilitySetEvent.class));
     verify(capabilitySetService).findByCapabilityName("dummy");
     verify(capabilitySetService).findByCapabilityName("relatedCapabilitySet");

@@ -309,7 +309,7 @@ public class CapabilitySetService {
   }
 
   @Transactional
-  public void addCapabilitiesById(Collection<UUID> capabilityIds, UUID capabilitySetId) {
+  public void addCapabilitiesById(UUID capabilitySetId, Collection<UUID> capabilityIds) {
     for (var capabilityId : capabilityIds) {
       repository.addCapabilityById(capabilitySetId, capabilityId);
     }

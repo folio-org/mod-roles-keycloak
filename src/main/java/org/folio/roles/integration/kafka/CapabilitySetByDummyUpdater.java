@@ -6,7 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import  lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilitySet;
@@ -32,12 +32,18 @@ public class CapabilitySetByDummyUpdater {
   private final FolioExecutionContext folioExecutionContext;
   private final ApplicationEventPublisher applicationEventPublisher;
 
+  /**
+   *  In case if there is a capability set with the same name as dummy capability
+   *  add its capabilities to capability sets with dummy capability.
+   *
+   * @param dummyCapabilitiesNames - dummy capabilities names
+   */
   public void update(List<String> dummyCapabilitiesNames) {
     for (var dummyCapabilityName : dummyCapabilitiesNames) {
       var capabilitySetOpt = capabilitySetService.findByName(dummyCapabilityName);
       capabilitySetOpt.ifPresent(capabilitySet -> {
         log.info("Found capability set by dummy name {}", dummyCapabilityName);
-        var capabilitiesToAdd = capabilityService.findByCapabilitySetIds(Set.of(capabilitySet.getId()))
+        var capabilitiesToAdd = capabilityService.findByCapabilitySetIdsIncludeDummy(Set.of(capabilitySet.getId()))
           .stream()
           .filter(capability -> !StringUtils.equals(capability.getName(), dummyCapabilityName))
           .toList();
@@ -74,7 +80,8 @@ public class CapabilitySetByDummyUpdater {
   }
 
   private void updateRelatedCapabilitySet(List<Capability> capabilitiesToAdd, CapabilitySet relatedCapabilitySet) {
-    var relatedSetCapabilities = capabilityService.findByCapabilitySetIds(Set.of(relatedCapabilitySet.getId()));
+    var relatedSetCapabilities = capabilityService
+      .findByCapabilitySetIdsIncludeDummy(Set.of(relatedCapabilitySet.getId()));
     var relatedExtendedCapabilitySet = capabilitySetMapper
       .toExtendedCapabilitySet(relatedCapabilitySet, relatedSetCapabilities);
     var updatedCapabilities = new LinkedHashSet<>(relatedSetCapabilities);
@@ -86,7 +93,7 @@ public class CapabilitySetByDummyUpdater {
       .stream()
       .map(Capability::getId)
       .toList();
-    capabilitySetService.addCapabilitiesById(capabilityIdsToAdd, relatedCapabilitySet.getId());
+    capabilitySetService.addCapabilitiesById(relatedCapabilitySet.getId(), capabilityIdsToAdd);
     var event = CapabilitySetEvent.updated(updatedRelatedExtendedCapabilitySet, relatedExtendedCapabilitySet);
     applicationEventPublisher.publishEvent(event.withContext(folioExecutionContext));
   }

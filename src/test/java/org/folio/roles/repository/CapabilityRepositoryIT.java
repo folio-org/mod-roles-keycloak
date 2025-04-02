@@ -245,7 +245,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void findByCapabilitySetIds_positive_excludeDummy() {
+  void findByCapabilitySetIds_positive_excludeDummyAndIncludeDummy() {
     var capabilityEntity = capabilityEntity(null);
     var dummyCapabilityEntity = capabilityEntity(null);
     dummyCapabilityEntity.setDummyCapability(true);
@@ -258,6 +258,8 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
 
     var capabilityEntities = capabilityRepository.findByCapabilitySetIds(List.of(capabilitySetEntity.getId()));
     assertThat(capabilityEntities).hasSize(1);
+    capabilityEntities = capabilityRepository.findByCapabilitySetIdsIncludeDummy(List.of(capabilitySetEntity.getId()));
+    assertThat(capabilityEntities).hasSize(2);
   }
 
   @Test
