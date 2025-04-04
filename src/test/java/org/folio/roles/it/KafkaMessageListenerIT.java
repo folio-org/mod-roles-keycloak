@@ -62,7 +62,6 @@ import org.folio.roles.integration.kafka.model.ResourceEventType;
 import org.folio.roles.repository.CapabilityRepository;
 import org.folio.roles.repository.CapabilitySetRepository;
 import org.folio.roles.service.capability.CapabilityService;
-import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.test.types.IntegrationTest;
 import org.hibernate.exception.SQLGrammarException;
 import org.junit.jupiter.api.AfterAll;
