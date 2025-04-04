@@ -56,6 +56,7 @@ class CapabilityKafkaEventHandlerTest {
   @Mock private CapabilityEventProcessor capabilityEventProcessor;
   @Mock private CapabilitySetDescriptorService capabilitySetDescriptorService;
   @Mock private CapabilityReplacementsService capabilityReplacementsService;
+  @Mock private CapabilitySetByDummyUpdater capabilitySetByDummyUpdater;
 
   @Test
   void handleEvent_positive_capabilityCreateEvent() {

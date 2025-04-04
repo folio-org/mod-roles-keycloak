@@ -5,16 +5,20 @@ import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.integration.kafka.model.ResourceEventType.CREATE;
 import static org.folio.roles.integration.kafka.model.ResourceEventType.UPDATE;
 import static org.folio.roles.utils.CapabilityUtils.getNameFromAppOrModuleId;
+import static org.folio.roles.utils.CollectionUtils.toSet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.model.CapabilityReplacements;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
+import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
 import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
@@ -35,6 +39,7 @@ public class CapabilityKafkaEventHandler {
   private final CapabilityEventProcessor capabilityEventProcessor;
   private final CapabilitySetDescriptorService capabilitySetDescriptorService;
   private final CapabilityReplacementsService capabilityReplacementsService;
+  private final CapabilitySetByDummyUpdater capabilitySetByDummyUpdater;
 
   /**
    * Handles resource event containing created, updated, or deprecated capabilities and capability sets.
@@ -78,8 +83,16 @@ public class CapabilityKafkaEventHandler {
     folioPermissionService.update(getPermissions(newValue), getPermissions(oldValue));
     var nrh = capabilityEventProcessor.process(newValue);
 
+    var dummyNames = capabilityService
+      .findDummyCapabilitiesByNames(toSet(nrh.capabilities(), Capability::getName));
     capabilityService.update(eventType, nrh.capabilities(), orh.capabilities());
     capabilitySetDescriptorService.update(eventType, nrh.capabilitySets(), orh.capabilitySets());
+    var newCapabilitySetDescriptors = nrh.capabilitySets()
+      .stream()
+      .map(CapabilitySetDescriptor::getName)
+      .collect(Collectors.toSet());
+    dummyNames.removeIf(dummy -> !newCapabilitySetDescriptors.contains(dummy));
+    capabilitySetByDummyUpdater.update(dummyNames);
 
     return capabilityReplacements;
   }

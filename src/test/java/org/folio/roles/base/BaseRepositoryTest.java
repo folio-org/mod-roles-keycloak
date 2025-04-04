@@ -15,10 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @Log4j2
 @IntegrationTest
@@ -31,7 +31,7 @@ import org.springframework.test.annotation.DirtiesContext;
 public abstract class BaseRepositoryTest {
 
   @Autowired protected TestEntityManager entityManager;
-  @MockBean protected FolioExecutionContext folioExecutionContext;
+  @MockitoBean protected FolioExecutionContext folioExecutionContext;
 
   @AfterAll
   static void afterAll(@Autowired JdbcTemplate jdbcTemplate) {

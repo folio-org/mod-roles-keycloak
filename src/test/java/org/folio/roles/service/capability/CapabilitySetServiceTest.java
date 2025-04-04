@@ -542,4 +542,35 @@ class CapabilitySetServiceTest {
       assertThat(result).contains(capability);
     }
   }
+
+  @Nested
+  @DisplayName("findByCapabilityName")
+  class FindByCapabilityName {
+
+    @Test
+    void positive() {
+      var capabilityName = "capabilityName";
+
+      capabilitySetService.findByCapabilityName(capabilityName);
+
+      verify(capabilitySetRepository).findByCapabilityName(capabilityName);
+    }
+  }
+
+  @Nested
+  @DisplayName("addCapabilitiesById")
+  class AddCapabilitiesById {
+
+    @Test
+    void positive() {
+      var capabilityId1 = UUID.randomUUID();
+      var capabilityId2 = UUID.randomUUID();
+      var capabilitySetId = UUID.randomUUID();
+
+      capabilitySetService.addCapabilitiesById(capabilitySetId, List.of(capabilityId1, capabilityId2));
+
+      verify(capabilitySetRepository).addCapabilityById(capabilitySetId, capabilityId1);
+      verify(capabilitySetRepository).addCapabilityById(capabilitySetId, capabilityId2);
+    }
+  }
 }
