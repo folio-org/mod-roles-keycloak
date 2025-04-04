@@ -41,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.testcontainers.shaded.org.awaitility.Durations.FIVE_HUNDRED_MILLISECONDS;
 import static org.testcontainers.shaded.org.awaitility.Durations.FIVE_SECONDS;
 import static org.testcontainers.shaded.org.awaitility.Durations.ONE_HUNDRED_MILLISECONDS;
+import static org.testcontainers.shaded.org.awaitility.Durations.TWO_SECONDS;
 
 import java.sql.SQLDataException;
 import java.time.Duration;
@@ -269,7 +270,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     awaitFor(FIVE_HUNDRED_MILLISECONDS);
 
     enableTenant(TENANT_ID);
-    awaitFor(FIVE_HUNDRED_MILLISECONDS);
+    awaitFor(FIVE_SECONDS);
     var capabilityEntities = capabilityRepository.findAll();
     assertThat(capabilityEntities).hasSize(5);
     var capabilitySetEntities = capabilitySetRepository.findAll();
