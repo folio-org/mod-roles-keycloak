@@ -59,8 +59,6 @@ import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.integration.kafka.CapabilitySetDescriptorService;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.integration.kafka.model.ResourceEventType;
-import org.folio.roles.repository.CapabilityRepository;
-import org.folio.roles.repository.CapabilitySetRepository;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.test.types.IntegrationTest;
 import org.hibernate.exception.SQLGrammarException;
@@ -89,8 +87,6 @@ import org.testcontainers.shaded.org.awaitility.core.ConditionFactory;
 class KafkaMessageListenerIT extends BaseIntegrationTest {
 
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
-  @Autowired private CapabilityRepository capabilityRepository;
-  @Autowired private CapabilitySetRepository capabilitySetRepository;
 
   @SpyBean private CapabilityService capabilityService;
   @SpyBean private CapabilitySetDescriptorService capabilitySetDescriptorService;
@@ -269,11 +265,8 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     awaitFor(FIVE_HUNDRED_MILLISECONDS);
 
     enableTenant(TENANT_ID);
-    awaitFor(FIVE_SECONDS);
-    var capabilityEntities = capabilityRepository.findAll();
-    assertThat(capabilityEntities).hasSize(5);
-    var capabilitySetEntities = capabilitySetRepository.findAll();
-    assertThat(capabilitySetEntities).hasSize(4);
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(5))));
+    await().untilAsserted(() -> doGet("/capability-sets").andExpect(jsonPath("$.totalRecords", is(4))));
   }
 
   @MethodSource("exceptionDataProvider")
