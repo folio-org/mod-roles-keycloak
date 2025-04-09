@@ -145,7 +145,7 @@ public class CapabilityReplacementsService {
         entry(sourceToName.apply(capability), assignmentsLookup.apply(capability).stream()
           .map(assignmentToTargetUuid)
           .collect(toSet())))
-      .collect(toMap(Entry::getKey, Entry::getValue));
+      .collect(toMap(Entry::getKey, Entry::getValue, CapabilityReplacementsService::mergeSets));
   }
 
   protected void assignReplacementCapabilities(CapabilityReplacements capabilityReplacements) {
@@ -332,6 +332,11 @@ public class CapabilityReplacementsService {
 
   private static Stream<Entry<String, String>> mapToReplacesByPermission(Permission perm) {
     return toStream(perm.getReplaces()).map(replacesValue -> entry(replacesValue, perm.getPermissionName()));
+  }
+
+  private static <T> Set<T> mergeSets(Set<T> existingSet, Set<T> newSet) {
+    existingSet.addAll(newSet);
+    return existingSet;
   }
 
   private Function<Capability, DomainEvent<Capability>> mapToDeleteCapabilityAppEvent() {
