@@ -275,6 +275,18 @@ public class CapabilityService {
   }
 
   /**
+   * Retrieves capabilities including dummy by capability set ids.
+   *
+   * @param capabilitySetIds - list with capability set identifiers
+   * @return {@link List} with found {@link Capability} records
+   */
+  @Transactional(readOnly = true)
+  public List<Capability> findByCapabilitySetIdsIncludeDummy(Collection<UUID> capabilitySetIds) {
+    var capabilityEntities = capabilityRepository.findByCapabilitySetIdsIncludeDummy(capabilitySetIds);
+    return capabilityEntityMapper.convert(capabilityEntities);
+  }
+
+  /**
    * Checks existing capability ids.
    *
    * @param capabilityIds - collection with capability {@link UUID} identifiers
@@ -333,6 +345,11 @@ public class CapabilityService {
     }
 
     return capabilityRepository.findAllFolioPermissions(userId);
+  }
+
+  @Transactional(readOnly = true)
+  public List<String> findDummyCapabilitiesByNames(Collection<String> names) {
+    return capabilityRepository.findDummyCapabilitiesByNames(names);
   }
 
   @Transactional
