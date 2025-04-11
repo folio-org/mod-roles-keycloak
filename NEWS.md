@@ -2,7 +2,6 @@
 * ui-invoice uses backend permission to show/hide action - approve & pay not visible in action menu (MODROLESKC-293)
 * The "Data import: Can upload files, import, and view logs" capability set does not provide ability to see Orders app (MODROLESKC-288)
 
-
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)
 * Create dummy capabilities / capability sets (MODROLESKC-270)
