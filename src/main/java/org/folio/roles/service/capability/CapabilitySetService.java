@@ -302,4 +302,16 @@ public class CapabilitySetService {
     String newApplicationId, String newModuleId) {
     repository.updateAppAndModuleVersionByAppAndModuleName(applicationName, moduleName, newApplicationId, newModuleId);
   }
+
+  @Transactional(readOnly = true)
+  public List<CapabilitySetEntity> findByCapabilityName(String capabilityName) {
+    return repository.findByCapabilityName(capabilityName);
+  }
+
+  @Transactional
+  public void addCapabilitiesById(UUID capabilitySetId, Collection<UUID> capabilityIds) {
+    for (var capabilityId : capabilityIds) {
+      repository.addCapabilityById(capabilitySetId, capabilityId);
+    }
+  }
 }
