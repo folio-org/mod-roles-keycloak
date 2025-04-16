@@ -1,9 +1,7 @@
 {
   "viewCapabilities": [
     "user-capabilities_collection.view",
-    "user_capabilities_collection.view",
     "user-capability-sets_collection.view",
-    "user_capability-sets_collection.view",
     "roles_users_item.view",
     "roles_users_collection.view",
     "role-capabilities_collection.view",
