@@ -1,3 +1,6 @@
+## Version `v3.0.2` (18.04.2025)
+* Inconsistent naming of permissions (MODROLESKC-295)
+
 ## Version `v3.0.1` (11.04.2025)
 * ui-invoice uses backend permission to show/hide action - approve & pay not visible in action menu (MODROLESKC-293)
 * The "Data import: Can upload files, import, and view logs" capability set does not provide ability to see Orders app (MODROLESKC-288)
