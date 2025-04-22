@@ -30,11 +30,14 @@ import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
+import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.entity.key.RoleCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
@@ -172,6 +175,34 @@ class RoleCapabilityServiceImplTest {
     }
 
     @Test
+    void positive_plainCapabilitiesByNames_skipInvalidCapabilityNames() {
+      var roleCapabilityEntity = roleCapabilityEntity(capabilityId1);
+      var capability1 = capability().id(capabilityId1).name(CAPABILITY_NAME);
+      var capabilities = List.of(capability1);
+      var capabilityNames = List.of(CAPABILITY_NAME, INVALID_CAPABILITY_NAME);
+      var capabilityIds = List.of(capabilityId1);
+      var request = new RoleCapabilitiesRequest().roleId(ROLE_ID)
+        .addCapabilityNamesItem(CAPABILITY_NAME)
+        .addCapabilityNamesItem(INVALID_CAPABILITY_NAME);
+      var endpoints = List.of(endpoint("/c1", GET));
+
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+      when(capabilityService.findByNames(capabilityNames)).thenReturn(capabilities);
+      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(roleCapabilityRepository.findRoleCapabilities(ROLE_ID, capabilityIds)).thenReturn(List.of());
+      when(roleCapabilityEntityMapper.convert(roleCapabilityEntity)).thenReturn(roleCapability(ROLE_ID, capabilityId1));
+      when(roleCapabilityRepository.saveAll(List.of(roleCapabilityEntity))).thenReturn(List.of(roleCapabilityEntity));
+      when(capabilityEndpointService.getByCapabilityIds(eq(capabilityIds), anyList())).thenReturn(endpoints);
+
+      var result = roleCapabilityService.create(request, false);
+
+      verify(capabilityService).checkIds(capabilityIds);
+      verify(rolePermissionService).createPermissions(ROLE_ID, endpoints);
+      verify(capabilityEndpointService).getByCapabilityIds(capabilityIds, List.of());
+      assertThat(result).isEqualTo(asSinglePage(roleCapability(ROLE_ID, capabilityId1)));
+    }
+
+    @Test
     void positive_capabilitySetAssigned() {
       var roleCapability1 = roleCapability(capabilityId1);
       var roleCapability2 = roleCapability(capabilityId2);
@@ -245,14 +276,12 @@ class RoleCapabilityServiceImplTest {
     @Test
     void negative_capabilitySetNameIsNotFound() {
       var errorMessage = "Capabilities by name are not found";
-      var capabilityNames = List.of(CAPABILITY_NAME, INVALID_CAPABILITY_NAME);
-      var capability = capability(capabilityId1).name(CAPABILITY_NAME);
-      var capabilities = List.of(capability);
+      var capabilityNames = List.of(INVALID_CAPABILITY_NAME);
       var request = new RoleCapabilitiesRequest()
         .roleId(ROLE_ID)
         .capabilityNames(capabilityNames);
 
-      when(capabilityService.findByNames(capabilityNames)).thenReturn(capabilities);
+      when(capabilityService.findByNames(capabilityNames)).thenReturn(List.of());
 
       assertThatThrownBy(() -> roleCapabilityService.create(request, false))
         .isInstanceOf(RequestValidationException.class)
@@ -445,6 +474,34 @@ class RoleCapabilityServiceImplTest {
     }
 
     @Test
+    void positiveByName_skipInvalidCapabilityNames() {
+      var uce1 = roleCapabilityEntity(capabilityId1);
+
+      var capability1 = capability().id(capabilityId1).name(CAPABILITY_NAME);
+      var capability2 = capability().id(capabilityId2).name(INVALID_CAPABILITY_NAME);
+      var capabilities = List.of(capability1);
+      var capabilityNames = List.of(capability1.getName(), capability2.getName());
+
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+      when(capabilityService.findByNames(capabilityNames)).thenReturn(capabilities);
+      when(capabilitySetService.findByRoleId(ROLE_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(List.of());
+      when(roleCapabilityEntityMapper.convert(uce1)).thenReturn(roleCapability(ROLE_ID, capabilityId1));
+      when(roleCapabilityRepository.saveAll(List.of(uce1))).thenReturn(List.of(uce1));
+
+      var newIds = List.of(capabilityId1);
+      var endpointsToAssign = List.of(endpoint("/c1", GET));
+      when(capabilityEndpointService.getByCapabilityIds(eq(newIds), anyList())).thenReturn(endpointsToAssign);
+
+      var request = new CapabilitiesUpdateRequest().capabilityNames(capabilityNames);
+      roleCapabilityService.update(ROLE_ID, request);
+
+      verify(capabilityService).checkIds(List.of(capabilityId1));
+      verify(rolePermissionService).createPermissions(ROLE_ID, endpointsToAssign);
+      verify(capabilityEndpointService).getByCapabilityIds(newIds, List.of());
+    }
+
+    @Test
     void negative_notingToUpdate() {
       var roleCapabilityEntity = roleCapabilityEntity(ROLE_ID, capabilityId1);
       when(roleService.getById(ROLE_ID)).thenReturn(role());
@@ -469,9 +526,8 @@ class RoleCapabilityServiceImplTest {
     @Test
     void negative_capabilitySetNameIsNotFound() {
       var errorMessage = "Capabilities by name are not found";
-      var capabilityNames = List.of(CAPABILITY_NAME, INVALID_CAPABILITY_NAME);
-      var capability = capability(capabilityId1).name(CAPABILITY_NAME);
-      var capabilities = List.of(capability);
+      var capabilityNames = List.of(INVALID_CAPABILITY_NAME);
+      var capabilities = new ArrayList<Capability>();
       var request = new CapabilitiesUpdateRequest().capabilityNames(capabilityNames);
 
       when(capabilityService.findByNames(capabilityNames)).thenReturn(capabilities);
