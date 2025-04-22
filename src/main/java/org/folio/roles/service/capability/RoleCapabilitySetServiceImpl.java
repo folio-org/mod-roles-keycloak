@@ -229,7 +229,6 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
         "capabilitySetNames", notFoundCapabilitySets);
     }
 
-    // throw error if all capabilities are not found, otherwise continue with found ones
     if (isNotEmpty(notFoundCapabilitySets)) {
       log.warn("resolveCapabilitySetsByNames:: Found non existing capabilitySetNames: {}", notFoundCapabilitySets);
     }
