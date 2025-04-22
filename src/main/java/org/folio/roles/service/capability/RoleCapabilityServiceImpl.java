@@ -228,9 +228,14 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     var foundCapabilitiesByNames = capabilityService.findByNames(capabilityNames);
     var foundCapabilitiesNames = mapItems(foundCapabilitiesByNames, Capability::getName);
     var notFoundCapabilities = difference(capabilityNames, foundCapabilitiesNames);
+
+    // throw error only all capabilities are not found, otherwise continue with found ones
     if (isNotEmpty(notFoundCapabilities)) {
-      throw new RequestValidationException("Capabilities by name are not found",
-        "capabilityNames", notFoundCapabilities);
+      if (isEmpty(foundCapabilitiesNames)) {
+        throw new RequestValidationException("Capabilities by name are not found",
+          "capabilityNames", notFoundCapabilities);
+      }
+      log.warn("resolveCapabilitiesByNames:: Found non existing capabilityNames: {}", notFoundCapabilities);
     }
 
     return mapItems(foundCapabilitiesByNames, Capability::getId);
