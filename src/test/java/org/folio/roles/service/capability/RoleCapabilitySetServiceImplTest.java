@@ -171,6 +171,37 @@ class RoleCapabilitySetServiceImplTest {
     }
 
     @Test
+    void positive_capabilityNamesInRequest_skipInvalidNames() {
+      var roleCapability = roleCapabilitySet(capabilitySetId1);
+      var capabilitySet = capabilitySet(capabilitySetId1).name(CAPABILITY_SET_NAME);
+      var capabilitySets = List.of(capabilitySet);
+      var capabilitySetIds = List.of(capabilitySetId1);
+      var capabilitySetNames = List.of(CAPABILITY_SET_NAME, INVALID_CAPABILITY_SET_NAME);
+      var roleCapabilityEntity = roleCapabilitySetEntity(capabilitySetId1);
+      var entities = List.of(roleCapabilityEntity);
+      var request = new RoleCapabilitySetsRequest().roleId(ROLE_ID)
+        .addCapabilitySetNamesItem(CAPABILITY_SET_NAME)
+        .addCapabilitySetNamesItem(INVALID_CAPABILITY_SET_NAME);
+      var endpoints = List.of(endpoint());
+
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+      when(roleCapabilitySetEntityMapper.convert(roleCapabilityEntity)).thenReturn(roleCapability);
+      when(roleCapabilitySetRepository.findRoleCapabilitySets(ROLE_ID, capabilitySetIds)).thenReturn(emptyList());
+      when(roleCapabilitySetRepository.saveAll(entities)).thenReturn(entities);
+      when(capabilityService.findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilitySetService.findByNames(capabilitySetNames)).thenReturn(capabilitySets);
+      when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
+      doNothing().when(rolePermissionService).createPermissions(ROLE_ID, endpoints);
+
+      var result = roleCapabilitySetService.create(request, false);
+
+      assertThat(result).isEqualTo(asSinglePage(roleCapability));
+      verify(capabilitySetService).checkIds(capabilitySetIds);
+      verify(rolePermissionService).createPermissions(ROLE_ID, endpoints);
+      verify(endpointService).getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList());
+    }
+
+    @Test
     void negative_emptyCapabilities() {
       var capabilityIds = Collections.<UUID>emptyList();
       assertThatThrownBy(() -> roleCapabilitySetService.create(ROLE_ID, capabilityIds, false))
@@ -219,14 +250,12 @@ class RoleCapabilitySetServiceImplTest {
     @Test
     void negative_capabilitySetNameIsNotFound() {
       var errorMessage = "Capability sets by name are not found";
-      var capabilitySetNames = List.of(CAPABILITY_SET_NAME, INVALID_CAPABILITY_SET_NAME);
-      var capabilitySet = capabilitySet(capabilitySetId1).name(CAPABILITY_SET_NAME);
-      var capabilitySets = List.of(capabilitySet);
+      var capabilitySetNames = List.of(INVALID_CAPABILITY_SET_NAME);
       var request = new RoleCapabilitySetsRequest()
         .roleId(ROLE_ID)
         .capabilitySetNames(capabilitySetNames);
 
-      when(capabilitySetService.findByNames(capabilitySetNames)).thenReturn(capabilitySets);
+      when(capabilitySetService.findByNames(capabilitySetNames)).thenReturn(List.of());
 
       assertThatThrownBy(() -> roleCapabilitySetService.create(request, false))
         .isInstanceOf(RequestValidationException.class)
@@ -437,6 +466,47 @@ class RoleCapabilitySetServiceImplTest {
     }
 
     @Test
+    void positiveByName_SkipInvalidName() {
+      var ucse1 = roleCapabilitySetEntity(capabilitySetId1);
+      var ucse2 = roleCapabilitySetEntity(capabilitySetId2);
+      var ucse3 = roleCapabilitySetEntity(capabilitySetId3);
+      var existingEntities = List.of(ucse1, ucse3);
+
+      var capabilitySet2 = capabilitySet().id(capabilitySetId2).name(CAPABILITY_SET_NAME);
+      var capabilitySet3 = capabilitySet().id(capabilitySetId3).name(CAPABILITY_SET_NAME_2);
+      var capabilitySets = List.of(capabilitySet2, capabilitySet3);
+      var capabilitySetNames = List.of(capabilitySet2.getName(), capabilitySet3.getName(), INVALID_CAPABILITY_SET_NAME);
+
+      when(roleService.getById(ROLE_ID)).thenReturn(role());
+      when(capabilitySetService.findByNames(capabilitySetNames)).thenReturn(capabilitySets);
+      when(roleCapabilitySetRepository.findAllByRoleId(ROLE_ID)).thenReturn(existingEntities);
+      when(roleCapabilitySetEntityMapper.convert(ucse2)).thenReturn(roleCapabilitySet(ROLE_ID, capabilitySetId2));
+      when(roleCapabilitySetRepository.saveAll(List.of(ucse2))).thenReturn(List.of(ucse2));
+      when(capabilityService.findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+
+      var newIds = List.of(capabilitySetId2);
+      var deprecatedIds = List.of(capabilitySetId1);
+      var endpointsToAssign = List.of(endpoint("/c2", GET));
+      var endpointsToDel = List.of(endpoint("/c1", GET));
+      var idsToAssign = List.of(capabilitySetId1, capabilitySetId3);
+      var assignedIds = Set.of(capabilitySetId2, capabilitySetId3);
+
+      when(endpointService.getByCapabilitySetIds(newIds, idsToAssign, emptyList())).thenReturn(endpointsToAssign);
+      when(endpointService.getByCapabilitySetIds(deprecatedIds, assignedIds, emptyList())).thenReturn(endpointsToDel);
+
+      var request = new CapabilitySetsUpdateRequest().capabilitySetNames(capabilitySetNames);
+      roleCapabilitySetService.update(ROLE_ID, request);
+
+      verify(capabilitySetService).checkIds(newIds);
+      verify(rolePermissionService).createPermissions(ROLE_ID, endpointsToAssign);
+      verify(rolePermissionService).deletePermissions(ROLE_ID, endpointsToDel);
+      verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, deprecatedIds);
+      verify(capabilityService, times(2)).findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0);
+      verify(endpointService).getByCapabilitySetIds(newIds, idsToAssign, emptyList());
+      verify(endpointService).getByCapabilitySetIds(deprecatedIds, assignedIds, emptyList());
+    }
+
+    @Test
     void negative_notingToUpdate() {
       var capabilityIds = List.of(CAPABILITY_SET_ID);
 
@@ -462,12 +532,10 @@ class RoleCapabilitySetServiceImplTest {
     @Test
     void negative_capabilitySetNameIsNotFound() {
       var errorMessage = "Capability sets by name are not found";
-      var capabilitySetNames = List.of(CAPABILITY_SET_NAME, INVALID_CAPABILITY_SET_NAME);
-      var capabilitySet = capabilitySet(capabilitySetId1).name(CAPABILITY_SET_NAME);
-      var capabilitySets = List.of(capabilitySet);
+      var capabilitySetNames = List.of(INVALID_CAPABILITY_SET_NAME);
       var request = new CapabilitySetsUpdateRequest().capabilitySetNames(capabilitySetNames);
 
-      when(capabilitySetService.findByNames(capabilitySetNames)).thenReturn(capabilitySets);
+      when(capabilitySetService.findByNames(capabilitySetNames)).thenReturn(List.of());
 
       assertThatThrownBy(() -> roleCapabilitySetService.update(ROLE_ID, request))
         .isInstanceOf(RequestValidationException.class)

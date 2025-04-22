@@ -222,10 +222,15 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
 
     var foundCapabilitySetsByNames = capabilitySetService.findByNames(capabilitySetNames);
     var foundCapabilitySetNames = mapItems(foundCapabilitySetsByNames, CapabilitySet::getName);
-    var notFoundCapabilities = difference(capabilitySetNames, foundCapabilitySetNames);
-    if (isNotEmpty(notFoundCapabilities)) {
+    var notFoundCapabilitySets = difference(capabilitySetNames, foundCapabilitySetNames);
+
+    if (isEmpty(foundCapabilitySetNames)) {
       throw new RequestValidationException("Capability sets by name are not found",
-        "capabilitySetNames", notFoundCapabilities);
+        "capabilitySetNames", notFoundCapabilitySets);
+    }
+
+    if (isNotEmpty(notFoundCapabilitySets)) {
+      log.warn("resolveCapabilitySetsByNames:: Found non existing capabilitySetNames: {}", notFoundCapabilitySets);
     }
 
     return mapItems(foundCapabilitySetsByNames, CapabilitySet::getId);
