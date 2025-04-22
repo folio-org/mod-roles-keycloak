@@ -30,7 +30,6 @@ import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
