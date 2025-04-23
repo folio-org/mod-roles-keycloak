@@ -1,3 +1,6 @@
+## Version `v3.0.3` (23.04.2025)
+* Skip attaching capabilities to the shared role if they do not exist in the tenant. (MODROLESKC-297)
+
 ## Version `v3.0.2` (18.04.2025)
 * Inconsistent naming of permissions (MODROLESKC-295)
 
