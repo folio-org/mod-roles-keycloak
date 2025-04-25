@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="capability_visible_populate" author="Mykola Makhin">
+    <sql>UPDATE capability AS c SET visible = COALESCE((SELECT visible FROM "permission" WHERE "permission"."name" = c.folio_permission), FALSE);</sql>
+  </changeSet>
+
+  <changeSet id="capability_set_visible_populate" author="Mykola Makhin">
+    <sql>UPDATE capability_set AS c SET visible = COALESCE((SELECT visible FROM "permission" WHERE "permission"."name" = c.folio_permission), FALSE);</sql>
+  </changeSet>
+</databaseChangeLog>
