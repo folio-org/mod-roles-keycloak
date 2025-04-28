@@ -72,5 +72,5 @@ public class CapabilitySetEntity extends Auditable {
   private List<UUID> capabilities;
 
   @Column(name = "visible")
-  private Boolean visible = false;
+  private boolean visible;
 }
