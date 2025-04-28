@@ -236,6 +236,7 @@ public class CapabilitySetDescriptorService {
         dummyCapability.setModuleId(capabilitySetDescriptor.getModuleId());
         dummyCapability.setPermission(capabilitySetDescriptor.getPermission());
         dummyCapability.setName(capabilityName);
+        dummyCapability.setVisible(capabilitySetDescriptor.isVisible());
         capabilityId = capabilityService.save(dummyCapability);
         log.info("Created dummy capability with name: {}", capabilityName);
       }

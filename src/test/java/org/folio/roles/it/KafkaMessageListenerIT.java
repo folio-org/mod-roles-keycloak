@@ -220,7 +220,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       fooItemCapability(CREATE, "foo.item.post", fooItemPostEndpoint()),
       fooItemCapability(DELETE, "foo.item.delete", fooItemDeleteEndpoint()),
       fooItemCapability(EDIT, "foo.item.put", fooItemPutEndpoint(), fooItemPatchEndpoint()),
-      fooItemCapability(VIEW, "foo.item.get", fooItemGetEndpoint())));
+      fooItemCapability(VIEW, "foo.item.get", fooItemGetEndpoint()).visible(true)));
 
     await().untilAsserted(() -> doGet("/capabilities")
       .andExpect(content().json(expectedCapabilitiesJson))
@@ -251,6 +251,8 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     assertCapabilityNamesBySetId(capabilitySets.get(2).getId(),
       "foo_item.create", "foo_item.delete", "foo_item.edit", "foo_item.manage", "foo_item.view");
     assertCapabilityNamesBySetId(capabilitySets.get(3).getId(), "foo_item.view");
+
+    assertThat(capabilitySets.get(3).getVisible()).isTrue();
   }
 
   @Test
