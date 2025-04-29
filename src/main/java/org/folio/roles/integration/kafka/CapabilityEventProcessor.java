@@ -118,7 +118,8 @@ public class CapabilityEventProcessor {
       .moduleId(event.getModuleId())
       .applicationId(event.getApplicationId())
       .permission(permission.getPermissionName())
-      .capabilities(capabilities);
+      .capabilities(capabilities)
+      .visible(permission.getVisible());
   }
 
   public static PermissionData extractPermissionData(String permissionName,
@@ -148,7 +149,8 @@ public class CapabilityEventProcessor {
       .description(permission.getDescription())
       .permission(permission.getPermissionName())
       .applicationId(event.getApplicationId())
-      .endpoints(emptyIfNull(resource.getEndpoints()));
+      .endpoints(emptyIfNull(resource.getEndpoints()))
+      .visible(resource.getPermission().getVisible());
   }
 
   private static boolean hasRequiredFields(org.folio.common.utils.permission.model.PermissionData permissionData) {

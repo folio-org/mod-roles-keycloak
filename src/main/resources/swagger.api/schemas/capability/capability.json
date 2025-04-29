@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
   "title": "Capability Set Object Schema",
-  "description": "Object containing the details of the capability set",
+  "description": "Object containing details of a capability",
   "properties": {
     "id": {
       "description": "A unique identifier for this capability",
@@ -57,6 +57,10 @@
     "metadata": {
       "$ref": "../common/metadata.json",
       "readOnly": true
+    },
+    "visible": {
+      "description": "Is visible in UI",
+      "type": "boolean"
     }
   },
   "required": [

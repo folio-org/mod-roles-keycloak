@@ -72,4 +72,7 @@ public class CapabilityEntity extends Auditable {
 
   @Column(name = "dummy_capability")
   private boolean dummyCapability;
+
+  @Column(name = "visible")
+  private boolean visible;
 }

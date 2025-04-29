@@ -11,7 +11,8 @@
         "permission": {
           "permissionName": "foo.item.get",
           "displayName": "foo_item.view - display name",
-          "description": "foo_item.view - description"
+          "description": "foo_item.view - description",
+          "visible": true
         },
         "endpoints": [
           {
@@ -68,7 +69,8 @@
           "permissionName": "foo.item.view",
           "displayName": "foo_item.view - display name",
           "description": "foo_item.view - description",
-          "subPermissions": [ "foo.item.get" ]
+          "subPermissions": [ "foo.item.get" ],
+          "visible": true
         }
       },
       {

@@ -55,6 +55,11 @@ public class CapabilitySetDescriptor {
   private Map<String, List<CapabilityAction>> capabilities;
 
   /**
+   * Visible in UI.
+   */
+  private boolean visible;
+
+  /**
    * Sets resource field and returns {@link CapabilitySetDescriptor}.
    *
    * @return modified {@link CapabilitySetDescriptor} value
@@ -142,6 +147,16 @@ public class CapabilitySetDescriptor {
    */
   public CapabilitySetDescriptor permission(String permission) {
     this.permission = permission;
+    return this;
+  }
+
+  /**
+   * Sets visible field and returns {@link CapabilitySetDescriptor}.
+   *
+   * @return modified {@link CapabilitySetDescriptor} value
+   */
+  public CapabilitySetDescriptor visible(Boolean visible) {
+    this.visible = visible != null && visible;
     return this;
   }
 }

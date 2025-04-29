@@ -35,4 +35,6 @@
   <include file="changes/create-permission-migration-schema.xml" relativeToChangelogFile="true"/>
   <include file="changes/update-role-with-type-from-loadable-roles.xml" relativeToChangelogFile="true"/>
   <include file="changes/add-dummy-capability-field-to-capability-table.xml" relativeToChangelogFile="true"/>
+  <include file="changes/add-visible-field-to-capabilities-and-capsets.xml" relativeToChangelogFile="true"/>
+  <include file="changes/populate-visible-field-in-capabilities-and-capsets.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="add-visible-field-to-capability-table" author="Mykola Makhin">
+    <addColumn tableName="capability">
+      <column name="visible" type="boolean" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+    <createIndex indexName="idx_capability_visible" tableName="capability">
+      <column name="visible"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="add-visible-field-to-capability-set-table" author="Mykola Makhin">
+    <addColumn tableName="capability_set">
+      <column name="visible" type="boolean" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+    <createIndex indexName="idx_capability_set_visible" tableName="capability_set">
+      <column name="visible"/>
+    </createIndex>
+  </changeSet>
+</databaseChangeLog>
