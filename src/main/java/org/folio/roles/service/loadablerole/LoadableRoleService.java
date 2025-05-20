@@ -137,7 +137,8 @@ public class LoadableRoleService {
     }
   }
 
-  private void saveDefaultRoles(List<LoadableRole> roles) {
+  @Transactional
+  public void saveDefaultRoles(List<LoadableRole> roles) {
     var existing = findAllDefaultRoles();
     var incoming = mapper.toRoleEntity(roles);
     log.debug("Saving default roles:\n\texisting = {},\n\tincoming = {}", () -> toIdNames(existing),

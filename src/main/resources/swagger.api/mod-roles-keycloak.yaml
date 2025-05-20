@@ -1056,6 +1056,28 @@ paths:
           $ref: '#/components/responses/badRequestResponse'
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
+    post:
+      description: Create a loadable role
+      operationId: createLoadableRole
+      tags:
+        - loadable-roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/loadableRole'
+      responses:
+        '201':
+          description: Created loadable role object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/loadableRole'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
 
 components:
   schemas:

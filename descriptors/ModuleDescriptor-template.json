@@ -1,6 +1,12 @@
 {
   "id": "@artifactId@-@version@",
   "name": "roles-keycloak",
+  "requires": [
+    {
+      "id": "permissions",
+      "version": "5.6"
+    }
+  ],
   "provides": [
     {
       "id": "roles",
@@ -306,12 +312,17 @@
     },
     {
       "id": "loadable-roles",
-      "version": "1.0",
+      "version": "1.1",
       "handlers": [
         {
           "methods": [ "GET" ],
           "pathPattern": "/loadable-roles",
           "permissionsRequired": [ "loadable-roles.collection.get" ]
+        },
+        {
+          "methods": [ "POST" ],
+          "pathPattern": "/loadable-roles",
+          "permissionsRequired": [ "loadable-roles.item.post" ]
         }
       ]
     },
@@ -522,7 +533,7 @@
     },
     {
       "permissionName": "role-capabilities.collection.get",
-      "replaces": ["role.capabilities.collection.get"],
+      "replaces": [ "role.capabilities.collection.get" ],
       "displayName": "Role-Capabilities - Get capabilities assigned to role",
       "description": "Retrieve capabilities assigned to role"
     },
@@ -565,7 +576,7 @@
     },
     {
       "permissionName": "role-capability-sets.collection.get",
-      "replaces": ["role.capability-sets.collection.get"],
+      "replaces": [ "role.capability-sets.collection.get" ],
       "displayName": "Role-Capability-Sets - Get capability-sets assigned to role",
       "description": "Retrieve capability-sets assigned to role"
     },
@@ -587,7 +598,7 @@
     },
     {
       "permissionName": "user-capabilities.collection.get",
-      "replaces": ["user.capabilities.collection.get"],
+      "replaces": [ "user.capabilities.collection.get" ],
       "displayName": "Role-Capabilities - Get capabilities assigned to user",
       "description": "Retrieve capabilities assigned to user"
     },
@@ -629,7 +640,7 @@
     },
     {
       "permissionName": "user-capability-sets.collection.get",
-      "replaces": ["user.capability-sets.collection.get"],
+      "replaces": [ "user.capability-sets.collection.get" ],
       "displayName": "User-Capability-Sets - Get capability-sets assigned to user",
       "description": "Retrieve capability-sets assigned to user"
     },
@@ -653,12 +664,11 @@
       "permissionName": "loadable-roles.collection.get",
       "displayName": "Loadable roles collection get",
       "description": "Searching loadable roles"
-    }
-  ],
-  "requires": [
+    },
     {
-      "id": "permissions",
-      "version": "5.6"
+      "permissionName": "loadable-roles.item.post",
+      "displayName": "Loadable roles item create",
+      "description": "Create a loadable role"
     }
   ],
   "launchDescriptor": {
@@ -668,23 +678,63 @@
       "HostConfig": {
         "Memory": 357913941,
         "PortBindings": {
-          "8081/tcp": [ { "HostPort": "%p" } ]
+          "8081/tcp": [
+            {
+              "HostPort": "%p"
+            }
+          ]
         }
       }
     },
     "env": [
-      { "name": "JAVA_OPTIONS", "value": "-XX:MaxRAMPercentage=85.0" },
-      { "name": "DB_HOST", "value": "postgres" },
-      { "name": "DB_PORT", "value": "5432" },
-      { "name": "DB_USERNAME", "value": "postgres" },
-      { "name": "DB_PASSWORD", "value": "postgres" },
-      { "name": "DB_DATABASE", "value": "okapi_modules" },
-      { "name": "KC_URL", "value": "keycloak:8080" },
-      { "name": "KC_CLIENT_SECRET", "value": "mod-roles-keycloak" },
-      { "name": "KC_CLIENT_ID", "value": "secret" },
-      { "name": "KC_POLICIES_CLIENT_NAME", "value": "mod-login-keycloak" },
-      { "name": "KC_TOKEN_TTL", "value": "59" },
-      { "name": "KC_CLIENT_ID_TTL", "value": "3600" }
+      {
+        "name": "JAVA_OPTIONS",
+        "value": "-XX:MaxRAMPercentage=85.0"
+      },
+      {
+        "name": "DB_HOST",
+        "value": "postgres"
+      },
+      {
+        "name": "DB_PORT",
+        "value": "5432"
+      },
+      {
+        "name": "DB_USERNAME",
+        "value": "postgres"
+      },
+      {
+        "name": "DB_PASSWORD",
+        "value": "postgres"
+      },
+      {
+        "name": "DB_DATABASE",
+        "value": "okapi_modules"
+      },
+      {
+        "name": "KC_URL",
+        "value": "keycloak:8080"
+      },
+      {
+        "name": "KC_CLIENT_SECRET",
+        "value": "mod-roles-keycloak"
+      },
+      {
+        "name": "KC_CLIENT_ID",
+        "value": "secret"
+      },
+      {
+        "name": "KC_POLICIES_CLIENT_NAME",
+        "value": "mod-login-keycloak"
+      },
+      {
+        "name": "KC_TOKEN_TTL",
+        "value": "59"
+      },
+      {
+        "name": "KC_CLIENT_ID_TTL",
+        "value": "3600"
+      }
     ]
   },
   "metadata": {
@@ -693,7 +743,7 @@
       "permissions": [
         "users-keycloak.auth-users.item.get",
         "users-keycloak.auth-users.item.post"
-	  ]
+      ]
     }
   }
 }
