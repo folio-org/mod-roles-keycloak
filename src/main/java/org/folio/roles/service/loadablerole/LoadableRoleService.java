@@ -82,7 +82,7 @@ public class LoadableRoleService {
   public LoadableRole save(LoadableRole role) {
     var entity = mapper.toRoleEntity(role);
 
-    var saved = hasRole(entity) ? updateRole(entity) : createRole(entity);
+    var saved = saveOrUpdate(entity);
     return mapper.toRole(saved);
   }
 
@@ -90,6 +90,26 @@ public class LoadableRoleService {
   public void saveAll(List<LoadableRole> roles) {
     toStream(roles).collect(groupingBy(LoadableRole::getType))
       .forEach(this::saveAllByType);
+  }
+
+  @Transactional
+  public LoadableRole saveDefaultRolesIncremental(LoadableRole loadableRole) {
+    repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
+      .ifPresent(found -> loadableRole.setId(found.getId()));
+    var incoming = mapper.toRoleEntity(loadableRole);
+    incoming.getPermissions().forEach(p -> p.setRoleId(incoming.getId()));
+    incoming.setType(EntityRoleType.DEFAULT);
+    var existing = findAllDefaultRolesNotLoadedFromFiles();
+
+    mergeInBatch(List.of(incoming), existing, comparatorById(), this::createAll, this::updateAll, nothing());
+
+    var saved = repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
+      .orElseThrow(() -> new ServiceException("Loadable role not found in DB"));
+    return mapper.toRole(saved);
+  }
+
+  private LoadableRoleEntity saveOrUpdate(LoadableRoleEntity entity) {
+    return hasRole(entity) ? updateRole(entity) : createRole(entity);
   }
 
   private Page<LoadableRoleEntity> findByQuery(String query, Integer limit, Integer offset) {
@@ -137,18 +157,24 @@ public class LoadableRoleService {
     }
   }
 
-  @Transactional
-  public void saveDefaultRoles(List<LoadableRole> roles) {
-    var existing = findAllDefaultRoles();
+  private void saveDefaultRoles(List<LoadableRole> roles) {
+    var existing = findAllDefaultRolesLoadedFromFiles();
     var incoming = mapper.toRoleEntity(roles);
+    incoming.forEach(role -> role.setLoadedFromFile(true));
     log.debug("Saving default roles:\n\texisting = {},\n\tincoming = {}", () -> toIdNames(existing),
       () -> toIdNames(incoming));
 
     mergeInBatch(incoming, existing, comparatorById(), this::createAll, this::updateAll, this::deleteAll);
   }
 
-  private List<LoadableRoleEntity> findAllDefaultRoles() {
-    try (var defaultRoles = repository.findAllByType(EntityRoleType.DEFAULT)) {
+  private List<LoadableRoleEntity> findAllDefaultRolesLoadedFromFiles() {
+    try (var defaultRoles = repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, true)) {
+      return defaultRoles.toList();
+    }
+  }
+
+  private List<LoadableRoleEntity> findAllDefaultRolesNotLoadedFromFiles() {
+    try (var defaultRoles = repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, false)) {
       return defaultRoles.toList();
     }
   }
@@ -257,7 +283,7 @@ public class LoadableRoleService {
   }
 
   private LoadableRoleEntity saveToDb(LoadableRoleEntity entity) {
-    assert entity.getId() != null;
+    requireNonNull(entity.getId(), "Loadable role id cannot be null");
 
     return repository.save(entity);
   }
