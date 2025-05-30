@@ -8,5 +8,11 @@
       <column name="loaded_from_file"  type="boolean" defaultValueBoolean="false"/>
     </addColumn>
   </changeSet>
+  <changeSet id="set-loaded-from-file-true-for-existing-roles" author="Yauhen Vavilkin">
+    <update tableName="role_loadable">
+      <column name="loaded_from_file" valueBoolean="true"/>
+      <where>loaded_from_file = false</where>
+    </update>
+  </changeSet>
 
 </databaseChangeLog>

@@ -20,8 +20,8 @@ public class LoadableRoleController implements LoadableRolesApi {
   }
 
   @Override
-  public ResponseEntity<LoadableRole> createLoadableRole(LoadableRole loadableRole) {
-    var response = service.saveDefaultRolesIncremental(loadableRole);
-    return ResponseEntity.status(201).body(response);
+  public ResponseEntity<LoadableRole> upsertLoadableRole(LoadableRole loadableRole) {
+    var response = service.upsertDefaultLoadableRole(loadableRole);
+    return ResponseEntity.ok().body(response);
   }
 }

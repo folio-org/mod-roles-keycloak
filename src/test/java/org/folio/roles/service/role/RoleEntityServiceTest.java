@@ -1,6 +1,8 @@
 package org.folio.roles.service.role;
 
+import static java.util.Arrays.stream;
 import static java.util.UUID.fromString;
+import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.roles.domain.dto.RoleType.REGULAR;
 import static org.junit.jupiter.api.Assertions.assertEquals;

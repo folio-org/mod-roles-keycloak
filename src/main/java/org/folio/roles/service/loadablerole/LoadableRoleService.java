@@ -93,12 +93,9 @@ public class LoadableRoleService {
   }
 
   @Transactional
-  public LoadableRole saveDefaultRolesIncremental(LoadableRole loadableRole) {
-    repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
-      .ifPresent(found -> loadableRole.setId(found.getId()));
+  public LoadableRole upsertDefaultLoadableRole(LoadableRole loadableRole) {
+    prepareLoadableRole(loadableRole);
     var incoming = mapper.toRoleEntity(loadableRole);
-    incoming.getPermissions().forEach(p -> p.setRoleId(incoming.getId()));
-    incoming.setType(EntityRoleType.DEFAULT);
     var existing = findAllDefaultRolesNotLoadedFromFiles();
 
     mergeInBatch(List.of(incoming), existing, comparatorById(), this::createAll, this::updateAll, nothing());
@@ -106,6 +103,13 @@ public class LoadableRoleService {
     var saved = repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
       .orElseThrow(() -> new ServiceException("Loadable role not found in DB"));
     return mapper.toRole(saved);
+  }
+
+  private void prepareLoadableRole(LoadableRole loadableRole) {
+    repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
+      .ifPresent(found -> loadableRole.setId(found.getId()));
+    loadableRole.getPermissions().forEach(p -> p.setRoleId(loadableRole.getId()));
+    loadableRole.setType(DEFAULT);
   }
 
   private LoadableRoleEntity saveOrUpdate(LoadableRoleEntity entity) {

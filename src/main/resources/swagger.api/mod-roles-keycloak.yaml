@@ -1056,9 +1056,12 @@ paths:
           $ref: '#/components/responses/badRequestResponse'
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
-    post:
-      description: Create a loadable role
-      operationId: createLoadableRole
+    put:
+      description: >-
+        A default role is created or updated, role is populated with the specified
+        permissions (capabilities and capability sets) as they become available in
+        the system. Default role cannot be changed via Roles API.
+      operationId: upsertLoadableRole
       tags:
         - loadable-roles
       requestBody:
@@ -1068,8 +1071,8 @@ paths:
             schema:
               $ref: '#/components/schemas/loadableRole'
       responses:
-        '201':
-          description: Created loadable role object
+        '200':
+          description: Default loadable role was created or updated successfully
           content:
             application/json:
               schema:

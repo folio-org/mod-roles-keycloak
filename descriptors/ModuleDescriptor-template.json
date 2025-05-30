@@ -320,9 +320,9 @@
           "permissionsRequired": [ "loadable-roles.collection.get" ]
         },
         {
-          "methods": [ "POST" ],
+          "methods": [ "PUT" ],
           "pathPattern": "/loadable-roles",
-          "permissionsRequired": [ "loadable-roles.item.post" ]
+          "permissionsRequired": [ "loadable-roles.item.put" ]
         }
       ]
     },
@@ -666,9 +666,9 @@
       "description": "Searching loadable roles"
     },
     {
-      "permissionName": "loadable-roles.item.post",
-      "displayName": "Loadable roles item create",
-      "description": "Create a loadable role"
+      "permissionName": "loadable-roles.item.put",
+      "displayName": "Loadable roles item create or update",
+      "description": "Create or update a loadable role"
     }
   ],
   "launchDescriptor": {
