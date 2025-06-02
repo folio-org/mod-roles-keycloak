@@ -4,7 +4,9 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
+import static org.folio.roles.support.RoleUtils.ROLE_ID_3;
 import static org.folio.roles.support.RoleUtils.ROLE_NAME;
+import static org.folio.roles.support.RoleUtils.defaultRole;
 import static org.folio.roles.support.RoleUtils.role;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -13,12 +15,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
+import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.test.types.UnitTest;
@@ -117,7 +121,7 @@ class RoleServiceTest {
     }
 
     @Test
-    void positive_returnsEmpty() {
+    void create_positive_returnsEmpty() {
       var role = role();
 
       when(keycloakService.createSafe(role)).thenReturn(Optional.empty());
@@ -125,6 +129,18 @@ class RoleServiceTest {
       var result = facade.create(List.of(role));
 
       assertTrue(result.getRoles().isEmpty());
+    }
+
+    @Test
+    void negative_cannotCreateDefaultRole() {
+      var defaultRole = defaultRole();
+
+      assertThatThrownBy(() -> facade.create(defaultRole))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
+
+      verifyNoInteractions(keycloakService);
+      verifyNoInteractions(entityService);
     }
   }
 
@@ -136,6 +152,8 @@ class RoleServiceTest {
     void positive() {
       var role = role();
 
+      when(entityService.getById(ROLE_ID)).thenReturn(role);
+
       facade.update(role);
 
       verify(entityService).update(role);
@@ -146,38 +164,24 @@ class RoleServiceTest {
     void negative_repositoryThrowsException() {
       var role = role();
 
-      when(keycloakService.getById(any())).thenReturn(role);
+      when(entityService.getById(any())).thenReturn(role);
       when(entityService.update(role)).thenThrow(RuntimeException.class);
 
       assertThrows(RuntimeException.class, () -> facade.update(role));
       verify(keycloakService, times(2)).update(any());
     }
-  }
-
-  @Nested
-  @DisplayName("updateFoundByName")
-  class UpdateByName {
 
     @Test
-    void positive() {
-      var role = role();
-      when(entityService.create(role)).thenReturn(role);
+    void negative_defaultRoleCannotBeUpdated() {
+      var role = defaultRole();
 
-      facade.updateFoundByName(role);
+      when(entityService.getById(ROLE_ID_3)).thenReturn(role);
 
-      verify(keycloakService).update(role);
-      verify(entityService).create(role);
-    }
+      assertThatThrownBy(() -> facade.update(role))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
 
-    @Test
-    void negative_repositoryThrowsException() {
-      var role = role();
-
-      when(keycloakService.update(any())).thenReturn(role);
-      when(entityService.create(role)).thenThrow(RuntimeException.class);
-
-      assertThrows(ServiceException.class, () -> facade.updateFoundByName(role));
-      verify(keycloakService).update(any());
+      verifyNoInteractions(keycloakService);
     }
   }
 
@@ -188,7 +192,7 @@ class RoleServiceTest {
     @Test
     void positive() {
       var role = role();
-      var roles = List.of(role);
+      var roles = PageResult.of(1L, List.of(role));
       var cqlQuery = "cql.allRecords = 1";
 
       when(entityService.findByQuery(cqlQuery, 0, 1)).thenReturn(roles);
@@ -206,6 +210,8 @@ class RoleServiceTest {
 
     @Test
     void positive() {
+      when(keycloakService.getById(ROLE_ID)).thenReturn(role());
+
       facade.deleteById(ROLE_ID);
 
       verify(entityService).deleteById(ROLE_ID);
@@ -222,6 +228,19 @@ class RoleServiceTest {
       assertThrows(RuntimeException.class, () -> facade.deleteById(ROLE_ID));
       verify(entityService).deleteById(ROLE_ID);
       verify(entityService).create(role);
+    }
+
+    @Test
+    void negative_defaultRoleCannotBeDeleted() {
+      var role = defaultRole();
+
+      when(keycloakService.getById(ROLE_ID_3)).thenReturn(role);
+
+      assertThatThrownBy(() -> facade.deleteById(ROLE_ID_3))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
+
+      verifyNoInteractions(entityService);
     }
   }
 

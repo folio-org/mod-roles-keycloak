@@ -25,6 +25,7 @@ import lombok.extern.log4j.Log4j2;
 import org.assertj.core.api.ThrowingConsumer;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
+import org.folio.common.domain.model.error.ErrorResponse;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.Capabilities;
 import org.folio.roles.domain.dto.Capability;
@@ -168,7 +169,6 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       .permissions(List.of(new LoadablePermission().permissionName("test.permission")));
 
     var mvcResult = doPut("/loadable-roles", role)
-      .andExpect(status().isOk())
       .andReturn();
 
     var createdRole = parseResponse(mvcResult, LoadableRole.class);
@@ -187,7 +187,6 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       .permissions(List.of(new LoadablePermission().permissionName("initial.permission")));
 
     var createResult = doPut("/loadable-roles", initialRole)
-      .andExpect(status().isOk())
       .andReturn();
 
     var createdRole = parseResponse(createResult, LoadableRole.class);
@@ -229,8 +228,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       .description("Role for reading notes")
       .permissions(List.of(new LoadablePermission().permissionName(expectedPermission)));
 
-    doPut("/loadable-roles", role)
-      .andExpect(status().isOk());
+    doPut("/loadable-roles", role);
 
     sendCapabilityEvent("json/kafka-events/be-notes-capability-event.json");
 
@@ -262,8 +260,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       .description("Role for reading notes")
       .permissions(List.of(new LoadablePermission().permissionName(expectedPermissionSet)));
 
-    doPut("/loadable-roles", role)
-      .andExpect(status().isOk());
+    doPut("/loadable-roles", role);
 
     await().untilAsserted(() -> {
       var fetchedRole = getLoadableRoleByName("Note Reader Role");
@@ -275,6 +272,46 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
         .orElseThrow();
       assertThat(matchingPermission.getCapabilitySetId()).isNotNull();
     });
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
+  void updateRole_negative_defaultRoleCannotBeChangedViaRolesApi() throws Exception {
+    var role = new LoadableRole()
+      .name("Default Role")
+      .description("This is the default role")
+      .permissions(List.of(new LoadablePermission().permissionName("default.permission")));
+
+    doPut("/loadable-roles", role);
+
+    var defaultRole = getLoadableRoleByName("Default Role");
+
+    var request = Map.of("name", "Updated Default Role");
+
+    var mvcResult = attemptPut("/roles/{id}", request, defaultRole.getId())
+      .andExpect(status().isBadRequest())
+      .andReturn();
+
+    var errorResponse = parseResponse(mvcResult, ErrorResponse.class);
+    assertThat(errorResponse.getErrors().getFirst().getMessage())
+      .isEqualTo("Default role cannot be created, updated or deleted via roles API.");
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
+  void createRole_negative_defaultRoleCannotBeCreatedViaRolesApi() throws Exception {
+    var role = Map.of(
+      "name", "Default Role",
+      "description", "This is the default role",
+      "type", "DEFAULT");
+
+    var mvcResult = attemptPost("/roles", role)
+      .andExpect(status().isBadRequest())
+      .andReturn();
+
+    var errorResponse = parseResponse(mvcResult, ErrorResponse.class);
+    assertThat(errorResponse.getErrors().getFirst().getMessage())
+      .isEqualTo("Default role cannot be created, updated or deleted via roles API.");
   }
 
   private int unassignedCapabilitySetCountForPermissionLike(String permission) {

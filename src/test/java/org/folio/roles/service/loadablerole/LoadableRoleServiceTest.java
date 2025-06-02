@@ -2,7 +2,6 @@ package org.folio.roles.service.loadablerole;
 
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.RandomStringUtils.insecure;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.LoadableRoleUtils.loadableRole;
@@ -13,15 +12,14 @@ import static org.folio.roles.support.TestUtils.copy;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
-import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.support.TestUtils;
@@ -198,7 +196,7 @@ class LoadableRoleServiceTest {
       when(repository.saveAndFlush(roleEntity)).thenReturn(roleEntity);
       when(capabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(roleEntity.getPermissions()))
         .thenReturn(roleEntity.getPermissions());
-      when(repository.saveAllAndFlush(org.mockito.ArgumentMatchers.anyList())).thenReturn(java.util.List.of(roleEntity));
+      when(repository.saveAllAndFlush(org.mockito.ArgumentMatchers.anyList())).thenReturn(List.of(roleEntity));
       when(repository.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(roleEntity));
       when(mapper.toRole(roleEntity)).thenReturn(role);
 

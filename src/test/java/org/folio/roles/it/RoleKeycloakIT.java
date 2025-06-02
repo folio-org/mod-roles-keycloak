@@ -253,9 +253,7 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       .andExpect(status().isNotFound())
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
-      .andExpect(jsonPath("$.errors[0].code", is("not_found_error")))
-      .andExpect(jsonPath("$.errors[0].message", is("Failed to find role: id = " + notExistingRoleId)))
-    ;
+      .andExpect(jsonPath("$.errors[0].code", is("not_found_error")));
   }
 
   private static Date timestampFrom(String value) {

@@ -5,7 +5,9 @@
                http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
   <changeSet id="add-loaded-from-file-field-to-loadable-roles" author="Yauhen Vavilkin">
     <addColumn tableName="role_loadable">
-      <column name="loaded_from_file"  type="boolean" defaultValueBoolean="false"/>
+      <column name="loaded_from_file" type="boolean" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
     </addColumn>
   </changeSet>
   <changeSet id="set-loaded-from-file-true-for-existing-roles" author="Yauhen Vavilkin">
@@ -14,5 +16,11 @@
       <where>loaded_from_file = false</where>
     </update>
   </changeSet>
-
+  <changeSet id="update-migrated-roles-type-to-regular" author="Yauhen Vavilkin">
+    <sql>
+      UPDATE role
+      SET type = 'REGULAR'
+      WHERE description = 'System generated role during migration';
+    </sql>
+  </changeSet>
 </databaseChangeLog>
