@@ -13,7 +13,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.ListUtils;
 import org.folio.roles.domain.dto.Role;
+import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.domain.dto.Roles;
+import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
@@ -60,9 +62,9 @@ public class RoleService {
   /**
    * Search roles by query or/and offset or/and limit. Searching without parameters returns all roles.
    *
-   * @param query  - query for searching roles
+   * @param query - query for searching roles
    * @param offset - offset for searching roles
-   * @param limit  - limit for searching roles
+   * @param limit - limit for searching roles
    * @return {@link Roles} which contains array of {@link Role} and number of elements in the roles array
    */
   @Transactional(readOnly = true)
@@ -80,6 +82,7 @@ public class RoleService {
    */
   @Transactional
   public Role create(Role role) {
+    checkIfRoleHasDefaultType(role);
     var createdRole = keycloakService.create(role);
     try {
       createdRole.setType(role.getType());
@@ -116,7 +119,8 @@ public class RoleService {
   @Transactional
   public Role update(Role role) {
     Assert.notNull(role.getId(), "Role should has ID");
-    var actualRole = keycloakService.getById(role.getId());
+    var actualRole = entityService.getById(role.getId());
+    checkIfRoleHasDefaultType(actualRole);
     keycloakService.update(role);
     try {
       return entityService.update(role);
@@ -128,25 +132,6 @@ public class RoleService {
   }
 
   /**
-   * Update one role found by name.
-   *
-   * @param role - role for updating
-   * @return updated role {@link Role}
-   */
-  @Transactional
-  public Role updateFoundByName(Role role) {
-    Assert.notNull(role.getId(), "Role should have ID");
-    keycloakService.update(role);
-    try {
-      Role updatedRole = entityService.create(role);
-      log.debug("Role has been updated: id = {}, name = {}", updatedRole.getId(), updatedRole.getName());
-      return updatedRole;
-    } catch (Exception e) {
-      throw new ServiceException("Failed to update role found by name", e);
-    }
-  }
-
-  /**
    * Delete role by ID.
    *
    * @param id - role identifier
@@ -154,6 +139,7 @@ public class RoleService {
   @Transactional
   public void deleteById(UUID id) {
     var actualRole = keycloakService.getById(id);
+    checkIfRoleHasDefaultType(actualRole);
     entityService.deleteById(id);
     try {
       keycloakService.deleteById(id);
@@ -165,6 +151,10 @@ public class RoleService {
   }
 
   private Optional<Role> createSafe(Role role) {
+    if (hasDefaultRoleType(role)) {
+      log.debug("Skip role creation. Default role cannot be created via roles API: name = {}", role.getName());
+      return empty();
+    }
     var createdRoleOpt = keycloakService.createSafe(role);
     if (createdRoleOpt.isEmpty()) {
       // Create role entity in DB if it doesn't exist, but exists in Keycloak
@@ -190,7 +180,23 @@ public class RoleService {
     }
   }
 
-  private Roles buildRoles(List<Role> roles) {
-    return new Roles().roles(roles).totalRecords(roles.size());
+  private static Roles buildRoles(List<Role> roles) {
+    return new Roles().roles(roles).totalRecords((long) roles.size());
+  }
+
+  private static Roles buildRoles(PageResult<Role> roles) {
+    return new Roles().roles(roles.getRecords()).totalRecords(roles.getTotalRecords());
+  }
+
+  private static void checkIfRoleHasDefaultType(Role role) {
+    if (hasDefaultRoleType(role)) {
+      log.debug("Default role cannot be created, updated or deleted via roles API: id = {}, name = {}", role.getId(),
+        role.getName());
+      throw new IllegalArgumentException("Default role cannot be created, updated or deleted via roles API.");
+    }
+  }
+
+  private static boolean hasDefaultRoleType(Role role) {
+    return RoleType.DEFAULT == role.getType();
   }
 }

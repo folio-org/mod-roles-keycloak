@@ -15,7 +15,8 @@
     },
     "totalRecords": {
       "description": "The total number of roles matching the provided criteria",
-      "type": "integer"
+      "type": "integer",
+      "format": "int64"
     }
   },
   "required": [

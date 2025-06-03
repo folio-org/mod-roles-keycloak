@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.folio.roles.domain.dto.Metadata;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.entity.RoleEntity;
+import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.folio.roles.mapper.entity.DateConvertHelper;
 import org.folio.roles.mapper.entity.RoleEntityMapper;
 import org.folio.roles.mapper.entity.RoleEntityMapperImpl;
@@ -72,6 +73,7 @@ class RoleEntityServiceTest {
     entity.setName(ROLE_NAME);
     entity.setId(ROLE_ID);
     entity.setDescription(ROLE_DESCRIPTION);
+    entity.setType(EntityRoleType.REGULAR);
     return entity;
   }
 
@@ -209,17 +211,17 @@ class RoleEntityServiceTest {
       var offset = 0;
       var limit = 10;
       var cqlQuery = "cql.allRecords = 1";
-      var roles = List.of(createRoleEntity());
-      var expectedPage = new PageImpl<>(roles, Pageable.ofSize(1), 1);
+      var rolesEntities = List.of(createRoleEntity());
 
-      when(repository.findByCql(cqlQuery, OffsetRequest.of(offset, limit))).thenReturn(expectedPage);
+      when(repository.findByCql(cqlQuery, OffsetRequest.of(offset, limit)))
+        .thenReturn(new PageImpl<>(rolesEntities, Pageable.ofSize(limit), rolesEntities.size()));
 
       var result = service.findByQuery(cqlQuery, offset, limit);
 
-      assertEquals(1, result.size());
-      assertEquals(ROLE_ID, result.get(0).getId());
-      assertEquals(ROLE_NAME, result.get(0).getName());
-      assertEquals(ROLE_DESCRIPTION, result.get(0).getDescription());
+      assertThat(result.getTotalRecords()).isEqualTo(1);
+      assertThat(result.getRecords().getFirst().getId()).isEqualTo(ROLE_ID);
+      assertThat(result.getRecords().getFirst().getName()).isEqualTo(ROLE_NAME);
+      assertThat(result.getRecords().getFirst().getDescription()).isEqualTo(ROLE_DESCRIPTION);
     }
   }
 

@@ -9,6 +9,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Role;
+import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.mapper.entity.RoleEntityMapper;
 import org.folio.roles.repository.RoleEntityRepository;
 import org.folio.spring.data.OffsetRequest;
@@ -63,13 +64,14 @@ public class RoleEntityService {
   }
 
   @Transactional(readOnly = true)
-  public List<Role> findByQuery(String query, Integer offset, Integer limit) {
+  public PageResult<Role> findByQuery(String query, Integer offset, Integer limit) {
     var offsetRequest = OffsetRequest.of(offset, limit);
     var roleEntities = isNotBlank(query)
       ? repository.findByCql(query, offsetRequest)
       : repository.findAll(offsetRequest);
     log.debug("Roles have been found: count = {}", roleEntities.getTotalElements());
-    return mapper.toRole(roleEntities.getContent());
+    var rolesPages = roleEntities.map(mapper::toRole);
+    return PageResult.fromPage(rolesPages);
   }
 
   public Optional<Role> findByName(String roleName) {

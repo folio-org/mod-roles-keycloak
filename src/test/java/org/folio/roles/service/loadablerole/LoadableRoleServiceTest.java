@@ -1,7 +1,7 @@
 package org.folio.roles.service.loadablerole;
 
 import static java.util.UUID.randomUUID;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.apache.commons.lang3.RandomStringUtils.insecure;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.LoadableRoleUtils.loadableRole;
@@ -14,6 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.folio.roles.domain.entity.type.EntityRoleType;
@@ -43,6 +44,7 @@ class LoadableRoleServiceTest {
   @Mock private LoadableRoleRepository repository;
   @Mock private LoadableRoleMapper mapper;
   @Mock private KeycloakRoleService keycloakService;
+  @Mock private LoadableRoleCapabilityAssignmentHelper capabilityAssignmentHelper;
 
   @AfterEach
   void tearDown() {
@@ -65,7 +67,7 @@ class LoadableRoleServiceTest {
   @Test
   void findByIdOrName_positive_notFound() {
     var roleId = randomUUID();
-    var roleName = randomAlphabetic(10);
+    var roleName = insecure().nextAlphabetic(10);
 
     when(repository.findByIdOrName(roleId, roleName)).thenReturn(Optional.empty());
 
@@ -171,6 +173,60 @@ class LoadableRoleServiceTest {
       service.cleanupDefaultRolesFromKeycloak();
 
       verifyNoInteractions(keycloakService);
+    }
+  }
+
+  @Nested
+  @DisplayName("upsertDefaultLoadableRole")
+  class UpsertDefaultLoadableRole {
+
+    @Test
+    void positive() {
+      var role = loadableRole();
+      var roleEntity = loadableRoleEntity(role);
+      var createdRegularRole = regularRole(role);
+      var regularRole = copy(createdRegularRole).id(null);
+
+      when(repository.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
+      when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
+      when(repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, false)).thenReturn(Stream.empty());
+      when(mapper.toRegularRole(roleEntity)).thenReturn(regularRole);
+      when(keycloakService.findByName(regularRole.getName())).thenReturn(Optional.empty());
+      when(keycloakService.create(regularRole)).thenReturn(createdRegularRole);
+      when(repository.saveAndFlush(roleEntity)).thenReturn(roleEntity);
+      when(capabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(roleEntity.getPermissions()))
+        .thenReturn(roleEntity.getPermissions());
+      when(repository.saveAllAndFlush(org.mockito.ArgumentMatchers.anyList())).thenReturn(List.of(roleEntity));
+      when(repository.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(roleEntity));
+      when(mapper.toRole(roleEntity)).thenReturn(role);
+
+      var actual = service.upsertDefaultLoadableRole(role);
+
+      assertThat(actual).isEqualTo(role);
+    }
+
+    @Test
+    void negative_keycloakThrowsException() {
+      var role = loadableRole();
+      var roleEntity = loadableRoleEntity(role);
+      var regularRole = regularRole(role);
+
+      when(repository.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
+      when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
+      when(repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, false)).thenReturn(Stream.empty());
+      when(mapper.toRegularRole(roleEntity)).thenReturn(regularRole);
+      when(keycloakService.findByName(regularRole.getName())).thenReturn(Optional.empty());
+      when(keycloakService.create(regularRole)).thenThrow(new RuntimeException("Keycloak error"));
+
+      assertThatThrownBy(() -> service.upsertDefaultLoadableRole(role))
+        .isInstanceOf(ServiceException.class)
+        .hasMessage("Failed to create loadable roles")
+        .satisfies(throwable -> {
+          var se = (ServiceException) throwable;
+
+          assertThat(se.getKey()).isEqualTo("cause");
+          assertThat(se.getValue()).isEqualTo("Keycloak error");
+        });
     }
   }
 }

@@ -99,7 +99,7 @@ public class MigrationRoleCreator {
   private static Role createRole(String roleName) {
     return new Role()
       .name(roleName)
-      .type(RoleType.DEFAULT)
+      .type(RoleType.REGULAR)
       .description("System generated role during migration");
   }
 }

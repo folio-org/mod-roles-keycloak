@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="add-loaded-from-file-field-to-loadable-roles" author="Yauhen Vavilkin">
+    <addColumn tableName="role_loadable">
+      <column name="loaded_from_file" type="boolean" defaultValueBoolean="false">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
+  </changeSet>
+  <changeSet id="set-loaded-from-file-true-for-existing-roles" author="Yauhen Vavilkin">
+    <update tableName="role_loadable">
+      <column name="loaded_from_file" valueBoolean="true"/>
+      <where>loaded_from_file = false</where>
+    </update>
+  </changeSet>
+  <changeSet id="update-migrated-roles-type-to-regular" author="Yauhen Vavilkin">
+    <sql>
+      UPDATE role
+      SET type = 'REGULAR'
+      WHERE description = 'System generated role during migration';
+    </sql>
+  </changeSet>
+</databaseChangeLog>

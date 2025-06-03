@@ -49,19 +49,19 @@ class MigrationRoleCreatorTest {
   private static Role migrationRole() {
     return new Role()
       .name(ROLE_NAME)
-      .type(RoleType.DEFAULT)
+      .type(RoleType.REGULAR)
       .description("System generated role during migration");
   }
 
   private static Roles createdMigrationRoles() {
-    return new Roles().addRolesItem(createdMigrationRole()).totalRecords(1);
+    return new Roles().addRolesItem(createdMigrationRole()).totalRecords(1L);
   }
 
   private static Role createdMigrationRole() {
     return new Role()
       .id(ROLE_ID)
       .name(ROLE_NAME)
-      .type(RoleType.DEFAULT)
+      .type(RoleType.REGULAR)
       .description("System generated role during migration");
   }
 
@@ -82,7 +82,7 @@ class MigrationRoleCreatorTest {
 
     @Test
     void positive_roleFound() {
-      when(roleService.create(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0));
+      when(roleService.create(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
       when(roleService.search("name==" + ROLE_NAME, 0, 1)).thenReturn(createdMigrationRoles());
 
       var result = migrationRoleCreator.createRoles(List.of(userPermissions()));
