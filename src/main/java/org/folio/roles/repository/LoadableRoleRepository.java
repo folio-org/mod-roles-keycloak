@@ -15,4 +15,6 @@ public interface LoadableRoleRepository extends BaseCqlJpaRepository<LoadableRol
   boolean existsByIdAndType(UUID id, EntityRoleType type);
 
   Stream<LoadableRoleEntity> findAllByType(EntityRoleType type);
+
+  Stream<LoadableRoleEntity> findAllByTypeAndLoadedFromFile(EntityRoleType type, boolean loadedFromFile);
 }

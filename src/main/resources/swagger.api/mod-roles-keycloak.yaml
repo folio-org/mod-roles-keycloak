@@ -1056,6 +1056,31 @@ paths:
           $ref: '#/components/responses/badRequestResponse'
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
+    put:
+      description: >-
+        A default role is created or updated, role is populated with the specified
+        permissions (capabilities and capability sets) as they become available in
+        the system. Default role cannot be changed via Roles API.
+      operationId: upsertLoadableRole
+      tags:
+        - loadable-roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/loadableRole'
+      responses:
+        '200':
+          description: Default loadable role was created or updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/loadableRole'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
 
 components:
   schemas:

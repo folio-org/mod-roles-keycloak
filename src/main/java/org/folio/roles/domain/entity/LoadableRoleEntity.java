@@ -2,6 +2,7 @@ package org.folio.roles.domain.entity;
 
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -31,6 +32,9 @@ public class LoadableRoleEntity extends RoleEntity {
     mappedBy = "role",
     orphanRemoval = true)
   private Set<LoadablePermissionEntity> permissions = new HashSet<>();
+
+  @Schema(name = "loaded_from_file")
+  private boolean loadedFromFile = false;
 
   public void setPermissions(Collection<LoadablePermissionEntity> newPermissions) {
     removeExistingPermissions();
