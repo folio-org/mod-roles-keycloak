@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+  <changeSet id="replace system role type by regular" author="Yauhen Vavilkin">
+    <sql>
+      UPDATE role
+      SET type = 'REGULAR'
+      WHERE type = 'SUPPORT';
+    </sql>
+
+    <sql>ALTER TABLE role ALTER COLUMN type DROP DEFAULT;</sql>
+
+    <sql>ALTER TYPE role_type RENAME TO role_type_old;</sql>
+
+    <sql>CREATE TYPE role_type AS ENUM ('DEFAULT','REGULAR','CONSORTIUM');</sql>
+
+    <sql>
+      ALTER TABLE role
+      ALTER COLUMN type
+      TYPE role_type
+      USING type::text::role_type;
+    </sql>
+
+    <sql>ALTER TABLE role ALTER COLUMN type SET DEFAULT 'REGULAR';</sql>
+
+    <sql>DROP TYPE role_type_old;</sql>
+  </changeSet>
+</databaseChangeLog>

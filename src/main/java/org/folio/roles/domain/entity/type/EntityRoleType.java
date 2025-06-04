@@ -5,7 +5,6 @@ import org.folio.roles.domain.dto.RoleType;
 public enum EntityRoleType {
 
   DEFAULT,
-  SUPPORT,
   REGULAR,
   CONSORTIUM;
 

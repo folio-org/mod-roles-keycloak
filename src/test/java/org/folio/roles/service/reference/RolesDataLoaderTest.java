@@ -5,7 +5,6 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.dto.RoleType.DEFAULT;
-import static org.folio.roles.domain.dto.RoleType.SUPPORT;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
@@ -83,20 +82,5 @@ class RolesDataLoaderTest {
 
     assertThatThrownBy(() -> rolesDataLoader.loadReferenceData()).isInstanceOf(IllegalStateException.class)
       .hasMessage("Failed to deserialize data");
-  }
-
-  @Test
-  void loadReferenceData_negative_ifTypeMismatch() {
-    var role = new PlainLoadableRole().name("role1").type(DEFAULT);
-    var roles = new PlainLoadableRoles().roles(List.of(role));
-    var loadableRole = new LoadableRole().id(randomUUID()).name(role.getName()).type(SUPPORT);
-
-    when(resourceHelper.readObjectsFromDirectory("reference-data/roles", PlainLoadableRoles.class))
-      .thenReturn(Stream.of(roles));
-    when(roleService.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(loadableRole));
-
-    assertThatThrownBy(() -> rolesDataLoader.loadReferenceData())
-      .isInstanceOf(IllegalArgumentException.class)
-      .hasMessage("Loadable role type cannot be changed: original = %s, new = %s", SUPPORT, DEFAULT);
   }
 }
