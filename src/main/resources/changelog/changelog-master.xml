@@ -38,4 +38,5 @@
   <include file="changes/add-visible-field-to-capabilities-and-capsets.xml" relativeToChangelogFile="true"/>
   <include file="changes/populate-visible-field-in-capabilities-and-capsets.xml" relativeToChangelogFile="true"/>
   <include file="changes/add-loaded-from-file-field-to-loadable-roles.xml" relativeToChangelogFile="true"/>
+  <include file="changes/remove-system-role-type.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

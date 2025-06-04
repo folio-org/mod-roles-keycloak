@@ -70,24 +70,6 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
-  void supportRolesInitialized_positive() throws Exception {
-    var supportLibRole = readRole("librarian-support-role.json");
-    var supportUserRole = readRole("user-support-role.json");
-    when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
-      .thenReturn(Stream.of(supportLibRole, supportUserRole));
-
-    enableTenant(TENANT_ID, TENANT_ATTR);
-
-    var roles = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
-
-    assertThat(roles).satisfiesExactly(
-      roleMatches(supportLibRole),
-      roleMatches(supportUserRole)
-    );
-  }
-
-  @Test
-  @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
   void defaultRolesInitialized_positive() throws Exception {
     when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
       .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole));
