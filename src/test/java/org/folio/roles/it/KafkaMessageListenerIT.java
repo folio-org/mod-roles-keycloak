@@ -170,7 +170,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.totalRecords", is(1)))
       .andReturn();
 
-    var foundCapabilitySet = parseResponse(searchResult, CapabilitySets.class).getCapabilitySets().get(0);
+    var foundCapabilitySet = parseResponse(searchResult, CapabilitySets.class).getCapabilitySets().getFirst();
     assertThat(foundCapabilitySet.getCapabilities()).hasSize(7);
 
     doGet("/capability-sets/{id}/capabilities", foundCapabilitySet.getId())
@@ -275,9 +275,10 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
   @ParameterizedTest(name = "[{index}] name={0}")
   @DisplayName("handleCapabilityEvent_negative_parameterizedForNonRetryableExceptions")
   void handleCapabilityEvent_negative_parameterized(@SuppressWarnings("unused") String name, Throwable throwable) {
+    doThrow(throwable).when(capabilityService).update(eq(ResourceEventType.CREATE), anyList(), anyList());
+
     var capabilityEvent = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
-    doThrow(throwable).when(capabilityService).update(eq(ResourceEventType.CREATE), anyList(), anyList());
 
     awaitFor(FIVE_HUNDRED_MILLISECONDS);
 
