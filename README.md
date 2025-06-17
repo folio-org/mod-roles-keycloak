@@ -9,6 +9,13 @@ more information.
 
 * [Introduction](#introduction)
 * [Environment Variables](#environment-variables)
+  * [Secure storage environment variables](#secure-storage-environment-variables)
+    * [AWS-SSM](#aws-ssm)
+    * [Vault](#vault)
+    * [Folio Secure Store Proxy (FSSP)](#folio-secure-store-proxy-fssp)
+  * [Keycloak environment variables](#keycloak-environment-variables)
+* [Loading of client IDs/secrets](#loading-of-client-idssecrets)
+* [Custom permission-capability mappings](#custom-permission-capability-mappings)
 
 ## Introduction
 
@@ -64,6 +71,19 @@ Required when `SECRET_STORE_TYPE=VAULT`
 | SECRET_STORE_VAULT_KEYSTORE_FILE_PATH   | -             | the path to a JKS keystore file containing a client cert and private key            |
 | SECRET_STORE_VAULT_TRUSTSTORE_FILE_PATH | -             | the path to a JKS truststore file containing Vault server certs that can be trusted |
 
+#### Folio Secure Store Proxy (FSSP)
+
+Required when `SECRET_STORE_TYPE=FSSP`
+
+| Name                                   | Default value         | Description                                          |
+|:---------------------------------------|:----------------------|:-----------------------------------------------------|
+| SECRET_STORE_FSSP_ADDRESS              | -                     | The address (URL) of the FSSP service.               |
+| SECRET_STORE_FSSP_SECRET_PATH          | secure-store/entries  | The path in FSSP where secrets are stored/retrieved. |
+| SECRET_STORE_FSSP_ENABLE_SSL           | false                 | Whether to use SSL when connecting to FSSP.          |
+| SECRET_STORE_FSSP_TRUSTSTORE_PATH      | -                     | Path to the truststore file for SSL connections.     |
+| SECRET_STORE_FSSP_TRUSTSTORE_FILE_TYPE | -                     | The type of the truststore file (e.g., JKS, PKCS12). |
+| SECRET_STORE_FSSP_TRUSTSTORE_PASSWORD  | -                     | The password for the truststore file.                |
+
 ### Keycloak environment variables
 
 Keycloak all configuration properties: https://www.keycloak.org/server/all-config
@@ -113,4 +133,3 @@ One can define custom mapping of a module-descriptor permission to Eureka capabi
 See [Permissions naming convention](https://folio-org.atlassian.net/wiki/spaces/FOLIJET/pages/156368925/Permissions+naming+convention) for more
 information regarding permission properties such as "action", permission naming conventions and other permission related
 information.
-
