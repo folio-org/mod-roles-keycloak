@@ -138,7 +138,7 @@ public class RoleService {
    */
   @Transactional
   public void deleteById(UUID id) {
-    var actualRole = keycloakService.getById(id);
+    var actualRole = entityService.getById(id);
     checkIfRoleHasDefaultType(actualRole);
     entityService.deleteById(id);
     try {
