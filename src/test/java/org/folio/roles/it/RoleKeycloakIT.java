@@ -203,6 +203,7 @@ class RoleKeycloakIT extends BaseIntegrationTest {
   @Test
   void deleteRole_negative_notFound() throws Exception {
     var notExistingRoleId = ROLE_NOT_EXISTED.getId();
+    var errorMessage = "Unable to find org.folio.roles.domain.entity.RoleEntity with id " + notExistingRoleId;
     mockMvc.perform(delete("/roles/{id}", notExistingRoleId)
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER))
@@ -210,8 +211,7 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
       .andExpect(jsonPath("$.errors[0].code", is("not_found_error")))
-      .andExpect(jsonPath("$.errors[0].message", is("Failed to find role: id = " + notExistingRoleId)))
-    ;
+      .andExpect(jsonPath("$.errors[0].message", is(errorMessage)));
   }
 
   @Test
