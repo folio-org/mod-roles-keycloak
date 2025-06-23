@@ -13,7 +13,8 @@
         "ui-invoice.acq.unit.assignment.assign",
         "ui-invoice.invoice.create",
         "ui-invoice.invoice.delete",
-        "ui-invoice.settings.all"
+        "ui-invoice.settings.all",
+        "consortia.data-import.central-record-update.execute"
       ]
     }
   ]
