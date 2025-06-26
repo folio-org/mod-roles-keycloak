@@ -1,6 +1,7 @@
 ## Version `v3.1.0` (in progress)
 * Added endpoint to create or update default roles via REST API (MODROLESKC-301)
-* Introduce configuration for FSSP (APPPOCTOOL-59) 
+* Introduce configuration for FSSP (APPPOCTOOL-59)
+* Provide "Data Import" role with permission for central tenant record update through data import (MODROLESKC-304)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)
