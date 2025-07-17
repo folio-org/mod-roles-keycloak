@@ -21,9 +21,7 @@ public interface CapabilitySetMapper {
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "metadata", ignore = true)
   @Mapping(target = "capabilities", ignore = true)
-  @Mapping(target = "name", expression = "java(CapabilityUtils.getCapabilityName(csd.getResource(), csd.getAction()))")
   CapabilitySet convert(CapabilitySetDescriptor csd);
 
-  @Mapping(target = "capabilities", expression = "java(CollectionUtils.mapItems(capabilityList, Capability::getId))")
   ExtendedCapabilitySet toExtendedCapabilitySet(CapabilitySet capabilitySet, List<Capability> capabilityList);
 }

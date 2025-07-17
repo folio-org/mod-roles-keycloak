@@ -78,16 +78,16 @@ public class CapabilityKafkaEventHandler {
 
     final var capabilityReplacements = capabilityReplacementsService.deduceReplacements(newValue);
 
-    var orh = capabilityEventProcessor.process(oldValue);
+    var oldResources = capabilityEventProcessor.process(oldValue);
 
     folioPermissionService.update(getPermissions(newValue), getPermissions(oldValue));
-    var nrh = capabilityEventProcessor.process(newValue);
+    var newResources = capabilityEventProcessor.process(newValue);
 
-    var dummyNames = capabilityService
-      .findDummyCapabilitiesByNames(toSet(nrh.capabilities(), Capability::getName));
-    capabilityService.update(eventType, nrh.capabilities(), orh.capabilities());
-    capabilitySetDescriptorService.update(eventType, nrh.capabilitySets(), orh.capabilitySets());
-    var newCapabilitySetDescriptors = nrh.capabilitySets()
+    var dummyNames =
+      capabilityService.findDummyCapabilitiesByNames(toSet(newResources.capabilities(), Capability::getName));
+    capabilityService.update(eventType, newResources.capabilities(), oldResources.capabilities());
+    capabilitySetDescriptorService.update(eventType, newResources.capabilitySets(), oldResources.capabilitySets());
+    var newCapabilitySetDescriptors = newResources.capabilitySets()
       .stream()
       .map(CapabilitySetDescriptor::getName)
       .collect(Collectors.toSet());
