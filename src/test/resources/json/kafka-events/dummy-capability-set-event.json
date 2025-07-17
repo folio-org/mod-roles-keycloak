@@ -1,0 +1,36 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "real-module-1.0.0",
+    "moduleType": "module",
+    "applicationId": "real-application-0.0.1",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "test.real.from-event.view",
+          "displayName": "A real permission from the event",
+          "description": "This permission is defined with endpoints and should be created as a real capability."
+        },
+        "endpoints": [
+          {
+            "path": "/test/real",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "test.real.set-from-event.all",
+          "displayName": "A capability set",
+          "description": "This is a capability set that includes a real permission and one that should become a dummy.",
+          "subPermissions": [
+            "test.real.from-event.view",
+            "foo.dummy.from-event.edit"
+          ]
+        }
+      }
+    ]
+  }
+}
