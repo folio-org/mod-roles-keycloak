@@ -91,8 +91,9 @@ class CapabilityReplacementsServiceTest {
 
     var capabilityUuid = randomUUID();
     var capabilitySetUuid = randomUUID();
-    when(capabilityService.findByPermissionNames(Set.of("old-perm.get", "old-perm2.get"))).thenReturn(
-      List.of(new Capability().id(capabilityUuid).name("old-perm.view").permission("old-perm.get")));
+    when(capabilityService.findByPermissionNamesIncludeDummy(Set.of("old-perm.get", "old-perm2.get")))
+      .thenReturn(List.of(new Capability().id(capabilityUuid).name("old-perm.view").permission("old-perm.get")
+        .dummyCapability(false)));
     when(capabilitySetService.findByPermissionNames(Set.of("old-perm.get", "old-perm2.get"))).thenReturn(
       List.of(new CapabilitySet().id(capabilitySetUuid).name("old-perm-two.view").permission("old-perm2.get")));
 
@@ -161,6 +162,8 @@ class CapabilityReplacementsServiceTest {
       List.of(capabilitySet(capSet1Id, "newcapset1.view")));
     when(capabilityService.findByPermissionNames(Set.of("oldcap1.view", "oldcapset2.view"))).thenReturn(
       List.of(capability(cap1Id, "oldcap1.view")));
+    when(capabilityService.findByPermissionNamesIncludeDummy(Set.of("oldcap1.view", "oldcapset2.view"))).thenReturn(
+      List.of(capability(cap1Id, "oldcap1.view")));
     when(capabilitySetService.findByPermissionNames(Set.of("oldcap1.view", "oldcapset2.view"))).thenReturn(
       List.of(capabilitySet(capSet1Id, "oldcapset2.view")));
 
@@ -202,7 +205,8 @@ class CapabilityReplacementsServiceTest {
 
     var capabilityReplacements =
       new CapabilityReplacements(oldPermissionToNewPermission, oldCapabilityRoleAssignments,
-        oldCapabilityUserAssignments, oldCapabilitySetRoleAssignments, oldCapabilitySetUserAssignments);
+        oldCapabilityUserAssignments, oldCapabilitySetRoleAssignments,
+        oldCapabilitySetUserAssignments, Map.of());
 
     var newLoadablePermissions = new ArrayList<LoadablePermissionEntity>();
     when(loadablePermissionRepository.save(any())).then(inv -> {
@@ -265,7 +269,8 @@ class CapabilityReplacementsServiceTest {
 
   @Test
   void replaceLoadable_positive_emptyPermissionMappingData() {
-    var capabilityReplacements = new CapabilityReplacements(Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+    var capabilityReplacements = new CapabilityReplacements(Map.of(),
+      Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
     unit.replaceLoadable(capabilityReplacements);
 
     verifyNoInteractions(loadablePermissionRepository);

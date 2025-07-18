@@ -73,6 +73,7 @@ public class CapabilityReplacementsService {
   private final CapabilitySetService capabilitySetService;
   private final CapabilitySetMapper capabilitySetMapper;
   private final LoadablePermissionRepository loadablePermissionRepository;
+  private final CapabilitySetByCapabilitiesUpdater capabilitySetByCapabilitiesUpdater;
 
   /**
    * Process permission replacements.
@@ -107,7 +108,12 @@ public class CapabilityReplacementsService {
       return empty();
     }
 
-    var oldCapabilities = capabilityService.findByPermissionNames(permissionReplacements.keySet());
+    var capabilitiesByPermissionName = capabilityService
+      .findByPermissionNamesIncludeDummy(permissionReplacements.keySet());
+    var oldCapabilities = toStream(capabilitiesByPermissionName).filter(c -> Boolean.FALSE.equals(
+      c.getDummyCapability())).toList();
+    var oldDummyCapabilities = toStream(capabilitiesByPermissionName).filter(c -> Boolean.TRUE.equals(
+      c.getDummyCapability())).toList();
     var oldCapabilitySets = capabilitySetService.findByPermissionNames(permissionReplacements.keySet());
 
     // Determine which users and roles have assignments of old (replaced) capabilities/capability-sets
@@ -127,15 +133,19 @@ public class CapabilityReplacementsService {
       capabilitySet -> userCapabilitySetRepository.findAllByCapabilitySetId(capabilitySet.getId()),
       CapabilitySet::getPermission, UserCapabilitySetEntity::getUserId);
 
+    var dummyCapabilityCapabilitySetAssignments = extractAssignments(oldDummyCapabilities,
+      capability -> capabilitySetService.findAllByCapabilityIdIncludeDummy(capability.getId()),
+      Capability::getPermission, Function.identity());
     log.info("Found capability replacements for {} capabilities and capability sets", permissionReplacements.size());
     return Optional.of(
-      new CapabilityReplacements(permissionReplacements, capabilityRoleAssignments, capabilityUserAssignments,
-        capabilitySetRoleAssignments, capabilitySetUserAssignments));
+      new CapabilityReplacements(permissionReplacements, capabilityRoleAssignments,
+        capabilityUserAssignments, capabilitySetRoleAssignments,
+        capabilitySetUserAssignments, dummyCapabilityCapabilitySetAssignments));
   }
 
-  protected <S, A> Map<String, Set<UUID>> extractAssignments(List<S> capabilityOrCapabilitySet,
+  protected <S, A, U> Map<String, Set<U>> extractAssignments(List<S> capabilityOrCapabilitySet,
     Function<S, Collection<A>> assignmentsLookup, Function<S, String> sourceToName,
-    Function<A, UUID> assignmentToTargetUuid) {
+    Function<A, U> assignmentToTargetValue) {
 
     if (capabilityOrCapabilitySet.isEmpty()) {
       return Map.of();
@@ -143,7 +153,7 @@ public class CapabilityReplacementsService {
 
     return capabilityOrCapabilitySet.stream().map(capability ->
         entry(sourceToName.apply(capability), assignmentsLookup.apply(capability).stream()
-          .map(assignmentToTargetUuid)
+          .map(assignmentToTargetValue)
           .collect(toSet())))
       .collect(toMap(Entry::getKey, Entry::getValue, CapabilityReplacementsService::mergeSets));
   }
@@ -161,6 +171,8 @@ public class CapabilityReplacementsService {
           replacementCapabilities, replacementCapabilitySets);
         assignReplacementsToUsers(capabilityReplacements.oldUserCapabSetByPermission().get(oldPermissionName),
           replacementCapabilities, replacementCapabilitySets);
+        assignReplacementsToCapabilitySet(capabilityReplacements
+            .oldCapabSetDummyCapabByPermission().get(oldPermissionName), replacementCapabilities);
       }
     });
   }
@@ -303,12 +315,20 @@ public class CapabilityReplacementsService {
     }
   }
 
+  protected void assignReplacementsToCapabilitySet(Set<CapabilitySet> capabilitySets,
+    List<Capability> replacementCapabilities) {
+    if (capabilitySets != null && !capabilitySets.isEmpty()) {
+      capabilitySets.forEach(capabilitySet -> capabilitySetByCapabilitiesUpdater
+          .updateCapabilitySetByCapabilities(replacementCapabilities, capabilitySet));
+    }
+  }
+
   protected void unassignReplacedCapabilities(CapabilityReplacements capabilityReplacements) {
     var oldPermissionsToRemove = capabilityReplacements.oldPermissionsToNewPermissions().keySet();
 
     log.info("Removing old capabilities and capability sets by permission names: {}",
       String.join(", ", oldPermissionsToRemove));
-    var oldCapabilitiesToRemove = capabilityService.findByPermissionNames(oldPermissionsToRemove);
+    var oldCapabilitiesToRemove = capabilityService.findByPermissionNamesIncludeDummy(oldPermissionsToRemove);
     oldCapabilitiesToRemove.stream()
       .map(mapToDeleteCapabilityAppEvent())
       .forEach(applicationEventPublisher::publishEvent);

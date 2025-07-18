@@ -242,6 +242,21 @@ public class CapabilityService {
   }
 
   /**
+   * Retrieves capabilities including dummy by permission names .
+   *
+   * @param permissionNames - list of {@link String} permission names
+   * @return list with {@link Capability} objects
+   */
+  @Transactional(readOnly = true)
+  public List<Capability> findByPermissionNamesIncludeDummy(Collection<String> permissionNames) {
+    if (isEmpty(permissionNames)) {
+      return emptyList();
+    }
+    var capabilityEntities = capabilityRepository.findAllByPermissionNamesIncludeDummy(permissionNames);
+    return capabilityEntityMapper.convert(capabilityEntities);
+  }
+
+  /**
    * Retrieves capabilities by capability set id and pagination parameters.
    *
    * @param capabilitySetId - capability set identifier
