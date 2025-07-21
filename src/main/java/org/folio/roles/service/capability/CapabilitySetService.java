@@ -251,7 +251,7 @@ public class CapabilitySetService {
 
   @Transactional(readOnly = true)
   public List<CapabilitySet> findAllByCapabilityIdIncludeDummy(UUID capabilityId) {
-    return toStream(repository.findAllByCapabilityIdIncludeDummy(capabilityId))
+    return toStream(repository.findAllByCapabilityId(capabilityId))
       .map(capabilitySetEntityMapper::convert)
       .toList();
   }

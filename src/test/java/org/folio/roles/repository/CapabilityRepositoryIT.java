@@ -311,7 +311,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void findAllByPermissionName_positive_excludeDummy() {
+  void findAllByPermissionName_positive_excludeDummyAndIncludeDummy() {
     var capabilityEntity = capabilityEntity(null);
     capabilityEntity.setPermission("permission-not-for-dummy");
     var dummyCapabilityEntity = capabilityEntity(null);
@@ -325,6 +325,10 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
       .findAllByPermissionNames(List.of("permission-not-for-dummy", "permission-for-dummy"));
     assertThat(capabilityEntities).hasSize(1);
     assertThat(capabilityEntities.get(0).isDummyCapability()).isFalse();
+
+    capabilityEntities = capabilityRepository
+      .findAllByPermissionNamesIncludeDummy(List.of("permission-not-for-dummy", "permission-for-dummy"));
+    assertThat(capabilityEntities).hasSize(2);
   }
 
   @Test

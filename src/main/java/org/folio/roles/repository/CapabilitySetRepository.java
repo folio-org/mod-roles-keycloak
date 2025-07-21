@@ -61,7 +61,7 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
       SELECT cs.* FROM capability_set cs
       INNER JOIN capability_set_capability csc ON cs.id = csc.capability_set_id
       WHERE csc.capability_id = :capabilityId""")
-  List<CapabilitySetEntity> findAllByCapabilityIdIncludeDummy(UUID capabilityId);
+  List<CapabilitySetEntity> findAllByCapabilityId(UUID capabilityId);
 
   @Modifying
   @Query(nativeQuery = true, value = "DELETE FROM capability_set_capability WHERE capability_id = :capabilityId")

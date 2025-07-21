@@ -647,6 +647,32 @@ class CapabilityServiceTest {
   }
 
   @Nested
+  @DisplayName("findByPermissionNamesIncludeDummy")
+  class FindByPermissionNamesIncludeDummy {
+
+    @Test
+    void positive() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      var permissionNames = List.of("test_resource.create");
+      when(capabilityRepository.findAllByPermissionNamesIncludeDummy(permissionNames)).thenReturn(List.of(capabilityEntity));
+      when(capabilityEntityMapper.convert(List.of(capabilityEntity))).thenReturn(List.of(capability));
+
+      var result = capabilityService.findByPermissionNamesIncludeDummy(permissionNames);
+
+      assertThat(result).containsExactly(capability);
+      verify(capabilityRepository).findAllByPermissionNamesIncludeDummy(permissionNames);
+    }
+
+    @Test
+    void positive_emptyInput() {
+      var result = capabilityService.findByPermissionNamesIncludeDummy(emptyList());
+      assertThat(result).isEmpty();
+      verifyNoInteractions(capabilityRepository);
+    }
+  }
+
+  @Nested
   @DisplayName("findByPermissionName")
   class FindByPermissionName {
 

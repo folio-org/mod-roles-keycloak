@@ -23,7 +23,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-public class CapabilitySetByCapabilitiesUpdaterTest {
+class CapabilitySetByCapabilitiesUpdaterTest {
 
   @InjectMocks private CapabilitySetByCapabilitiesUpdater capabilitySetByCapabilitiesUpdater;
   @Mock private CapabilitySetMapper capabilitySetMapper;
