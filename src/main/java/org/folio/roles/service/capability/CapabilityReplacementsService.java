@@ -319,7 +319,7 @@ public class CapabilityReplacementsService {
     List<Capability> replacementCapabilities) {
     if (capabilitySets != null && !capabilitySets.isEmpty()) {
       capabilitySets.forEach(capabilitySet -> capabilitySetByCapabilitiesUpdater
-          .updateCapabilitySetByCapabilities(replacementCapabilities, capabilitySet));
+          .update(replacementCapabilities, capabilitySet));
     }
   }
 

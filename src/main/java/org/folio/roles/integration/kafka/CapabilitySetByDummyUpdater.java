@@ -46,7 +46,7 @@ public class CapabilitySetByDummyUpdater {
             log.info("Add capabilities from {} to related set {}",
               dummyCapabilityName, relatedCapabilitySet.getName());
             capabilitySetByCapabilitiesUpdater
-              .updateCapabilitySetByCapabilities(capabilitiesToAdd, relatedCapabilitySet);
+              .update(capabilitiesToAdd, relatedCapabilitySet);
           }
         }
       });

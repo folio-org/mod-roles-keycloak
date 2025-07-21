@@ -242,7 +242,7 @@ public class CapabilityService {
   }
 
   /**
-   * Retrieves capabilities including dummy by permission names .
+   * Retrieves capabilities including dummy by permission names.
    *
    * @param permissionNames - list of {@link String} permission names
    * @return list with {@link Capability} objects

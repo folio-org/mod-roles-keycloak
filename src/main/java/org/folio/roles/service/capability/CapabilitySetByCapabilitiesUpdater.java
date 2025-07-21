@@ -30,7 +30,7 @@ public class CapabilitySetByCapabilitiesUpdater {
    * @param capabilitiesToAdd - capabilities to add to capability set
    * @param capabilitySet - capability set to update
    */
-  public void updateCapabilitySetByCapabilities(List<Capability> capabilitiesToAdd, CapabilitySet capabilitySet) {
+  public void update(List<Capability> capabilitiesToAdd, CapabilitySet capabilitySet) {
     var capabilities = capabilityService
       .findByCapabilitySetIdsIncludeDummy(Set.of(capabilitySet.getId()));
     var extendedCapabilitySet = capabilitySetMapper
