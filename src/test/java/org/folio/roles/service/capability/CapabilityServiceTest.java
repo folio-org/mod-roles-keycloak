@@ -655,7 +655,8 @@ class CapabilityServiceTest {
       var capability = capability();
       var capabilityEntity = capabilityEntity();
       var permissionNames = List.of("test_resource.create");
-      when(capabilityRepository.findAllByPermissionNamesIncludeDummy(permissionNames)).thenReturn(List.of(capabilityEntity));
+      when(capabilityRepository.findAllByPermissionNamesIncludeDummy(permissionNames))
+        .thenReturn(List.of(capabilityEntity));
       when(capabilityEntityMapper.convert(List.of(capabilityEntity))).thenReturn(List.of(capability));
 
       var result = capabilityService.findByPermissionNamesIncludeDummy(permissionNames);
