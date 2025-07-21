@@ -134,7 +134,7 @@ public class CapabilityReplacementsService {
       CapabilitySet::getPermission, UserCapabilitySetEntity::getUserId);
 
     var dummyCapabilityCapabilitySetAssignments = extractAssignments(oldDummyCapabilities,
-      capability -> capabilitySetService.findAllByCapabilityIdIncludeDummy(capability.getId()),
+      capability -> capabilitySetService.findAllByCapabilityId(capability.getId()),
       Capability::getPermission, Function.identity());
     log.info("Found capability replacements for {} capabilities and capability sets", permissionReplacements.size());
     return Optional.of(
