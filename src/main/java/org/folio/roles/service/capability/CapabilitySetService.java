@@ -49,12 +49,10 @@ public class CapabilitySetService {
    */
   @Transactional
   public CapabilitySet create(CapabilitySet capabilitySet) {
-    var name = getCapabilityName(capabilitySet.getResource(), capabilitySet.getAction());
-    if (repository.existsByName(name) && !repository.existsById(capabilitySet.getId())) {
-      throw new RequestValidationException("Capability set name is already taken", "name", name);
+    if (repository.existsByName(capabilitySet.getName()) && !repository.existsById(capabilitySet.getId())) {
+      throw new RequestValidationException("Capability set name is already taken", "name", capabilitySet.getName());
     }
 
-    capabilitySet.setName(name);
     capabilityService.checkIds(capabilitySet.getCapabilities());
 
     var capabilityEntity = capabilitySetEntityMapper.convert(capabilitySet);
@@ -313,5 +311,17 @@ public class CapabilitySetService {
     for (var capabilityId : capabilityIds) {
       repository.addCapabilityById(capabilitySetId, capabilityId);
     }
+  }
+
+  @Transactional
+  public void updateAll(List<CapabilitySet> capabilitySets) {
+    if (isEmpty(capabilitySets)) {
+      return;
+    }
+
+    checkIds(mapItems(capabilitySets, CapabilitySet::getId));
+
+    var capabilitySetEntities = capabilitySetEntityMapper.mapToEntities(capabilitySets);
+    repository.saveAll(capabilitySetEntities);
   }
 }

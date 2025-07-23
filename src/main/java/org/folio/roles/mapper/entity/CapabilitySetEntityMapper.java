@@ -24,4 +24,6 @@ public interface CapabilitySetEntityMapper {
   CapabilitySet convert(CapabilitySetEntity entity);
 
   List<CapabilitySet> convert(List<CapabilitySetEntity> entities);
+
+  List<CapabilitySetEntity> mapToEntities(List<CapabilitySet> capabilities);
 }

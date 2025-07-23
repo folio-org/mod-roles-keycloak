@@ -1,5 +1,6 @@
 package org.folio.roles.integration.kafka;
 
+import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -8,6 +9,7 @@ import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.common.utils.Collectors.toLinkedHashMap;
@@ -33,6 +35,7 @@ import org.folio.roles.domain.model.event.CapabilitySetEvent;
 import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
 import org.folio.roles.integration.kafka.model.ResourceEventType;
+import org.folio.roles.repository.PermissionRepository;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.spring.FolioExecutionContext;
@@ -51,6 +54,7 @@ public class CapabilitySetDescriptorService {
   private final CapabilitySetService capabilitySetService;
   private final FolioExecutionContext folioExecutionContext;
   private final ApplicationEventPublisher applicationEventPublisher;
+  private final PermissionRepository permissionRepository;
 
   /**
    * Updates capabilities using given event type, old and new collection of capability set descriptors.
@@ -70,11 +74,11 @@ public class CapabilitySetDescriptorService {
     var newCapabilityNames = toSet(newCapabilitySetDescriptors, CapabilitySetDescriptor::getName);
     var existingCapabilitySets = getExistingCapabilitySetsByNames(newCapabilityNames);
 
-    var groupedCapabilitySets = toStream(newCapabilitySetDescriptors)
+    var alreadyCreatedCapabilitySets = toStream(newCapabilitySetDescriptors)
       .collect(groupingBy(csd -> existingCapabilitySets.containsKey(csd.getName())));
 
-    handleNewCapabilitySets(groupedCapabilitySets.get(Boolean.FALSE));
-    handleUpdatedCapabilitySets(resourceEventType, groupedCapabilitySets.get(TRUE), existingCapabilitySets);
+    handleNewCapabilitySets(alreadyCreatedCapabilitySets.get(FALSE));
+    handleUpdatedCapabilitySets(resourceEventType, alreadyCreatedCapabilitySets.get(TRUE), existingCapabilitySets);
     handleDeprecatedCapabilitySets(oldCapabilitySetDescriptors, newCapabilityNames);
   }
 
@@ -126,9 +130,32 @@ public class CapabilitySetDescriptorService {
     for (var createdCapabilitySet : createdCapabilitySets) {
       var capabilityList = mapItems(createdCapabilitySet.getCapabilities(), capabilityMap::get);
       var extendedCapabilitySet = capabilitySetMapper.toExtendedCapabilitySet(createdCapabilitySet, capabilityList);
+      updateParentCapabilitySetsByDummyCapabilities(createdCapabilitySet, extendedCapabilitySet);
       var event = CapabilitySetEvent.created(extendedCapabilitySet).withContext(folioExecutionContext);
       applicationEventPublisher.publishEvent(event);
     }
+  }
+
+  private void updateParentCapabilitySetsByDummyCapabilities(CapabilitySet createdCapabilitySet,
+    ExtendedCapabilitySet extendedCapabilitySet) {
+    if (hasNoDummyCapabilities(extendedCapabilitySet)) {
+      log.debug("No dummy capabilities found in capability set: {}", extendedCapabilitySet.getName());
+      return;
+    }
+
+    var dummiesToAdd = toStream(extendedCapabilitySet.getCapabilityList())
+      .filter(c -> isTrue(c.getDummyCapability()))
+      .map(Capability::getId)
+      .toList();
+    var capSetPermission = createdCapabilitySet.getPermission();
+    var parentCapSetsPermissions = permissionRepository.getAllParentPermissions(capSetPermission);
+    parentCapSetsPermissions.remove(capSetPermission);
+
+    var parentSets = capabilitySetService.findByPermissionNames(parentCapSetsPermissions);
+    for (var cs : parentSets) {
+      cs.getCapabilities().addAll(dummiesToAdd);
+    }
+    capabilitySetService.updateAll(parentSets);
   }
 
   private void handleUpdatedCapabilitySets(ResourceEventType type, List<CapabilitySetDescriptor> setDescriptors,
@@ -267,5 +294,9 @@ public class CapabilitySetDescriptorService {
           capabilitySetDescriptor.getName(), capabilitySetDescriptor.getPermission(), key, value);
       }
     });
+  }
+
+  private static boolean hasNoDummyCapabilities(ExtendedCapabilitySet extendedCapabilitySet) {
+    return toStream(extendedCapabilitySet.getCapabilityList()).noneMatch(c -> isTrue(c.getDummyCapability()));
   }
 }
