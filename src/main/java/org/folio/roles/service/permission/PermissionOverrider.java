@@ -47,12 +47,13 @@ public class PermissionOverrider {
     }
   }
 
-  private static PermissionData mapToPermissionData(Entry<String, Permission> key) {
-    var permission = key.getValue();
+  private static PermissionData mapToPermissionData(Entry<String, Permission> entry) {
+    var permission = entry.getValue();
     return PermissionData.builder()
       .action(PermissionAction.fromValue(permission.action()))
       .type(PermissionType.fromValue(permission.type()))
       .resource(permission.resource())
+      .permissionName(entry.getKey())
       .build();
   }
 

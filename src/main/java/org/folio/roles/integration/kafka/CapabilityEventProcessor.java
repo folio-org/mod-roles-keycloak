@@ -3,7 +3,6 @@ package org.folio.roles.integration.kafka;
 import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
@@ -20,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -40,6 +38,7 @@ import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.service.permission.FolioPermissionService;
 import org.folio.roles.service.permission.PermissionOverrider;
 import org.springframework.beans.BeanUtils;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Log4j2
@@ -92,34 +91,37 @@ public class CapabilityEventProcessor {
 
   private CapabilitySetDescriptor createCapabilitySetDescriptor(
     CapabilityEvent event, FolioResource res, PermissionData permissionData) {
-    var permission = res.getPermission();
+    var capabSetPermission = res.getPermission();
     /*
      * The SubPermissions are handled equally for both module types: MODULE and UI_MODULE.
      * It is needed to support cases when a PermissionSet defined in BE modules are used in UI modules.
      * see https://folio-org.atlassian.net/browse/MODROLESKC-240
      */
-    var subPermissions = union(permission.getSubPermissions(), List.of(permission.getPermissionName()));
+    var subPermissions = union(capabSetPermission.getSubPermissions(), List.of(capabSetPermission.getPermissionName()));
     var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions)
       .stream()
       .map(Permission::getPermissionName).toList();
-    subPermissionsExpanded = union(subPermissionsExpanded, subPermissions);
+    subPermissionsExpanded = union(subPermissionsExpanded, capabSetPermission.getSubPermissions());
     var capabilities = subPermissionsExpanded.stream()
       .map(permissionName -> extractPermissionData(permissionName, permissionOverrider.getPermissionMappings()))
       .filter(CapabilityEventProcessor::hasRequiredFields)
-      .map(data -> createCapability(event, res, data))
-      .collect(groupingBy(Capability::getResource, TreeMap::new, mapping(Capability::getAction, toList())));
+      .map(data -> createCapabilityHolder(
+        event,
+        findFolioResourceByPermissionName(data.getPermissionName(), event.getResources()),
+        data))
+      .toList();
 
     return new CapabilitySetDescriptor()
       .name(getCapabilityName(permissionData))
       .type(CapabilityType.fromValue(permissionData.getType().getValue()))
       .action(CapabilityAction.fromValue(permissionData.getAction().getValue()))
       .resource(permissionData.getResource())
-      .description(permission.getDescription())
+      .description(capabSetPermission.getDescription())
       .moduleId(event.getModuleId())
       .applicationId(event.getApplicationId())
-      .permission(permission.getPermissionName())
+      .permission(capabSetPermission.getPermissionName())
       .capabilities(capabilities)
-      .visible(permission.getVisible());
+      .visible(capabSetPermission.getVisible());
   }
 
   public static PermissionData extractPermissionData(String permissionName,
@@ -151,6 +153,42 @@ public class CapabilityEventProcessor {
       .applicationId(event.getApplicationId())
       .endpoints(emptyIfNull(resource.getEndpoints()))
       .visible(resource.getPermission().getVisible());
+  }
+
+  private static Capability createCapabilityHolder(CapabilityEvent event, @Nullable FolioResource resource,
+    PermissionData permissionData) {
+    var capability = new Capability()
+      .name(getCapabilityName(permissionData))
+      .permission(permissionData.getPermissionName())
+      .type(CapabilityType.fromValue(permissionData.getType().getValue()))
+      .action(CapabilityAction.fromValue(permissionData.getAction().getValue()))
+      .resource(permissionData.getResource());
+
+    if (resource != null) {
+      capability
+        .applicationId(event.getApplicationId())
+        .endpoints(emptyIfNull(resource.getEndpoints()))
+        .visible(resource.getPermission().getVisible())
+        .moduleId(event.getModuleId())
+        .description(resource.getPermission().getDescription());
+    }
+
+    log.info("Created capability holder with name: {}, permission: {}, resource: {}, action: {}",
+      capability.getName(), capability.getPermission(), capability.getResource(), capability.getAction());
+
+    return capability;
+  }
+
+  private static FolioResource findFolioResourceByPermissionName(String permissionName, List<FolioResource> resources) {
+    return toStream(resources)
+      .filter(resource -> samePermissionName(permissionName, resource))
+      .findFirst()
+      .orElse(null);
+  }
+
+  private static boolean samePermissionName(String permissionName, FolioResource resource) {
+    return resource.getPermission() != null && Objects.equals(resource.getPermission().getPermissionName(),
+      permissionName);
   }
 
   private static boolean hasRequiredFields(org.folio.common.utils.permission.model.PermissionData permissionData) {

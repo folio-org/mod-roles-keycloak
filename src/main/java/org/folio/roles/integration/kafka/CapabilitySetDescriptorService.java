@@ -1,7 +1,9 @@
 package org.folio.roles.integration.kafka;
 
+import static java.lang.Boolean.TRUE;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static java.util.function.Function.identity;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
@@ -10,27 +12,23 @@ import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.common.utils.Collectors.toLinkedHashMap;
 import static org.folio.roles.integration.kafka.model.ResourceEventType.CREATE;
-import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 import static org.folio.roles.utils.CollectionUtils.toSet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
 import org.folio.roles.domain.dto.Capability;
-import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.model.ExtendedCapabilitySet;
+import org.folio.roles.domain.model.event.CapabilityEvent;
 import org.folio.roles.domain.model.event.CapabilitySetEvent;
 import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
@@ -38,6 +36,7 @@ import org.folio.roles.integration.kafka.model.ResourceEventType;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.spring.FolioExecutionContext;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,7 +74,7 @@ public class CapabilitySetDescriptorService {
       .collect(groupingBy(csd -> existingCapabilitySets.containsKey(csd.getName())));
 
     handleNewCapabilitySets(groupedCapabilitySets.get(Boolean.FALSE));
-    handleUpdatedCapabilitySets(resourceEventType, groupedCapabilitySets.get(Boolean.TRUE), existingCapabilitySets);
+    handleUpdatedCapabilitySets(resourceEventType, groupedCapabilitySets.get(TRUE), existingCapabilitySets);
     handleDeprecatedCapabilitySets(oldCapabilitySetDescriptors, newCapabilityNames);
   }
 
@@ -119,6 +118,8 @@ public class CapabilitySetDescriptorService {
       var capabilitySet = capabilitySetMapper.convert(setDescriptor);
       capabilitySet.setCapabilities(mapItems(capabilityList, Capability::getId));
       capabilitySets.add(capabilitySet);
+      log.debug("Prepared new capability set for creation: name = {}, permission = {}",
+        capabilitySet.getName(), capabilitySet.getPermission());
     }
 
     var createdCapabilitySets = capabilitySetService.createAll(capabilitySets);
@@ -189,62 +190,31 @@ public class CapabilitySetDescriptorService {
     }
   }
 
-  private static Stream<String> getRequiredCapabilityNames(CapabilitySetDescriptor descriptor) {
-    var capabilities = descriptor.getCapabilities();
-    if (MapUtils.isEmpty(capabilities)) {
-      return Stream.empty();
-    }
-
-    return capabilities.entrySet().stream()
-      .flatMap(entry -> getCapabilityNames(descriptor, entry))
-      .distinct();
-  }
-
-  private static Stream<String> getCapabilityNames(CapabilitySetDescriptor descriptor,
-    Entry<String, List<CapabilityAction>> entry) {
-    var resource = entry.getKey();
-    var actions = entry.getValue();
-    if (CollectionUtils.isEmpty(actions)) {
-      log.warn("Capability set resource actions are empty: capabilitySet = {}, resource = {}",
-        () -> getCapabilityName(descriptor.getResource(), descriptor.getAction()), () -> resource);
-      return Stream.empty();
-    }
-
-    return toStream(actions).map(action -> getCapabilityName(resource, action));
-  }
-
   private List<Capability> resolveCapabilities(CapabilitySetDescriptor capabilitySetDescriptor) {
-    var requiredCapabilityNames = getRequiredCapabilityNames(capabilitySetDescriptor).toList();
-    if (isEmpty(requiredCapabilityNames)) {
+    detectAndLogCapabilityCollisionInSet(capabilitySetDescriptor);
+
+    var requiredCapability = filterAndGetCapabilities(capabilitySetDescriptor);
+
+    if (isEmpty(requiredCapability)) {
       log.warn("Capabilities are empty for capability set: name = {}", capabilitySetDescriptor.getName());
       return emptyList();
     }
 
-    var capabilityIds = new ArrayList<Capability>();
-    var capabilities = capabilityService.findByNamesIncludeDummy(requiredCapabilityNames);
-    var capabilityIdsByNames = capabilities.stream().collect(toMap(Capability::getName, Function.identity()));
-    for (var capabilityName : requiredCapabilityNames) {
-      var capabilityId = capabilityIdsByNames.get(capabilityName);
-      if (capabilityId == null) {
-        log.warn("Capability id is not found by capability name: {}", capabilityName);
-        var dummyCapability = new Capability();
-        dummyCapability.setDummyCapability(true);
-        dummyCapability.setResource(capabilitySetDescriptor.getResource());
-        dummyCapability.setAction(capabilitySetDescriptor.getAction());
-        dummyCapability.setType(capabilitySetDescriptor.getType());
-        dummyCapability.setApplicationId(capabilitySetDescriptor.getApplicationId());
-        dummyCapability.setModuleId(capabilitySetDescriptor.getModuleId());
-        dummyCapability.setPermission(capabilitySetDescriptor.getPermission());
-        dummyCapability.setName(capabilityName);
-        dummyCapability.setVisible(capabilitySetDescriptor.isVisible());
-        capabilityId = capabilityService.save(dummyCapability);
-        log.info("Created dummy capability with name: {}", capabilityName);
-      }
+    var capabilities = new ArrayList<Capability>();
+    var alreadySavedCapabilities =
+      capabilityService.findByNamesIncludeDummy(mapItems(requiredCapability, Capability::getName));
+    var savedCapabilitiesByNames = alreadySavedCapabilities.stream().collect(toMap(Capability::getName, identity()));
 
-      capabilityIds.add(capabilityId);
+    // create dummy for all not found capabilities in db ->
+    for (var capabilityFromEvent : requiredCapability) {
+      var capability = savedCapabilitiesByNames.get(capabilityFromEvent.getName());
+      if (capability == null) {
+        capability = createDummyCapabilityAndSendEvent(capabilitySetDescriptor, capabilityFromEvent);
+      }
+      capabilities.add(capability);
     }
 
-    return capabilityIds;
+    return capabilities;
   }
 
   private Map<String, CapabilitySet> getExistingCapabilitySetsByNames(Set<String> newCapabilityNames) {
@@ -254,5 +224,48 @@ public class CapabilitySetDescriptorService {
 
     return toStream(capabilitySetService.findByNames(newCapabilityNames))
       .collect(toLinkedHashMap(CapabilitySet::getName));
+  }
+
+  private Capability createDummyCapabilityAndSendEvent(CapabilitySetDescriptor capabilitySetDescriptor,
+    Capability capabilityFromEvent) {
+    log.warn("Capability is not found by name: {}, creating a dummy one", capabilityFromEvent.getName());
+    capabilityFromEvent.setDummyCapability(TRUE);
+    capabilityFromEvent.setApplicationId(capabilitySetDescriptor.getApplicationId());
+    capabilityFromEvent.setModuleId(capabilitySetDescriptor.getModuleId());
+    var capability = capabilityService.save(capabilityFromEvent);
+    log.info("Created dummy capability with name: {}", capabilityFromEvent.getName());
+
+    var event = CapabilityEvent.created(capability);
+    applicationEventPublisher.publishEvent(event);
+    return capability;
+  }
+
+  private static @NotNull List<Capability> filterAndGetCapabilities(CapabilitySetDescriptor capabilitySetDescriptor) {
+    return capabilitySetDescriptor.getCapabilities()
+      .stream()
+      .collect(Collectors.toMap(
+        Capability::getName,
+        Function.identity(),
+        (a, b) -> a, LinkedHashMap::new))
+      .values()
+      .stream()
+      .toList();
+  }
+
+  private static void detectAndLogCapabilityCollisionInSet(CapabilitySetDescriptor capabilitySetDescriptor) {
+    var duplicateMap = new HashMap<String, List<String>>();
+    toStream(capabilitySetDescriptor.getCapabilities()).forEach(c -> {
+      var values = duplicateMap.getOrDefault(c.getName(), new ArrayList<>());
+      values.add(c.getPermission());
+      duplicateMap.put(c.getName(), values);
+    });
+    duplicateMap.forEach((key, value) -> {
+      if (value.size() > 1) {
+        log.warn(
+          "Capability collision detected: "
+            + "CapabilitySet '{}' (permission: '{}') contains capability '{}' with multiple permissions: {}",
+          capabilitySetDescriptor.getName(), capabilitySetDescriptor.getPermission(), key, value);
+      }
+    });
   }
 }
