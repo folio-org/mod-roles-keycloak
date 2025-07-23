@@ -267,7 +267,7 @@ public class CapabilitySetDescriptorService {
     return capability;
   }
 
-  private static @NotNull List<Capability> filterAndGetCapabilities(CapabilitySetDescriptor capabilitySetDescriptor) {
+  private static List<Capability> filterAndGetCapabilities(CapabilitySetDescriptor capabilitySetDescriptor) {
     return capabilitySetDescriptor.getCapabilities()
       .stream()
       .collect(Collectors.toMap(
