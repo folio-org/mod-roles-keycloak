@@ -75,7 +75,7 @@ class LoadableRolesWithDummyCapabilitiesIT extends BaseIntegrationTest {
     final var permissionRealLevel1 = "real.permission.get";
     final var permissionDummySetLevel2 = "ui-level-2.all";
     final var permissionNestedSetLevel2 = "nested.permission.get";
-    final var dummyPermissionLevel2 = "nested.dummy.permission.post"; //unused permission (dummy)
+    // "nested.dummy.permission.post" - unused permission (dummy), it is not expected into user permission result list
 
     // Step 1: Create a loadable role that requires a capability set which, in turn, contains a dummy set
     var role = new LoadableRole().name("Nested Dummy Set Role").description("Role to test nested dummy capability sets")
