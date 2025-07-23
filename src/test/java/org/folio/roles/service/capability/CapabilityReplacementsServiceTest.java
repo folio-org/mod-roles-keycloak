@@ -268,15 +268,9 @@ class CapabilityReplacementsServiceTest {
       .filter(e -> e instanceof org.folio.roles.domain.model.event.CapabilityEvent)
       .map(org.folio.roles.domain.model.event.CapabilityEvent.class::cast).toList();
     assertThat(capEvents).hasSize(2);
-    var capEvent = capEvents.getFirst();
-    assertThat(capEvent.getOldObject().getName()).isEqualTo("oldcap1.view");
-    assertThat(capEvent.getOldObject().getId()).isEqualTo(cap1Id);
-    assertThat(capEvent.getType()).isEqualTo(DELETE);
+    verifyCapabilityDeleteEvent(capEvents.getFirst(), "oldcap1.view", cap1Id);
     //verify delete event for dummy capability
-    capEvent = capEvents.get(1);
-    assertThat(capEvent.getOldObject().getName()).isEqualTo(dummyCapability.getPermission());
-    assertThat(capEvent.getOldObject().getId()).isEqualTo(dummyCapability.getId());
-    assertThat(capEvent.getType()).isEqualTo(DELETE);
+    verifyCapabilityDeleteEvent(capEvents.get(1), dummyCapability.getPermission(), dummyCapability.getId());
 
     var capSetEvent =
       (CapabilitySetEvent) publishedEvents.stream().filter(e -> e instanceof CapabilitySetEvent).findAny().get();
@@ -314,6 +308,13 @@ class CapabilityReplacementsServiceTest {
     unit.replaceLoadable(capabilityReplacements);
 
     verifyNoInteractions(loadablePermissionRepository);
+  }
+
+  private void verifyCapabilityDeleteEvent(org.folio.roles.domain.model.event.CapabilityEvent capabilityEvent, String
+    expectedPermission, UUID expectedCapabilityId) {
+    assertThat(capabilityEvent.getOldObject().getName()).isEqualTo(expectedPermission);
+    assertThat(capabilityEvent.getOldObject().getId()).isEqualTo(expectedCapabilityId);
+    assertThat(capabilityEvent.getType()).isEqualTo(DELETE);
   }
 
   private static Capability capability(UUID id, String name) {
