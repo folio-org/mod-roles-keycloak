@@ -229,12 +229,12 @@ class CapabilityReplacementsServiceTest {
     var oldCapabilitySetRoleAssignments = Map.of("oldcapset2.view", Set.of(role1Id, role2Id));
     var oldCapabilitySetUserAssignments = Map.of("oldcapset2.view", Set.of(user1Id, user2Id));
     var capabilitySetForDummy = new CapabilitySet().id(randomUUID()).name("capabilitySetForDummy");
-    var oldCapabilitySetDummyCapabilityByPermission = Map.of(permissionForDummy, Set.of(capabilitySetForDummy));
+    var oldCapabilitySetByDummyCapabilityPermission = Map.of(permissionForDummy, Set.of(capabilitySetForDummy));
 
     var capabilityReplacements =
       new CapabilityReplacements(oldPermissionToNewPermission, oldCapabilityRoleAssignments,
         oldCapabilityUserAssignments, oldCapabilitySetRoleAssignments,
-        oldCapabilitySetUserAssignments, oldCapabilitySetDummyCapabilityByPermission);
+        oldCapabilitySetUserAssignments, oldCapabilitySetByDummyCapabilityPermission);
 
     var newLoadablePermissions = new ArrayList<LoadablePermissionEntity>();
     when(loadablePermissionRepository.save(any())).then(inv -> {
@@ -263,13 +263,23 @@ class CapabilityReplacementsServiceTest {
     verify(capabilitySetByCapabilitiesUpdater).update(List.of(capabilityToReplaceDummy), capabilitySetForDummy);
 
     assertThat(publishedEvents).hasSize(3);
-    var capEvent = (org.folio.roles.domain.model.event.CapabilityEvent) publishedEvents.stream()
-      .filter(e -> e instanceof org.folio.roles.domain.model.event.CapabilityEvent).findAny().get();
-    var capSetEvent =
-      (CapabilitySetEvent) publishedEvents.stream().filter(e -> e instanceof CapabilitySetEvent).findAny().get();
+
+    var capEvents = publishedEvents.stream()
+      .filter(e -> e instanceof org.folio.roles.domain.model.event.CapabilityEvent)
+      .map(org.folio.roles.domain.model.event.CapabilityEvent.class::cast).toList();
+    assertThat(capEvents).hasSize(2);
+    var capEvent = capEvents.getFirst();
     assertThat(capEvent.getOldObject().getName()).isEqualTo("oldcap1.view");
     assertThat(capEvent.getOldObject().getId()).isEqualTo(cap1Id);
     assertThat(capEvent.getType()).isEqualTo(DELETE);
+    //verify delete event for dummy capability
+    capEvent = capEvents.get(1);
+    assertThat(capEvent.getOldObject().getName()).isEqualTo(dummyCapability.getPermission());
+    assertThat(capEvent.getOldObject().getId()).isEqualTo(dummyCapability.getId());
+    assertThat(capEvent.getType()).isEqualTo(DELETE);
+
+    var capSetEvent =
+      (CapabilitySetEvent) publishedEvents.stream().filter(e -> e instanceof CapabilitySetEvent).findAny().get();
     assertThat(capSetEvent.getOldObject().getName()).isEqualTo("capset1.view");
     assertThat(capSetEvent.getOldObject().getId()).isEqualTo(capSet1Id);
     assertThat(capSetEvent.getType()).isEqualTo(DELETE);

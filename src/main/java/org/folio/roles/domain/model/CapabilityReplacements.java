@@ -15,10 +15,10 @@ public record CapabilityReplacements(
   Map<String, Set<CapabilitySet>> oldCapabSetByDummyCapabilityPermission) {
 
   /**
-   * Returns a map of old permissions to new permissions
-   * excluding those related to dummy capabilities.
+   * Returns a map of old permissions to new permissions for replacement
+   * excluding old as a key related to dummy capabilities.
    *
-   * @return a map of old permissions to new permissions
+   * @return a map of old permissions as a key to new permissions
    */
   public Map<String, Set<String>> getReplacementsExcludeDummy() {
     var excludeDummy = new HashMap<>(oldPermissionsToNewPermissions);
@@ -27,10 +27,10 @@ public record CapabilityReplacements(
   }
 
   /**
-   * Returns a map of old permissions to new permissions
-   * including only those related to dummy capabilities.
+   * Returns a map of old permissions to new permissions for replacement
+   * including only old as a key related to dummy capabilities.
    *
-   * @return a map of old permissions to new permissions
+   * @return a map of old permissions as a key to new permissions
    */
   public Map<String, Set<String>> getReplacementsOnlyDummy() {
     var dummy = new HashMap<String, Set<String>>();

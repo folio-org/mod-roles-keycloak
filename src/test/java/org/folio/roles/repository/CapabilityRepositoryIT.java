@@ -311,7 +311,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void findAllByPermissionName_positive_excludeDummyAndIncludeDummy() {
+  void findAllByPermissionNames_positive_excludeDummyAndIncludeDummy() {
     var capabilityEntity = capabilityEntity(null);
     capabilityEntity.setPermission("permission-not-for-dummy");
     var dummyCapabilityEntity = capabilityEntity(null);
