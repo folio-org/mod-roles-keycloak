@@ -50,7 +50,7 @@ class CapabilitySetByCapabilitiesUpdaterTest {
     when(capabilitySetMapper.toExtendedCapabilitySet(capabilitySet, updatedCapabilities))
       .thenReturn(extendedCapabilitySet);
 
-    capabilitySetByCapabilitiesUpdater.update(List.of(newCapability), capabilitySet);
+    capabilitySetByCapabilitiesUpdater.update(capabilitySet, List.of(newCapability));
 
     verify(capabilitySetService).addCapabilitiesById(capabilitySet.getId(), List.of(newCapabilityId));
     verify(applicationEventPublisher).publishEvent(isA(CapabilitySetEvent.class));

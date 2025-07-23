@@ -123,7 +123,7 @@ public class CapabilityReplacementsService {
     permissionReplacementsForCapabilitySet.removeAll(permissionsForDummyCapabilities);
     var oldCapabilitySets = capabilitySetService.findByPermissionNames(permissionReplacementsForCapabilitySet);
 
-    // Determine which users and roles have assignments of old (replaced) capabilities/capability-sets
+    // Determine which users and roles have assignments to old (replaced) capabilities/capability-sets
     var capabilityRoleAssignments = extractAssignments(oldCapabilities,
       capability -> roleCapabilityRepository.findAllByCapabilityId(capability.getId()), Capability::getPermission,
       RoleCapabilityEntity::getRoleId);
@@ -140,7 +140,7 @@ public class CapabilityReplacementsService {
       capabilitySet -> userCapabilitySetRepository.findAllByCapabilitySetId(capabilitySet.getId()),
       CapabilitySet::getPermission, UserCapabilitySetEntity::getUserId);
 
-    // Determine which capabilities sets have assignments of old (replaced) dummy capabilities
+    // Determine which capabilities sets have assignments to old (replaced) dummy capabilities
     var dummyCapabilityCapabilitySetAssignments = extractAssignments(oldDummyCapabilities,
       capability -> capabilitySetService.findAllByCapabilityId(capability.getId()),
       Capability::getPermission, Function.identity());
@@ -299,13 +299,14 @@ public class CapabilityReplacementsService {
     if (roleIds != null && !roleIds.isEmpty()) {
       if (!replacementCapabilities.isEmpty()) {
         log.info("Assigning replacement capabilities {} to {} roles",
-          replacementCapabilities.stream().map(Capability::getName).collect(Collectors.joining(", ")), roleIds.size());
+          toStream(replacementCapabilities).map(Capability::getName).collect(Collectors.joining(", ")),
+          roleIds.size());
         roleIds.forEach(doIgnoringExistingAssignments(roleId -> roleCapabilityService.create(roleId,
           replacementCapabilities.stream().map(Capability::getId).toList(), true)));
       }
       if (!replacementCapabilitySets.isEmpty()) {
         log.info("Assigning replacement capability sets {} to {} roles",
-          replacementCapabilitySets.stream().map(CapabilitySet::getName).collect(Collectors.joining(", ")),
+          toStream(replacementCapabilitySets).map(CapabilitySet::getName).collect(Collectors.joining(", ")),
           roleIds.size());
         roleIds.forEach(doIgnoringExistingAssignments(roleId -> roleCapabilitySetService.create(roleId,
           replacementCapabilitySets.stream().map(CapabilitySet::getId).toList(), true)));
@@ -318,13 +319,13 @@ public class CapabilityReplacementsService {
     if (userIds != null && !userIds.isEmpty()) {
       if (!replacementCapabilities.isEmpty()) {
         log.info("Assigning replacement capabilities {} to {} users",
-          replacementCapabilities.stream().map(Capability::getName).collect(Collectors.joining(", ")), userIds.size());
+          toStream(replacementCapabilities).map(Capability::getName).collect(Collectors.joining(", ")), userIds.size());
         userIds.forEach(doIgnoringExistingAssignments(userId -> userCapabilityService.create(userId,
           replacementCapabilities.stream().map(Capability::getId).toList())));
       }
       if (!replacementCapabilitySets.isEmpty()) {
         log.info("Assigning replacement capability sets {} to {} users",
-          replacementCapabilitySets.stream().map(CapabilitySet::getName).collect(Collectors.joining(", ")),
+          toStream(replacementCapabilitySets).map(CapabilitySet::getName).collect(Collectors.joining(", ")),
           userIds.size());
         userIds.forEach(doIgnoringExistingAssignments(userId -> userCapabilitySetService.create(userId,
           replacementCapabilitySets.stream().map(CapabilitySet::getId).toList())));
@@ -335,8 +336,11 @@ public class CapabilityReplacementsService {
   protected void assignReplacementsToCapabilitySet(Set<CapabilitySet> capabilitySets,
     List<Capability> replacementCapabilities) {
     if (capabilitySets != null && !capabilitySets.isEmpty()) {
+      log.info("Assigning replacement capabilities {} to {} capabilities set",
+        toStream(replacementCapabilities).map(Capability::getName).collect(Collectors.joining(", ")),
+        capabilitySets.size());
       capabilitySets.forEach(capabilitySet -> capabilitySetByCapabilitiesUpdater
-          .update(replacementCapabilities, capabilitySet));
+          .update(capabilitySet, replacementCapabilities));
     }
   }
 

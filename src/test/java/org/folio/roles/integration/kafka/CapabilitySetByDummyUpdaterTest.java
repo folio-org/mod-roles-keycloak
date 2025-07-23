@@ -59,7 +59,6 @@ class CapabilitySetByDummyUpdaterTest {
 
     verify(capabilitySetService).findByCapabilityName("dummy");
     verify(capabilitySetService).findByCapabilityName("relatedCapabilitySet");
-    verify(capabilitySetByCapabilitiesUpdater)
-      .update(List.of(capabilityToAdd), relatedCapabilitySet);
+    verify(capabilitySetByCapabilitiesUpdater).update(relatedCapabilitySet, List.of(capabilityToAdd));
   }
 }

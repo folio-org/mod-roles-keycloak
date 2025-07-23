@@ -260,7 +260,7 @@ class CapabilityReplacementsServiceTest {
     verify(userCapabilitySetService).create(user1Id, List.of(capSet1Id));
     verify(userCapabilitySetService).create(user2Id, List.of(capSet2Id));
 
-    verify(capabilitySetByCapabilitiesUpdater).update(List.of(capabilityToReplaceDummy), capabilitySetForDummy);
+    verify(capabilitySetByCapabilitiesUpdater).update(capabilitySetForDummy, List.of(capabilityToReplaceDummy));
 
     assertThat(publishedEvents).hasSize(3);
 

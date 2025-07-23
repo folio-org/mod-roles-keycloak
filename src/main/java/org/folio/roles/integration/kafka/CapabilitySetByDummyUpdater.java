@@ -45,8 +45,7 @@ public class CapabilitySetByDummyUpdater {
           if (!capabilitySet.getId().equals(relatedCapabilitySet.getId())) {
             log.info("Add capabilities from {} to related set {}",
               dummyCapabilityName, relatedCapabilitySet.getName());
-            capabilitySetByCapabilitiesUpdater
-              .update(capabilitiesToAdd, relatedCapabilitySet);
+            capabilitySetByCapabilitiesUpdater.update(relatedCapabilitySet, capabilitiesToAdd);
           }
         }
       });
