@@ -1,0 +1,33 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "real-second-module-1.0.0",
+    "moduleType": "module",
+    "applicationId": "real-second-application-0.0.1",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "test.replace.from-event.edit",
+          "replaces" : ["foo.dummy.from-event.edit"],
+          "displayName": "A real permission for dummy capability from the event",
+          "description": "Real permission for dummy capability."
+        },
+        "endpoints": [
+          {
+            "path": "/test/replace-for-dummy",
+            "method": "GET"
+          }
+        ]
+      }
+    ]
+  },
+  "old": {
+    "resources": [{
+      "permission": {
+        "permissionName": "foo.dummy.from-event.edit"
+      }
+    }]
+  }
+}

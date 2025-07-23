@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.utils.TestValues.readValue;
 import static org.folio.test.TestUtils.parseResponse;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -37,6 +38,7 @@ class DummyCapabilityIT extends BaseIntegrationTest {
 
   private static final String CAPABILITY_SET_PERMISSION = "test.real.set-from-event.all";
   private static final String REAL_CAPABILITY_PERMISSION = "test.real.from-event.view";
+  private static final String REPLACED_DUMMY_CAPABILITY_PERMISSION = "test.replace.from-event.edit";
   private static final String DUMMY_CAPABILITY_PERMISSION = "foo.dummy.from-event.edit";
 
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
@@ -84,6 +86,23 @@ class DummyCapabilityIT extends BaseIntegrationTest {
     assertAllCapabilitiesReal(capabilities);
   }
 
+  @Test
+  @DisplayName("Create dummy capability and then handle replace permission event")
+  void handleCapabilityEvent_positive_dummyCapabilityReplacePermissionEvent() throws Exception {
+    sendCapabilityEvent("json/kafka-events/dummy-capability-set-event.json");
+
+    var capabilitySetId = waitForCapabilitySetCreated("test.real.set-from-event.all");
+    var capabilities = getCapabilitiesForSet(capabilitySetId);
+
+    assertThat(capabilities).hasSize(3);
+    assertRealCapability(capabilities);
+    assertDummyCapability(capabilities);
+
+    sendCapabilityEvent("json/kafka-events/dummy-capability-replaces-permission-event.json");
+
+    assertRealCapabilityPermissionsAfterPermissionReplacement(capabilitySetId);
+  }
+
   private void sendCapabilityEvent(String filePath) {
     var capabilityEvent = readValue(filePath, ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
@@ -124,6 +143,19 @@ class DummyCapabilityIT extends BaseIntegrationTest {
 
     assertThat(permissionsForRealCapabilities).hasSize(2);
     assertThat(permissionsForRealCapabilities).contains(REAL_CAPABILITY_PERMISSION, CAPABILITY_SET_PERMISSION);
+  }
+
+  private void assertRealCapabilityPermissionsAfterPermissionReplacement(String setId) {
+    await().atMost(1, TimeUnit.MINUTES)
+      .pollInterval(1, TimeUnit.SECONDS)
+      .until(() -> {
+        var capabilities = getCapabilitiesForSet(setId);
+        return capabilities.stream()
+          .filter(c -> isNotTrue(c.getDummyCapability()))
+          .map(Capability::getPermission)
+          .toList();
+      }, containsInAnyOrder(REAL_CAPABILITY_PERMISSION, CAPABILITY_SET_PERMISSION,
+        REPLACED_DUMMY_CAPABILITY_PERMISSION));
   }
 
   private static void assertDummyCapability(List<Capability> capabilities) {
