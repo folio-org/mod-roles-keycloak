@@ -1,6 +1,7 @@
 package org.folio.roles.service.capability;
 
 import static java.util.Collections.emptyList;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.SetUtils.difference;
@@ -50,12 +51,11 @@ public class CapabilitySetService {
    */
   @Transactional
   public CapabilitySet create(CapabilitySet capabilitySet) {
-    var name = getCapabilityName(capabilitySet.getResource(), capabilitySet.getAction());
-    if (repository.existsByName(name) && !repository.existsById(capabilitySet.getId())) {
-      throw new RequestValidationException("Capability set name is already taken", "name", name);
+    requireNonNull(capabilitySet, "Capability set must not be null");
+    if (repository.existsByName(capabilitySet.getName()) && !repository.existsById(capabilitySet.getId())) {
+      throw new RequestValidationException("Capability set name is already taken", "name", capabilitySet.getName());
     }
 
-    capabilitySet.setName(name);
     capabilityService.checkIds(capabilitySet.getCapabilities());
 
     var capabilityEntity = capabilitySetEntityMapper.convert(capabilitySet);
@@ -268,12 +268,7 @@ public class CapabilitySetService {
       return;
     }
 
-    var capabilityIdsToCheck = new LinkedHashSet<>(capabilitySetIds);
-    var foundCapabilityIds = repository.findCapabilitySetIdsByIdIn(capabilityIdsToCheck);
-    if (foundCapabilityIds.size() != capabilityIdsToCheck.size()) {
-      var notFoundCapabilityIds = CollectionUtils.subtract(capabilityIdsToCheck, foundCapabilityIds);
-      throw new EntityNotFoundException("Capability sets not found by ids: " + notFoundCapabilityIds);
-    }
+    checkByIds(capabilitySetIds);
   }
 
   @Transactional
@@ -320,6 +315,27 @@ public class CapabilitySetService {
   public void addCapabilitiesById(UUID capabilitySetId, Collection<UUID> capabilityIds) {
     for (var capabilityId : capabilityIds) {
       repository.addCapabilityById(capabilitySetId, capabilityId);
+    }
+  }
+
+  @Transactional
+  public void updateAll(List<CapabilitySet> capabilitySets) {
+    if (isEmpty(capabilitySets)) {
+      return;
+    }
+
+    checkByIds(mapItems(capabilitySets, CapabilitySet::getId));
+
+    var capabilitySetEntities = capabilitySetEntityMapper.mapToEntities(capabilitySets);
+    repository.saveAll(capabilitySetEntities);
+  }
+
+  private void checkByIds(Collection<UUID> capabilitySetIds) {
+    var capabilityIdsToCheck = new LinkedHashSet<>(capabilitySetIds);
+    var foundCapabilityIds = repository.findCapabilitySetIdsByIdIn(capabilityIdsToCheck);
+    if (foundCapabilityIds.size() != capabilityIdsToCheck.size()) {
+      var notFoundCapabilityIds = CollectionUtils.subtract(capabilityIdsToCheck, foundCapabilityIds);
+      throw new EntityNotFoundException("Capability sets not found by ids: " + notFoundCapabilityIds);
     }
   }
 }

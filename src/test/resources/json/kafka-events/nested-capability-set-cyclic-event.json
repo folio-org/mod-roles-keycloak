@@ -1,0 +1,58 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "cyclic-module-1.0.0",
+    "moduleType": "module",
+    "applicationId": "cyclic-application-0.0.1",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "a.cyclic.set.all",
+          "displayName": "Cyclic Set A",
+          "subPermissions": [
+            "b.cyclic.set.all",
+            "a.cyclic.dummy.view",
+            "a.cyclic.real.get"
+          ]
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "b.cyclic.set.all",
+          "displayName": "Cyclic Set B",
+          "subPermissions": [
+            "a.cyclic.set.all",
+            "b.cyclic.dummy.view",
+            "b.cyclic.real.post"
+          ]
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "a.cyclic.real.get",
+          "displayName": "A Real Cyclic Permission GET"
+        },
+        "endpoints": [
+          {
+            "path": "/a/cyclic/real",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "b.cyclic.real.post",
+          "displayName": "B Real Cyclic Permission POST"
+        },
+        "endpoints": [
+          {
+            "path": "/b/cyclic/real",
+            "method": "POST"
+          }
+        ]
+      }
+    ]
+  }
+}

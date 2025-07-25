@@ -1,0 +1,34 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "ui-level-1-module-1.0.0",
+    "moduleType": "module",
+    "applicationId": "ui-level-1-app-1.0.0",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "ui-level-1.all",
+          "displayName": "UI Level 1: All Permissions",
+          "subPermissions": [
+            "real.permission.get",
+            "ui-level-2.all"
+          ]
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "real.permission.get",
+          "displayName": "Real Permission: Can get"
+        },
+        "endpoints": [
+          {
+            "path": "/real/items",
+            "method": "GET"
+          }
+        ]
+      }
+    ]
+  }
+}
