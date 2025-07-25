@@ -13,6 +13,9 @@ import static org.folio.roles.support.AuthResourceUtils.permission;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
 import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.capability;
+import static org.folio.roles.support.CapabilityUtils.capabilityFromPermission;
+import static org.folio.roles.support.CapabilityUtils.capabilityHolder;
+import static org.folio.roles.support.CapabilityUtils.capabilityHolderFromPermission;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemGetEndpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemPatchEndpoint;
@@ -97,9 +100,11 @@ class CapabilityEventProcessorTest {
     var uiCapability = capability(null, csResource, VIEW, itemViewPerm).description(csDescription).moduleId(MODULE_ID);
     // now subPermissions are processed identically for both UI_MODULE and MODULE moduleTypes!
     // see capabilityEventProcessor.createCapabilitySetDescriptor#112 method
-    var setResources = Map.of(resource, List.of(VIEW), csResource, List.of(VIEW));
-    var capabilitySetDesc = capabilitySetDescriptor(csResource, itemViewPerm, setResources).moduleId(MODULE_ID);
-    var uiCapabilitySetDesc = capabilitySetDescriptor(csResource, itemViewPerm, setResources).moduleId(MODULE_ID);
+    var capabilities = List.of(
+      capabilityFromPermission(itemGetPermName, null).description(description).moduleId(MODULE_ID),
+      capabilityFromPermission(itemViewPerm, null).description(csDescription).moduleId(MODULE_ID));
+    var capabilitySetDesc = capabilitySetDescriptor(csResource, itemViewPerm, capabilities).moduleId(MODULE_ID);
+    var uiCapabilitySetDesc = capabilitySetDescriptor(csResource, itemViewPerm, capabilities).moduleId(MODULE_ID);
 
     var permission = permission(itemGetPermName).description(description);
     var permissionSet = permission(itemViewPerm, itemGetPermName).description(csDescription);
@@ -170,16 +175,28 @@ class CapabilityEventProcessorTest {
 
       arguments("module event (permission set)",
         event(MODULE, resource(permissionSet)),
-        result(List.of(uiCapability), List.of(capabilitySetDesc))),
+        result(List.of(uiCapability), List.of(capabilitySetDescriptor(csResource, itemViewPerm, List.of(
+          capabilityHolderFromPermission(itemGetPermName),
+          capabilityFromPermission(itemViewPerm, null).description(csDescription).moduleId(MODULE_ID)))
+          .moduleId(MODULE_ID)
+        ))),
 
       arguments("module event (permission set) mapping overrides",
         event(MODULE,
           resource(permission(itemViewPerm, "perm.name").description(csDescription))),
-        result(List.of(uiCapability), List.of(capabilitySetDesc))),
+        result(List.of(uiCapability), List.of(capabilitySetDescriptor(csResource, itemViewPerm, List.of(
+          capabilityHolder("Test-Resource Item", VIEW, DATA, "perm.name"),
+          capabilityFromPermission(itemViewPerm, null).description(csDescription).moduleId(MODULE_ID)))
+          .moduleId(MODULE_ID)
+        ))),
 
       arguments("module event (duplicate permission set)",
         event(MODULE, resource(permissionSet), resource(permissionSet)),
-        result(List.of(uiCapability), List.of(capabilitySetDesc))),
+        result(List.of(uiCapability), List.of(capabilitySetDescriptor(csResource, itemViewPerm, List.of(
+          capabilityHolderFromPermission(itemGetPermName),
+          capabilityFromPermission(itemViewPerm, null).description(csDescription).moduleId(MODULE_ID)))
+          .moduleId(MODULE_ID)
+        ))),
 
       arguments("ui-module event (permission)",
         event(UI_MODULE, resource(permission)),
@@ -220,7 +237,7 @@ class CapabilityEventProcessorTest {
   }
 
   private static CapabilitySetDescriptor capabilitySetDescriptor(String resource, String permissionName,
-    Map<String, List<CapabilityAction>> capabilities) {
+    List<Capability> capabilities) {
     return new CapabilitySetDescriptor()
       .name(getCapabilityName(resource, CapabilityAction.VIEW))
       .resource(resource)
@@ -239,6 +256,6 @@ class CapabilityEventProcessorTest {
 
   private static Map<String, PermissionData> permissionMappingOverrides() {
     return Map.of("perm.name",
-      new PermissionData("Test-Resource Item", PermissionType.DATA, PermissionAction.VIEW, null));
+      new PermissionData("Test-Resource Item", PermissionType.DATA, PermissionAction.VIEW, "perm.name"));
   }
 }

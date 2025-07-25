@@ -1,0 +1,46 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "second-module-1.0.0",
+    "moduleType": "module",
+    "applicationId": "second-application-0.0.1",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "second.module.all",
+          "displayName": "Second Module: All nested permissions",
+          "subPermissions": [
+            "second.module.real.get",
+            "second.module.real.delete"
+          ]
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "second.module.real.get",
+          "displayName": "Second Module: A real permission that is not dummy"
+        },
+        "endpoints": [
+          {
+            "path": "/second/module/real",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "second.module.real.delete",
+          "displayName": "Second Module: A real permission that is not dummy"
+        },
+        "endpoints": [
+          {
+            "path": "/second/module/real/{id}",
+            "method": "DELETE"
+          }
+        ]
+      }
+    ]
+  }
+}

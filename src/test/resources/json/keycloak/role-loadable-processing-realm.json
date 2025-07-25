@@ -28,7 +28,18 @@
   },
   "groups": [ ],
   "localizationTexts": { },
-  "users": [],
+  "users": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "username": "test_user",
+      "enabled": true,
+      "attributes": {
+        "user_id": [
+          "00000000-0000-0000-0000-000000000001"
+        ]
+      }
+    }
+  ],
   "clients": [
     {
       "id": "00000000-0000-0000-0000-000000000010",
@@ -310,6 +321,24 @@
               },
               {
                 "name": "POST"
+              }
+            ]
+          },
+          {
+            "name": "/real/items",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "GET#real.permission.get"
+              ]
+            },
+            "_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+            "uris": [
+              "/real/items"
+            ],
+            "scopes": [
+              {
+                "name": "GET"
               }
             ]
           }

@@ -48,7 +48,8 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     log.debug("\"Capabilities Created\" event received: {}", event);
     var capability = event.getNewObject();
 
-    log.info("Handling created capability: {}", capability.getName());
+    log.info("Handling created capability: capabilityName = {}, permission = {}", capability.getName(),
+      capability.getPermission());
 
     if (isTechnicalCapability(capability)) {
       log.debug("Technical capability found: {}. Skipping...", capability);
@@ -203,6 +204,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       .append("id", set.getId())
       .append("name", set.getName())
       .append("applicationId", set.getApplicationId())
+      .append("permission", set.getPermission())
       .build();
   }
 }

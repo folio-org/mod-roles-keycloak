@@ -194,7 +194,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     var assignedRoleCapabilitySetEntities = roleCapabilitySetRepository.findAllByRoleId(roleId);
     var assignedSetIds = getCapabilitySetIds(assignedRoleCapabilitySetEntities);
     UpdateOperationHelper.create(assignedSetIds, capabilitySetIds, "role-capability set")
-      .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(roleId, newIds, assignedSetIds)))
+      .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilitySets(roleId, newIds, assignedSetIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
   }
 
@@ -212,7 +212,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     }
 
     var newSetIds = difference(setIds, existingCapabilitySetIds);
-    return isEmpty(newSetIds) ? PageResult.empty() : assignCapabilities(roleId, newSetIds, emptyList());
+    return isEmpty(newSetIds) ? PageResult.empty() : assignCapabilitySets(roleId, newSetIds, emptyList());
   }
 
   private List<UUID> resolveCapabilitySetsByNames(List<String> capabilitySetNames) {
@@ -236,7 +236,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     return mapItems(foundCapabilitySetsByNames, CapabilitySet::getId);
   }
 
-  private PageResult<RoleCapabilitySet> assignCapabilities(
+  private PageResult<RoleCapabilitySet> assignCapabilitySets(
     UUID roleId, List<UUID> newSetIds, Collection<UUID> assignedSetIds) {
     log.debug("Assigning capabilities to role: roleId = {}, ids = {}", roleId, newSetIds);
     capabilitySetService.checkIds(newSetIds);
@@ -246,10 +246,10 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
     rolePermissionService.createPermissions(roleId, changedEndpoints);
 
     var resultEntities = roleCapabilitySetRepository.saveAll(entities);
-    var createdRoleCapabilities = mapItems(resultEntities, roleCapabilitySetEntityMapper::convert);
+    var createdRoleCapabilitySets = mapItems(resultEntities, roleCapabilitySetEntityMapper::convert);
     log.info("Capabilities assigned to role: roleId = {}, ids = {}", roleId, newSetIds);
 
-    return PageResult.of(createdRoleCapabilities.size(), createdRoleCapabilities);
+    return PageResult.of(createdRoleCapabilitySets.size(), createdRoleCapabilitySets);
   }
 
   private void removeCapabilities(UUID roleId, List<UUID> deprecatedSetIds, Collection<UUID> assignedSetIds) {
