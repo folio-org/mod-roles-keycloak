@@ -10,10 +10,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import lombok.experimental.UtilityClass;
+import org.folio.common.utils.permission.PermissionUtils;
 import org.folio.roles.domain.dto.Capabilities;
 import org.folio.roles.domain.dto.CapabilitiesUpdateRequest;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
+import org.folio.roles.domain.dto.CapabilityType;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.entity.CapabilityEntity;
 import org.folio.roles.domain.entity.type.EntityCapabilityAction;
@@ -74,6 +76,44 @@ public class CapabilityUtils {
       .resource(resource)
       .permission(permission)
       .endpoints(endpoints == null ? null : Arrays.asList(endpoints))
+      .action(action);
+  }
+
+  public static Capability capabilityFromPermission(String permission) {
+    return capabilityFromPermission(permission, UUID.randomUUID());
+  }
+
+  public static Capability capabilityFromPermission(String permission, UUID id) {
+    var permissionData = PermissionUtils.extractPermissionData(permission);
+    return new Capability()
+      .id(id)
+      .type(CapabilityType.fromValue(permissionData.getType().getValue()))
+      .applicationId(APPLICATION_ID)
+      .name(getCapabilityName(permissionData))
+      .description(String.format("Capability to %s a %s", permissionData.getAction().getValue(),
+        permissionData.getResource().toLowerCase()))
+      .resource(permissionData.getResource())
+      .permission(permission)
+      .action(CapabilityAction.fromValue(permissionData.getAction().getValue()));
+  }
+
+  public static Capability capabilityHolderFromPermission(String permission) {
+    var permissionData = PermissionUtils.extractPermissionData(permission);
+    return new Capability()
+      .name(getCapabilityName(permissionData))
+      .permission(permission)
+      .type(CapabilityType.fromValue(permissionData.getType().getValue()))
+      .resource(permissionData.getResource())
+      .action(CapabilityAction.fromValue(permissionData.getAction().getValue()));
+  }
+
+  public static Capability capabilityHolder(String resource, CapabilityAction action, CapabilityType type,
+    String permissionName) {
+    return new Capability()
+      .name(getCapabilityName(resource, action))
+      .permission(permissionName)
+      .type(type)
+      .resource(resource)
       .action(action);
   }
 

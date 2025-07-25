@@ -21,15 +21,16 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.dto.Capability;
-import org.folio.roles.domain.dto.CapabilityAction;
+import org.folio.roles.domain.model.event.CapabilityEvent;
 import org.folio.roles.domain.model.event.CapabilitySetEvent;
+import org.folio.roles.domain.model.event.DomainEvent;
 import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
 import org.folio.roles.integration.kafka.model.ResourceEventType;
+import org.folio.roles.repository.PermissionRepository;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.roles.support.TestUtils;
@@ -59,13 +60,15 @@ class CapabilitySetDescriptorServiceTest {
   @Mock private CapabilitySetMapper mapper;
   @Mock private CapabilitySetService capabilitySetService;
   @Mock private ApplicationEventPublisher applicationEventPublisher;
-  @Captor private ArgumentCaptor<CapabilitySetEvent> eventCaptor;
+  @Mock private PermissionRepository permissionRepository;
+  @Captor private ArgumentCaptor<DomainEvent> eventCaptor;
 
   @BeforeEach
   void setUp() {
     var folioExecutionContext = new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
     this.capabilitySetDescriptorService = new CapabilitySetDescriptorService(
-      capabilityService, mapper, capabilitySetService, folioExecutionContext, applicationEventPublisher);
+      capabilityService, mapper, capabilitySetService, folioExecutionContext, applicationEventPublisher,
+      permissionRepository);
   }
 
   @AfterEach
@@ -77,7 +80,7 @@ class CapabilitySetDescriptorServiceTest {
   void update_positive_createdCapabilitySetDescriptor() {
     var capability = capability(CAPABILITY_ID, "Foo", CREATE, "foo.item.create");
     var capabilities = List.of(capability);
-    var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", List.of(CREATE)));
+    var capabilitySetDescriptor = capabilitySetDescriptor(capabilities);
     var capabilitySetsToSave = List.of(capabilitySet(null, List.of(CAPABILITY_ID)));
     var savedSet = capabilitySet(CAPABILITY_SET_ID, List.of(CAPABILITY_ID));
     var extendedCapabilitySet = extendedCapabilitySet(savedSet, capabilities);
@@ -106,7 +109,7 @@ class CapabilitySetDescriptorServiceTest {
     var capability = capability(newCapabilityId, "Foo", CREATE, "foo.item.create");
     var capabilities = List.of(capability());
     var newCapabilities = List.of(capability);
-    var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", List.of(CREATE)));
+    var capabilitySetDescriptor = capabilitySetDescriptor(List.of(capability));
     var updatedCapabilitySet = capabilitySet(List.of(newCapabilityId));
     var existingCapabilitySet = capabilitySet();
     var capabilitySets = List.of(updatedCapabilitySet);
@@ -130,7 +133,7 @@ class CapabilitySetDescriptorServiceTest {
 
   @Test
   void update_positive_capabilitySetWithoutCapabilities(CapturedOutput output) {
-    var capabilitySetDescriptor = capabilitySetDescriptor(emptyMap());
+    var capabilitySetDescriptor = capabilitySetDescriptor(List.of());
     var capabilitySetsToSave = List.of(capabilitySet(null, emptyList()));
     var savedCapabilitySet = capabilitySet(emptyList());
     var extendedCapabilitySet = extendedCapabilitySet(savedCapabilitySet, emptyList());
@@ -151,7 +154,7 @@ class CapabilitySetDescriptorServiceTest {
   void update_positive_capabilitySetWithoutActions(CapturedOutput output) {
     var capabilitySetsToSave = List.of(capabilitySet(null, emptyList()));
     var savedCapabilitySet = capabilitySet(emptyList());
-    var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", emptyList()));
+    var capabilitySetDescriptor = capabilitySetDescriptor(emptyList());
     var extendedCapabilitySet = extendedCapabilitySet(savedCapabilitySet, emptyList());
 
     when(capabilitySetService.findByNames(Set.of(CAPABILITY_SET_NAME))).thenReturn(emptyList());
@@ -164,7 +167,6 @@ class CapabilitySetDescriptorServiceTest {
 
     verifyCapturedEvents(CapabilitySetEvent.created(extendedCapabilitySet));
     assertThat(output.getAll()).contains(
-      "Capability set resource actions are empty: capabilitySet = test_resource.create, resource = Foo",
       "Capabilities are empty for capability set: name = test_resource.create");
   }
 
@@ -176,7 +178,7 @@ class CapabilitySetDescriptorServiceTest {
     dummyCapability.setDummyCapability(true);
     var capabilitySetsToSave = List.of(capabilitySet(null, List.of(dummyCapability.getId())));
     var savedCapabilitySet = capabilitySet(emptyList());
-    var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", List.of(CREATE)));
+    var capabilitySetDescriptor = capabilitySetDescriptor(List.of(dummyCapability));
     var extendedCapabilitySet = extendedCapabilitySet(savedCapabilitySet, emptyList());
 
     when(capabilitySetService.findByNames(Set.of(CAPABILITY_SET_NAME))).thenReturn(emptyList());
@@ -189,9 +191,23 @@ class CapabilitySetDescriptorServiceTest {
 
     capabilitySetDescriptorService.update(ResourceEventType.CREATE, List.of(capabilitySetDescriptor), emptyList());
 
-    verifyCapturedEvents(CapabilitySetEvent.created(extendedCapabilitySet));
-    assertThat(output.getAll()).contains("Capability id is not found by capability name: foo.create");
+    assertThat(output.getAll()).contains("Capability is not found by name: foo.create, creating a dummy one");
     assertThat(output.getAll()).contains("Created dummy capability with name: foo.create");
+
+    var capturedEvents = eventCaptor.getAllValues();
+    assertThat(capturedEvents).hasSize(2);
+
+    var capabilityEvent = (CapabilityEvent) capturedEvents.get(0);
+    assertThat(capabilityEvent.getNewObject())
+      .usingRecursiveComparison()
+      .ignoringFields("id", "timestamp", "context")
+      .isEqualTo(dummyCapability);
+
+    var capabilitySetEvent = (CapabilitySetEvent) capturedEvents.get(1);
+    assertThat(capabilitySetEvent.getNewObject())
+      .usingRecursiveComparison()
+      .ignoringFields("timestamp", "context")
+      .isEqualTo(extendedCapabilitySet);
   }
 
   @Test
@@ -200,7 +216,7 @@ class CapabilitySetDescriptorServiceTest {
     var capability = capability(newCapabilityId, "Foo", CREATE, "foo.item.create");
     var capabilities = List.of(capability());
     var newCapabilities = List.of(capability);
-    var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", List.of(CREATE)));
+    var capabilitySetDescriptor = capabilitySetDescriptor(newCapabilities);
     var updatedCapabilitySet = capabilitySet(List.of(newCapabilityId));
     var existingCapabilitySet = capabilitySet();
     var capabilitySets = List.of(updatedCapabilitySet);
@@ -232,7 +248,7 @@ class CapabilitySetDescriptorServiceTest {
     when(mapper.toExtendedCapabilitySet(existingCapabilitySet, emptyList())).thenReturn(extendedCapabilitySet);
     doNothing().when(applicationEventPublisher).publishEvent(eventCaptor.capture());
 
-    var capabilitySetDescriptor = capabilitySetDescriptor(Map.of("Foo", List.of(CREATE)));
+    var capabilitySetDescriptor = capabilitySetDescriptor(List.of(capability()));
     capabilitySetDescriptorService.update(ResourceEventType.DELETE, emptyList(), List.of(capabilitySetDescriptor));
 
     verifyCapturedEvents(CapabilitySetEvent.deleted(extendedCapabilitySet));
@@ -245,7 +261,7 @@ class CapabilitySetDescriptorServiceTest {
     verify(capabilitySetService).updateApplicationVersion(moduleId, APPLICATION_ID_V2, APPLICATION_ID);
   }
 
-  private static CapabilitySetDescriptor capabilitySetDescriptor(Map<String, List<CapabilityAction>> capabilities) {
+  private static CapabilitySetDescriptor capabilitySetDescriptor(List<Capability> capabilities) {
     var capabilitySetDescriptor = new CapabilitySetDescriptor();
     capabilitySetDescriptor.setResource(RESOURCE_NAME);
     capabilitySetDescriptor.setAction(CREATE);

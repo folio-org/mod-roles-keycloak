@@ -95,7 +95,6 @@
           "subPermissions": [ "foo.item.view", "foo.item.edit", "foo.item.create", "foo.item.delete" ]
         }
       }
-    ],
-    "capabilities": [ ]
+    ]
   }
 }

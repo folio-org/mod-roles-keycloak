@@ -1,0 +1,43 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "first-module-1.0.0",
+    "moduleType": "module",
+    "applicationId": "first-application-0.0.1",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "first.module.all",
+          "displayName": "First Module: All nested permissions",
+          "subPermissions": [
+            "first.module.execute"
+          ]
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "first.module.execute",
+          "displayName": "First Module: Execute nested permissions",
+          "subPermissions": [
+            "first.module.real.get",
+            "second.module.all"
+          ]
+        }
+      },
+      {
+        "permission": {
+          "permissionName": "first.module.real.get",
+          "displayName": "First Module: A real permission that exists"
+        },
+        "endpoints": [
+          {
+            "path": "/first/module/real",
+            "method": "GET"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,8 +1,8 @@
 package org.folio.roles.integration.kafka.model;
 
 import java.util.List;
-import java.util.Map;
 import lombok.Data;
+import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.CapabilityType;
 
@@ -50,9 +50,9 @@ public class CapabilitySetDescriptor {
   private CapabilityType type;
 
   /**
-   * Child capability name-actions map.
+   * Child capability as List.
    */
-  private Map<String, List<CapabilityAction>> capabilities;
+  private List<Capability> capabilities;
 
   /**
    * Sets resource field and returns {@link CapabilitySetDescriptor}.
@@ -129,8 +129,7 @@ public class CapabilitySetDescriptor {
    *
    * @return modified {@link CapabilitySetDescriptor} value
    */
-  public CapabilitySetDescriptor capabilities(
-    Map<String, List<CapabilityAction>> capabilities) {
+  public CapabilitySetDescriptor capabilities(List<Capability> capabilities) {
     this.capabilities = capabilities;
     return this;
   }
