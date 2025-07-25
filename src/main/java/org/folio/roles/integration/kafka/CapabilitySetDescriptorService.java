@@ -8,7 +8,9 @@ import static java.util.function.Function.identity;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
@@ -18,6 +20,7 @@ import static org.folio.roles.utils.CollectionUtils.toSet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,16 +148,42 @@ public class CapabilitySetDescriptorService {
     var dummiesToAdd = toStream(extendedCapabilitySet.getCapabilityList())
       .filter(c -> isTrue(c.getDummyCapability()))
       .map(Capability::getId)
-      .toList();
+      .collect(toSet());
+
+    if (isEmpty(dummiesToAdd)) {
+      log.debug("No dummy capabilities to add for capability set: {}", extendedCapabilitySet.getName());
+      return;
+    }
+
     var capSetPermission = createdCapabilitySet.getPermission();
     var parentCapSetsPermissions = permissionRepository.getAllParentPermissions(capSetPermission);
     parentCapSetsPermissions.remove(capSetPermission);
 
-    var parentSets = capabilitySetService.findByPermissionNames(parentCapSetsPermissions);
-    for (var cs : parentSets) {
-      cs.getCapabilities().addAll(dummiesToAdd);
+    if (isEmpty(parentCapSetsPermissions)) {
+      log.debug("No parent permissions found for capability set: {}", createdCapabilitySet.getName());
+      return;
     }
-    capabilitySetService.updateAll(parentSets);
+
+    log.info("Found {} parent capability sets for permission '{}': {}",
+      parentCapSetsPermissions.size(), capSetPermission, parentCapSetsPermissions);
+
+    var parentSets = capabilitySetService.findByPermissionNames(parentCapSetsPermissions);
+    var setsToUpdate = new ArrayList<CapabilitySet>();
+
+    for (var cs : parentSets) {
+      // capability is unique for capability set, so we use HashSet to avoid duplicates
+      var uniqueCapabilities = new HashSet<>(cs.getCapabilities());
+      if (uniqueCapabilities.addAll(dummiesToAdd)) {
+        log.info("Updating parent capability set '{}' with new dummy capabilities: {}", cs.getName(), dummiesToAdd);
+        cs.setCapabilities(new ArrayList<>(uniqueCapabilities));
+        setsToUpdate.add(cs);
+      }
+    }
+
+    if (isNotEmpty(setsToUpdate)) {
+      log.info("Saving {} parent capability sets that were updated with dummy capabilities", setsToUpdate.size());
+      capabilitySetService.updateAll(setsToUpdate);
+    }
   }
 
   private void handleUpdatedCapabilitySets(ResourceEventType type, List<CapabilitySetDescriptor> setDescriptors,
@@ -202,7 +231,7 @@ public class CapabilitySetDescriptorService {
     var deprecatedCapabilitySetNames = toStream(oldSetDescriptors)
       .map(CapabilitySetDescriptor::getName)
       .filter(not(capabilitySetNames::contains))
-      .collect(Collectors.toSet());
+      .collect(toSet());
 
     if (isEmpty(deprecatedCapabilitySetNames)) {
       return;
