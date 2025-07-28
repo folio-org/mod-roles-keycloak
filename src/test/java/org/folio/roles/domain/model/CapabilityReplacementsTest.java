@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class CapabilityReplacementsTest {
 
   @Test
-  public void getReplacementsExcludeDummy_positive() {
+  void getReplacementsExcludeDummy_positive() {
     Map<String, Set<String>> oldPermissionsToNewPermissions = new HashMap<>();
     oldPermissionsToNewPermissions.put("perm1", Set.of("newPerm1"));
     oldPermissionsToNewPermissions.put("perm2", Set.of("newPerm2"));
