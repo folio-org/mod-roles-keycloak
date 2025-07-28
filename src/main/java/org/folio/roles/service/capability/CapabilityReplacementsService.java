@@ -168,6 +168,7 @@ public class CapabilityReplacementsService {
   }
 
   protected void assignReplacementCapabilities(CapabilityReplacements capabilityReplacements) {
+    // dummy capabilities are related only to capability sets, so we should not assign them to roles/users
     capabilityReplacements.getReplacementsExcludeDummy()
       .forEach((oldPermissionName, replacements) -> {
         if (isNotEmpty(replacements)) {

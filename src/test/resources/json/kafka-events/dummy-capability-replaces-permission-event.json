@@ -11,8 +11,8 @@
         "permission": {
           "permissionName": "test.replace.from-event.edit",
           "replaces" : ["foo.dummy.from-event.edit"],
-          "displayName": "A real permission for dummy capability from the event",
-          "description": "Real permission for dummy capability."
+          "displayName": "Real permission to replace permission of dummy capability.",
+          "description": "Real permission to replace permission of dummy capability."
         },
         "endpoints": [
           {
