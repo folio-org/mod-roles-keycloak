@@ -14,6 +14,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.domain.model.event.CapabilitySetEvent.deleted;
+import static org.folio.roles.utils.CapabilityUtils.getCapabilityNamesAsString;
 
 import jakarta.persistence.EntityExistsException;
 import java.util.Collection;
@@ -300,14 +301,14 @@ public class CapabilityReplacementsService {
     if (roleIds != null && !roleIds.isEmpty()) {
       if (!replacementCapabilities.isEmpty()) {
         log.info("Assigning replacement capabilities {} to {} roles",
-          toStream(replacementCapabilities).map(Capability::getName).collect(Collectors.joining(", ")),
+          getCapabilityNamesAsString(replacementCapabilities),
           roleIds.size());
         roleIds.forEach(doIgnoringExistingAssignments(roleId -> roleCapabilityService.create(roleId,
           replacementCapabilities.stream().map(Capability::getId).toList(), true)));
       }
       if (!replacementCapabilitySets.isEmpty()) {
         log.info("Assigning replacement capability sets {} to {} roles",
-          toStream(replacementCapabilitySets).map(CapabilitySet::getName).collect(Collectors.joining(", ")),
+          getCapabilitySetNamesAsString(replacementCapabilitySets),
           roleIds.size());
         roleIds.forEach(doIgnoringExistingAssignments(roleId -> roleCapabilitySetService.create(roleId,
           replacementCapabilitySets.stream().map(CapabilitySet::getId).toList(), true)));
@@ -320,13 +321,13 @@ public class CapabilityReplacementsService {
     if (userIds != null && !userIds.isEmpty()) {
       if (!replacementCapabilities.isEmpty()) {
         log.info("Assigning replacement capabilities {} to {} users",
-          toStream(replacementCapabilities).map(Capability::getName).collect(Collectors.joining(", ")), userIds.size());
+          getCapabilityNamesAsString(replacementCapabilities), userIds.size());
         userIds.forEach(doIgnoringExistingAssignments(userId -> userCapabilityService.create(userId,
           replacementCapabilities.stream().map(Capability::getId).toList())));
       }
       if (!replacementCapabilitySets.isEmpty()) {
         log.info("Assigning replacement capability sets {} to {} users",
-          toStream(replacementCapabilitySets).map(CapabilitySet::getName).collect(Collectors.joining(", ")),
+          getCapabilitySetNamesAsString(replacementCapabilitySets),
           userIds.size());
         userIds.forEach(doIgnoringExistingAssignments(userId -> userCapabilitySetService.create(userId,
           replacementCapabilitySets.stream().map(CapabilitySet::getId).toList())));
@@ -338,7 +339,7 @@ public class CapabilityReplacementsService {
     List<Capability> replacementCapabilities) {
     if (capabilitySets != null && !capabilitySets.isEmpty()) {
       log.info("Assigning replacement capabilities {} to {} capabilities set",
-        toStream(replacementCapabilities).map(Capability::getName).collect(Collectors.joining(", ")),
+        getCapabilityNamesAsString(replacementCapabilities),
         capabilitySets.size());
       capabilitySets.forEach(capabilitySet -> capabilitySetByCapabilitiesUpdater
           .update(capabilitySet, replacementCapabilities));
@@ -385,5 +386,9 @@ public class CapabilityReplacementsService {
   private Function<Capability, DomainEvent<Capability>> mapToDeleteCapabilityAppEvent() {
     return deprecatedCapability -> org.folio.roles.domain.model.event.CapabilityEvent.deleted(deprecatedCapability)
       .withContext(folioExecutionContext);
+  }
+
+  private String getCapabilitySetNamesAsString(List<CapabilitySet> capabilitySet) {
+    return toStream(capabilitySet).map(CapabilitySet::getName).collect(Collectors.joining(", "));
   }
 }

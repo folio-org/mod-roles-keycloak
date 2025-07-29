@@ -57,4 +57,16 @@ class CapabilityUtilsTest {
     var result = CapabilityUtils.getCapabilityEndpoints(capabilities);
     assertThat(result).containsExactly(endpoint1, endpoint3, endpoint2, endpoint4);
   }
+
+  @Test
+  void getCapabilityNamesAsString_positive() {
+    var capability1 = capability(UUID.randomUUID());
+    capability1.setName("foo1.get");
+    var capability2 = capability(UUID.randomUUID());
+    capability2.setName("foo2.get");
+    var capabilities = List.of(capability1, capability2);
+
+    var result = CapabilityUtils.getCapabilityNamesAsString(capabilities);
+    assertThat(result).isEqualTo("foo1.get, foo2.get");
+  }
 }

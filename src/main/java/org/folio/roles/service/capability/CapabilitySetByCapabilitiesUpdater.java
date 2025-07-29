@@ -1,6 +1,8 @@
 package org.folio.roles.service.capability;
 
+import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
+import static org.folio.roles.utils.CapabilityUtils.getCapabilityNamesAsString;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -36,7 +38,7 @@ public class CapabilitySetByCapabilitiesUpdater {
   public void update(CapabilitySet capabilitySet, List<Capability> capabilitiesToAdd) {
     log.info("Update capability set by capabilities : capability set name - {},  capabilities - {}",
       capabilitySet.getName(),
-      toStream(capabilitiesToAdd).map(Capability::getName).collect(Collectors.joining(", ")));
+      getCapabilityNamesAsString(capabilitiesToAdd));
     var capabilities = capabilityService.findByCapabilitySetIdsIncludeDummy(Set.of(capabilitySet.getId()));
     var extendedCapabilitySet = capabilitySetMapper
       .toExtendedCapabilitySet(capabilitySet, capabilities);
@@ -45,10 +47,7 @@ public class CapabilitySetByCapabilitiesUpdater {
     var updatedExtendedCapabilitySet = capabilitySetMapper
       .toExtendedCapabilitySet(capabilitySet, toStream(updatedCapabilities).toList());
 
-    var capabilityIdsToAdd = capabilitiesToAdd
-      .stream()
-      .map(Capability::getId)
-      .toList();
+    var capabilityIdsToAdd = mapItems(capabilitiesToAdd, Capability::getId);
     capabilitySetService.addCapabilitiesById(capabilitySet.getId(), capabilityIdsToAdd);
     var event = CapabilitySetEvent.updated(updatedExtendedCapabilitySet, extendedCapabilitySet);
     applicationEventPublisher.publishEvent(event.withContext(folioExecutionContext));
