@@ -7,7 +7,6 @@ import static org.folio.roles.utils.CapabilityUtils.getCapabilityNamesAsString;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Capability;
