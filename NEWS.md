@@ -1,3 +1,6 @@
+## Version `v3.0.3` (30.07.2025)
+* Fix missing capabilities in capability sets (#257) (MODROLESKC-313)
+
 ## Version `v3.0.3` (23.04.2025)
 * Skip attaching capabilities to the shared role if they do not exist in the tenant. (MODROLESKC-297)
 
