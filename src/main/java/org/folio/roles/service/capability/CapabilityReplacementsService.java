@@ -169,7 +169,7 @@ public class CapabilityReplacementsService {
   }
 
   protected void assignReplacementCapabilities(CapabilityReplacements capabilityReplacements) {
-    // dummy capabilities are related only to capability sets, so we should not assign them to roles/users
+    // Dummy capabilities are related only to capability sets, so we should not assign them to roles/users
     capabilityReplacements.getReplacementsExcludeDummy()
       .forEach((oldPermissionName, replacements) -> {
         if (isNotEmpty(replacements)) {
@@ -347,17 +347,18 @@ public class CapabilityReplacementsService {
   }
 
   protected void unassignReplacedCapabilities(CapabilityReplacements capabilityReplacements) {
-    var oldPermissionsToRemove = capabilityReplacements.oldPermissionsToNewPermissions().keySet();
-
-    log.info("Removing old capabilities and capability sets by permission names: {}",
-      String.join(", ", oldPermissionsToRemove));
-    var oldCapabilitiesToRemove = capabilityService.findByPermissionNamesIncludeDummy(oldPermissionsToRemove);
+    var permissionsToRemoveCapabilities = capabilityReplacements.oldPermissionsToNewPermissions().keySet();
+    log.info("Removing old capabilities by permission names: {}",
+      String.join(", ", getPermissionNamesAsString(permissionsToRemoveCapabilities)));
+    var oldCapabilitiesToRemove = capabilityService.findByPermissionNamesIncludeDummy(permissionsToRemoveCapabilities);
     oldCapabilitiesToRemove.stream()
       .map(mapToDeleteCapabilityAppEvent())
       .forEach(applicationEventPublisher::publishEvent);
     // Should not be a capabilitySet by permission name of dummy capability for unassigning logic
-    oldPermissionsToRemove = capabilityReplacements.getReplacementsExcludeDummy().keySet();
-    var oldCapabilitySetsToRemove = capabilitySetService.findByPermissionNames(oldPermissionsToRemove);
+    var permissionsToRemoveCapabilitySets = capabilityReplacements.getReplacementsExcludeDummy().keySet();
+    log.info("Removing old capability sets by permission names: {}",
+      String.join(", ", getPermissionNamesAsString(permissionsToRemoveCapabilitySets)));
+    var oldCapabilitySetsToRemove = capabilitySetService.findByPermissionNames(permissionsToRemoveCapabilitySets);
     oldCapabilitySetsToRemove.stream()
       .map(capSet -> capabilitySetMapper.toExtendedCapabilitySet(capSet, emptyList()))
       .map(capSetExt -> deleted(capSetExt).withContext(folioExecutionContext))
@@ -390,5 +391,9 @@ public class CapabilityReplacementsService {
 
   private String getCapabilitySetNamesAsString(List<CapabilitySet> capabilitySet) {
     return toStream(capabilitySet).map(CapabilitySet::getName).collect(Collectors.joining(", "));
+  }
+
+  private String getPermissionNamesAsString(Set<String> permissionNames) {
+    return  String.join(", ", permissionNames);
   }
 }

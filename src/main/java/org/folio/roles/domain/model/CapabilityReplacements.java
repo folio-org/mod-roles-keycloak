@@ -1,7 +1,10 @@
 package org.folio.roles.domain.model;
 
+import static java.util.stream.Collectors.toMap;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.dto.CapabilitySet;
@@ -33,13 +36,10 @@ public record CapabilityReplacements(
    * @return a map of old permissions as a key to new permissions
    */
   public Map<String, Set<String>> getReplacementsOnlyDummy() {
-    var dummy = new HashMap<String, Set<String>>();
-    oldPermissionsToNewPermissions
-      .forEach((key, value) -> {
-        if (oldCapabSetByDummyCapabilityPermission.containsKey(key)) {
-          dummy.put(key, value);
-        }
-      });
-    return dummy;
+    return oldPermissionsToNewPermissions
+      .entrySet()
+      .stream()
+      .filter(entry -> oldCapabSetByDummyCapabilityPermission.containsKey(entry.getKey()))
+      .collect(toMap(Entry::getKey, Entry::getValue));
   }
 }
