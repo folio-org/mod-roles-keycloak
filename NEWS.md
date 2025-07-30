@@ -1,4 +1,4 @@
-## Version `v3.0.3` (30.07.2025)
+## Version `v3.0.4` (30.07.2025)
 * Fix missing capabilities in capability sets (#257) (MODROLESKC-313)
 
 ## Version `v3.0.3` (23.04.2025)
