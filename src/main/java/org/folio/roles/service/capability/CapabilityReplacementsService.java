@@ -349,7 +349,7 @@ public class CapabilityReplacementsService {
   protected void unassignReplacedCapabilities(CapabilityReplacements capabilityReplacements) {
     var permissionsToRemoveCapabilities = capabilityReplacements.oldPermissionsToNewPermissions().keySet();
     log.info("Removing old capabilities by permission names: {}",
-      String.join(", ", getPermissionNamesAsString(permissionsToRemoveCapabilities)));
+      getPermissionNamesAsString(permissionsToRemoveCapabilities));
     var oldCapabilitiesToRemove = capabilityService.findByPermissionNamesIncludeDummy(permissionsToRemoveCapabilities);
     oldCapabilitiesToRemove.stream()
       .map(mapToDeleteCapabilityAppEvent())
@@ -357,7 +357,7 @@ public class CapabilityReplacementsService {
     // Should not be a capabilitySet by permission name of dummy capability for unassigning logic
     var permissionsToRemoveCapabilitySets = capabilityReplacements.getReplacementsExcludeDummy().keySet();
     log.info("Removing old capability sets by permission names: {}",
-      String.join(", ", getPermissionNamesAsString(permissionsToRemoveCapabilitySets)));
+      getPermissionNamesAsString(permissionsToRemoveCapabilitySets));
     var oldCapabilitySetsToRemove = capabilitySetService.findByPermissionNames(permissionsToRemoveCapabilitySets);
     oldCapabilitySetsToRemove.stream()
       .map(capSet -> capabilitySetMapper.toExtendedCapabilitySet(capSet, emptyList()))
