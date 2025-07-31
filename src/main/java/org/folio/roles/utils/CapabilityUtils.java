@@ -6,6 +6,7 @@ import static org.folio.common.utils.CollectionUtils.toStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
@@ -90,5 +91,9 @@ public class CapabilityUtils {
 
   public static String getNameFromAppOrModuleId(String appOrModuleId) {
     return appOrModuleId == null ? null : appOrModuleId.substring(0, appOrModuleId.lastIndexOf("-"));
+  }
+
+  public static String getCapabilityNamesAsString(List<Capability> capabilities) {
+    return toStream(capabilities).map(Capability::getName).collect(Collectors.joining(", "));
   }
 }

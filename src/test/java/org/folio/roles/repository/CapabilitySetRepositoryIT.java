@@ -66,4 +66,19 @@ class CapabilitySetRepositoryIT extends BaseRepositoryTest {
     var actualCapabilitySetEntities = repository.findByCapabilityName(capabilityEntity.getName());
     assertThat(actualCapabilitySetEntities).containsOnly(capabilitySetEntity);
   }
+
+  @Test
+  void findAllByCapabilityId_positive() {
+    var capabilityEntity = capabilityEntity(null);
+    capabilityEntity = entityManager.persistAndFlush(capabilityEntity);
+    var capabilitySetEntity1 = capabilitySetEntity(null, List.of(capabilityEntity.getId()));
+    capabilitySetEntity1.setName("capabilitySetEntity1");
+    var capabilitySetEntity2 = capabilitySetEntity(null, List.of(capabilityEntity.getId()));
+    capabilitySetEntity2.setName("capabilitySetEntity2");
+    entityManager.persistAndFlush(capabilitySetEntity1);
+    entityManager.persistAndFlush(capabilitySetEntity2);
+
+    var actualCapabilitySetEntities = repository.findAllByCapabilityId(capabilityEntity.getId());
+    assertThat(actualCapabilitySetEntities).containsExactlyInAnyOrder(capabilitySetEntity1, capabilitySetEntity2);
+  }
 }

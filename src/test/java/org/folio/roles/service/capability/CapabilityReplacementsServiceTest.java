@@ -70,6 +70,7 @@ class CapabilityReplacementsServiceTest {
   @Mock private CapabilitySetService capabilitySetService;
   @Mock private CapabilitySetMapper capabilitySetMapper;
   @Mock private LoadablePermissionRepository loadablePermissionRepository;
+  @Mock private CapabilitySetByCapabilitiesUpdater capabilitySetByCapabilitiesUpdater;
 
   @Test
   void deduceReplacements_positive() {
@@ -87,12 +88,20 @@ class CapabilityReplacementsServiceTest {
           .subPermissions(List.of("A", "B"))),
       new FolioResource().endpoints(List.of(new Endpoint().path("/endpoint3").method(GET)))
         .permission(new Permission().permissionName("new-perm3.get")
-          .replaces(List.of("old-perm.get")))));
-
+          .replaces(List.of("old-perm.get"))),
+      new FolioResource().endpoints(List.of(new Endpoint().path("/endpoint4").method(GET)))
+        .permission(new Permission().permissionName("new-perm4.get")
+          .replaces(List.of("permission-for-dummy.get")))
+    ));
+    var permissionForDummy = "permission-for-dummy.get";
+    var dummyCapability = new Capability().id(randomUUID())
+      .dummyCapability(true).name("dummy").permission(permissionForDummy);
     var capabilityUuid = randomUUID();
     var capabilitySetUuid = randomUUID();
-    when(capabilityService.findByPermissionNames(Set.of("old-perm.get", "old-perm2.get"))).thenReturn(
-      List.of(new Capability().id(capabilityUuid).name("old-perm.view").permission("old-perm.get")));
+    when(capabilityService
+      .findByPermissionNamesIncludeDummy(Set.of("old-perm.get", "old-perm2.get", permissionForDummy)))
+      .thenReturn(List.of(new Capability().id(capabilityUuid).name("old-perm.view").permission("old-perm.get")
+        .dummyCapability(false), dummyCapability));
     when(capabilitySetService.findByPermissionNames(Set.of("old-perm.get", "old-perm2.get"))).thenReturn(
       List.of(new CapabilitySet().id(capabilitySetUuid).name("old-perm-two.view").permission("old-perm2.get")));
 
@@ -105,18 +114,24 @@ class CapabilityReplacementsServiceTest {
     when(roleCapabilityRepository.findAllByCapabilityId(capabilityUuid)).thenReturn(
       List.of(RoleCapabilityEntity.of(role1Uuid, null)));
     when(roleCapabilitySetRepository.findAllByCapabilitySetId(capabilitySetUuid)).thenReturn(
-      List.of(RoleCapabilitySetEntity.of(role2Uuid, null), RoleCapabilitySetEntity.of(role3Uuid, null)));
+      List.of(RoleCapabilitySetEntity.of(role2Uuid, null),
+        RoleCapabilitySetEntity.of(role3Uuid, null)));
 
     when(userCapabilityRepository.findAllByCapabilityId(capabilityUuid)).thenReturn(
       List.of(UserCapabilityEntity.of(userUuid, null)));
     when(userCapabilitySetRepository.findAllByCapabilitySetId(capabilitySetUuid)).thenReturn(
       List.of(UserCapabilitySetEntity.of(user2Uuid, null), UserCapabilitySetEntity.of(user3Uuid, null)));
 
+    var capabilitySetForDummy = new CapabilitySet().id(randomUUID()).name("capabilitySetForDummy");
+    when(capabilitySetService.findAllByCapabilityId(dummyCapability.getId()))
+      .thenReturn(List.of(capabilitySetForDummy));
+
     var replacements = unit.deduceReplacements(testData);
     assertThat(replacements).isPresent();
     assertThat(replacements.get().oldPermissionsToNewPermissions()).isEqualTo(
       Map.of("old-perm.get", Set.of("new-perm3.get", "new-perm.get"),
-        "old-perm2.get", Set.of("new-perm2.get")));
+        "old-perm2.get", Set.of("new-perm2.get"),
+        permissionForDummy, Set.of("new-perm4.get")));
 
     assertThat(replacements.get().oldRoleCapabByPermission()).isEqualTo(Map.of("old-perm.get", Set.of(role1Uuid)));
     assertThat(replacements.get().oldRoleCapabSetByPermission()).isEqualTo(
@@ -124,6 +139,8 @@ class CapabilityReplacementsServiceTest {
     assertThat(replacements.get().oldUserCapabByPermission()).isEqualTo(Map.of("old-perm.get", Set.of(userUuid)));
     assertThat(replacements.get().oldUserCapabSetByPermission()).isEqualTo(
       Map.of("old-perm2.get", Set.of(user2Uuid, user3Uuid)));
+    assertThat(replacements.get().oldCapabSetByDummyCapabilityPermission()).isEqualTo(Map.of(permissionForDummy,
+      Set.of(capabilitySetForDummy)));
   }
 
   @Test
@@ -149,7 +166,6 @@ class CapabilityReplacementsServiceTest {
     var cap2Id = randomUUID();
     var capSet1Id = randomUUID();
     var capSet2Id = randomUUID();
-    var roleId = randomUUID();
 
     when(capabilityService.findByPermissionNames(Set.of("newcap1.view", "newcapset2.view"))).thenReturn(
       List.of(capability(cap1Id, "newcap1.view")));
@@ -164,6 +180,18 @@ class CapabilityReplacementsServiceTest {
     when(capabilitySetService.findByPermissionNames(Set.of("oldcap1.view", "oldcapset2.view"))).thenReturn(
       List.of(capabilitySet(capSet1Id, "oldcapset2.view")));
 
+    var permissionForDummy = "permission-for-dummy.get";
+    var dummyCapability = capability(randomUUID(), permissionForDummy);
+    var capabilityToReplaceDummy = capability(randomUUID(), "capabilityToReplaceDummy");
+    capabilityToReplaceDummy.permission("newcap3.view");
+
+    when(capabilityService
+      .findByPermissionNamesIncludeDummy(Set.of("oldcap1.view", "oldcapset2.view", permissionForDummy)))
+      .thenReturn(List.of(capability(cap1Id, "oldcap1.view"), dummyCapability));
+    when(capabilityService.findByPermissionNames(Set.of("newcap3.view")))
+      .thenReturn(List.of(capabilityToReplaceDummy));
+
+    var roleId = randomUUID();
     when(loadablePermissionRepository.findAllByCapabilityId(cap1Id))
       .thenReturn(Stream.of(loadablePermissionEntity(roleId, loadablePermission(roleId, "oldperm1"))));
     when(capabilityService.findByPermissionName("newcap1.view"))
@@ -194,15 +222,19 @@ class CapabilityReplacementsServiceTest {
 
     var oldPermissionToNewPermission =
       Map.of("oldcap1.view", Set.of("newcap1.view", "newcapset2.view"),
-        "oldcapset2.view", Set.of("newcapset1.view", "newcap2.view"));
+        "oldcapset2.view", Set.of("newcapset1.view", "newcap2.view"),
+        permissionForDummy, Set.of(capabilityToReplaceDummy.getPermission()));
     var oldCapabilityRoleAssignments = Map.of("oldcap1.view", Set.of(role1Id, role2Id));
     var oldCapabilityUserAssignments = Map.of("oldcap1.view", Set.of(user1Id, user2Id));
     var oldCapabilitySetRoleAssignments = Map.of("oldcapset2.view", Set.of(role1Id, role2Id));
     var oldCapabilitySetUserAssignments = Map.of("oldcapset2.view", Set.of(user1Id, user2Id));
+    var capabilitySetForDummy = new CapabilitySet().id(randomUUID()).name("capabilitySetForDummy");
+    var oldCapabilitySetByDummyCapabilityPermission = Map.of(permissionForDummy, Set.of(capabilitySetForDummy));
 
     var capabilityReplacements =
       new CapabilityReplacements(oldPermissionToNewPermission, oldCapabilityRoleAssignments,
-        oldCapabilityUserAssignments, oldCapabilitySetRoleAssignments, oldCapabilitySetUserAssignments);
+        oldCapabilityUserAssignments, oldCapabilitySetRoleAssignments,
+        oldCapabilitySetUserAssignments, oldCapabilitySetByDummyCapabilityPermission);
 
     var newLoadablePermissions = new ArrayList<LoadablePermissionEntity>();
     when(loadablePermissionRepository.save(any())).then(inv -> {
@@ -228,14 +260,20 @@ class CapabilityReplacementsServiceTest {
     verify(userCapabilitySetService).create(user1Id, List.of(capSet1Id));
     verify(userCapabilitySetService).create(user2Id, List.of(capSet2Id));
 
-    assertThat(publishedEvents).hasSize(2);
-    var capEvent = (org.folio.roles.domain.model.event.CapabilityEvent) publishedEvents.stream()
-      .filter(e -> e instanceof org.folio.roles.domain.model.event.CapabilityEvent).findAny().get();
+    verify(capabilitySetByCapabilitiesUpdater).update(capabilitySetForDummy, List.of(capabilityToReplaceDummy));
+
+    assertThat(publishedEvents).hasSize(3);
+
+    var capEvents = publishedEvents.stream()
+      .filter(e -> e instanceof org.folio.roles.domain.model.event.CapabilityEvent)
+      .map(org.folio.roles.domain.model.event.CapabilityEvent.class::cast).toList();
+    assertThat(capEvents).hasSize(2);
+    verifyCapabilityDeleteEvent(capEvents.getFirst(), "oldcap1.view", cap1Id);
+    //verify delete event for dummy capability
+    verifyCapabilityDeleteEvent(capEvents.get(1), dummyCapability.getPermission(), dummyCapability.getId());
+
     var capSetEvent =
       (CapabilitySetEvent) publishedEvents.stream().filter(e -> e instanceof CapabilitySetEvent).findAny().get();
-    assertThat(capEvent.getOldObject().getName()).isEqualTo("oldcap1.view");
-    assertThat(capEvent.getOldObject().getId()).isEqualTo(cap1Id);
-    assertThat(capEvent.getType()).isEqualTo(DELETE);
     assertThat(capSetEvent.getOldObject().getName()).isEqualTo("capset1.view");
     assertThat(capSetEvent.getOldObject().getId()).isEqualTo(capSet1Id);
     assertThat(capSetEvent.getType()).isEqualTo(DELETE);
@@ -265,10 +303,18 @@ class CapabilityReplacementsServiceTest {
 
   @Test
   void replaceLoadable_positive_emptyPermissionMappingData() {
-    var capabilityReplacements = new CapabilityReplacements(Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+    var capabilityReplacements = new CapabilityReplacements(Map.of(),
+      Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
     unit.replaceLoadable(capabilityReplacements);
 
     verifyNoInteractions(loadablePermissionRepository);
+  }
+
+  private void verifyCapabilityDeleteEvent(org.folio.roles.domain.model.event.CapabilityEvent capabilityEvent, String
+    expectedPermission, UUID expectedCapabilityId) {
+    assertThat(capabilityEvent.getOldObject().getName()).isEqualTo(expectedPermission);
+    assertThat(capabilityEvent.getOldObject().getId()).isEqualTo(expectedCapabilityId);
+    assertThat(capabilityEvent.getType()).isEqualTo(DELETE);
   }
 
   private static Capability capability(UUID id, String name) {
