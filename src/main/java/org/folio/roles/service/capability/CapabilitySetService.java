@@ -7,6 +7,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.SetUtils.difference;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.common.utils.CollectionUtils.mapItems;
+import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.domain.entity.CapabilitySetEntity.DEFAULT_CAPABILITY_SET_SORT;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
@@ -246,6 +247,13 @@ public class CapabilitySetService {
   @Transactional(readOnly = true)
   public Optional<CapabilitySet> findByPermissionName(String permissionName) {
     return repository.findByPermission(permissionName).map(capabilitySetEntityMapper::convert);
+  }
+
+  @Transactional(readOnly = true)
+  public List<CapabilitySet> findAllByCapabilityId(UUID capabilityId) {
+    return toStream(repository.findAllByCapabilityId(capabilityId))
+      .map(capabilitySetEntityMapper::convert)
+      .toList();
   }
 
   /**
