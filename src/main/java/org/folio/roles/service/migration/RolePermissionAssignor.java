@@ -51,7 +51,7 @@ public class RolePermissionAssignor {
   private void assignCapabilitiesAndSets(UUID roleId, UserPermissions userPermissions) {
     log.debug("Assigning capabilities/capability sets for role: roleId = {}", roleId);
     var permissions = userPermissions.getPermissions();
-    var capabilitiesByPermissions = capabilityService.findByPermissionNamesNoTechnical(permissions);
+    var capabilitiesByPermissions = capabilityService.findByPermissionNames(permissions);
     var notFoundPermissions = difference(permissions, mapItems(capabilitiesByPermissions, Capability::getPermission));
     var capabilities = union(capabilitiesByPermissions, userPermissions.getManageCapabilities());
     if (isNotEmpty(capabilities)) {
