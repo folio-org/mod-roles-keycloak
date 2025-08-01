@@ -53,8 +53,8 @@ class ManagePermissionsResolverTest {
     var managedCapabilities = managePermissionsResolver.getCapabilitiesToManageCapabilities();
     var managedPermissions = managePermissionsResolver.getPermissionsToManagePermissions();
 
-    assertThat(managedCapabilities.getViewCapabilities()).hasSize(15);
-    assertThat(managedCapabilities.getEditCapabilities()).hasSize(20);
+    assertThat(managedCapabilities.getViewCapabilities()).hasSize(17);
+    assertThat(managedCapabilities.getEditCapabilities()).hasSize(24);
     assertThat(managedPermissions.getViewPermissions()).hasSize(4);
     assertThat(managedPermissions.getEditPermissions()).hasSize(12);
   }
