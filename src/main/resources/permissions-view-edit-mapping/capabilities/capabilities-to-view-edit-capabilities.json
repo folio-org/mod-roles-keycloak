@@ -14,9 +14,15 @@
     "capability-sets_capabilities_collection.view",
     "capability-sets_item.view",
     "capability-sets_collection.view",
-    "ui-authorization-roles_users_settings.view",
+    "settings_authorization-roles_enabled.view",
     "users-keycloak_auth-users_item.view",
-    "ui-authorization-roles_settings.view"
+    "ui-authorization-roles_users_settings.view",
+    "ui-authorization-roles_settings.view",
+    "settings_authorization-roles_enabled.view",
+    "settings_authorization-policies_enabled.view",
+    "policies_item.view",
+    "policies_collection.view",
+    "settings_enabled.view"
   ],
   "editCapabilities": [
     "user-capabilities_collection.execute",
@@ -38,10 +44,15 @@
     "roles_item.delete",
     "roles_item.create",
     "roles_collection.execute",
+    "ui-authorization-roles_settings_admin.view",
     "ui-authorization-roles_users_settings.manage",
     "users-keycloak_auth-users_item.create",
     "ui-authorization-roles_settings.create",
     "ui-authorization-roles_settings.edit",
-    "ui-authorization-roles_settings.delete"
+    "ui-authorization-roles_settings.delete",
+    "policies_item.edit",
+    "policies_item.delete",
+    "policies_item.create",
+    "policies_collection.create"
   ]
 }
