@@ -7,6 +7,7 @@ import static org.folio.roles.utils.CollectionUtils.union;
 import static org.folio.roles.utils.CollectionUtils.unionUniqueValues;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +56,7 @@ public class RolePermissionAssignor {
     var notFoundPermissions = difference(permissions, mapItems(capabilitiesByPermissions, Capability::getPermission));
     var capabilities = union(capabilitiesByPermissions, userPermissions.getManageCapabilities());
     if (isNotEmpty(capabilities)) {
-      roleCapabilityService.create(roleId, mapItems(capabilities, Capability::getId), true);
+      roleCapabilityService.create(roleId, mapItems(new LinkedHashSet<>(capabilities), Capability::getId), true);
     }
 
     var sets = capabilitySetService.findByPermissionNames(permissions);
