@@ -1,13 +1,13 @@
 package org.folio.roles.service.migration;
 
 import static java.util.Collections.emptyList;
-import static org.folio.roles.domain.dto.CapabilityAction.CREATE;
 import static org.folio.roles.domain.dto.CapabilityAction.MANAGE;
 import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.FOO_MANAGE_CAPABILITIES;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilityUtils.FOO_CREATE_CAPABILITY;
+import static org.folio.roles.support.CapabilityUtils.FOO_MANAGE_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.FOO_VIEW_CAPABILITY;
 import static org.folio.roles.support.CapabilityUtils.fooItemCapability;
 import static org.folio.roles.support.EndpointUtils.fooItemGetEndpoint;
@@ -62,16 +62,18 @@ class RolePermissionAssignorTest {
     var userPermissions = new UserPermissions().userId(USER_ID).role(role())
       .permissions(permissions).manageCapabilities(manageCapabilities);
 
-    when(capabilityService.findByPermissionNamesNoTechnical(permissions)).thenReturn(List.of(
+    when(capabilityService.findByPermissionNames(permissions)).thenReturn(List.of(
       fooItemCapability(FOO_VIEW_CAPABILITY, VIEW, "foo.item.get", fooItemGetEndpoint()),
-      fooItemCapability(FOO_CREATE_CAPABILITY, CREATE, "foo.item.post", fooItemPostEndpoint())));
+      fooItemCapability(FOO_CREATE_CAPABILITY, VIEW, "foo.item.post", fooItemPostEndpoint()),
+      fooItemCapability(FOO_MANAGE_CAPABILITY, MANAGE, "foo.item.all")));
 
     when(capabilitySetService.findByPermissionNames(permissions)).thenReturn(List.of(
       capabilitySet(CAPABILITY_SET_ID, "Foo Item", MANAGE, FOO_MANAGE_CAPABILITIES).permission("foo.item.all")));
 
     rolePermissionAssignor.assignPermissions(List.of(userPermissions, userPermissions));
 
-    var expectedCapabilitiesIds = List.of(FOO_VIEW_CAPABILITY, FOO_CREATE_CAPABILITY, idCapabilityToViewCapabilities);
+    var expectedCapabilitiesIds =
+      List.of(FOO_VIEW_CAPABILITY, FOO_CREATE_CAPABILITY, FOO_MANAGE_CAPABILITY, idCapabilityToViewCapabilities);
     verify(roleCapabilityService).create(ROLE_ID, expectedCapabilitiesIds, true);
     verify(roleCapabilitySetService).create(ROLE_ID, List.of(CAPABILITY_SET_ID), true);
   }
@@ -80,7 +82,7 @@ class RolePermissionAssignorTest {
   void assignPermissions_positive_capabilitiesAndCapabilitySetsNotFound() {
     var permissions = List.of("foo.item.get", "foo.item.post", "foo.item.all");
     var userPermissions = new UserPermissions().userId(USER_ID).role(role()).permissions(permissions);
-    when(capabilityService.findByPermissionNamesNoTechnical(permissions)).thenReturn(emptyList());
+    when(capabilityService.findByPermissionNames(permissions)).thenReturn(emptyList());
     when(capabilitySetService.findByPermissionNames(permissions)).thenReturn(emptyList());
 
     rolePermissionAssignor.assignPermissions(List.of(userPermissions));
