@@ -51,6 +51,7 @@
     "ui-authorization-roles_settings.create",
     "ui-authorization-roles_settings.edit",
     "ui-authorization-roles_settings.delete",
+    "ui-authorization-policies_settings_admin.view",
     "policies_item.edit",
     "policies_item.delete",
     "policies_item.create",
