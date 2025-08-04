@@ -1,3 +1,6 @@
+## Version `v3.0.5` (04.08.2025)
+* BE permission is not properly converted to capabilities after migration to Eureka (MODROLESKC-323)
+
 ## Version `v3.0.4` (30.07.2025)
 * Fix missing capabilities in capability sets (#257) (MODROLESKC-313)
 
