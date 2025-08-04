@@ -147,7 +147,7 @@ class NestedCapabilitySetIT extends BaseIntegrationTest {
   }
 
   private static List<Capability> getExpandedCapabilitiesForSet(String setId) throws Exception {
-    var mvcResult = doGet("/capability-sets/{id}/capabilities?expand=true&includeDummy=true", setId).andReturn();
+    var mvcResult = doGet("/capability-sets/{id}/capabilities?includeDummy=true", setId).andReturn();
     return parseResponse(mvcResult, Capabilities.class).getCapabilities();
   }
 }
