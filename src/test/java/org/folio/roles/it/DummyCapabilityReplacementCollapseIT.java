@@ -51,7 +51,7 @@ class DummyCapabilityReplacementCollapseIT extends BaseIntegrationTest {
 
   @Test
   @DisplayName("Remove old dummy capabilities if it were replaced")
-  void replacement_positive_updatedSetHasNewCapabilityAndOldShouldBeDeleted() throws Exception {
+  void replacement_positive_updatedSetHasNewCapabilityAndOldShouldBeDeleted() {
     sendCapabilityEvent("json/kafka-events/mod-items-1.0.0-create-event.json");
 
     var createdSetId = waitForCapabilitySetCreatedAndReturnId("set.items.view");
@@ -79,7 +79,7 @@ class DummyCapabilityReplacementCollapseIT extends BaseIntegrationTest {
 
   @Test
   @DisplayName("Replace dummy capability when its real one is created")
-  void replacement_positive_updatedSetHasOldCapabilityAndOldShouldBeDeleted() throws Exception {
+  void replacement_positive_updatedSetHasOldCapabilityAndOldShouldBeDeleted() {
     sendCapabilityEvent("json/kafka-events/mod-items-1.0.0-create-event.json");
 
     var createdSetId = waitForCapabilitySetCreatedAndReturnId("set.items.view");
