@@ -6,6 +6,7 @@
 * Implement replacement for dummy capabilities (MODROLESKC-306)
 * BE permission is not properly converted to capabilities after migration to Eureka (MODROLESKC-323)
 * Ability to view Authorization roles and policies (MODROLESKC-314)
+* Add integration test for replace cross-module dummy capabilities (MODROLESKC-305)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)
