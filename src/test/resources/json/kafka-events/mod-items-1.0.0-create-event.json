@@ -1,0 +1,20 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "mod-items-1.0.0",
+    "applicationId": "app-items-app-1.0.0",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "set.items.view",
+          "displayName": "Items Old View",
+          "subPermissions": [
+            "ui-orders.old.manage"
+          ]
+        }
+      }
+    ]
+  }
+}

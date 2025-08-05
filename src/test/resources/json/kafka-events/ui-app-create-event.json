@@ -1,0 +1,18 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "ui-order-2.0.0",
+    "applicationId": "app-ui-app-2.0.0",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "ui-orders.new.manage",
+          "replaces": [ "ui-orders.old.manage" ],
+          "displayName": "Orders Old Manage"
+        }
+      }
+    ]
+  }
+}
