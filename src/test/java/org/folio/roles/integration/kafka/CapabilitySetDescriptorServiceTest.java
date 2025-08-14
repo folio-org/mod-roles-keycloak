@@ -30,7 +30,9 @@ import org.folio.roles.domain.model.event.DomainEvent;
 import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
 import org.folio.roles.integration.kafka.model.ResourceEventType;
+import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.PermissionRepository;
+import org.folio.roles.service.capability.CapabilityResolver;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.roles.support.TestUtils;
@@ -61,6 +63,8 @@ class CapabilitySetDescriptorServiceTest {
   @Mock private CapabilitySetService capabilitySetService;
   @Mock private ApplicationEventPublisher applicationEventPublisher;
   @Mock private PermissionRepository permissionRepository;
+  @Mock private CapabilityResolver capabilityResolver;
+  @Mock private CapabilityEntityMapper capabilityMapper;
   @Captor private ArgumentCaptor<DomainEvent> eventCaptor;
 
   @BeforeEach
@@ -68,7 +72,7 @@ class CapabilitySetDescriptorServiceTest {
     var folioExecutionContext = new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
     this.capabilitySetDescriptorService = new CapabilitySetDescriptorService(
       capabilityService, mapper, capabilitySetService, folioExecutionContext, applicationEventPublisher,
-      permissionRepository);
+      permissionRepository, capabilityResolver, capabilityMapper);
   }
 
   @AfterEach

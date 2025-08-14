@@ -10,6 +10,8 @@ import org.folio.roles.domain.entity.EmbeddableEndpoint;
 import org.folio.roles.mapper.AuditableEntityMapping;
 import org.folio.roles.mapper.AuditableMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 /**
  * Mapper for mapping {@link Capability} objects to {@link CapabilityEntity} objects and vice versa.
@@ -26,4 +28,7 @@ public interface CapabilityEntityMapper {
   Capability convert(CapabilityEntity entity);
 
   List<Capability> convert(List<CapabilityEntity> entities);
+
+  @Mapping(target = "id", ignore = true)
+  void update(Capability source, @MappingTarget Capability target);
 }

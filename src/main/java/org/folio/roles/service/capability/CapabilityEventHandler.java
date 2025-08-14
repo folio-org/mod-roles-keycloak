@@ -38,6 +38,7 @@ public class CapabilityEventHandler extends AbstractCapabilityEventHandler {
   private final RoleCapabilityService roleCapabilityService;
   private final UserPermissionService userPermissionService;
   private final UserCapabilityService userCapabilityService;
+  private final CapabilityResolver capabilityResolver;
 
   /**
    * Handles update event for capability.
@@ -85,6 +86,12 @@ public class CapabilityEventHandler extends AbstractCapabilityEventHandler {
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).DELETE")
   public void handleCapabilityDeletedEvent(CapabilityEvent event) {
     var deprecatedCapability = event.getOldObject();
+    if (capabilityResolver.isCapabilityPermissionCorrupted(deprecatedCapability)) {
+      log.warn("Capability is corrupted, skipping capability deletion: capabilityName = {}, permission = {}",
+        deprecatedCapability.getName(), deprecatedCapability.getPermission());
+      return;
+    }
+
     var capabilityId = deprecatedCapability.getId();
     var deprecatedEndpoints = getCapabilityEndpoints(deprecatedCapability);
 

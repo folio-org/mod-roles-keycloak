@@ -12,6 +12,7 @@ import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -65,6 +66,7 @@ class CapabilityEventHandlerTest {
   @Mock private RoleCapabilityService roleCapabilityService;
   @Mock private UserPermissionService userPermissionService;
   @Mock private UserCapabilityService userCapabilityService;
+  @Mock private CapabilityResolver capabilityResolver;
 
   @AfterEach
   void tearDown() {
@@ -189,6 +191,7 @@ class CapabilityEventHandlerTest {
     when(policyService.findRolePoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(List.of(rolePolicy()));
     when(policyService.findUserPoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(emptyList());
     when(rolePermissionService.getAssignedEndpoints(ROLE_ID, capabilityIds, emptyList())).thenReturn(existingEndpoints);
+    when(capabilityResolver.isCapabilityPermissionCorrupted(any())).thenReturn(false);
 
     var capability = capability(CAPABILITY_ID, fooItemGetEndpoint(), fooItemPostEndpoint());
     var event = (CapabilityEvent) CapabilityEvent.deleted(capability).withContext(context);
@@ -208,6 +211,7 @@ class CapabilityEventHandlerTest {
     when(policyService.findRolePoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(emptyList());
     when(policyService.findUserPoliciesByCapabilityId(CAPABILITY_ID)).thenReturn(List.of(userPolicy()));
     when(userPermissionService.getAssignedEndpoints(USER_ID, capabilityIds, emptyList())).thenReturn(existingEndpoints);
+    when(capabilityResolver.isCapabilityPermissionCorrupted(any())).thenReturn(false);
 
     var capability = capability(CAPABILITY_ID, fooItemGetEndpoint(), fooItemPostEndpoint());
     var event = (CapabilityEvent) CapabilityEvent.deleted(capability).withContext(context);
@@ -219,6 +223,19 @@ class CapabilityEventHandlerTest {
     verify(capabilityService).deleteById(CAPABILITY_ID);
     verify(capabilitySetService).deleteAllLinksToCapability(CAPABILITY_ID);
     verifyNoInteractions(rolePermissionService, roleCapabilityService);
+  }
+
+  @Test
+  void handleCapabilityDeletedEvent_positive_skipDeletionForCorruptedCapability() {
+    when(capabilityResolver.isCapabilityPermissionCorrupted(any())).thenReturn(true);
+
+    var capability = capability(CAPABILITY_ID, fooItemGetEndpoint(), fooItemPostEndpoint());
+    var event = (CapabilityEvent) CapabilityEvent.deleted(capability).withContext(context);
+
+    capabilityEventHandler.handleCapabilityDeletedEvent(event);
+
+    verifyNoInteractions(policyService, userPermissionService, rolePermissionService, userCapabilityService,
+      roleCapabilityService, capabilitySetService);
   }
 
   private static Stream<Arguments> invalidRolePolicyDataSource() {
