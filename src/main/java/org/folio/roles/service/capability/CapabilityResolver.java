@@ -5,12 +5,14 @@ import static org.folio.common.utils.permission.PermissionUtils.hasNoRequiredFie
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.folio.common.utils.permission.PermissionUtils;
 import org.folio.common.utils.permission.model.PermissionData;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.service.permission.PermissionOverrider;
 import org.springframework.stereotype.Service;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class CapabilityResolver {
@@ -23,7 +25,8 @@ public class CapabilityResolver {
     var permission = capability.getPermission();
     var permissionData = extractPermissionData(permission);
     if (hasNoRequiredFields(permissionData)) {
-      throw new IllegalArgumentException(); //todo what is right behaviour here?
+      log.warn("Permission data is missing required fields: {}", permission);
+      throw new IllegalStateException("Permission data is missing required fields: " + permission);
     }
 
     var expectedName = getCapabilityName(permissionData);
