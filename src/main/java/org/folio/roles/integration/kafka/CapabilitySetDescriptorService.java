@@ -38,7 +38,9 @@ import org.folio.roles.domain.model.event.CapabilitySetEvent;
 import org.folio.roles.integration.kafka.mapper.CapabilitySetMapper;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
 import org.folio.roles.integration.kafka.model.ResourceEventType;
+import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.PermissionRepository;
+import org.folio.roles.service.capability.CapabilityResolver;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.spring.FolioExecutionContext;
@@ -57,6 +59,8 @@ public class CapabilitySetDescriptorService {
   private final FolioExecutionContext folioExecutionContext;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final PermissionRepository permissionRepository;
+  private final CapabilityResolver capabilityResolver;
+  private final CapabilityEntityMapper capabilityMapper;
 
   /**
    * Updates capabilities using given event type, old and new collection of capability set descriptors.
@@ -262,14 +266,40 @@ public class CapabilitySetDescriptorService {
 
     // create dummy for all not found capabilities in db ->
     for (var capabilityFromEvent : requiredCapability) {
-      var capability = savedCapabilitiesByNames.get(capabilityFromEvent.getName());
-      if (capability == null) {
-        capability = createDummyCapabilityAndSendEvent(capabilitySetDescriptor, capabilityFromEvent);
-      }
+      var capability = createOrUpdeteCorruptedDummyCapability(capabilitySetDescriptor, capabilityFromEvent,
+        savedCapabilitiesByNames);
       capabilities.add(capability);
     }
 
     return capabilities;
+  }
+
+  private Capability createOrUpdeteCorruptedDummyCapability(CapabilitySetDescriptor capabilitySetDescriptor,
+    Capability capabilityFromEvent, Map<String, Capability> savedCapabilitiesByNames) {
+    var capability = savedCapabilitiesByNames.get(capabilityFromEvent.getName());
+    if (capability == null) {
+      capability = createDummyCapabilityAndSendEvent(capabilitySetDescriptor, capabilityFromEvent);
+    } else if (isDummyAndCorrupted(capability)) {
+      capability = updateDummyCapabilityAndSendEvent(capabilitySetDescriptor, capability, capabilityFromEvent);
+    }
+    return capability;
+  }
+
+  private boolean isDummyAndCorrupted(Capability capability) {
+    return isTrue(capability.getDummyCapability()) && capabilityResolver.isCapabilityPermissionCorrupted(capability);
+  }
+
+  private Capability updateDummyCapabilityAndSendEvent(CapabilitySetDescriptor capabilitySetDescriptor,
+    Capability capability, Capability capabilityFromEvent) {
+    capabilityFromEvent.setApplicationId(capabilitySetDescriptor.getApplicationId());
+    capabilityFromEvent.setModuleId(capabilitySetDescriptor.getModuleId());
+    capabilityMapper.update(capabilityFromEvent, capability);
+    var result = capabilityService.save(capability);
+    log.debug("Updated dummy capability with name: {}, permission: {}", result.getName(), result.getPermission());
+
+    var event = CapabilityEvent.updated(result, capability);
+    applicationEventPublisher.publishEvent(event);
+    return result;
   }
 
   private Map<String, CapabilitySet> getExistingCapabilitySetsByNames(Set<String> newCapabilityNames) {

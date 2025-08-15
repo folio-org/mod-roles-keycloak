@@ -2,6 +2,7 @@
 * Ability to view Authorization roles and policies (MODROLESKC-314)
 * Implement replacement for dummy capabilities (MODROLESKC-306)
 * Add integration test for replace cross-module dummy capabilities (MODROLESKC-305)
+* Fix corrupted capabilities during Kafka event processing (MODROLESKC-316)
 
 ## Version `v3.0.5` (04.08.2025)
 * BE permission is not properly converted to capabilities after migration to Eureka (MODROLESKC-323)
