@@ -1,0 +1,35 @@
+{
+  "type": "UPDATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "mod-items-2.0.0",
+    "applicationId": "app-items-2.0.0",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "upgraded-feature.item.manage",
+          "displayName": "Upgraded Feature",
+          "replaces": [
+            "old-feature.item.view"
+          ]
+        }
+      }
+    ]
+  },
+  "old": {
+    "moduleId": "mod-items-1.0.0",
+    "applicationId": "app-items-1.0.0",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "upgraded-feature.item.manage",
+          "displayName": "Upgraded Feature",
+          "replaces": [
+            "old-feature.item.view"
+          ]
+        }
+      }
+    ]
+  }
+}

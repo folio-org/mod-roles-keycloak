@@ -1,0 +1,70 @@
+{
+  "type": "UPDATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "test-module-2.0.0",
+    "applicationId": "test-app-2.0.0",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "test.sub-capability.view",
+          "displayName": "Test Sub-Capability View",
+          "description": "A corrected capability from an event",
+          "visible": true
+        },
+        "endpoints": [
+          {
+            "path": "/test/sub-capability",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "test.capability-set.all",
+          "displayName": "Test Sub-Capability Edit",
+          "description": "A corrected capability from an event",
+          "subPermissions": [
+            "test.sub-capability.view",
+            "test.dummy.capability.view"
+          ],
+          "visible": true
+        }
+      }
+    ]
+  },
+  "old": {
+    "moduleId": "test-module-1.0.0",
+    "applicationId": "test-app-1.0.0",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "test.sub-capability.view",
+          "displayName": "Test Sub-Capability View",
+          "description": "A corrected capability from an event",
+          "visible": true
+        },
+        "endpoints": [
+          {
+            "path": "/test/sub-capability",
+            "method": "GET"
+          }
+        ]
+      },
+      {
+        "permission": {
+          "permissionName": "test.capability-set.all",
+          "displayName": "Test Sub-Capability Edit",
+          "description": "A corrected capability from an event",
+          "subPermissions": [
+            "test.sub-capability.view",
+            "test.dummy.capability.view",
+            "new.dummy.capability.view"
+          ],
+          "visible": true
+        }
+      }
+    ]
+  }
+}
