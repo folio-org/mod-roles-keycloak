@@ -8,6 +8,7 @@
 * Ability to view Authorization roles and policies (MODROLESKC-314)
 * Add integration test for replace cross-module dummy capabilities (MODROLESKC-305)
 * Fix corrupted capabilities during Kafka event processing (MODROLESKC-316)
+* Add fetchRoles config parameter for policies to fetch keycloak roles (MODROLESKC-325)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)
