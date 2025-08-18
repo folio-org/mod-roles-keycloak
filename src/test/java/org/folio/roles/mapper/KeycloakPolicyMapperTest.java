@@ -57,6 +57,7 @@ class KeycloakPolicyMapperTest {
     Policy policy, PolicyMapperContext context, PolicyRepresentation policyRepresentation) {
     var result = mapper.toKeycloakPolicy(policy, context);
     assertThat(result).isEqualTo(policyRepresentation);
+    assertThat(result.getConfig()).isEqualTo(policyRepresentation.getConfig());
     if (policy.getType() != PolicyType.TIME) {
       verify(jsonHelper).asJsonStringSafe(any());
     }
