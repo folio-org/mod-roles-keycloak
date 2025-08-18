@@ -1,7 +1,6 @@
 package org.folio.roles.mapper;
 
 import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonMap;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections4.MapUtils.emptyIfNull;
 import static org.apache.commons.lang3.ObjectUtils.anyNotNull;
@@ -40,6 +39,8 @@ import org.mapstruct.MappingTarget;
  */
 @Mapper(componentModel = "spring", injectionStrategy = CONSTRUCTOR, imports = PolicyType.class)
 public abstract class KeycloakPolicyMapper {
+
+  private static final String FETCH_ROLES_CONFIG_PROPERTY = "fetchRoles";
 
   @Resource private JsonHelper jsonHelper;
 
@@ -217,13 +218,19 @@ public abstract class KeycloakPolicyMapper {
   }
 
   private Map<String, String> getUserPolicyConfig(List<String> userIds) {
-    return userIds != null ? singletonMap("users", jsonHelper.asJsonStringSafe(userIds)) : emptyMap();
+    return userIds == null
+      ? emptyMap()
+      : Map.of(
+        "users", jsonHelper.asJsonStringSafe(userIds),
+        FETCH_ROLES_CONFIG_PROPERTY, "true");
   }
 
   private Map<String, String> getRolePolicyConfig(RolePolicy rolePolicy) {
-    return rolePolicy != null
-      ? singletonMap("roles", jsonHelper.asJsonStringSafe(rolePolicy.getRoles()))
-      : emptyMap();
+    return rolePolicy == null
+      ? emptyMap()
+      : Map.of(
+        "roles", jsonHelper.asJsonStringSafe(rolePolicy.getRoles()),
+        FETCH_ROLES_CONFIG_PROPERTY, "true");
   }
 
   private List<UUID> parseUserIds(Map<String, String> config) {
