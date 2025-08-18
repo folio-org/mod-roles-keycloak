@@ -452,7 +452,7 @@
             <directory>${project.build.testSourceDirectory}</directory>
           </testSourceDirectories>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
-          <maxAllowedViolations>36</maxAllowedViolations>
+          <maxAllowedViolations>20</maxAllowedViolations>
           <failsOnError>true</failsOnError>
           <outputEncoding>UTF-8</outputEncoding>
           <inputEncoding>UTF-8</inputEncoding>
@@ -460,7 +460,8 @@
           <failOnViolation>true</failOnViolation>
           <logViolationsToConsole>true</logViolationsToConsole>
           <configLocation>folio-checkstyle/checkstyle.xml</configLocation>
-          <propertiesLocation>checkstyle/checkstyle-checker.properties</propertiesLocation>
+          <propertiesLocation>${basedir}/checkstyle/checkstyle-checker.properties</propertiesLocation>
+          <suppressionsLocation>${basedir}/checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
           <cacheFile>${basedir}/target/cachefile</cacheFile>
         </configuration>
       </plugin>
