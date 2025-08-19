@@ -1,6 +1,5 @@
 package org.folio.roles.support;
 
-import static java.time.Instant.ofEpochSecond;
 import static java.time.Month.JANUARY;
 import static java.time.Month.SEPTEMBER;
 import static java.time.ZoneOffset.UTC;
@@ -130,8 +129,6 @@ public class PolicyUtils {
       .timePolicy(new TimePolicy()
         .logic(PolicyLogicType.POSITIVE)
         .repeat(true)
-        .start(Date.from(ofEpochSecond(1724716800)))
-        .expires(Date.from(ofEpochSecond(1724976000)))
         .monthStart(1)
         .monthEnd(3)
       );
@@ -150,8 +147,8 @@ public class PolicyUtils {
     policyRepresentation.setLogic(Logic.POSITIVE);
     policyRepresentation.setDecisionStrategy(DecisionStrategy.UNANIMOUS);
     policyRepresentation.setConfig(Map.ofEntries(
-      entry("nbf", "2024-08-27 00:00:00"),
-      entry("noa", "2024-08-30 00:00:00"),
+      entry("nbf", ""),
+      entry("noa", ""),
       entry("minute", ""),
       entry("minuteEnd", ""),
       entry("hour", ""),
@@ -179,7 +176,7 @@ public class PolicyUtils {
     policyRepresentation.setDecisionStrategy(DecisionStrategy.UNANIMOUS);
     policyRepresentation.setConfig(Map.of(
       "roles", "[{\"id\":\"" + ROLE_ID + "\",\"required\":false}]",
-      "fetchRoles", "false"
+      "fetchRoles", "true"
     ));
 
     return policyRepresentation;
@@ -197,7 +194,9 @@ public class PolicyUtils {
     policyRepresentation.setType("user");
     policyRepresentation.setLogic(Logic.POSITIVE);
     policyRepresentation.setDecisionStrategy(DecisionStrategy.UNANIMOUS);
-    policyRepresentation.setConfig(Map.of("users", "[\"" + KEYCLOAK_USER_ID + "\"]]"));
+    policyRepresentation.setConfig(Map.of(
+      "users", "[\"" + KEYCLOAK_USER_ID + "\"]",
+      "fetchRoles", "true"));
 
     return policyRepresentation;
   }
