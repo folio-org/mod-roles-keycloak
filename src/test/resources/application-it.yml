@@ -18,6 +18,7 @@ spring:
 application:
   environment: it-test
   secret-store:
+    environment: folio
     type: EPHEMERAL
     ephemeral:
       content:
