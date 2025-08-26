@@ -209,7 +209,6 @@
   "components": {
     "org.keycloak.userprofile.UserProfileProvider": [
       {
-        "id": "3f10040e-201c-4805-83ac-ab33cda5ff9d",
         "providerId": "declarative-user-profile",
         "subComponents": {},
         "config": {
