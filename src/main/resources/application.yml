@@ -78,7 +78,6 @@ application:
     migration:
       users-batch-size: ${KC_MIGRATION_USERS_BATCH_SIZE:100}
   secret-store:
-    environment: ${SECURE_STORE_ENV:folio}
     type: ${SECRET_STORE_TYPE}
     aws-ssm:
       region: ${SECRET_STORE_AWS_SSM_REGION:}

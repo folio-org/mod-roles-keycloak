@@ -1,6 +1,6 @@
 # mod-roles-keycloak
 
-Copyright (C) 2023-2025 The Open Library Foundation
+Copyright (C) 2023-2023 The Open Library Foundation
 
 This software is distributed under the terms of the Apache License, Version 2.0. See the file "[LICENSE](LICENSE)" for
 more information.
@@ -45,10 +45,6 @@ metadata about who and when created a record.
 See also configurations from https://github.com/folio-org/folio-spring-support/tree/release/v8.1/folio-spring-system-user - FOLIO_ENVIRONMENT, FOLIO_OKAPI_URL, FOLIO_SYSTEM_USER_USERNAME, FOLIO_SYSTEM_USER_PASSWORD.
 
 ### Secure storage environment variables
-
-| Name                | Default value | Description                                                                                                                                                    |
-|:--------------------|:--------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| SECURE_STORE_ENV    | folio         | First segment of the secure store key, for example `prod` or `test`. Defaults to `folio`. In Ramsons and Sunflower defaults to ENV with fall-back `folio`.     |
 
 #### AWS-SSM
 
