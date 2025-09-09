@@ -1,7 +1,6 @@
 package org.folio.roles.integration.keyclock;
 
 import lombok.RequiredArgsConstructor;
-import org.folio.common.configuration.properties.FolioEnvironment;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
 import org.folio.roles.integration.keyclock.model.KeycloakRealmConfiguration;
 import org.folio.spring.FolioExecutionContext;
