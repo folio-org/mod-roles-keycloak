@@ -45,7 +45,7 @@
     <folio-spring-support.version>9.0.0</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.1.0</folio-java-checkstyle.version>
-    <applications-poc-tools.version>3.0.0</applications-poc-tools.version>
+    <applications-poc-tools.version>3.0.4</applications-poc-tools.version>
     <hibernate.version>6.5.3.Final</hibernate.version>
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
