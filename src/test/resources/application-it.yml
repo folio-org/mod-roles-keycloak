@@ -18,6 +18,7 @@ spring:
 application:
   environment: it-test
   secret-store:
+    environment: it-test
     type: EPHEMERAL
     ephemeral:
       content:

@@ -1,12 +1,12 @@
 package org.folio.roles.integration.keyclock;
 
 import lombok.RequiredArgsConstructor;
-import org.folio.common.configuration.properties.FolioEnvironment;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
 import org.folio.roles.integration.keyclock.model.KeycloakRealmConfiguration;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.tools.store.SecureStore;
 import org.folio.tools.store.exception.SecureStoreServiceException;
+import org.folio.tools.store.properties.SecureStoreProperties;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -15,9 +15,9 @@ import org.springframework.stereotype.Service;
 public class RealmConfigurationProvider {
 
   private static final String REALM = "master";
-  private final FolioEnvironment folioEnvironment;
   private final SecureStore secureStore;
   private final KeycloakConfigurationProperties keycloakConfigurationProperties;
+  private final SecureStoreProperties secureStoreProperties;
 
   /**
    * Provides realm configuration using {@link FolioExecutionContext} object.
@@ -34,7 +34,7 @@ public class RealmConfigurationProvider {
 
   private String retrieveKcClientSecret(String clientId) {
     try {
-      return secureStore.get(buildKey(folioEnvironment.getEnvironment(), clientId));
+      return secureStore.get(buildKey(secureStoreProperties.getEnvironment(), clientId));
     } catch (SecureStoreServiceException e) {
       throw new IllegalStateException(String.format(
         "Failed to get value from secure store [clientId: %s]", clientId), e);
