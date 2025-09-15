@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.Optional;
-import org.folio.common.configuration.properties.FolioEnvironment;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
 import org.folio.roles.integration.keyclock.model.KeycloakRealmConfiguration;
 import org.folio.spring.DefaultFolioExecutionContext;
@@ -18,17 +17,18 @@ import org.folio.spring.FolioExecutionContext;
 import org.folio.test.types.UnitTest;
 import org.folio.tools.store.SecureStore;
 import org.folio.tools.store.exception.NotFoundException;
+import org.folio.tools.store.properties.SecureStoreProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cache.Cache.ValueWrapper;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @UnitTest
 @SpringBootTest(classes = {RealmConfigurationProvider.class,
@@ -45,11 +45,11 @@ class RealmConfigurationProviderTest {
   private RealmConfigurationProvider realmConfigurationProvider;
   @Autowired
   private CacheManager cacheManager;
-  @MockBean
+  @MockitoBean
   private SecureStore secureStore;
-  @MockBean
+  @MockitoBean
   private KeycloakConfigurationProperties keycloakConfigurationProperties;
-  @MockBean private FolioEnvironment folioEnvironment;
+  @MockitoBean private SecureStoreProperties secureStoreProperties;
 
   @AfterEach
   void tearDown() {
@@ -59,7 +59,7 @@ class RealmConfigurationProviderTest {
   @Test
   void getRealmConfiguration_positive() throws Exception {
     when(keycloakConfigurationProperties.getClientId()).thenReturn(CLIENT_ID);
-    when(folioEnvironment.getEnvironment()).thenReturn("test");
+    when(secureStoreProperties.getEnvironment()).thenReturn("test");
     when(secureStore.get(KEY)).thenReturn(SECRET);
 
     var actual = realmConfigurationProvider.getRealmConfiguration();
@@ -75,7 +75,7 @@ class RealmConfigurationProviderTest {
   @Test
   void getRealmConfiguration_clientSecretNotFound() throws Exception {
     when(keycloakConfigurationProperties.getClientId()).thenReturn(CLIENT_ID);
-    when(folioEnvironment.getEnvironment()).thenReturn("test");
+    when(secureStoreProperties.getEnvironment()).thenReturn("test");
     when(secureStore.get(KEY)).thenThrow(new NotFoundException("not found"));
 
     assertThatThrownBy(() -> realmConfigurationProvider.getRealmConfiguration())
