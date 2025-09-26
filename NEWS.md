@@ -1,10 +1,12 @@
+## Version `v3.0.9` (26.09.2025)
+* Use SECURE_STORE_ENV, not ENV, for secure store key (MODROLESKC-326)
+
 ## Version `v3.0.8` (09.09.2025)
 * Upgrade to Keycloak 26.3.3 (KEYCLOAK-56)
 
 ## Version `v3.0.7` (21.08.2025)
 * Fix corrupted capabilities during Kafka event processing (MODROLESKC-316)
 * Add fetchRoles config parameter for policies to fetch keycloak roles (MODROLESKC-325)
-* Use SECURE_STORE_ENV, not ENV, for secure store key (MODROLESKC-326)
 
 ## Version `v3.0.6` (07.08.2025)
 * Ability to view Authorization roles and policies (MODROLESKC-314)
