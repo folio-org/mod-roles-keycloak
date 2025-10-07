@@ -128,13 +128,12 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
     var finalRoleNames = regularRolesAfterUpgrade.stream()
       .map(org.folio.roles.domain.dto.Role::getName)
       .collect(Collectors.toSet());
-    assertThat(finalRoleNames).containsExactlyInAnyOrder(
-      name(circAdminRole),
-      name(circObserverRole),
-      name(circStaffRole)
-    );
-
-    assertThat(finalRoleNames).doesNotContain(name(circStudentRole));
+    assertThat(finalRoleNames)
+      .containsExactlyInAnyOrder(
+        name(circAdminRole),
+        name(circObserverRole),
+        name(circStaffRole))
+      .doesNotContain(name(circStudentRole));
   }
 
   @Test
