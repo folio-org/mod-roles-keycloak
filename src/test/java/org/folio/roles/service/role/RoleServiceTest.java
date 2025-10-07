@@ -144,7 +144,7 @@ class RoleServiceTest {
     }
 
     @Test
-    void create_withNullDescription() {
+    void createRole_withNullDescription_positive() {
       var role = role();
       role.setDescription(null);
       when(keycloakService.create(role)).thenReturn(role);
@@ -157,7 +157,7 @@ class RoleServiceTest {
     }
 
     @Test
-    void create_withEmptyDescription() {
+    void createRole_withEmptyDescription_positive() {
       var role = role();
       role.setDescription("");
       when(keycloakService.create(role)).thenReturn(role);
