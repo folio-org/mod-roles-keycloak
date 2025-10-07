@@ -256,6 +256,48 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.errors[0].code", is("not_found_error")));
   }
 
+  @Test
+  @KeycloakRealms("classpath:json/keycloak/test-realm.json")
+  void createRole_withNullDescription_positive() throws Exception {
+    var roleToCreate = new Role().name("test role null desc");
+    var roleToCreateAsJson = asJsonString(roleToCreate);
+    var result = mockMvc.perform(post("/roles")
+        .content(roleToCreateAsJson)
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isCreated())
+      .andExpect(jsonPath("$.id").value(notNullValue()))
+      .andExpect(jsonPath("$.name").value("test role null desc"))
+      .andExpect(jsonPath("$.description").value(""))
+      .andExpect(jsonPath("$.metadata.createdByUserId").value(equalTo(USER_ID_HEADER)))
+      .andReturn();
+
+    var createdRole = parseResponse(result, Role.class);
+    assertNotNull(createdRole.getDescription());
+    assertEquals("", createdRole.getDescription());
+  }
+
+  @Test
+  @KeycloakRealms("classpath:json/keycloak/test-realm.json")
+  void createRole_withEmptyDescription_positive() throws Exception {
+    var roleToCreate = new Role().name("test role empty desc").description("");
+    var result = mockMvc.perform(post("/roles")
+        .content(asJsonString(roleToCreate))
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isCreated())
+      .andExpect(jsonPath("$.id").value(notNullValue()))
+      .andExpect(jsonPath("$.name").value("test role empty desc"))
+      .andExpect(jsonPath("$.description").value(""))
+      .andReturn();
+
+    var createdRole = parseResponse(result, Role.class);
+    assertNotNull(createdRole.getDescription());
+    assertEquals("", createdRole.getDescription());
+  }
+
   private static Date timestampFrom(String value) {
     return Date.from(LocalDateTime.parse(value).atZone(systemDefault()).toInstant());
   }

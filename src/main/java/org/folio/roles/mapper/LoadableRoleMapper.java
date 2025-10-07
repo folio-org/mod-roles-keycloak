@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 public interface LoadableRoleMapper {
 
   @AuditableEntityMapping
+  @Mapping(target = "description", source = "role.description", defaultValue = "")
   LoadableRoleEntity toRoleEntity(LoadableRole role);
 
   List<LoadableRoleEntity> toRoleEntity(List<LoadableRole> role);

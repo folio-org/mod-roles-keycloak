@@ -142,6 +142,32 @@ class RoleServiceTest {
       verifyNoInteractions(keycloakService);
       verifyNoInteractions(entityService);
     }
+
+    @Test
+    void createRole_withNullDescription_positive() {
+      var role = role();
+      role.setDescription(null);
+      when(keycloakService.create(role)).thenReturn(role);
+      when(entityService.create(role)).thenReturn(role);
+
+      facade.create(role);
+
+      verify(keycloakService).create(role);
+      verify(entityService).create(role);
+    }
+
+    @Test
+    void createRole_withEmptyDescription_positive() {
+      var role = role();
+      role.setDescription("");
+      when(keycloakService.create(role)).thenReturn(role);
+      when(entityService.create(role)).thenReturn(role);
+
+      facade.create(role);
+
+      verify(keycloakService).create(role);
+      verify(entityService).create(role);
+    }
   }
 
   @Nested

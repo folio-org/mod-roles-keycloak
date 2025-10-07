@@ -21,6 +21,7 @@ public interface RoleEntityMapper {
 
   @AuditableEntityMapping
   @Mapping(target = "type", source = "role.type", defaultValue = "REGULAR")
+  @Mapping(target = "description", source = "role.description", defaultValue = "")
   RoleEntity toRoleEntity(Role role);
 
   /**
