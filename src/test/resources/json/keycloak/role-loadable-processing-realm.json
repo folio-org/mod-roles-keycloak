@@ -359,6 +359,24 @@
                 "name": "GET"
               }
             ]
+          },
+          {
+            "name": "/nested/dummy/items",
+            "ownerManagedAccess": false,
+            "attributes": {
+              "folio_permissions": [
+                "POST#nested.dummy.permission.post"
+              ]
+            },
+            "_id": "a1b2c3d4-e5f6-7890-1234-567890abcdee",
+            "uris": [
+              "/nested/dummy/items"
+            ],
+            "scopes": [
+              {
+                "name": "POST"
+              }
+            ]
           }
         ],
         "scopes": [

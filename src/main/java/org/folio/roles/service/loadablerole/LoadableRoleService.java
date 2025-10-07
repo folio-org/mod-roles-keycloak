@@ -244,6 +244,7 @@ public class LoadableRoleService {
     if (isRoleDataChanged(target, source)) {
       target.setName(source.getName());
       target.setDescription(source.getDescription());
+      target.setLoadedFromFile(source.isLoadedFromFile());
 
       keycloakService.update(mapper.toRegularRole(target));
       log.debug("Loadable role name/description updated: roleId = {}, name = {}, description = {}",
