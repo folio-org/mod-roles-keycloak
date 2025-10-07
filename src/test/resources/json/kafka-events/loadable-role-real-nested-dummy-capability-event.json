@@ -1,0 +1,24 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "ui-level-3-module-1.0.0",
+    "moduleType": "module",
+    "applicationId": "ui-level-3-app-1.0.0",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "nested.dummy.permission.post",
+          "displayName": "Nested Dummy Permission: Can post"
+        },
+        "endpoints": [
+          {
+            "path": "/nested/dummy/items",
+            "method": "POST"
+          }
+        ]
+      }
+    ]
+  }
+}
