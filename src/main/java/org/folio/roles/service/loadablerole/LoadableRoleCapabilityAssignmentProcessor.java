@@ -46,20 +46,13 @@ public class LoadableRoleCapabilityAssignmentProcessor {
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).CREATE")
   public void handleCapabilitiesCreatedEvent(CapabilityEvent event) {
     log.debug("\"Capabilities Created\" event received: {}", event);
-    var capability = event.getNewObject();
+    handleCapabilityEvent(event, "created");
+  }
 
-    log.info("Handling created capability: capabilityName = {}, permission = {}", capability.getName(),
-      capability.getPermission());
-
-    if (isTechnicalCapability(capability)) {
-      log.debug("Technical capability found: {}. Skipping...", capability);
-      return;
-    }
-
-    var permission = capability.getPermission();
-
-    applyActionToRoles(() -> findRoleWithPermissionsByPermissionNames(List.of(permission)),
-      assignCapabilitiesToRole(Map.of(permission, capability)), event.getContext());
+  @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).UPDATE")
+  public void handleCapabilitiesUpdateEvent(CapabilityEvent event) {
+    log.debug("\"Capabilities Updated\" event received: {}", event);
+    handleCapabilityEvent(event, "updated");
   }
 
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).CREATE")
@@ -90,6 +83,24 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
     // reflecting changes in the roles due to modification of a capability set currently is not supported
     // by Role Capability Set service
+  }
+
+  private void handleCapabilityEvent(CapabilityEvent event, String eventType) {
+    var capability = event.getNewObject();
+
+    log.info("Handling {} capability: capabilityName = {}, permission = {}", eventType, capability.getName(),
+      capability.getPermission());
+
+    if (isTechnicalCapability(capability)) {
+      log.info("Technical capability found: capabilityName = {}, permission = {}. Skipping...", capability.getName(),
+        capability.getPermission());
+      return;
+    }
+
+    var permission = capability.getPermission();
+
+    applyActionToRoles(() -> findRoleWithPermissionsByPermissionNames(List.of(permission)),
+      assignCapabilitiesToRole(Map.of(permission, capability)), event.getContext());
   }
 
   private Supplier<Map<UUID, List<LoadablePermission>>> findRolesWithPermissionsByCapabilitySet(
@@ -144,7 +155,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       rolePermission.setCapabilitySetId(capabilitySet.getId());
       service.save(rolePermission);
 
-      log.info("Capability set assigned to loadable permission: roleId = {}, permission = {}, capabilitySet = {}",
+      log.info("Capability set assigned to loadable role: roleId = {}, permission = {}, capabilitySet = {}",
         () -> roleId, () -> rolePermission, () -> shortDescription(capabilitySet));
     };
   }
@@ -167,10 +178,12 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
   private static LoadablePermission getSingleLoadablePermission(UUID roleId, List<LoadablePermission> rolePermissions) {
     if (rolePermissions.size() != 1) {
+      log.warn("Expected one loadable permission in the role but several found: "
+        + "roleId = {}, rolePermissions = {}", roleId, rolePermissions);
       throw new IllegalStateException("Expected one loadable permission in the role but several found: "
         + "roleId = " + roleId + ", rolePermissions = " + rolePermissions);
     }
-    return rolePermissions.get(0);
+    return rolePermissions.getFirst();
   }
 
   private static Collection<String> toPermissionNames(Collection<LoadablePermission> rolePermissions) {
@@ -200,7 +213,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
   }
 
   private static String shortDescription(CapabilitySet set) {
-    return new ToStringBuilder(set)
+    return new ToStringBuilder(set.getName() + " : ")
       .append("id", set.getId())
       .append("name", set.getName())
       .append("applicationId", set.getApplicationId())

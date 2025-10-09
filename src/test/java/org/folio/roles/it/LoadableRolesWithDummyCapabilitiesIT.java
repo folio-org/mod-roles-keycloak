@@ -75,17 +75,18 @@ class LoadableRolesWithDummyCapabilitiesIT extends BaseIntegrationTest {
     final var permissionRealLevel1 = "real.permission.get";
     final var permissionDummySetLevel2 = "ui-level-2.all";
     final var permissionNestedSetLevel2 = "nested.permission.get";
-    // "nested.dummy.permission.post" - unused permission (dummy), it is not expected into user permission result list
+    final var permissionNestedDummyLevel3 = "nested.dummy.permission.post";
 
     // Step 1: Create a loadable role that requires a capability set which, in turn, contains a dummy set
-    var role = new LoadableRole().name("Nested Dummy Set Role").description("Role to test nested dummy capability sets")
+    var loadableRole = new LoadableRole().name("Nested Dummy Set Role")
+      .description("Role to test nested dummy capability sets")
       .permissions(List.of(new LoadablePermission().permissionName("ui-level-1.all")));
 
-    var mvcResult = doPut("/loadable-roles", role).andReturn();
-    var createdRole = parseResponse(mvcResult, LoadableRole.class);
+    var createdLoadableRole = parseResponse(doPut("/loadable-roles", loadableRole).andReturn(), LoadableRole.class);
 
     // Step 2: Assign role to the user
-    var userRoleRequest = new UserRolesRequest().userId(UUID.fromString(USER_ID)).roleIds(List.of(createdRole.getId()));
+    var userRoleRequest =
+      new UserRolesRequest().userId(UUID.fromString(USER_ID)).roleIds(List.of(createdLoadableRole.getId()));
     doPost("/roles/users", userRoleRequest);
 
     // Step 3: Send the first event, creating a real set with a nested dummy set
@@ -104,7 +105,17 @@ class LoadableRolesWithDummyCapabilitiesIT extends BaseIntegrationTest {
     await().untilAsserted(() -> {
       var userPermissions = getUserPermissions(USER_ID);
       assertThat(userPermissions).containsExactlyInAnyOrder(permissionSetLevel1, permissionRealLevel1,
-        permissionDummySetLevel2, permissionNestedSetLevel2);
+        permissionNestedSetLevel2, permissionDummySetLevel2);
+    });
+
+    // Step 7: Send the third event, which resolves the final nested dummy capability
+    sendCapabilityEvent("json/kafka-events/loadable-role-real-nested-dummy-capability-event.json");
+
+    // Step 8: Verify that the user now has all permissions, including the one from the final event
+    await().untilAsserted(() -> {
+      var userPermissions = getUserPermissions(USER_ID);
+      assertThat(userPermissions).containsExactlyInAnyOrder(permissionSetLevel1, permissionRealLevel1,
+        permissionNestedSetLevel2, permissionDummySetLevel2, permissionNestedDummyLevel3);
     });
   }
 

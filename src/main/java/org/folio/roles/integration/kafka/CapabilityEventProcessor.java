@@ -173,7 +173,7 @@ public class CapabilityEventProcessor {
         .description(resource.getPermission().getDescription());
     }
 
-    log.info("Created capability holder with name: {}, permission: {}, resource: {}, action: {}",
+    log.debug("Created capability holder with name: {}, permission: {}, resource: {}, action: {}",
       capability.getName(), capability.getPermission(), capability.getResource(), capability.getAction());
 
     return capability;

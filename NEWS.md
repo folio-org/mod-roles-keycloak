@@ -11,6 +11,7 @@
 * Add fetchRoles config parameter for policies to fetch keycloak roles (MODROLESKC-325)
 * Use SECURE_STORE_ENV, not ENV, for secure store key (MODROLESKC-326)
 * Role with null description becomes invalid (MODROLESKC-308)
+* Improve loadable role capability assignment logic (MODROLESKC-315)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)

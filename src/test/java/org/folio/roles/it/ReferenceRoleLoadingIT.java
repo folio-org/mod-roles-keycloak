@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.assertj.core.api.ThrowingConsumer;
 import org.folio.roles.base.BaseIntegrationTest;
@@ -93,15 +94,46 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
       .thenReturn(Stream.of(circAdminRole, circObserverRole, circStaffRole)); // admin added, student removed
 
     enableTenant(TENANT_ID, TENANT_ATTR); // initialize
+
+    var loadableRolesAfterInit =
+      parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
+    var regularRolesAfterInit =
+      parseResponse(doGet("/roles").andReturn(), org.folio.roles.domain.dto.Roles.class).getRoles();
+
+    assertThat(loadableRolesAfterInit).hasSize(3);
+    assertThat(regularRolesAfterInit).hasSize(3);
+    var initialRoleNames = regularRolesAfterInit.stream()
+      .map(org.folio.roles.domain.dto.Role::getName)
+      .collect(Collectors.toSet());
+    assertThat(initialRoleNames).containsExactlyInAnyOrder(
+      name(circObserverRole),
+      name(circStaffRole),
+      name(circStudentRole)
+    );
+
     enableTenant(TENANT_ID, TENANT_ATTR); // upgrade
 
-    var roles = parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
+    var loadableRolesAfterUpgrade =
+      parseResponse(doGet("/loadable-roles").andReturn(), LoadableRoles.class).getLoadableRoles();
+    var regularRolesAfterUpgrade =
+      parseResponse(doGet("/roles").andReturn(), org.folio.roles.domain.dto.Roles.class).getRoles();
 
-    assertThat(roles).satisfiesExactly(
+    assertThat(loadableRolesAfterUpgrade).satisfiesExactly(
       roleMatches(circAdminRole),
       roleMatches(circObserverRole),
       roleMatches(circStaffRole)
     );
+
+    assertThat(regularRolesAfterUpgrade).hasSize(3);
+    var finalRoleNames = regularRolesAfterUpgrade.stream()
+      .map(org.folio.roles.domain.dto.Role::getName)
+      .collect(Collectors.toSet());
+    assertThat(finalRoleNames)
+      .containsExactlyInAnyOrder(
+        name(circAdminRole),
+        name(circObserverRole),
+        name(circStaffRole))
+      .doesNotContain(name(circStudentRole));
   }
 
   @Test
@@ -155,7 +187,7 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   }
 
   private void changeNameAndDescription(PlainLoadableRoles roleToChange, List<LoadableRole> existingRoles) {
-    var role = roleToChange.getRoles().get(0);
+    var role = roleToChange.getRoles().getFirst();
     var roleId = findRoleIdByName(existingRoles, role.getName());
     role.setId(roleId);
     role.setName(role.getName() + " updated");
@@ -163,7 +195,7 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   }
 
   private void changePermissions(PlainLoadableRoles roleToChange, List<LoadableRole> existingRoles) {
-    var role = roleToChange.getRoles().get(0);
+    var role = roleToChange.getRoles().getFirst();
     var roleId = findRoleIdByName(existingRoles, role.getName());
     role.setId(roleId);
 
@@ -180,8 +212,7 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
 
   private static ThrowingConsumer<LoadableRole> roleMatches(PlainLoadableRoles expectedPlainRole) {
     return role -> {
-      var expected = expectedPlainRole.getRoles().get(0);
-
+      var expected = expectedPlainRole.getRoles().getFirst();
       assertThat(role.getId()).isNotNull();
       assertThat(role.getType()).isEqualTo(defaultIfNull(expected.getType(), DEFAULT));
       assertThat(role.getName()).isEqualTo(expected.getName());
@@ -206,5 +237,9 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
 
   private static PlainLoadableRoles readRole(String filename) {
     return readValue("json/reference-data/roles/" + filename, PlainLoadableRoles.class);
+  }
+
+  private static String name(PlainLoadableRoles loadableRole) {
+    return loadableRole.getRoles().getFirst().getName();
   }
 }

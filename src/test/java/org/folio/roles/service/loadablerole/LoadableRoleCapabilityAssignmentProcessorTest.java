@@ -99,6 +99,47 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   }
 
   @Test
+  void handleCapabilitiesUpdateEvent_positive() {
+    var permission = "permission1";
+    var capabilityId = randomUUID();
+
+    var perms = loadablePermissions(5);
+    for (LoadablePermission perm : perms) {
+      perm.setPermissionName(permission);
+      perm.setCapabilityId(null);
+    }
+
+    when(service.findAllByPermissions(List.of(permission))).thenReturn(perms);
+
+    perms.forEach(perm -> {
+      when(roleCapabilityService.create(perm.getRoleId(), List.of(capabilityId), false)).thenReturn(null);
+
+      var permsWithCapabilityId = List.of(copy(perm).capabilityId(capabilityId));
+      when(service.saveAll(permsWithCapabilityId)).thenReturn(permsWithCapabilityId);
+    });
+
+    var capability = capability(capabilityId, permission);
+    var event = (CapabilityEvent) CapabilityEvent.updated(capability, capability).withContext(context);
+    processor.handleCapabilitiesUpdateEvent(event);
+
+    var firstLoadablePermission = perms.getFirst();
+    verify(roleCapabilityService).create(firstLoadablePermission.getRoleId(), List.of(capabilityId), false);
+    verify(service).saveAll(List.of(copy(firstLoadablePermission).capabilityId(capabilityId)));
+  }
+
+  @Test
+  void handleCapabilitiesUpdateEvent_positive_loadablePermissionsNotFound() {
+    var permission = "permission1";
+    var capability = capability(randomUUID(), permission);
+    var event = (CapabilityEvent) CapabilityEvent.updated(capability, capability).withContext(context);
+    when(service.findAllByPermissions(List.of(permission))).thenReturn(emptyList());
+
+    processor.handleCapabilitiesUpdateEvent(event);
+
+    verifyNoInteractions(roleCapabilityService, roleCapabilitySetService);
+  }
+
+  @Test
   void handleCapabilitySetCreatedEvent_positive() {
     var capabilitySet = capabilitySet();
     var capability = capability();
