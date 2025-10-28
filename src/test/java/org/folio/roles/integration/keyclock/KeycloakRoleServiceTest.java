@@ -23,7 +23,6 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import java.util.List;
-import java.util.Optional;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.roles.mapper.KeycloakRoleMapper;

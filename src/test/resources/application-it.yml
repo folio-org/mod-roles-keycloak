@@ -30,10 +30,10 @@ application:
       trust-store-password: secretpassword
       trust-store-type: JKS
     retry:
-      max-attempts: ${KEYCLOAK_MAX_ATTEMPTS:3}
+      max-attempts: 3
       backoff:
-        delay-ms: ${KEYCLOAK_BACKOFF_DELAY_MS:20000}
-        multiplier: ${KEYCLOAK_BACKOFF_MULTIPLIER:3}
+        delay-ms: 20000
+        multiplier: 3
   moduserskc:
     url: moduserskc
   folio-permissions:
