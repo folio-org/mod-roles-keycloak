@@ -1,6 +1,6 @@
 package org.folio.roles.integration.keyclock;
 
-import static java.util.Optional.empty;
+import static java.lang.String.format;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -17,11 +17,19 @@ import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.roles.mapper.KeycloakRoleMapper;
 import org.folio.spring.FolioExecutionContext;
 import org.keycloak.admin.client.Keycloak;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 @Log4j2
 @Service
+@Retryable(
+  retryFor = KeycloakApiException.class,
+  maxAttemptsExpression =  "#{${application.keycloak.retry.max-attempts}}",
+  backoff = @Backoff(delayExpression = "#{${application.keycloak.retry.backoff.delay-ms}}",
+    multiplierExpression = "#{${application.keycloak.retry.backoff.multiplier}}")
+)
 @RequiredArgsConstructor
 public class KeycloakRoleService {
 
@@ -112,22 +120,9 @@ public class KeycloakRoleService {
       log.debug("Role has been created: id = {}, name = {}", role.getId(), role.getName());
       return keycloakRoleMapper.toRole(foundKeycloakRole);
     } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to create keycloak role", exception);
-    }
-  }
-
-  /**
-   * Creates a role, suppressing all exception during create process.
-   *
-   * @param role - role object to be created
-   * @return {@link Optional} with created {@link Role}, or {@link Optional#empty()} if exception occurred
-   */
-  public Optional<Role> createSafe(Role role) {
-    try {
-      return Optional.of(create(role));
-    } catch (Exception e) {
-      log.debug("Failed to create role: name = {}", role.getName(), e);
-      return empty();
+      var errorMessage = format("Failed to create keycloak role: name = %s", role.getName());
+      log.error(errorMessage);
+      throw new KeycloakApiException(errorMessage, exception);
     }
   }
 
