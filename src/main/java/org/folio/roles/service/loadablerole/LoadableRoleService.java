@@ -74,7 +74,7 @@ public class LoadableRoleService {
     try (var loadableRoles = repository.findAllByType(EntityRoleType.DEFAULT)) {
       loadableRoles.map(LoadableRoleEntity::getName)
         .map(keycloakService::findByName)
-        .forEach(optRole -> optRole.ifPresent(kcRole -> keycloakService.deleteByIdSafe(kcRole.getId())));
+        .forEach(optRole -> optRole.ifPresent(kcRole -> deleteByIdSafe(kcRole.getId())));
     }
   }
 
@@ -103,6 +103,19 @@ public class LoadableRoleService {
     var saved = repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
       .orElseThrow(() -> new ServiceException("Loadable role not found in DB"));
     return mapper.toRole(saved);
+  }
+
+  /**
+   * Deletes role by identifier, suppressing all exception during delete process.
+   *
+   * @param id - role identifier
+   */
+  private void deleteByIdSafe(UUID id) {
+    try {
+      keycloakService.deleteById(id);
+    } catch (Exception exception) {
+      log.debug("Failed to delete Role in Keycloak: id = {}", id, exception);
+    }
   }
 
   private void prepareLoadableRole(LoadableRole loadableRole) {
@@ -210,7 +223,7 @@ public class LoadableRoleService {
 
       return result;
     } catch (Exception e) {
-      createdInKeycloakRoleIds.forEach(keycloakService::deleteByIdSafe);
+      createdInKeycloakRoleIds.forEach(this::deleteByIdSafe);
 
       throw new ServiceException("Failed to create loadable roles", e);
     }
@@ -283,7 +296,7 @@ public class LoadableRoleService {
     repository.flush();
     repository.deleteAllInBatch(entities);
 
-    entities.forEach(entity -> keycloakService.deleteByIdSafe(entity.getId()));
+    entities.forEach(entity -> deleteByIdSafe(entity.getId()));
     log.info("Loadable roles deleted: {}", () -> toIdNames(entities));
   }
 

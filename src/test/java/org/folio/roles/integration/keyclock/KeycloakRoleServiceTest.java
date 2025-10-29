@@ -44,11 +44,9 @@ import org.keycloak.admin.client.resource.RolesResource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.system.CapturedOutput;
-import org.springframework.boot.test.system.OutputCaptureExtension;
 
 @UnitTest
-@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
+@ExtendWith(MockitoExtension.class)
 class KeycloakRoleServiceTest {
 
   @InjectMocks private KeycloakRoleService keycloakRoleService;
@@ -357,37 +355,6 @@ class KeycloakRoleServiceTest {
       assertThatThrownBy(() -> keycloakRoleService.deleteById(ROLE_ID))
         .isInstanceOf(KeycloakApiException.class)
         .hasMessage("Failed to delete role: %s", ROLE_ID);
-    }
-  }
-
-  @Nested
-  @DisplayName("deleteByIdSafe")
-  class DeleteByIdSafe {
-
-    @Test
-    void positive() {
-      var rolesByIdResource = mock(RoleByIdResource.class);
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.rolesById()).thenReturn(rolesByIdResource);
-
-      keycloakRoleService.deleteByIdSafe(ROLE_ID);
-
-      verify(rolesByIdResource).deleteRole(ROLE_ID.toString());
-    }
-
-    @Test
-    void negative_unauthorizedException(CapturedOutput capturedOutput) {
-      var rolesByIdResource = mock(RoleByIdResource.class);
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.rolesById()).thenReturn(rolesByIdResource);
-
-      var exception = new NotAuthorizedException(new ServerResponse(null, 401, new Headers<>()));
-      doThrow(exception).when(rolesByIdResource).deleteRole(ROLE_ID.toString());
-
-      keycloakRoleService.deleteByIdSafe(ROLE_ID);
-
-      assertThat(capturedOutput).contains("Failed to delete Role in Keycloak: id = " + ROLE_ID);
-      verify(rolesByIdResource).deleteRole(ROLE_ID.toString());
     }
   }
 

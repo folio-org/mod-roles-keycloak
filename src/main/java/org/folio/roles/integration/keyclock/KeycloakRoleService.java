@@ -54,7 +54,9 @@ public class KeycloakRoleService {
       log.debug("Role hasn't been found by id: id = {}", id);
       return Optional.empty();
     } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to find role: id = " + id, exception);
+      var errorMessage = format("Failed to find role: id = %s", id);
+      log.debug(errorMessage);
+      throw new KeycloakApiException(errorMessage, exception);
     }
   }
 
@@ -68,7 +70,9 @@ public class KeycloakRoleService {
       log.debug("Role hasn't been found by name: name = {}", name);
       return Optional.empty();
     } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to find role by name: " + name, exception);
+      var errorMessage = format("Failed to find role by name: %s", name);
+      log.debug(errorMessage);
+      throw new KeycloakApiException(errorMessage, exception);
     }
   }
 
@@ -100,7 +104,9 @@ public class KeycloakRoleService {
       log.debug("Roles have been found: names = {}", () -> mapItems(roles, Role::getName));
       return PageResult.of(roles.size(), roles);
     } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to search roles by query: " + query, exception);
+      var errorMessage = format("Failed to search roles by query: %s", query);
+      log.debug(errorMessage);
+      throw new KeycloakApiException(errorMessage, exception);
     }
   }
 
@@ -121,7 +127,7 @@ public class KeycloakRoleService {
       return keycloakRoleMapper.toRole(foundKeycloakRole);
     } catch (WebApplicationException exception) {
       var errorMessage = format("Failed to create keycloak role: name = %s", role.getName());
-      log.error(errorMessage);
+      log.debug(errorMessage);
       throw new KeycloakApiException(errorMessage, exception);
     }
   }
@@ -144,7 +150,9 @@ public class KeycloakRoleService {
       log.debug("Role has been updated: name = {}", role.getName());
       return role;
     } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to update role: " + role.getId(), exception);
+      var errorMessage = format("Failed to update role: %s", role.getId());
+      log.debug(errorMessage);
+      throw new KeycloakApiException(errorMessage, exception);
     }
   }
 
@@ -161,20 +169,9 @@ public class KeycloakRoleService {
       realmResource.rolesById().deleteRole(id != null ? id.toString() : null);
       log.debug("Role has been deleted: id = {}", id);
     } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to delete role: " + id, exception);
-    }
-  }
-
-  /**
-   * Deletes role by identifier, suppressing all exception during delete process.
-   *
-   * @param id - role identifier
-   */
-  public void deleteByIdSafe(UUID id) {
-    try {
-      deleteById(id);
-    } catch (Exception exception) {
-      log.debug("Failed to delete Role in Keycloak: id = {}", id, exception);
+      var errorMessage = format("Failed to delete role: %s", id);
+      log.debug(errorMessage);
+      throw new KeycloakApiException(errorMessage, exception);
     }
   }
 }
