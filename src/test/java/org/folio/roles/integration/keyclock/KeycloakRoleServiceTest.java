@@ -1,14 +1,12 @@
 package org.folio.roles.integration.keyclock;
 
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.RoleUtils.ROLE_NAME;
 import static org.folio.roles.support.RoleUtils.keycloakRole;
 import static org.folio.roles.support.RoleUtils.role;
-import static org.folio.roles.support.RoleUtils.role2;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.atLeastOnce;
@@ -18,12 +16,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
-import java.util.List;
-import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.roles.mapper.KeycloakRoleMapper;
 import org.folio.roles.support.TestUtils;
@@ -64,101 +59,6 @@ class KeycloakRoleServiceTest {
   @AfterEach
   void afterEach() {
     TestUtils.verifyNoMoreInteractions(this);
-  }
-
-  @Nested
-  @DisplayName("findById")
-  class FindById {
-
-    @Test
-    void positive_roleFound() {
-      var role = role();
-      var keycloakRole = keycloakRole();
-
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.rolesById().getRole(ROLE_ID.toString())).thenReturn(keycloakRole);
-      when(keycloakRoleMapper.toRole(keycloakRole)).thenReturn(role);
-
-      var actual = keycloakRoleService.findById(ROLE_ID);
-
-      assertThat(actual).contains(role);
-      verify(realmResource, atLeastOnce()).rolesById();
-    }
-
-    @Test
-    void negative_notFoundException() {
-      var exception = new NotFoundException(new ServerResponse(null, 404, new Headers<>()));
-
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.rolesById().getRole(ROLE_ID.toString())).thenThrow(exception);
-
-      var actual = keycloakRoleService.findById(ROLE_ID);
-
-      assertThat(actual).isEmpty();
-      verify(realmResource, atLeastOnce()).rolesById();
-    }
-
-    @Test
-    void negative_keycloakApiExceptionIfUnauthorized() {
-      var exception = new NotAuthorizedException(new ServerResponse(null, 401, new Headers<>()));
-
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.rolesById().getRole(ROLE_ID.toString())).thenThrow(exception);
-
-      assertThatThrownBy(() -> keycloakRoleService.getById(ROLE_ID))
-        .isInstanceOf(KeycloakApiException.class)
-        .hasMessage("Failed to find role: id = %s", ROLE_ID);
-
-      verify(realmResource, atLeastOnce()).rolesById();
-    }
-  }
-
-  @Nested
-  @DisplayName("getById")
-  class GetById {
-
-    @Test
-    void positive_roleFound() {
-      var role = role();
-      var keycloakRole = keycloakRole();
-
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.rolesById().getRole(ROLE_ID.toString())).thenReturn(keycloakRole);
-      when(keycloakRoleMapper.toRole(keycloakRole)).thenReturn(role);
-
-      var actual = keycloakRoleService.getById(ROLE_ID);
-
-      assertThat(actual).isEqualTo(role);
-      verify(realmResource, atLeastOnce()).rolesById();
-    }
-
-    @Test
-    void negative_notFoundException() {
-      var exception = new NotFoundException(new ServerResponse(null, 404, new Headers<>()));
-
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.rolesById().getRole(ROLE_ID.toString())).thenThrow(exception);
-
-      assertThatThrownBy(() -> keycloakRoleService.getById(ROLE_ID))
-        .isInstanceOf(EntityNotFoundException.class)
-        .hasMessage("Failed to find role: id = %s", ROLE_ID);
-
-      verify(realmResource, atLeastOnce()).rolesById();
-    }
-
-    @Test
-    void negative_keycloakApiExceptionIfUnauthorized() {
-      var exception = new NotAuthorizedException(new ServerResponse(null, 401, new Headers<>()));
-
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.rolesById().getRole(ROLE_ID.toString())).thenThrow(exception);
-
-      assertThatThrownBy(() -> keycloakRoleService.getById(ROLE_ID))
-        .isInstanceOf(KeycloakApiException.class)
-        .hasMessage("Failed to find role: id = %s", ROLE_ID);
-
-      verify(realmResource, atLeastOnce()).rolesById();
-    }
   }
 
   @Nested
@@ -246,74 +146,6 @@ class KeycloakRoleServiceTest {
       assertThatThrownBy(() -> keycloakRoleService.create(role))
         .isInstanceOf(KeycloakApiException.class)
         .hasMessageContaining("Failed to create keycloak role: name = role1");
-    }
-  }
-
-  @Nested
-  @DisplayName("search")
-  class Search {
-
-    @Test
-    void positive() {
-      var role = role();
-      var role2 = role2();
-      var keycloakRole = keycloakRole(role);
-      var keycloakRole2 = keycloakRole(role2);
-      var query = "test-role";
-
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(keycloakRoleMapper.toRole(keycloakRole)).thenReturn(role);
-      when(keycloakRoleMapper.toRole(keycloakRole2)).thenReturn(role2);
-      when(realmResource.roles().list(query, 1, 10, false)).thenReturn(List.of(keycloakRole, keycloakRole2));
-
-      var roles = keycloakRoleService.search(query, 1, 10);
-
-      assertThat(roles).isEqualTo(PageResult.asSinglePage(role, role2));
-      verify(realmResource, atLeastOnce()).roles();
-    }
-
-    @Test
-    void positive_nullQuery() {
-      var role = role();
-      var role2 = role2();
-      var keycloakRole = keycloakRole(role);
-      var keycloakRole2 = keycloakRole(role2);
-
-      when(keycloakRoleMapper.toRole(keycloakRole)).thenReturn(role);
-      when(keycloakRoleMapper.toRole(keycloakRole2)).thenReturn(role2);
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.roles().list(null, null, null, false)).thenReturn(List.of(keycloakRole, keycloakRole2));
-
-      var roles = keycloakRoleService.search(null, null, null);
-
-      assertThat(roles).isEqualTo(PageResult.asSinglePage(role, role2));
-      verify(realmResource, atLeastOnce()).roles();
-    }
-
-    @Test
-    void positive_returns_empty_result() {
-      var query = "test-role";
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.roles().list(query, 0, 10, false)).thenReturn(emptyList());
-
-      var result = keycloakRoleService.search(query, 0, 10);
-
-      assertThat(result).isEqualTo(PageResult.empty());
-      verify(realmResource, atLeastOnce()).roles();
-    }
-
-    @Test
-    void negative_notAuthorizedException() {
-      var query = "test-role";
-      var exception = new NotAuthorizedException(new ServerResponse(null, 401, new Headers<>()));
-      when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
-      when(realmResource.roles().list(query, 0, 10, false)).thenThrow(exception);
-
-      assertThatThrownBy(() -> keycloakRoleService.search(query, 0, 10))
-        .isInstanceOf(KeycloakApiException.class)
-        .hasMessage("Failed to search roles by query: %s", query);
-
-      verify(realmResource, atLeastOnce()).roles();
     }
   }
 
