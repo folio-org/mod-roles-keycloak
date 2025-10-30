@@ -162,7 +162,7 @@ class LoadableRoleServiceTest {
 
       service.cleanupDefaultRolesFromKeycloak();
 
-      verify(keycloakService).deleteByIdSafe(role.getId());
+      verify(keycloakService).deleteById(role.getId());
     }
 
     @Test

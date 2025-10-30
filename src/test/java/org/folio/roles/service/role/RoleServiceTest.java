@@ -20,11 +20,13 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Optional;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
+import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -91,7 +93,7 @@ class RoleServiceTest {
       var role = role();
       var roles = List.of(role);
 
-      when(keycloakService.createSafe(role)).thenReturn(Optional.of(role));
+      when(keycloakService.create(role)).thenReturn(role);
       when(entityService.create(role)).thenReturn(role).thenThrow(RuntimeException.class);
 
       var result = facade.create(roles);
@@ -99,7 +101,7 @@ class RoleServiceTest {
 
       assertEquals(result.getRoles().size(), result.getTotalRecords());
       assertEquals(result.getRoles().get(0), role);
-      verify(keycloakService, times(2)).createSafe(role);
+      verify(keycloakService, times(2)).create(role);
       verify(entityService, times(2)).create(role);
     }
 
@@ -108,7 +110,8 @@ class RoleServiceTest {
       var role = role();
       var roles = List.of(role);
 
-      when(keycloakService.createSafe(role)).thenReturn(Optional.empty());
+      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
+        new WebApplicationException()));
       when(keycloakService.findByName(role.getName())).thenReturn(Optional.of(role));
       when(entityService.create(role)).thenReturn(role);
 
@@ -116,7 +119,7 @@ class RoleServiceTest {
       facade.create(roles);
 
       assertTrue(result.getRoles().isEmpty());
-      verify(keycloakService, times(2)).createSafe(role);
+      verify(keycloakService, times(2)).create(role);
       verify(entityService, times(2)).create(role);
     }
 
@@ -124,7 +127,8 @@ class RoleServiceTest {
     void create_positive_returnsEmpty() {
       var role = role();
 
-      when(keycloakService.createSafe(role)).thenReturn(Optional.empty());
+      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
+        new WebApplicationException()));
 
       var result = facade.create(List.of(role));
 

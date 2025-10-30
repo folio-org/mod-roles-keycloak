@@ -46,6 +46,12 @@ public class KeycloakConfigurationProperties {
    */
   private MigrationProperties migration;
 
+
+  /**
+   * Containing retry configuration for Keycloak communication.
+   **/
+  private Retry retry;
+
   @Data
   public static class Login {
 
@@ -59,5 +65,30 @@ public class KeycloakConfigurationProperties {
      * Users batch size for users migration.
      */
     private int usersBatchSize = 100;
+  }
+
+  @Data
+  public static class Retry {
+
+    /**
+     * The maximum number of retry attempts.
+     */
+    private int maxAttempts;
+
+    private Backoff backoff;
+  }
+
+  @Data
+  public static class Backoff {
+
+    /**
+     * The initial delay in milliseconds before retrying.
+     */
+    private long delayMs;
+
+    /**
+     * The multiplier for increasing the delay between retries.
+     */
+    private double multiplier;
   }
 }
