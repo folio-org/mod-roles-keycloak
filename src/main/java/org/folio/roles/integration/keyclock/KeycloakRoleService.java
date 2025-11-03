@@ -21,8 +21,8 @@ import org.springframework.util.Assert;
 @Log4j2
 @Service
 @Retryable(
-  retryFor = KeycloakApiException.class,
   maxAttemptsExpression =  "#{@keycloakConfigurationProperties.retry.maxAttempts}",
+  exceptionExpression = "#{@keycloakExceptionResolver.shouldRetry(#root)}",
   backoff = @Backoff(delayExpression = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}",
     multiplierExpression = "#{@keycloakConfigurationProperties.retry.backoff.multiplier}")
 )
