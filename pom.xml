@@ -44,7 +44,7 @@
     <hypersistence-utils-hibernate-63.version>3.11.0</hypersistence-utils-hibernate-63.version>
     <folio-spring-support.version>10.0.0-SNAPSHOT</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
-    <folio-java-checkstyle.version>1.2.0-SNAPSHOT</folio-java-checkstyle.version>
+    <folio-java-checkstyle.version>1.2.0</folio-java-checkstyle.version>
     <applications-poc-tools.version>3.1.0-SNAPSHOT</applications-poc-tools.version>
     <hibernate.version>6.5.3.Final</hibernate.version>
 
