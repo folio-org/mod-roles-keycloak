@@ -22,7 +22,7 @@ import org.springframework.util.Assert;
 @Service
 @Retryable(
   maxAttemptsExpression =  "#{@keycloakConfigurationProperties.retry.maxAttempts}",
-  exceptionExpression = "#{@keycloakExceptionResolver.shouldRetry(#root)}",
+  exceptionExpression = "@keycloakExceptionResolver.shouldRetry(#root)",
   backoff = @Backoff(delayExpression = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}",
     multiplierExpression = "#{@keycloakConfigurationProperties.retry.backoff.multiplier}")
 )
