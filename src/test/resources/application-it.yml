@@ -33,7 +33,7 @@ application:
       max-attempts: 3
       backoff:
         delay-ms: 20000
-        multiplier: 3
+        multiplier: 3.0
   moduserskc:
     url: moduserskc
   folio-permissions:
