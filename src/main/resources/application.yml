@@ -81,7 +81,6 @@ application:
       max-attempts: ${KC_RETRY_MAX_ATTEMPTS:3}
       backoff:
         delay-ms: ${KC_RETRY_BACKOFF_DELAY_MS:20000}
-        multiplier: ${KC_RETRY_BACKOFF_MULTIPLIER:3.0}
   secret-store:
     environment: ${SECURE_STORE_ENV:${ENV:folio}}
     type: ${SECRET_STORE_TYPE}

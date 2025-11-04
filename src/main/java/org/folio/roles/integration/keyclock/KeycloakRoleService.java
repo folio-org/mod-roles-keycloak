@@ -23,8 +23,7 @@ import org.springframework.util.Assert;
 @Retryable(
   maxAttemptsExpression =  "#{@keycloakConfigurationProperties.retry.maxAttempts}",
   exceptionExpression = "@keycloakExceptionResolver.shouldRetry(#root)",
-  backoff = @Backoff(delayExpression = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}",
-    multiplierExpression = "#{@keycloakConfigurationProperties.retry.backoff.multiplier}")
+  backoff = @Backoff(delayExpression = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}")
 )
 @RequiredArgsConstructor
 public class KeycloakRoleService {

@@ -85,10 +85,5 @@ public class KeycloakConfigurationProperties {
      * The initial delay in milliseconds before retrying.
      */
     private long delayMs;
-
-    /**
-     * The multiplier for increasing the delay between retries.
-     */
-    private double multiplier;
   }
 }
