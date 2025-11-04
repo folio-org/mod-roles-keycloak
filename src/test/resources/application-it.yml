@@ -32,7 +32,7 @@ application:
     retry:
       max-attempts: 3
       backoff:
-        delay-ms: 20000
+        delay-ms: 10000
   moduserskc:
     url: moduserskc
   folio-permissions:
