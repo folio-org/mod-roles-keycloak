@@ -36,10 +36,10 @@
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <lombok.version>1.18.42</lombok.version>
-    <swagger-annotations.version>2.2.39</swagger-annotations.version>
+    <swagger-annotations.version>2.2.40</swagger-annotations.version>
     <commons-lang3.version>3.17.0</commons-lang3.version>
     <apache-commons-collections4.version>4.5.0</apache-commons-collections4.version>
-    <openapi-tools.jackson-databind-nullable.version>0.2.7</openapi-tools.jackson-databind-nullable.version>
+    <openapi-tools.jackson-databind-nullable.version>0.2.8</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.6.3</mapstruct.version>
     <hypersistence-utils-hibernate-63.version>3.11.0</hypersistence-utils-hibernate-63.version>
     <folio-spring-support.version>10.0.0-SNAPSHOT</folio-spring-support.version>
@@ -62,7 +62,7 @@
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
-    <openapi-generator.version>7.16.0</openapi-generator.version>
+    <openapi-generator.version>7.17.0</openapi-generator.version>
     <keycloak-admin-client.version>26.0.4</keycloak-admin-client.version>
     <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
 
