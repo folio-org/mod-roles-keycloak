@@ -1073,5 +1073,10 @@
     "resource": "Foo Item",
     "action": "execute",
     "type": "procedural"
+  },
+  "foo.somePerm.get": {
+    "resource": "Foo Item",
+    "action": "view",
+    "type": "data"
   }
 }

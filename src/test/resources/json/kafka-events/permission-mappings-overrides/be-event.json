@@ -1,0 +1,27 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "foo-module-1.0.2",
+    "moduleType": "module",
+    "applicationId": "test-application-0.0.2",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "foo.item.get",
+          "replaces": [ "foo.somePerm.get" ],
+          "displayName": "foo_item.create - display name",
+          "description": "foo_item.create - description",
+          "visible": true
+        },
+        "endpoints": [
+          {
+            "path": "/foo/{id}",
+            "method": "GET"
+          }
+        ]
+      }
+    ]
+  }
+}

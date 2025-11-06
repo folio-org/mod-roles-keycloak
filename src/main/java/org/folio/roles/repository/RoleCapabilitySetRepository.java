@@ -27,4 +27,6 @@ public interface RoleCapabilitySetRepository
   @Modifying
   @Query("delete from RoleCapabilitySetEntity rcse where rcse.roleId = :roleId and rcse.capabilitySetId in :ids")
   void deleteRoleCapabilitySets(@Param("roleId") UUID roleId, @Param("ids") List<UUID> ids);
+
+  boolean existsByRoleIdAndCapabilitySetId(UUID roleId, UUID capabilitySetId);
 }
