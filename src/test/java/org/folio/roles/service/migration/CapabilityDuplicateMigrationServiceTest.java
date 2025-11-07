@@ -207,9 +207,9 @@ class CapabilityDuplicateMigrationServiceTest {
 
     var inOrder = inOrder(roleCapabilityService);
     inOrder.verify(roleCapabilityService).create(eq(roleId1), eq(List.of(NEW_CAP_ID)), anyBoolean());
-    inOrder.verify(roleCapabilityService).delete(eq(roleId1), eq(OLD_CAP_ID));
+    inOrder.verify(roleCapabilityService).delete(roleId1, OLD_CAP_ID);
     inOrder.verify(roleCapabilityService).create(eq(roleId2), eq(List.of(NEW_CAP_ID)), anyBoolean());
-    inOrder.verify(roleCapabilityService).delete(eq(roleId2), eq(OLD_CAP_ID));
+    inOrder.verify(roleCapabilityService).delete(roleId2, OLD_CAP_ID);
   }
 
   @Test
@@ -301,9 +301,9 @@ class CapabilityDuplicateMigrationServiceTest {
 
     var inOrder = inOrder(roleCapabilitySetService);
     inOrder.verify(roleCapabilitySetService).create(eq(roleId1), eq(List.of(NEW_CAP_SET_ID)), anyBoolean());
-    inOrder.verify(roleCapabilitySetService).delete(eq(roleId1), eq(OLD_CAP_SET_ID));
+    inOrder.verify(roleCapabilitySetService).delete(roleId1, OLD_CAP_SET_ID);
     inOrder.verify(roleCapabilitySetService).create(eq(roleId2), eq(List.of(NEW_CAP_SET_ID)), anyBoolean());
-    inOrder.verify(roleCapabilitySetService).delete(eq(roleId2), eq(OLD_CAP_SET_ID));
+    inOrder.verify(roleCapabilitySetService).delete(roleId2, OLD_CAP_SET_ID);
   }
 
   @Test

@@ -83,7 +83,7 @@ class RemoveCapabilityDuplicateMigrationIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-for-assignment.json")
-  void migrate_positive_capabilityLinkedToRole() throws Exception {
+  void migrate_positive_capabilityLinkedToRole() {
     createDuplicateCapabilities();
     var oldCapId = getCapabilityIdByName(OLD_CAPABILITY_NAME);
 
@@ -104,7 +104,7 @@ class RemoveCapabilityDuplicateMigrationIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-for-assignment.json")
-  void migrate_positive_capabilityWithUserHavingAccessViaRole() throws Exception {
+  void migrate_positive_capabilityWithUserHavingAccessViaRole() {
     createDuplicateCapabilities();
     var oldCapId = getCapabilityIdByName(OLD_CAPABILITY_NAME);
 
@@ -123,7 +123,7 @@ class RemoveCapabilityDuplicateMigrationIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-for-assignment.json")
-  void migrate_positive_bothCapabilityAndCapabilitySetWithMultipleReferences() throws Exception {
+  void migrate_positive_bothCapabilityAndCapabilitySetWithMultipleReferences() {
     createDuplicateCapabilities();
     var oldCapId = getCapabilityIdByName(OLD_CAPABILITY_NAME);
     var oldCapSetId = getCapabilitySetIdByName(OLD_CAPABILITY_NAME);
@@ -151,7 +151,7 @@ class RemoveCapabilityDuplicateMigrationIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-for-assignment.json")
-  void migrate_positive_duplicateAssignmentsRoleAlreadyHasNew() throws Exception {
+  void migrate_positive_duplicateAssignmentsRoleAlreadyHasNew() {
     createDuplicateCapabilities();
     var oldCapId = getCapabilityIdByName(OLD_CAPABILITY_NAME);
 
@@ -177,7 +177,7 @@ class RemoveCapabilityDuplicateMigrationIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-for-assignment.json")
-  void migrate_positive_idempotentRunMultipleTimes() throws Exception {
+  void migrate_positive_idempotentRunMultipleTimes() {
     createDuplicateCapabilities();
     var oldCapId = getCapabilityIdByName(OLD_CAPABILITY_NAME);
 
@@ -199,7 +199,7 @@ class RemoveCapabilityDuplicateMigrationIT extends BaseIntegrationTest {
   }
 
   @Test
-  void migrate_positive_skipWhenOldCapabilityNotFound() throws Exception {
+  void migrate_positive_skipWhenOldCapabilityNotFound() {
     sendKafkaEvent("event2-capability-without-override.json");
 
     await().untilAsserted(() ->
@@ -213,7 +213,7 @@ class RemoveCapabilityDuplicateMigrationIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-for-assignment.json")
-  void migrate_positive_loadableRoleWithOldCapability() throws Exception {
+  void migrate_positive_loadableRoleWithOldCapability() {
     createDuplicateCapabilities();
     var oldCapId = getCapabilityIdByName(OLD_CAPABILITY_NAME);
 
@@ -236,7 +236,7 @@ class RemoveCapabilityDuplicateMigrationIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-for-assignment.json")
-  void migrate_positive_loadableRoleWithOldCapabilitySet() throws Exception {
+  void migrate_positive_loadableRoleWithOldCapabilitySet() {
     createDuplicateCapabilities();
     var oldCapSetId = getCapabilitySetIdByName(OLD_CAPABILITY_NAME);
 
@@ -259,7 +259,7 @@ class RemoveCapabilityDuplicateMigrationIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-for-assignment.json")
-  void migrate_positive_loadableRoleDuplicateAssignments() throws Exception {
+  void migrate_positive_loadableRoleDuplicateAssignments() {
     createDuplicateCapabilities();
     var oldCapId = getCapabilityIdByName(OLD_CAPABILITY_NAME);
     var newCapId = getCapabilityIdByName(NEW_CAPABILITY_NAME);

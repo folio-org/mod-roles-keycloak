@@ -31,8 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Spring-managed migration service that removes duplicate capabilities and capability sets by
- * orchestrating existing domain services instead of raw SQL.
+ * Spring-managed migration service that removes duplicate capabilities and capability sets by orchestrating existing
+ * domain services instead of raw SQL.
  */
 @Log4j2
 @Service
@@ -87,8 +87,8 @@ public class CapabilityDuplicateMigrationService {
     oldCapability.ifPresent(capability -> {
       var replacement = newCapability.orElse(null);
       if (replacement == null) {
-        log.warn("OLD capability '{}' exists but NEW capability '{}' not found. "
-          + "Skipping capability migration.", oldCapabilityName, newCapabilityName);
+        log.warn("OLD capability '{}' exists but NEW capability '{}' not found. Skipping capability migration.",
+          oldCapabilityName, newCapabilityName);
         return;
       }
       migrateCapability(capability, replacement);
@@ -100,8 +100,9 @@ public class CapabilityDuplicateMigrationService {
     oldCapabilitySet.ifPresent(capabilitySet -> {
       var replacement = newCapabilitySet.orElse(null);
       if (replacement == null) {
-        log.warn("OLD capability set '{}' exists but NEW capability set '{}' not found. "
-          + "Skipping capability set migration.", oldCapabilityName, newCapabilityName);
+        log.warn(
+          "OLD capability set '{}' exists but NEW capability set '{}' not found. Skipping capability set migration.",
+          oldCapabilityName, newCapabilityName);
         return;
       }
       migrateCapabilitySet(capabilitySet, replacement);
@@ -185,18 +186,16 @@ public class CapabilityDuplicateMigrationService {
 
   private void migrateLoadablePermissionsForCapability(UUID oldCapabilityId, UUID newCapabilityId) {
     try (var stream = loadablePermissionRepository.findAllByCapabilityId(oldCapabilityId)) {
-      var permissions = stream
-        .peek(permission -> permission.setCapabilityId(newCapabilityId))
-        .collect(Collectors.toList());
+      var permissions = stream.toList();
+      permissions.forEach(permission -> permission.setCapabilityId(newCapabilityId));
       saveLoadablePermissions(permissions);
     }
   }
 
   private void migrateLoadablePermissionsForCapabilitySet(UUID oldCapabilitySetId, UUID newCapabilitySetId) {
     try (var stream = loadablePermissionRepository.findAllByCapabilitySetId(oldCapabilitySetId)) {
-      var permissions = stream
-        .peek(permission -> permission.setCapabilitySetId(newCapabilitySetId))
-        .collect(Collectors.toList());
+      var permissions = stream.toList();
+      permissions.forEach(permission -> permission.setCapabilitySetId(newCapabilitySetId));
       saveLoadablePermissions(permissions);
     }
   }
