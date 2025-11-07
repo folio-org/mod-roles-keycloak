@@ -230,7 +230,6 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       doGet("/capabilities").andReturn(),
       org.folio.roles.domain.dto.Capabilities.class);
     var capabilityAfterFirstEvent = capabilitiesAfterFirstEvent.getCapabilities().get(0);
-    var capabilityId = capabilityAfterFirstEvent.getId();
 
     assertThat(capabilityAfterFirstEvent.getPermission()).isEqualTo("foo.somePerm.get");
     assertThat(capabilityAfterFirstEvent.getResource()).isEqualTo("Foo Item");
@@ -251,6 +250,7 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
     var capabilityAfterSecondEvent = capabilitiesAfterSecondEvent.getCapabilities().getFirst();
 
     // and: capability ID remains unchanged
+    var capabilityId = capabilityAfterFirstEvent.getId();
     assertThat(capabilityAfterSecondEvent.getId()).isEqualTo(capabilityId);
 
     // and: permission name is updated to the new permission

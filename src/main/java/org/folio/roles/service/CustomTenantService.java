@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.integration.kafka.KafkaAdminService;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
+import org.folio.roles.service.migration.CapabilitiesMergeService;
 import org.folio.roles.service.reference.ReferenceDataLoader;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
@@ -25,16 +26,19 @@ public class CustomTenantService extends TenantService {
   private final List<ReferenceDataLoader> referenceDataLoaders;
   private final LoadableRoleService loadableRoleService;
   private final Keycloak keycloak;
+  private final CapabilitiesMergeService capabilitiesMergeService;
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
     FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
-    List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService, Keycloak keycloak) {
+    List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService, Keycloak keycloak,
+    CapabilitiesMergeService capabilitiesMergeService) {
 
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.kafkaAdminService = kafkaAdminService;
     this.referenceDataLoaders = referenceDataLoaders;
     this.loadableRoleService = loadableRoleService;
     this.keycloak = keycloak;
+    this.capabilitiesMergeService = capabilitiesMergeService;
   }
 
   @Override
@@ -58,6 +62,8 @@ public class CustomTenantService extends TenantService {
     kafkaAdminService.restartEventListeners();
     log.debug("Issuing fresh Keycloak token after tenant update");
     keycloak.tokenManager().grantToken();
+    log.debug("Merging duplicate capabilities after tenant update");
+    capabilitiesMergeService.mergeDuplicateCapabilities();
   }
 
   @Override
