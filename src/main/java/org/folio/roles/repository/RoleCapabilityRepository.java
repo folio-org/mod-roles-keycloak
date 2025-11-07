@@ -41,6 +41,4 @@ public interface RoleCapabilityRepository extends BaseCqlJpaRepository<RoleCapab
   @Modifying
   @Query("delete from RoleCapabilityEntity rce where rce.roleId = :roleId and rce.capabilityId in :ids")
   void deleteRoleCapabilities(@Param("roleId") UUID userId, @Param("ids") List<UUID> ids);
-
-  boolean existsByRoleIdAndCapabilityId(UUID roleId, UUID capabilityId);
 }
