@@ -1,17 +1,22 @@
 package org.folio.roles.integration.keyclock.configuration;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.folio.common.configuration.properties.TlsProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.validation.annotation.Validated;
 
 /**
  * Keycloak properties from application.yaml configuration.
  */
 @Getter
 @Setter
+@Validated
 @Configuration
 @ConfigurationProperties(prefix = "application.keycloak")
 public class KeycloakConfigurationProperties {
@@ -50,6 +55,7 @@ public class KeycloakConfigurationProperties {
   /**
    * Containing retry configuration for Keycloak communication.
    **/
+  @Valid
   private Retry retry;
 
   @Data
@@ -73,8 +79,11 @@ public class KeycloakConfigurationProperties {
     /**
      * The maximum number of retry attempts.
      */
+    @Min(1)
+    @Max(10)
     private int maxAttempts;
 
+    @Valid
     private Backoff backoff;
   }
 
@@ -84,6 +93,8 @@ public class KeycloakConfigurationProperties {
     /**
      * The initial delay in milliseconds before retrying.
      */
+    @Min(1000)
+    @Max(60000)
     private long delayMs;
   }
 }
