@@ -1,3 +1,6 @@
+## Version `v3.0.10` (11.11.2025)
+* Add create loadalble roles endpoint (MODROLESKC-301)
+
 ## Version `v3.0.9` (26.09.2025)
 * Use SECURE_STORE_ENV, not ENV, for secure store key (MODROLESKC-326)
 
