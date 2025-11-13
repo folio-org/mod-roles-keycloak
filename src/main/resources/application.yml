@@ -77,6 +77,10 @@ application:
       trust-store-type: ${KC_CLIENT_TLS_TRUSTSTORE_TYPE:}
     migration:
       users-batch-size: ${KC_MIGRATION_USERS_BATCH_SIZE:100}
+    retry:
+      max-attempts: ${KC_RETRY_MAX_ATTEMPTS:3}
+      backoff:
+        delay-ms: ${KC_RETRY_BACKOFF_DELAY_MS:10000}
   secret-store:
     environment: ${SECURE_STORE_ENV:${ENV:folio}}
     type: ${SECRET_STORE_TYPE}
