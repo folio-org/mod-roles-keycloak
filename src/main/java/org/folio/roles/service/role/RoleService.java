@@ -155,7 +155,7 @@ public class RoleService {
       log.debug("Skip role creation. Default role cannot be created via roles API: name = {}", role.getName());
       return empty();
     }
-    var createdRoleOpt = keycloakService.createSafe(role);
+    var createdRoleOpt = createSuppressingExceptions(role);
     if (createdRoleOpt.isEmpty()) {
       // Create role entity in DB if it doesn't exist, but exists in Keycloak
       if (entityService.findByName(role.getName()).isEmpty()) {
@@ -169,6 +169,21 @@ public class RoleService {
     var createdRole = createdRoleOpt.get();
     createdRole.setType(role.getType());
     return getOrCreateRoleEntitySafe(createdRole);
+  }
+
+  /**
+   * Creates a role, suppressing all exception during create process.
+   *
+   * @param role - role object to be created
+   * @return {@link Optional} with created {@link Role}, or {@link Optional#empty()} if exception occurred
+   */
+  private Optional<Role> createSuppressingExceptions(Role role) {
+    try {
+      return Optional.of(keycloakService.create(role));
+    } catch (Exception e) {
+      log.debug("Failed to create role: name = {}", role.getName(), e);
+      return empty();
+    }
   }
 
   private Optional<Role> getOrCreateRoleEntitySafe(Role role) {

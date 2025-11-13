@@ -1,9 +1,7 @@
 package org.folio.roles.integration.keyclock;
 
-import static java.util.Optional.empty;
-import static org.folio.common.utils.CollectionUtils.mapItems;
+import static java.lang.String.format;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import java.util.Optional;
@@ -11,44 +9,28 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Role;
-import org.folio.roles.domain.dto.Roles;
-import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.roles.mapper.KeycloakRoleMapper;
 import org.folio.spring.FolioExecutionContext;
 import org.keycloak.admin.client.Keycloak;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 @Log4j2
 @Service
+@Retryable(
+  maxAttemptsExpression =  "#{@keycloakConfigurationProperties.retry.maxAttempts}",
+  exceptionExpression = "@keycloakExceptionResolver.shouldRetry(#root)",
+  backoff = @Backoff(delayExpression = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}")
+)
 @RequiredArgsConstructor
 public class KeycloakRoleService {
 
   private final Keycloak keycloak;
   private final KeycloakRoleMapper keycloakRoleMapper;
   private final FolioExecutionContext context;
-
-  /**
-   * Tries to find role by identifier.
-   *
-   * @param id - role identifier
-   * @return {@link Optional} with found {@link Role} object, {@link Optional#empty()} if entity is not found
-   * @throws KeycloakApiException if role cannot be retrieved from Keycloak
-   */
-  public Optional<Role> findById(UUID id) {
-    try {
-      var realmResource = keycloak.realm(context.getTenantId());
-      var keycloakRoleById = realmResource.rolesById().getRole(id.toString());
-      log.debug("Role has been found by id: id = {}, name = {}", id, keycloakRoleById.getName());
-      return Optional.of(keycloakRoleMapper.toRole(keycloakRoleById));
-    } catch (NotFoundException nf) {
-      log.debug("Role hasn't been found by id: id = {}", id);
-      return Optional.empty();
-    } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to find role: id = " + id, exception);
-    }
-  }
 
   public Optional<Role> findByName(String name) {
     var realmResource = keycloak.realm(context.getTenantId());
@@ -60,39 +42,9 @@ public class KeycloakRoleService {
       log.debug("Role hasn't been found by name: name = {}", name);
       return Optional.empty();
     } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to find role by name: " + name, exception);
-    }
-  }
-
-  /**
-   * Retrieves role by identifier.
-   *
-   * @param id - role identifier
-   * @return found {@link Role} object
-   * @throws EntityNotFoundException if role is not found by identifier
-   * @throws KeycloakApiException if role cannot be retrieved from Keycloak
-   */
-  public Role getById(UUID id) {
-    return findById(id).orElseThrow(() -> new EntityNotFoundException("Failed to find role: id = " + id));
-  }
-
-  /**
-   * Searches role by query using pagination parameters.
-   *
-   * @param query - string query
-   * @param offset - offset in pagination from first record
-   * @param limit - a number of results in response
-   * @return {@link PageResult} with found {@link Roles} object
-   */
-  public PageResult<Role> search(String query, Integer offset, Integer limit) {
-    var realmResource = keycloak.realm(context.getTenantId());
-    try {
-      var keycloakRoles = realmResource.roles().list(query, offset, limit, false);
-      var roles = mapItems(keycloakRoles, keycloakRoleMapper::toRole);
-      log.debug("Roles have been found: names = {}", () -> mapItems(roles, Role::getName));
-      return PageResult.of(roles.size(), roles);
-    } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to search roles by query: " + query, exception);
+      var errorMessage = format("Failed to find role by name: %s", name);
+      log.debug(errorMessage);
+      throw new KeycloakApiException(errorMessage, exception);
     }
   }
 
@@ -112,22 +64,9 @@ public class KeycloakRoleService {
       log.debug("Role has been created: id = {}, name = {}", role.getId(), role.getName());
       return keycloakRoleMapper.toRole(foundKeycloakRole);
     } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to create keycloak role", exception);
-    }
-  }
-
-  /**
-   * Creates a role, suppressing all exception during create process.
-   *
-   * @param role - role object to be created
-   * @return {@link Optional} with created {@link Role}, or {@link Optional#empty()} if exception occurred
-   */
-  public Optional<Role> createSafe(Role role) {
-    try {
-      return Optional.of(create(role));
-    } catch (Exception e) {
-      log.debug("Failed to create role: name = {}", role.getName(), e);
-      return empty();
+      var errorMessage = format("Failed to create keycloak role: name = %s", role.getName());
+      log.debug(errorMessage);
+      throw new KeycloakApiException(errorMessage, exception);
     }
   }
 
@@ -149,7 +88,9 @@ public class KeycloakRoleService {
       log.debug("Role has been updated: name = {}", role.getName());
       return role;
     } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to update role: " + role.getId(), exception);
+      var errorMessage = format("Failed to update role: %s", role.getId());
+      log.debug(errorMessage);
+      throw new KeycloakApiException(errorMessage, exception);
     }
   }
 
@@ -166,20 +107,9 @@ public class KeycloakRoleService {
       realmResource.rolesById().deleteRole(id != null ? id.toString() : null);
       log.debug("Role has been deleted: id = {}", id);
     } catch (WebApplicationException exception) {
-      throw new KeycloakApiException("Failed to delete role: " + id, exception);
-    }
-  }
-
-  /**
-   * Deletes role by identifier, suppressing all exception during delete process.
-   *
-   * @param id - role identifier
-   */
-  public void deleteByIdSafe(UUID id) {
-    try {
-      deleteById(id);
-    } catch (Exception exception) {
-      log.debug("Failed to delete Role in Keycloak: id = {}", id, exception);
+      var errorMessage = format("Failed to delete role: %s", id);
+      log.debug(errorMessage);
+      throw new KeycloakApiException(errorMessage, exception);
     }
   }
 }
