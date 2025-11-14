@@ -16,6 +16,7 @@ more information.
   * [Keycloak environment variables](#keycloak-environment-variables)
 * [Loading of client IDs/secrets](#loading-of-client-idssecrets)
 * [Custom permission-capability mappings](#custom-permission-capability-mappings)
+* [Capability duplicate removal](#capability-duplicate-removal)
 
 ## Introduction
 
@@ -139,3 +140,51 @@ One can define custom mapping of a module-descriptor permission to Eureka capabi
 See [Permissions naming convention](https://folio-org.atlassian.net/wiki/spaces/FOLIJET/pages/156368925/Permissions+naming+convention) for more
 information regarding permission properties such as "action", permission naming conventions and other permission related
 information.
+
+## Capability duplicate removal
+
+The application automatically removes duplicate capabilities during tenant initialization. This ensures data consistency
+when the same capability exists under different names.
+
+### What gets merged
+
+When a duplicate capability is detected:
+- All **role-to-capability** assignments are migrated from the old capability to the new one
+- All **user-to-capability** assignments are migrated from the old capability to the new one
+- All **role-to-capability-set** assignments are migrated from the old capability set to the new one
+- All **user-to-capability-set** assignments are migrated from the old capability set to the new one
+- All **loadable permission** references are updated to point to the new capability
+
+### What gets cleaned up
+
+After successful migration:
+- The old/duplicate capability is deleted from the database
+- The old/duplicate capability set is deleted from the database
+- All related links to the old capability/capability set are removed
+
+### Adding new duplicate capability pairs
+
+To add a new capability pair for merging, edit the `CapabilitiesMergeService` class in
+`src/main/java/org/folio/roles/service/migration/CapabilitiesMergeService.java`:
+
+```java
+@Transactional
+public void mergeDuplicateCapabilities() {
+  log.info("Starting capability duplicates merge");
+  try {
+    capabilityDuplicateMigrationService.migrate(
+      "old_capability_name",
+      "new_capability_name");
+    log.info("Capability duplicates merge completed successfully");
+  } catch (Exception e) {
+    log.warn("Error during capability duplicates merge", e);
+  }
+}
+```
+
+**Parameters:**
+- `old_capability_name` - Name of the deprecated/duplicate capability or capability set to be removed
+- `new_capability_name` - Name of the replacement capability or capability set
+
+If either the old or new capability does not exist, the migration is skipped with a log message.
+Migration errors are logged but do not block tenant initialization.

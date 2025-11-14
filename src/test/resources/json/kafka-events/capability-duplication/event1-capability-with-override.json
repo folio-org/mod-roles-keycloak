@@ -1,0 +1,29 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "foo-module-1.0.0",
+    "moduleType": "module",
+    "applicationId": "test-application-1.0.0",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "foo.migration.test.get",
+          "displayName": "Foo Migration Test View",
+          "description": "View foo migration test items",
+          "visible": true,
+          "subPermissions": [
+            "dummy.migration.test.get"
+          ]
+        },
+        "endpoints": [
+          {
+            "path": "/foo/{id}",
+            "method": "GET"
+          }
+        ]
+      }
+    ]
+  }
+}

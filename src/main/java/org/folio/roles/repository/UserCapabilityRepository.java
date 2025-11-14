@@ -33,4 +33,6 @@ public interface UserCapabilityRepository extends BaseCqlJpaRepository<UserCapab
   @Modifying
   @Query("delete from UserCapabilityEntity uce where uce.userId = :userId and uce.capabilityId in :ids")
   void deleteUserCapabilities(@Param("userId") UUID userId, @Param("ids") List<UUID> ids);
+
+  boolean existsByUserIdAndCapabilityId(UUID userId, UUID capabilityId);
 }

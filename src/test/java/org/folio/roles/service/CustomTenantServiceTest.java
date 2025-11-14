@@ -4,12 +4,15 @@ import static com.google.common.collect.ImmutableList.of;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.folio.roles.integration.kafka.KafkaAdminService;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
+import org.folio.roles.service.migration.CapabilitiesMergeService;
 import org.folio.roles.service.reference.PoliciesDataLoader;
 import org.folio.roles.service.reference.ReferenceDataLoader;
 import org.folio.roles.service.reference.RolesDataLoader;
@@ -21,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.token.TokenManager;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -45,13 +49,15 @@ class CustomTenantServiceTest {
   private LoadableRoleService loadableRoleService;
   @Mock
   private Keycloak keycloak;
+  @Mock
+  private CapabilitiesMergeService capabilitiesMergeService;
   private CustomTenantService customTenantService;
 
   @BeforeEach
   void setUp() {
     var referenceDataLoader = of(rolesDataLoader, policiesDataLoader);
     customTenantService = new TestCustomTenantService(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService,
-      referenceDataLoader, loadableRoleService, keycloak);
+      referenceDataLoader, loadableRoleService, keycloak, capabilitiesMergeService);
   }
 
   @Test
@@ -110,13 +116,29 @@ class CustomTenantServiceTest {
     verify(loadableRoleService).cleanupDefaultRolesFromKeycloak();
   }
 
+  @Test
+  void afterTenantUpdate_positive() {
+    var attributes = new TenantAttributes();
+    var tokenManager = mock(TokenManager.class);
+    when(keycloak.tokenManager()).thenReturn(tokenManager);
+    doNothing().when(kafkaAdminService).restartEventListeners();
+    doNothing().when(capabilitiesMergeService).mergeDuplicateCapabilities();
+
+    customTenantService.afterTenantUpdate(attributes);
+
+    verify(kafkaAdminService).restartEventListeners();
+    verify(capabilitiesMergeService).mergeDuplicateCapabilities();
+  }
+
   public static class TestCustomTenantService extends CustomTenantService {
+
     TestCustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
       FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
-      List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService, Keycloak keycloak) {
+      List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService, Keycloak keycloak,
+      CapabilitiesMergeService capabilitiesMergeService) {
 
       super(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService, referenceDataLoaders, loadableRoleService,
-        keycloak);
+        keycloak, capabilitiesMergeService);
     }
 
     @Override

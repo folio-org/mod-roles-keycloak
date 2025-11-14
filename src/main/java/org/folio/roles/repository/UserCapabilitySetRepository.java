@@ -28,4 +28,6 @@ public interface UserCapabilitySetRepository
   @Modifying
   @Query("delete from UserCapabilitySetEntity uce where uce.userId = :userId and uce.capabilitySetId in :ids")
   void deleteUserCapabilitySets(@Param("userId") UUID userId, @Param("ids") List<UUID> ids);
+
+  boolean existsByUserIdAndCapabilitySetId(UUID userId, UUID capabilitySetId);
 }
