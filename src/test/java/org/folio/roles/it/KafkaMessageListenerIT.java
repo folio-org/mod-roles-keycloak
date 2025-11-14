@@ -9,6 +9,7 @@ import static org.folio.roles.domain.dto.CapabilityAction.MANAGE;
 import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.domain.dto.CapabilityType.DATA;
 import static org.folio.roles.domain.dto.CapabilityType.PROCEDURAL;
+import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySets;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID_V2;
@@ -209,6 +210,58 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .andExpect(content().json(expectedCapabilitiesJson))
       .andExpect(jsonPath("$.capabilities[0].metadata.createdDate", notNullValue()))
       .andExpect(jsonPath("$.capabilities[1].metadata.createdDate", notNullValue())));
+  }
+
+  @Test
+  void handleCapabilityEvent_positive_sameResourceAndActionAsInMappingOverrides() throws Exception {
+    // given: no capabilities exist initially
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(0))));
+
+    // when: first event with overridden permission arrives
+    var event1 = readValue(
+      "json/kafka-events/permission-mappings-overrides/be-event-contains-overridden-permission.json",
+      ResourceEvent.class);
+    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, event1);
+
+    // then: one capability is created with the overridden permission name
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(1))));
+
+    var capabilitiesAfterFirstEvent = parseResponse(
+      doGet("/capabilities").andReturn(),
+      org.folio.roles.domain.dto.Capabilities.class);
+    var capabilityAfterFirstEvent = capabilitiesAfterFirstEvent.getCapabilities().get(0);
+
+    assertThat(capabilityAfterFirstEvent.getPermission()).isEqualTo("foo.somePerm.get");
+    assertThat(capabilityAfterFirstEvent.getResource()).isEqualTo("Foo Item");
+    assertThat(capabilityAfterFirstEvent.getAction()).isEqualTo(VIEW);
+
+    // when: second event with new permission that replaces the overridden permission arrives
+    var event2 = readValue(
+      "json/kafka-events/permission-mappings-overrides/be-event.json",
+      ResourceEvent.class);
+    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, event2);
+
+    // then: capability count remains 1, existing capability is updated with new permission name
+    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(1))));
+
+    var capabilitiesAfterSecondEvent = parseResponse(
+      doGet("/capabilities").andReturn(),
+      org.folio.roles.domain.dto.Capabilities.class);
+    var capabilityAfterSecondEvent = capabilitiesAfterSecondEvent.getCapabilities().getFirst();
+
+    // and: capability ID remains unchanged
+    var capabilityId = capabilityAfterFirstEvent.getId();
+    assertThat(capabilityAfterSecondEvent.getId()).isEqualTo(capabilityId);
+
+    // and: permission name is updated to the new permission
+    assertThat(capabilityAfterSecondEvent.getPermission()).isEqualTo("foo.item.get");
+
+    // and: resource, action, and endpoint remain unchanged
+    assertThat(capabilityAfterSecondEvent.getResource()).isEqualTo("Foo Item");
+    assertThat(capabilityAfterSecondEvent.getAction()).isEqualTo(VIEW);
+    assertThat(capabilityAfterSecondEvent.getEndpoints()).hasSize(1);
+    assertThat(capabilityAfterSecondEvent.getEndpoints().getFirst().getPath()).isEqualTo("/foo/{id}");
+    assertThat(capabilityAfterSecondEvent.getEndpoints().getFirst().getMethod()).isEqualTo(GET);
   }
 
   private void sendCapabilityEventAndCheckResult() throws Exception {
