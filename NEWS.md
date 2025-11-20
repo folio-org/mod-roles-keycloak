@@ -1,3 +1,7 @@
+## Version `v3.0.11` (20.11.2025)
+* Improve role migration logic (MODROLESKC-340)
+* Multiple capabilities/sets exist for the same permission (MODROLESKC-343)
+
 ## Version `v3.0.10` (11.11.2025)
 * Add create loadalble roles endpoint (MODROLESKC-301)
 
