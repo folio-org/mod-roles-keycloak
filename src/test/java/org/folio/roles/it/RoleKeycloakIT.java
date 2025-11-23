@@ -340,7 +340,7 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.errors[0].type", is("IllegalArgumentException")))
       .andExpect(jsonPath("$.errors[0].code", is("validation_error")))
       .andExpect(jsonPath("$.errors[0].message",
-        is("Default role cannot be created, updated or deleted via roles API.")));
+        is("Cannot change role type from DEFAULT.")));
   }
 
   @Test
