@@ -3,6 +3,9 @@ package org.folio.roles.service.role;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.folio.roles.domain.dto.RoleType.CONSORTIUM;
+import static org.folio.roles.domain.dto.RoleType.DEFAULT;
+import static org.folio.roles.domain.dto.RoleType.REGULAR;
 import static org.folio.roles.support.RoleUtils.ROLE_DESCRIPTION;
 import static org.folio.roles.support.RoleUtils.ROLE_DESCRIPTION_2;
 import static org.folio.roles.support.RoleUtils.ROLE_DESCRIPTION_3;
@@ -316,32 +319,19 @@ class RoleServiceTest {
     }
 
     @Test
-    void negative_defaultRoleCannotBeUpdated() {
-      var role = defaultRole();
-
-      when(entityService.getById(ROLE_ID_3)).thenReturn(role);
-
-      assertThatThrownBy(() -> facade.update(role))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
-
-      verifyNoInteractions(keycloakService);
-    }
-
-    @Test
     void negative_cannotChangeRoleTypeFromDefaultToRegular() {
       var existingRole = defaultRole();
       var updatedRole = new Role()
         .id(ROLE_ID_3)
         .name(ROLE_NAME_3)
         .description(ROLE_DESCRIPTION_3)
-        .type(org.folio.roles.domain.dto.RoleType.REGULAR);
+        .type(REGULAR);
 
       when(entityService.getById(ROLE_ID_3)).thenReturn(existingRole);
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
+        .hasMessage("Cannot change role type from DEFAULT.");
 
       verifyNoInteractions(keycloakService);
       verify(entityService).getById(ROLE_ID_3);
@@ -355,37 +345,17 @@ class RoleServiceTest {
         .id(ROLE_ID_3)
         .name(ROLE_NAME_3)
         .description(ROLE_DESCRIPTION_3)
-        .type(org.folio.roles.domain.dto.RoleType.CONSORTIUM);
+        .type(CONSORTIUM);
 
       when(entityService.getById(ROLE_ID_3)).thenReturn(existingRole);
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
+        .hasMessage("Cannot change role type from DEFAULT.");
 
       verifyNoInteractions(keycloakService);
       verify(entityService).getById(ROLE_ID_3);
       verify(entityService, times(0)).update(any());
-    }
-
-    @Test
-    void negative_cannotUpdateDefaultRoleEvenWithSameType() {
-      // This test ensures that even if trying to update a DEFAULT role
-      // without changing its type, the update is still prevented
-      var existingRole = defaultRole();
-      var updatedRole = new Role()
-        .id(ROLE_ID_3)
-        .name("Updated Name")
-        .description("Updated Description")
-        .type(org.folio.roles.domain.dto.RoleType.DEFAULT);
-
-      when(entityService.getById(ROLE_ID_3)).thenReturn(existingRole);
-
-      assertThatThrownBy(() -> facade.update(updatedRole))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
-
-      verifyNoInteractions(keycloakService);
     }
 
     @Test
@@ -395,7 +365,7 @@ class RoleServiceTest {
         .id(ROLE_ID)
         .name(ROLE_NAME)
         .description(ROLE_DESCRIPTION)
-        .type(org.folio.roles.domain.dto.RoleType.DEFAULT);
+        .type(DEFAULT);
 
       when(entityService.getById(ROLE_ID)).thenReturn(existingRole);
 
@@ -413,7 +383,7 @@ class RoleServiceTest {
         .id(ROLE_ID_2)
         .name(ROLE_NAME_2)
         .description(ROLE_DESCRIPTION_2)
-        .type(org.folio.roles.domain.dto.RoleType.DEFAULT);
+        .type(DEFAULT);
 
       when(entityService.getById(ROLE_ID_2)).thenReturn(existingRole);
 
@@ -431,7 +401,7 @@ class RoleServiceTest {
         .id(ROLE_ID)
         .name(ROLE_NAME)
         .description(ROLE_DESCRIPTION)
-        .type(org.folio.roles.domain.dto.RoleType.CONSORTIUM);
+        .type(CONSORTIUM);
 
       when(entityService.getById(ROLE_ID)).thenReturn(existingRole);
 
@@ -448,7 +418,7 @@ class RoleServiceTest {
         .id(ROLE_ID_2)
         .name(ROLE_NAME_2)
         .description(ROLE_DESCRIPTION_2)
-        .type(org.folio.roles.domain.dto.RoleType.REGULAR);
+        .type(REGULAR);
 
       when(entityService.getById(ROLE_ID_2)).thenReturn(existingRole);
 
@@ -465,7 +435,7 @@ class RoleServiceTest {
         .id(ROLE_ID)
         .name("Updated Name")
         .description("Updated Description")
-        .type(org.folio.roles.domain.dto.RoleType.REGULAR);
+        .type(REGULAR);
 
       when(entityService.getById(ROLE_ID)).thenReturn(existingRole);
 
@@ -483,7 +453,7 @@ class RoleServiceTest {
         .id(ROLE_ID_2)
         .name("Updated Consortium Role")
         .description("Updated Description")
-        .type(org.folio.roles.domain.dto.RoleType.CONSORTIUM);
+        .type(CONSORTIUM);
 
       when(entityService.getById(ROLE_ID_2)).thenReturn(existingRole);
 
@@ -501,7 +471,7 @@ class RoleServiceTest {
         .id(ROLE_ID)
         .name("Completely New Name")
         .description("Completely New Description")
-        .type(org.folio.roles.domain.dto.RoleType.DEFAULT);
+        .type(DEFAULT);
 
       when(entityService.getById(ROLE_ID)).thenReturn(existingRole);
 
@@ -520,7 +490,7 @@ class RoleServiceTest {
         .id(ROLE_ID_2)
         .name("Completely New Name")
         .description("Completely New Description")
-        .type(org.folio.roles.domain.dto.RoleType.DEFAULT);
+        .type(DEFAULT);
 
       when(entityService.getById(ROLE_ID_2)).thenReturn(existingRole);
 

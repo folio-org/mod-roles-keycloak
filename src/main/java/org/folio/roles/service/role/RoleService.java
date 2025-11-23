@@ -120,7 +120,6 @@ public class RoleService {
   public Role update(Role role) {
     Assert.notNull(role.getId(), "Role should has ID");
     var actualRole = entityService.getById(role.getId());
-    checkIfRoleHasDefaultType(actualRole);
     checkIfRoleTypeTransitionInvolvesDefault(actualRole, role);
     keycloakService.update(role);
     try {
