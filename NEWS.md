@@ -15,6 +15,7 @@
 * Add automatic capability duplicate removal during tenant initialization (MODROLESKC-343)
 * Implement retry logic for calls to keycloak (MODROLESKC-340)
 * Disallow transitioning role type to/from DEFAULT (MODROLESKC-338)
+* Remove keycloak-admin-client version and add applications-poc-tools version management (KEYCLOAK-73)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)
