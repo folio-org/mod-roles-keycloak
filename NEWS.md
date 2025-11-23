@@ -14,6 +14,7 @@
 * Improve loadable role capability assignment logic (MODROLESKC-315)
 * Add automatic capability duplicate removal during tenant initialization (MODROLESKC-343)
 * Implement retry logic for calls to keycloak (MODROLESKC-340)
+* Disallow transitioning role type to/from DEFAULT (MODROLESKC-338)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)

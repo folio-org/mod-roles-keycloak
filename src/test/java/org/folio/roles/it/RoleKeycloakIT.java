@@ -298,6 +298,74 @@ class RoleKeycloakIT extends BaseIntegrationTest {
     assertEquals("", createdRole.getDescription());
   }
 
+  @Test
+  @KeycloakRealms("classpath:json/keycloak/test-realm-roles.json")
+  @Sql("classpath:/sql/populate-role.sql")
+  void updateRole_negative_cannotChangeTypeToDefault() throws Exception {
+    var roleForUpdate = new Role();
+    roleForUpdate.setId(ROLE_1.getId());
+    roleForUpdate.setName(ROLE_1.getName());
+    roleForUpdate.setDescription(ROLE_1.getDescription());
+    roleForUpdate.setType(RoleType.DEFAULT);
+
+    mockMvc.perform(put("/roles/{id}", ROLE_1.getId())
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .content(asJsonString(roleForUpdate))
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(jsonPath("$.errors[0].type", is("IllegalArgumentException")))
+      .andExpect(jsonPath("$.errors[0].code", is("validation_error")))
+      .andExpect(jsonPath("$.errors[0].message", is("Cannot change role type to DEFAULT.")));
+  }
+
+  @Test
+  @KeycloakRealms("classpath:json/keycloak/test-realm-roles.json")
+  @Sql("classpath:/sql/populate-default-role.sql")
+  void updateRole_negative_cannotChangeTypeFromDefault() throws Exception {
+    var roleForUpdate = new Role();
+    roleForUpdate.setId(ROLE_NOT_EXISTED.getId());
+    roleForUpdate.setName(ROLE_NOT_EXISTED.getName());
+    roleForUpdate.setDescription(ROLE_NOT_EXISTED.getDescription());
+    roleForUpdate.setType(RoleType.REGULAR);
+
+    mockMvc.perform(put("/roles/{id}", ROLE_NOT_EXISTED.getId())
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .content(asJsonString(roleForUpdate))
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(jsonPath("$.errors[0].type", is("IllegalArgumentException")))
+      .andExpect(jsonPath("$.errors[0].code", is("validation_error")))
+      .andExpect(jsonPath("$.errors[0].message",
+        is("Default role cannot be created, updated or deleted via roles API.")));
+  }
+
+  @Test
+  @KeycloakRealms("classpath:json/keycloak/test-realm-roles.json")
+  @Sql("classpath:/sql/populate-role.sql")
+  void updateRole_positive_canChangeTypeFromRegularToConsortium() throws Exception {
+    var roleForUpdate = new Role();
+    roleForUpdate.setId(ROLE_1.getId());
+    roleForUpdate.setName(ROLE_1.getName());
+    roleForUpdate.setDescription(ROLE_1.getDescription());
+    roleForUpdate.setType(RoleType.CONSORTIUM);
+
+    mockMvc.perform(put("/roles/{id}", ROLE_1.getId())
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .content(asJsonString(roleForUpdate))
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
+
+    var mvcResult = doGet("/roles/{id}", ROLE_1.getId()).andReturn();
+    var updatedRole = parseResponse(mvcResult, Role.class);
+
+    assertEquals(RoleType.CONSORTIUM, updatedRole.getType());
+  }
+
   private static Date timestampFrom(String value) {
     return Date.from(LocalDateTime.parse(value).atZone(systemDefault()).toInstant());
   }
