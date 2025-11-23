@@ -30,6 +30,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Optional;
+import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
@@ -107,7 +108,7 @@ class RoleServiceTest {
       facade.create(roles);
 
       assertEquals(result.getRoles().size(), result.getTotalRecords());
-      assertEquals(result.getRoles().get(0), role);
+      assertEquals(result.getRoles().getFirst(), role);
       verify(keycloakService, times(2)).create(role);
       verify(entityService, times(2)).create(role);
     }
@@ -330,7 +331,7 @@ class RoleServiceTest {
     @Test
     void negative_cannotChangeRoleTypeFromDefaultToRegular() {
       var existingRole = defaultRole();
-      var updatedRole = new org.folio.roles.domain.dto.Role()
+      var updatedRole = new Role()
         .id(ROLE_ID_3)
         .name(ROLE_NAME_3)
         .description(ROLE_DESCRIPTION_3)
@@ -343,16 +344,40 @@ class RoleServiceTest {
         .hasMessage("Default role cannot be created, updated or deleted via roles API.");
 
       verifyNoInteractions(keycloakService);
+      verify(entityService).getById(ROLE_ID_3);
+      verify(entityService, times(0)).update(any());
     }
 
     @Test
     void negative_cannotChangeRoleTypeFromDefaultToConsortium() {
       var existingRole = defaultRole();
-      var updatedRole = new org.folio.roles.domain.dto.Role()
+      var updatedRole = new Role()
         .id(ROLE_ID_3)
         .name(ROLE_NAME_3)
         .description(ROLE_DESCRIPTION_3)
         .type(org.folio.roles.domain.dto.RoleType.CONSORTIUM);
+
+      when(entityService.getById(ROLE_ID_3)).thenReturn(existingRole);
+
+      assertThatThrownBy(() -> facade.update(updatedRole))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
+
+      verifyNoInteractions(keycloakService);
+      verify(entityService).getById(ROLE_ID_3);
+      verify(entityService, times(0)).update(any());
+    }
+
+    @Test
+    void negative_cannotUpdateDefaultRoleEvenWithSameType() {
+      // This test ensures that even if trying to update a DEFAULT role
+      // without changing its type, the update is still prevented
+      var existingRole = defaultRole();
+      var updatedRole = new Role()
+        .id(ROLE_ID_3)
+        .name("Updated Name")
+        .description("Updated Description")
+        .type(org.folio.roles.domain.dto.RoleType.DEFAULT);
 
       when(entityService.getById(ROLE_ID_3)).thenReturn(existingRole);
 
@@ -366,7 +391,7 @@ class RoleServiceTest {
     @Test
     void negative_cannotChangeRoleTypeFromRegularToDefault() {
       var existingRole = role();
-      var updatedRole = new org.folio.roles.domain.dto.Role()
+      var updatedRole = new Role()
         .id(ROLE_ID)
         .name(ROLE_NAME)
         .description(ROLE_DESCRIPTION)
@@ -384,7 +409,7 @@ class RoleServiceTest {
     @Test
     void negative_cannotChangeRoleTypeFromConsortiumToDefault() {
       var existingRole = consortiumRole();
-      var updatedRole = new org.folio.roles.domain.dto.Role()
+      var updatedRole = new Role()
         .id(ROLE_ID_2)
         .name(ROLE_NAME_2)
         .description(ROLE_DESCRIPTION_2)
@@ -402,7 +427,7 @@ class RoleServiceTest {
     @Test
     void positive_canChangeRoleTypeFromRegularToConsortium() {
       var existingRole = role();
-      var updatedRole = new org.folio.roles.domain.dto.Role()
+      var updatedRole = new Role()
         .id(ROLE_ID)
         .name(ROLE_NAME)
         .description(ROLE_DESCRIPTION)
@@ -419,7 +444,7 @@ class RoleServiceTest {
     @Test
     void positive_canChangeRoleTypeFromConsortiumToRegular() {
       var existingRole = consortiumRole();
-      var updatedRole = new org.folio.roles.domain.dto.Role()
+      var updatedRole = new Role()
         .id(ROLE_ID_2)
         .name(ROLE_NAME_2)
         .description(ROLE_DESCRIPTION_2)
@@ -436,7 +461,7 @@ class RoleServiceTest {
     @Test
     void positive_updateWithoutTypeChange() {
       var existingRole = role();
-      var updatedRole = new org.folio.roles.domain.dto.Role()
+      var updatedRole = new Role()
         .id(ROLE_ID)
         .name("Updated Name")
         .description("Updated Description")
@@ -448,6 +473,62 @@ class RoleServiceTest {
 
       verify(keycloakService).update(updatedRole);
       verify(entityService).update(updatedRole);
+    }
+
+    @Test
+    void positive_updateConsortiumRoleWithoutTypeChange() {
+      // Validates that CONSORTIUM roles can be updated when type doesn't change
+      var existingRole = consortiumRole();
+      var updatedRole = new Role()
+        .id(ROLE_ID_2)
+        .name("Updated Consortium Role")
+        .description("Updated Description")
+        .type(org.folio.roles.domain.dto.RoleType.CONSORTIUM);
+
+      when(entityService.getById(ROLE_ID_2)).thenReturn(existingRole);
+
+      facade.update(updatedRole);
+
+      verify(keycloakService).update(updatedRole);
+      verify(entityService).update(updatedRole);
+    }
+
+    @Test
+    void negative_cannotChangeTypeFromRegularToDefaultWithDifferentFields() {
+      // Validates that even when changing other fields, type cannot be changed to DEFAULT
+      var existingRole = role();
+      var updatedRole = new Role()
+        .id(ROLE_ID)
+        .name("Completely New Name")
+        .description("Completely New Description")
+        .type(org.folio.roles.domain.dto.RoleType.DEFAULT);
+
+      when(entityService.getById(ROLE_ID)).thenReturn(existingRole);
+
+      assertThatThrownBy(() -> facade.update(updatedRole))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Cannot change role type to DEFAULT.");
+
+      verifyNoInteractions(keycloakService);
+    }
+
+    @Test
+    void negative_cannotChangeTypeFromConsortiumToDefaultWithDifferentFields() {
+      // Validates that CONSORTIUM roles also cannot be changed to DEFAULT
+      var existingRole = consortiumRole();
+      var updatedRole = new Role()
+        .id(ROLE_ID_2)
+        .name("Completely New Name")
+        .description("Completely New Description")
+        .type(org.folio.roles.domain.dto.RoleType.DEFAULT);
+
+      when(entityService.getById(ROLE_ID_2)).thenReturn(existingRole);
+
+      assertThatThrownBy(() -> facade.update(updatedRole))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Cannot change role type to DEFAULT.");
+
+      verifyNoInteractions(keycloakService);
     }
   }
 
