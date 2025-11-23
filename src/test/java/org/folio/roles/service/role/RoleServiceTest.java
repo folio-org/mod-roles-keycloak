@@ -143,6 +143,99 @@ class RoleServiceTest {
     }
 
     @Test
+    void createBatch_positive_roleAlreadyExistsInDb() {
+      var role = role();
+      var roles = List.of(role);
+
+      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
+        new WebApplicationException()));
+      when(entityService.findByName(role.getName())).thenReturn(Optional.of(role));
+
+      var result = facade.create(roles);
+
+      assertTrue(result.getRoles().isEmpty());
+      verify(keycloakService).create(role);
+      verify(entityService).findByName(role.getName());
+    }
+
+    @Test
+    void createBatch_positive_roleExistsInKeycloakButNotInDb() {
+      var role = role();
+      var roles = List.of(role);
+
+      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
+        new WebApplicationException()));
+      when(keycloakService.findByName(role.getName())).thenReturn(Optional.of(role));
+      when(entityService.findByName(role.getName())).thenReturn(Optional.empty()).thenReturn(Optional.empty());
+      when(entityService.create(role)).thenReturn(role);
+
+      var result = facade.create(roles);
+
+      assertTrue(result.getRoles().isEmpty());
+      verify(keycloakService).create(role);
+      verify(keycloakService).findByName(role.getName());
+      verify(entityService, times(2)).findByName(role.getName());
+      verify(entityService).create(role);
+    }
+
+    @Test
+    void createBatch_positive_roleExistsInKeycloakButDbCreateFails() {
+      var role = role();
+      var roles = List.of(role);
+
+      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
+        new WebApplicationException()));
+      when(keycloakService.findByName(role.getName())).thenReturn(Optional.of(role));
+      when(entityService.findByName(role.getName())).thenReturn(Optional.empty()).thenReturn(Optional.empty());
+      when(entityService.create(role)).thenThrow(RuntimeException.class);
+
+      var result = facade.create(roles);
+
+      assertTrue(result.getRoles().isEmpty());
+      verify(keycloakService).create(role);
+      verify(keycloakService).findByName(role.getName());
+      verify(entityService, times(2)).findByName(role.getName());
+      verify(entityService).create(role);
+    }
+
+    @Test
+    void createBatch_positive_keycloakRoleNotFound() {
+      var role = role();
+      var roles = List.of(role);
+
+      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
+        new WebApplicationException()));
+      when(keycloakService.findByName(role.getName())).thenReturn(Optional.empty());
+      when(entityService.findByName(role.getName())).thenReturn(Optional.empty());
+
+      var result = facade.create(roles);
+
+      assertTrue(result.getRoles().isEmpty());
+      verify(keycloakService).create(role);
+      verify(keycloakService).findByName(role.getName());
+      verify(entityService).findByName(role.getName());
+    }
+
+    @Test
+    void createBatch_positive_mixedRoles() {
+      var role1 = role();
+      var role2 = defaultRole();
+      var role3 = consortiumRole();
+      var roles = List.of(role1, role2, role3);
+
+      when(keycloakService.create(role1)).thenReturn(role1);
+      when(entityService.create(role1)).thenReturn(role1);
+      when(keycloakService.create(role3)).thenReturn(role3);
+      when(entityService.create(role3)).thenReturn(role3);
+
+      var result = facade.create(roles);
+
+      assertEquals(2, result.getTotalRecords());
+      assertEquals(2, result.getRoles().size());
+      verify(keycloakService, times(2)).create(any());
+    }
+
+    @Test
     void negative_cannotCreateDefaultRole() {
       var defaultRole = defaultRole();
 
@@ -195,6 +288,19 @@ class RoleServiceTest {
 
       verify(entityService).update(role);
       verify(keycloakService).update(role);
+    }
+
+    @Test
+    void negative_roleIdIsNull() {
+      var role = role();
+      role.setId(null);
+
+      assertThatThrownBy(() -> facade.update(role))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Role should has ID");
+
+      verifyNoInteractions(entityService);
+      verifyNoInteractions(keycloakService);
     }
 
     @Test
@@ -326,6 +432,23 @@ class RoleServiceTest {
       verify(keycloakService).update(updatedRole);
       verify(entityService).update(updatedRole);
     }
+
+    @Test
+    void positive_updateWithoutTypeChange() {
+      var existingRole = role();
+      var updatedRole = new org.folio.roles.domain.dto.Role()
+        .id(ROLE_ID)
+        .name("Updated Name")
+        .description("Updated Description")
+        .type(org.folio.roles.domain.dto.RoleType.REGULAR);
+
+      when(entityService.getById(ROLE_ID)).thenReturn(existingRole);
+
+      facade.update(updatedRole);
+
+      verify(keycloakService).update(updatedRole);
+      verify(entityService).update(updatedRole);
+    }
   }
 
   @Nested
@@ -400,9 +523,28 @@ class RoleServiceTest {
     }
 
     @Test
+    void positive_multipleRoles() {
+      var roleIds = List.of(ROLE_ID, ROLE_ID_2);
+      var role1 = role();
+      var role2 = consortiumRole();
+      when(entityService.findByIds(roleIds)).thenReturn(List.of(role1, role2));
+      var result = facade.findByIds(roleIds);
+      assertThat(result).containsExactly(role1, role2);
+    }
+
+    @Test
     void negative_notAllRolesFound() {
       var roleIds = List.of(ROLE_ID);
       when(entityService.findByIds(roleIds)).thenReturn(emptyList());
+      assertThatThrownBy(() -> facade.findByIds(roleIds))
+        .isInstanceOf(EntityNotFoundException.class)
+        .hasMessageMatching("Roles are not found for ids: \\[.*]");
+    }
+
+    @Test
+    void negative_someRolesNotFound() {
+      var roleIds = List.of(ROLE_ID, ROLE_ID_2, ROLE_ID_3);
+      when(entityService.findByIds(roleIds)).thenReturn(List.of(role()));
       assertThatThrownBy(() -> facade.findByIds(roleIds))
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessageMatching("Roles are not found for ids: \\[.*]");
