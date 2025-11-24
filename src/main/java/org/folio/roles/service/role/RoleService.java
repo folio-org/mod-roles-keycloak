@@ -2,7 +2,6 @@ package org.folio.roles.service.role;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
-import static java.util.stream.Collectors.toList;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -106,7 +105,7 @@ public class RoleService {
     var createdRoles = roles.stream()
       .map(this::createSafe)
       .flatMap(Optional::stream)
-      .collect(toList());
+      .toList();
     return buildRoles(createdRoles);
   }
 
@@ -120,7 +119,8 @@ public class RoleService {
   public Role update(Role role) {
     Assert.notNull(role.getId(), "Role should has ID");
     var actualRole = entityService.getById(role.getId());
-    checkIfRoleTypeTransitionInvolvesDefault(actualRole, role);
+    checkIfRoleHasDefaultType(role);
+    checkIfRoleHasDefaultType(actualRole);
     keycloakService.update(role);
     try {
       return entityService.update(role);
@@ -208,21 +208,6 @@ public class RoleService {
       log.debug("Default role cannot be created, updated or deleted via roles API: id = {}, name = {}", role.getId(),
         role.getName());
       throw new IllegalArgumentException("Default role cannot be created, updated or deleted via roles API.");
-    }
-  }
-
-  private static void checkIfRoleTypeTransitionInvolvesDefault(Role currentRole, Role updatedRole) {
-    if (currentRole.getType() != updatedRole.getType()) {
-      if (hasDefaultRoleType(currentRole)) {
-        log.debug("Cannot change role type from DEFAULT: id = {}, name = {}", currentRole.getId(),
-          currentRole.getName());
-        throw new IllegalArgumentException("Cannot change role type from DEFAULT.");
-      }
-      if (hasDefaultRoleType(updatedRole)) {
-        log.debug("Cannot change role type to DEFAULT: id = {}, name = {}", updatedRole.getId(),
-          updatedRole.getName());
-        throw new IllegalArgumentException("Cannot change role type to DEFAULT.");
-      }
     }
   }
 

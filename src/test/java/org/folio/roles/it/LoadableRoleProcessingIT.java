@@ -294,7 +294,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
     var errorResponse = parseResponse(mvcResult, ErrorResponse.class);
     assertThat(errorResponse.getErrors().getFirst().getMessage())
-      .isEqualTo("Cannot change role type from DEFAULT.");
+      .isEqualTo("Default role cannot be created, updated or deleted via roles API.");
   }
 
   @Test

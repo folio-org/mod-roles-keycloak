@@ -331,7 +331,7 @@ class RoleServiceTest {
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Cannot change role type from DEFAULT.");
+        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
 
       verifyNoInteractions(keycloakService);
       verify(entityService).getById(ROLE_ID_3);
@@ -351,7 +351,7 @@ class RoleServiceTest {
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Cannot change role type from DEFAULT.");
+        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
 
       verifyNoInteractions(keycloakService);
       verify(entityService).getById(ROLE_ID_3);
@@ -371,7 +371,7 @@ class RoleServiceTest {
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Cannot change role type to DEFAULT.");
+        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
 
       verifyNoInteractions(keycloakService);
     }
@@ -389,7 +389,7 @@ class RoleServiceTest {
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Cannot change role type to DEFAULT.");
+        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
 
       verifyNoInteractions(keycloakService);
     }
@@ -477,7 +477,7 @@ class RoleServiceTest {
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Cannot change role type to DEFAULT.");
+        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
 
       verifyNoInteractions(keycloakService);
     }
@@ -496,7 +496,7 @@ class RoleServiceTest {
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Cannot change role type to DEFAULT.");
+        .hasMessage("Default role cannot be created, updated or deleted via roles API.");
 
       verifyNoInteractions(keycloakService);
     }
