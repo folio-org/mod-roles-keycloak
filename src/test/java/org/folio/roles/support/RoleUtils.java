@@ -52,6 +52,15 @@ public class RoleUtils {
     return role;
   }
 
+  public static Role consortiumRole() {
+    var role = new Role();
+    role.setId(ROLE_ID_2);
+    role.setName(ROLE_NAME_2);
+    role.setDescription(ROLE_DESCRIPTION_2);
+    role.setType(RoleType.CONSORTIUM);
+    return role;
+  }
+
   public static RoleEntity roleEntity() {
     var roleEntity = new RoleEntity();
     roleEntity.setId(ROLE_ID_2);

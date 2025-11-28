@@ -2,7 +2,6 @@ package org.folio.roles.service.role;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
-import static java.util.stream.Collectors.toList;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -106,7 +105,7 @@ public class RoleService {
     var createdRoles = roles.stream()
       .map(this::createSafe)
       .flatMap(Optional::stream)
-      .collect(toList());
+      .toList();
     return buildRoles(createdRoles);
   }
 
@@ -120,6 +119,7 @@ public class RoleService {
   public Role update(Role role) {
     Assert.notNull(role.getId(), "Role should has ID");
     var actualRole = entityService.getById(role.getId());
+    checkIfRoleHasDefaultType(role);
     checkIfRoleHasDefaultType(actualRole);
     keycloakService.update(role);
     try {

@@ -118,12 +118,12 @@ class CustomTenantServiceTest {
 
   @Test
   void afterTenantUpdate_positive() {
-    var attributes = new TenantAttributes();
     var tokenManager = mock(TokenManager.class);
     when(keycloak.tokenManager()).thenReturn(tokenManager);
     doNothing().when(kafkaAdminService).restartEventListeners();
     doNothing().when(capabilitiesMergeService).mergeDuplicateCapabilities();
 
+    var attributes = new TenantAttributes();
     customTenantService.afterTenantUpdate(attributes);
 
     verify(kafkaAdminService).restartEventListeners();
