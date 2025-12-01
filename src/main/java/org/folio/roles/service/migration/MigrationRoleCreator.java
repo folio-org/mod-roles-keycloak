@@ -3,6 +3,7 @@ package org.folio.roles.service.migration;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
@@ -35,28 +36,92 @@ public class MigrationRoleCreator {
   /**
    * Creates a list of role from user permissions.
    *
+   * <p>This method handles partial failures gracefully:
+   * <ul>
+   *   <li>If a role already exists in DB or Keycloak, it will be retrieved</li>
+   *   <li>If role creation fails, it will be skipped and logged</li>
+   *   <li>No partial data will be left (rollback is handled by RoleService)</li>
+   * </ul>
+   *
    * @param userPermissions - user permissions list
-   * @return {@link List} with created {@link Role} objects
+   * @return {@link List} with created {@link Role} objects (only successfully created or existing roles)
    */
   @Transactional
   public List<Role> createRoles(List<UserPermissions> userPermissions) {
-    var roleNames = toStream(userPermissions)
+    var roleNames = extractUniqueRoleNames(userPermissions);
+    log.info("Creating {} role(s)...", roleNames.size());
+    
+    var roles = mapItems(roleNames, MigrationRoleCreator::createRole);
+    var createdRoles = roleService.create(roles).getRoles();
+    log.info("Roles created successfully: {} out of {} requested", createdRoles.size(), roles.size());
+
+    return handlePartialFailures(roleNames, createdRoles);
+  }
+
+  private List<String> extractUniqueRoleNames(List<UserPermissions> userPermissions) {
+    return toStream(userPermissions)
       .map(UserPermissions::getRoleName)
       .distinct()
       .toList();
+  }
 
-    log.info("Creating {} role(s) in keycloak...", roleNames.size());
-    var roles = mapItems(roleNames, MigrationRoleCreator::createRole);
-    var createdRoles = roleService.create(roles).getRoles();
-    log.info("Roles created: totalRecords = {}", createdRoles.size());
-
-    if (createdRoles.size() == roles.size()) {
+  private List<Role> handlePartialFailures(List<String> expectedRoleNames, List<Role> createdRoles) {
+    if (createdRoles.size() >= expectedRoleNames.size()) {
       return createdRoles;
     }
 
-    return toStream(roles)
-      .map(role -> roleService.search("name==" + role.getName(), 0, roles.size()))
-      .flatMap(rolesByName -> toStream(rolesByName.getRoles()))
+    log.warn("Some roles failed to create or already existed. Expected: {}, Successfully created/found: {}",
+      expectedRoleNames.size(), createdRoles.size());
+
+    var missingRoleNames = findMissingRoleNames(expectedRoleNames, createdRoles);
+    if (isEmpty(missingRoleNames)) {
+      return createdRoles;
+    }
+
+    return searchAndCombineRoles(createdRoles, missingRoleNames);
+  }
+
+  private List<String> findMissingRoleNames(List<String> expectedNames, List<Role> createdRoles) {
+    var createdRoleNames = toStream(createdRoles).map(Role::getName).toList();
+    return expectedNames.stream()
+      .filter(name -> createdRoleNames.stream().noneMatch(name::equals))
+      .toList();
+  }
+
+  private List<Role> searchAndCombineRoles(List<Role> createdRoles, List<String> missingRoleNames) {
+    log.info("Searching for {} missing role(s)...", missingRoleNames.size());
+    var foundRoles = findMissingRoles(missingRoleNames);
+    
+    if (isEmpty(foundRoles)) {
+      return createdRoles;
+    }
+
+    log.info("Found {} existing role(s)", foundRoles.size());
+    var allRoles = new ArrayList<>(createdRoles);
+    allRoles.addAll(foundRoles);
+    return allRoles;
+  }
+  
+  /**
+   * Searches for roles that might already exist in the system.
+   *
+   * @param roleNames - list of role names to search for
+   * @return list of found roles
+   */
+  private List<Role> findMissingRoles(List<String> roleNames) {
+    return roleNames.stream()
+      .map(roleName -> {
+        try {
+          var rolesFound = roleService.search("name==" + roleName, 0, 1);
+          if (rolesFound.getRoles() != null && !rolesFound.getRoles().isEmpty()) {
+            return rolesFound.getRoles().get(0);
+          }
+        } catch (Exception e) {
+          log.warn("Failed to search for role: name = {}", roleName, e);
+        }
+        return null;
+      })
+      .filter(role -> role != null)
       .toList();
   }
 

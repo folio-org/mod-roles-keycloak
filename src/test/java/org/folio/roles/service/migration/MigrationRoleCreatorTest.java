@@ -89,6 +89,58 @@ class MigrationRoleCreatorTest {
 
       assertThat(result).isEqualTo(List.of(createdMigrationRole()));
     }
+    
+    @Test
+    void positive_partialFailure_someRolesCreated(CapturedOutput output) {
+      var userPerm1 = userPermissions();
+      var userPerm2 = new UserPermissions().userId(USER_ID).roleName("role2").permissions(List.of("bar.item.get"));
+      
+      var role1 = migrationRole();
+      var role2 = new Role()
+        .name("role2")
+        .type(RoleType.REGULAR)
+        .description("System generated role during migration");
+      
+      var createdRole1 = createdMigrationRole();
+      
+      // Only role1 is created successfully, role2 fails
+      when(roleService.create(List.of(role1, role2)))
+        .thenReturn(new Roles().addRolesItem(createdRole1).totalRecords(1L));
+      
+      // role2 search returns empty (not found)
+      when(roleService.search("name==role2", 0, 1)).thenReturn(new Roles().totalRecords(0L));
+      
+      var result = migrationRoleCreator.createRoles(List.of(userPerm1, userPerm2));
+      
+      // Only successfully created roles are returned
+      assertThat(result).hasSize(1);
+      assertThat(result.get(0)).isEqualTo(createdRole1);
+      assertThat(output.getAll()).contains("Some roles failed to create or already existed");
+      assertThat(output.getAll()).contains("Searching for 1 missing role(s)");
+    }
+    
+    @Test
+    void positive_allRolesFailed_returnsEmpty(CapturedOutput output) {
+      when(roleService.create(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
+      when(roleService.search("name==" + ROLE_NAME, 0, 1)).thenReturn(new Roles().totalRecords(0L));
+      
+      var result = migrationRoleCreator.createRoles(List.of(userPermissions()));
+      
+      assertThat(result).isEmpty();
+      assertThat(output.getAll()).contains("Some roles failed to create or already existed");
+    }
+    
+    @Test
+    void positive_searchThrowsException_skipsRole(CapturedOutput output) {
+      when(roleService.create(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
+      when(roleService.search("name==" + ROLE_NAME, 0, 1))
+        .thenThrow(new RuntimeException("Search failed"));
+      
+      var result = migrationRoleCreator.createRoles(List.of(userPermissions()));
+      
+      assertThat(result).isEmpty();
+      assertThat(output.getAll()).contains("Failed to search for role: name = " + ROLE_NAME);
+    }
   }
 
   @Nested

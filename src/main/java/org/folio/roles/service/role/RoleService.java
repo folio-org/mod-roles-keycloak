@@ -188,10 +188,31 @@ public class RoleService {
 
   private Optional<Role> getOrCreateRoleEntitySafe(Role role) {
     try {
-      return of(entityService.findByName(role.getName()).orElseGet(() -> entityService.create(role)));
+      var existingRole = entityService.findByName(role.getName());
+      if (existingRole.isPresent()) {
+        return existingRole;
+      }
+      
+      var createdRole = entityService.create(role);
+      return of(createdRole);
     } catch (Exception e) {
-      log.warn("Role entity creation failed for role name = {}", role.getName(), e);
+      log.warn("Role entity creation failed for role name = {}, cleaning up Keycloak role", role.getName(), e);
+      rollbackKeycloakRole(role);
       return empty();
+    }
+  }
+
+  private void rollbackKeycloakRole(Role role) {
+    if (role.getId() == null) {
+      return;
+    }
+
+    try {
+      keycloakService.deleteById(role.getId());
+      log.info("Successfully rolled back Keycloak role: id = {}, name = {}", role.getId(), role.getName());
+    } catch (Exception rollbackException) {
+      log.error("Failed to rollback Keycloak role: id = {}, name = {}", 
+        role.getId(), role.getName(), rollbackException);
     }
   }
 

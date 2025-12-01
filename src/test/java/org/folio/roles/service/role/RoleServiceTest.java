@@ -200,6 +200,27 @@ class RoleServiceTest {
       verify(keycloakService).findByName(role.getName());
       verify(entityService, times(2)).findByName(role.getName());
       verify(entityService).create(role);
+      // Verify rollback: Keycloak role should be deleted after DB creation fails
+      verify(keycloakService).deleteById(role.getId());
+    }
+    
+    @Test
+    void createBatch_positive_dbCreationFailsAfterKeycloakSuccess_rollbackHappens() {
+      var role = role();
+      var roles = List.of(role);
+
+      when(keycloakService.create(role)).thenReturn(role);
+      when(entityService.findByName(role.getName())).thenReturn(Optional.empty());
+      when(entityService.create(role)).thenThrow(RuntimeException.class);
+
+      var result = facade.create(roles);
+
+      assertTrue(result.getRoles().isEmpty());
+      verify(keycloakService).create(role);
+      verify(entityService).findByName(role.getName());
+      verify(entityService).create(role);
+      // Verify rollback: Keycloak role should be deleted after DB creation fails
+      verify(keycloakService).deleteById(role.getId());
     }
 
     @Test
