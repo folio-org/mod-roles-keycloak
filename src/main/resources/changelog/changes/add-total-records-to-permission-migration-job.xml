@@ -1,0 +1,14 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+  <changeSet id="add-total-records-to-permission-migration-job" author="okuzminov">
+    <addColumn tableName="permission_migration_job">
+      <column name="total_records" type="INT4">
+        <constraints nullable="true"/>
+      </column>
+    </addColumn>
+  </changeSet>
+</databaseChangeLog>

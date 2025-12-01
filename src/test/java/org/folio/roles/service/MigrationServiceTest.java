@@ -127,13 +127,13 @@ class MigrationServiceTest {
       var query = "cql.allRecords=1";
       var offsetRequest = OffsetRequest.of(0, 100);
       var entities = new PageImpl<>(List.of(migrationJobEntity()), offsetRequest, 1L);
+      var expectedJobs = new PermissionMigrationJobs().totalRecords(1).migrations(List.of(migrationJob()));
 
       when(migrationJobRepository.findByCql(query, offsetRequest)).thenReturn(entities);
-      when(permissionMigrationMapper.toDto(migrationJobEntity())).thenReturn(migrationJob());
+      when(permissionMigrationMapper.toDtoCollection(entities)).thenReturn(expectedJobs);
 
       var migrations = migrationService.findMigrations(query, 0, 100);
 
-      var expectedJobs = new PermissionMigrationJobs().totalRecords(1).migrations(List.of(migrationJob()));
       assertThat(migrations).isEqualTo(expectedJobs);
     }
 
@@ -142,13 +142,13 @@ class MigrationServiceTest {
       var query = "  ";
       var offsetRequest = OffsetRequest.of(0, 100);
       var entities = new PageImpl<>(List.of(migrationJobEntity()), offsetRequest, 1L);
+      var expectedJobs = new PermissionMigrationJobs().totalRecords(1).migrations(List.of(migrationJob()));
 
       when(migrationJobRepository.findAll(offsetRequest)).thenReturn(entities);
-      when(permissionMigrationMapper.toDto(migrationJobEntity())).thenReturn(migrationJob());
+      when(permissionMigrationMapper.toDtoCollection(entities)).thenReturn(expectedJobs);
 
       var migrations = migrationService.findMigrations(query, 0, 100);
 
-      var expectedJobs = new PermissionMigrationJobs().totalRecords(1).migrations(List.of(migrationJob()));
       assertThat(migrations).isEqualTo(expectedJobs);
     }
   }
@@ -182,8 +182,9 @@ class MigrationServiceTest {
 
     @Test
     void positive() {
+      when(migrationJobRepository.existsByStatus(IN_PROGRESS)).thenReturn(false);
       doNothing().when(migrationJobRepository).flush();
-      doAnswer(answersWithDelay(100, inv -> null)).when(permissionMigrationService).migratePermissions(MIGRATION_ID);
+      doAnswer(answersWithDelay(100, inv -> 10)).when(permissionMigrationService).migratePermissions(MIGRATION_ID);
       var inProgressJob = migrationJob(PermissionMigrationJobStatus.IN_PROGRESS);
       var inProgressEntity = migrationJobEntity(IN_PROGRESS);
 
@@ -199,13 +200,16 @@ class MigrationServiceTest {
 
       await().untilAsserted(() -> verify(migrationJobRepository).findById(MIGRATION_ID));
       assertThat(entityCaptor.getAllValues().get(0).getStatus()).isEqualTo(IN_PROGRESS);
+      assertThat(entityCaptor.getAllValues().get(0).getTotalRecords()).isNull();
       assertThat(entityCaptor.getAllValues().get(1).getStatus()).isEqualTo(FINISHED);
+      assertThat(entityCaptor.getAllValues().get(1).getTotalRecords()).isEqualTo(10);
     }
 
     @Test
     void positive_entityNotFoundById() {
+      when(migrationJobRepository.existsByStatus(IN_PROGRESS)).thenReturn(false);
       doNothing().when(migrationJobRepository).flush();
-      doAnswer(answersWithDelay(100, inv -> null)).when(permissionMigrationService).migratePermissions(MIGRATION_ID);
+      doAnswer(answersWithDelay(100, inv -> 10)).when(permissionMigrationService).migratePermissions(MIGRATION_ID);
       var inProgressJob = migrationJob(PermissionMigrationJobStatus.IN_PROGRESS);
       var inProgressEntity = migrationJobEntity(IN_PROGRESS);
 
@@ -221,10 +225,12 @@ class MigrationServiceTest {
 
       await().untilAsserted(() -> verify(migrationJobRepository).findById(MIGRATION_ID));
       assertThat(entityCaptor.getAllValues().get(0).getStatus()).isEqualTo(IN_PROGRESS);
+      assertThat(entityCaptor.getAllValues().get(0).getTotalRecords()).isNull();
     }
 
     @Test
     void negative_migrationFailed() {
+      when(migrationJobRepository.existsByStatus(IN_PROGRESS)).thenReturn(false);
       doNothing().when(migrationJobRepository).flush();
       doAnswer(answersWithDelay(100, throwMigrationException()))
         .when(permissionMigrationService).migratePermissions(MIGRATION_ID);
@@ -249,7 +255,23 @@ class MigrationServiceTest {
       verify(folioExecutionContext, atLeastOnce()).getRequestId();
 
       assertThat(entityCaptor.getAllValues().get(0).getStatus()).isEqualTo(IN_PROGRESS);
+      assertThat(entityCaptor.getAllValues().get(0).getTotalRecords()).isNull();
       assertThat(entityCaptor.getAllValues().get(1).getStatus()).isEqualTo(FAILED);
+      assertThat(entityCaptor.getAllValues().get(1).getTotalRecords()).isNull();
+    }
+
+    @Test
+    void negative_concurrentMigrationInProgress() {
+      when(migrationJobRepository.existsByStatus(IN_PROGRESS)).thenReturn(true);
+
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        assertThatThrownBy(() -> migrationService.createMigration())
+          .isInstanceOf(org.folio.roles.exception.RequestValidationException.class)
+          .hasMessageContaining("There is already an active migration job in progress");
+      }
+
+      verify(permissionMigrationService, never()).migratePermissions(org.mockito.ArgumentMatchers.any());
+      verify(migrationJobRepository, never()).save(org.mockito.ArgumentMatchers.any());
     }
 
     private static Answer<Object> throwMigrationException() {
