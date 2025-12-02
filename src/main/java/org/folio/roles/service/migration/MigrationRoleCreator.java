@@ -21,6 +21,8 @@ import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.domain.dto.UserRole;
 import org.folio.roles.domain.model.UserPermissions;
 import org.folio.roles.exception.MigrationException;
+import org.folio.roles.service.role.RoleCreationResult;
+import org.folio.roles.service.role.RoleMigrationService;
 import org.folio.roles.service.role.RoleService;
 import org.folio.roles.service.role.UserRoleService;
 import org.springframework.stereotype.Component;
@@ -32,7 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MigrationRoleCreator {
 
   private final RoleService roleService;
-  private final org.folio.roles.service.role.RoleMigrationService roleMigrationService;
+  private final RoleMigrationService roleMigrationService;
   private final UserRoleService userRoleService;
   private final MigrationErrorService migrationErrorService;
 
@@ -63,7 +65,7 @@ public class MigrationRoleCreator {
     var createdRoles = creationResult.getSuccessfulRoles();
     log.info("Roles created successfully: {} out of {} requested", createdRoles.size(), roles.size());
 
-    return handlePartialFailures(roleNames, createdRoles, jobId);
+    return handlePartialFailures(roleNames, createdRoles);
   }
 
   private List<String> extractUniqueRoleNames(List<UserPermissions> userPermissions) {
@@ -73,7 +75,7 @@ public class MigrationRoleCreator {
       .toList();
   }
 
-  private void logCreationErrors(org.folio.roles.service.role.RoleCreationResult result, UUID jobId) {
+  private void logCreationErrors(RoleCreationResult result, UUID jobId) {
     if (!result.hasFailures()) {
       return;
     }
@@ -85,7 +87,7 @@ public class MigrationRoleCreator {
     }
   }
 
-  private List<Role> handlePartialFailures(List<String> expectedRoleNames, List<Role> createdRoles, UUID jobId) {
+  private List<Role> handlePartialFailures(List<String> expectedRoleNames, List<Role> createdRoles) {
     if (createdRoles.size() >= expectedRoleNames.size()) {
       return createdRoles;
     }
@@ -98,7 +100,7 @@ public class MigrationRoleCreator {
       return createdRoles;
     }
 
-    return searchAndCombineRoles(createdRoles, missingRoleNames, jobId);
+    return searchAndCombineRoles(createdRoles, missingRoleNames);
   }
 
   private List<String> findMissingRoleNames(List<String> expectedNames, List<Role> createdRoles) {
@@ -108,9 +110,9 @@ public class MigrationRoleCreator {
       .toList();
   }
 
-  private List<Role> searchAndCombineRoles(List<Role> createdRoles, List<String> missingRoleNames, UUID jobId) {
+  private List<Role> searchAndCombineRoles(List<Role> createdRoles, List<String> missingRoleNames) {
     log.info("Searching for {} missing role(s)...", missingRoleNames.size());
-    var foundRoles = searchForMissingRoles(missingRoleNames, jobId);
+    var foundRoles = searchForMissingRoles(missingRoleNames);
     
     if (isEmpty(foundRoles)) {
       return createdRoles;
@@ -120,7 +122,7 @@ public class MigrationRoleCreator {
     return combineRoles(createdRoles, foundRoles);
   }
 
-  private List<Role> searchForMissingRoles(List<String> roleNames, UUID jobId) {
+  private List<Role> searchForMissingRoles(List<String> roleNames) {
     var foundRoles = new ArrayList<Role>();
     
     for (String roleName : roleNames) {

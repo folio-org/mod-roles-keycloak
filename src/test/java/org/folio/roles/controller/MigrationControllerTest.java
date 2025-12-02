@@ -94,6 +94,26 @@ class MigrationControllerTest {
       .andExpect(content().json(asJsonString(permissionMigrationJob), true));
   }
 
+  @Test
+  void getMigrationErrors_positive() throws Exception {
+    var migrationErrors = new org.folio.roles.domain.dto.PermissionMigrationErrors()
+      .errors(List.of(new org.folio.roles.domain.dto.PermissionMigrationError()
+        .id(UUID.randomUUID())
+        .errorType("ROLE_CREATION_FAILED")
+        .errorMessage("Failed to create role")))
+      .totalRecords(1);
+    when(migrationErrorService.getMigrationErrors(MIGRATION_ID, 0, 10)).thenReturn(migrationErrors);
+
+    mockMvc.perform(get("/roles-keycloak/migrations/{id}/errors", MIGRATION_ID)
+        .queryParam("offset", "0")
+        .queryParam("limit", "10")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(migrationErrors), true));
+  }
+
   private static PermissionMigrationJob permissionMigrationJob() {
     var permissionMigrationJob = new PermissionMigrationJob();
     permissionMigrationJob.setId(MIGRATION_ID);
