@@ -5,9 +5,11 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.folio.roles.domain.dto.PermissionMigrationErrors;
 import org.folio.roles.domain.dto.PermissionMigrationJob;
 import org.folio.roles.domain.dto.PermissionMigrationJobs;
 import org.folio.roles.rest.resource.MigrationApi;
+import org.folio.roles.service.MigrationErrorService;
 import org.folio.roles.service.MigrationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MigrationController implements MigrationApi {
 
   private final MigrationService migrationService;
+  private final MigrationErrorService migrationErrorService;
 
   @Override
   public ResponseEntity<PermissionMigrationJob> getMigration(UUID id) {
@@ -40,5 +43,11 @@ public class MigrationController implements MigrationApi {
   public ResponseEntity<String> deleteMigration(UUID id) {
     migrationService.deleteMigrationById(id);
     return ResponseEntity.status(NO_CONTENT).build();
+  }
+
+  @Override
+  public ResponseEntity<PermissionMigrationErrors> getMigrationErrors(UUID id, Integer limit, Integer offset) {
+    var errors = migrationErrorService.getMigrationErrors(id, offset, limit);
+    return ResponseEntity.ok(errors);
   }
 }

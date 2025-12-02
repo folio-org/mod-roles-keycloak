@@ -672,6 +672,30 @@ paths:
               schema:
                 type: string
 
+  /roles-keycloak/migrations/{id}/errors:
+    get:
+      description: Retrieve errors for a specific migration job
+      operationId: getMigrationErrors
+      tags:
+        - migration
+      parameters:
+        - $ref: '#/components/parameters/pathEntityId'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: A collection of migration errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/permissionMigrationErrors'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '404':
+          $ref: '#/components/responses/notFoundResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
   /capabilities:
     get:
       description: Get capabilities by query
@@ -1151,6 +1175,10 @@ components:
       $ref: schemas/migration/permissionMigrationJob.json
     permissionMigrationJobs:
       $ref: schemas/migration/permissionMigrationJobs.json
+    permissionMigrationError:
+      $ref: schemas/migration/permissionMigrationError.json
+    permissionMigrationErrors:
+      $ref: schemas/migration/permissionMigrationErrors.json
 
   responses:
     badRequestResponse:

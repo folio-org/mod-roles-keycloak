@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.UUID;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.domain.dto.Roles;
@@ -37,9 +38,13 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class MigrationRoleCreatorTest {
 
+  private static final UUID JOB_ID = UUID.randomUUID();
+
   @InjectMocks private MigrationRoleCreator migrationRoleCreator;
   @Mock private RoleService roleService;
+  @Mock private org.folio.roles.service.role.RoleMigrationService roleMigrationService;
   @Mock private UserRoleService userRoleService;
+  @Mock private org.folio.roles.service.MigrationErrorService migrationErrorService;
 
   @AfterEach
   void tearDown() {
@@ -75,17 +80,17 @@ class MigrationRoleCreatorTest {
 
     @Test
     void positive_roleCreated() {
-      when(roleService.create(List.of(migrationRole()))).thenReturn(createdMigrationRoles());
-      var result = migrationRoleCreator.createRoles(List.of(userPermissions()));
+      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(createdMigrationRoles());
+      var result = migrationRoleCreator.createRoles(List.of(userPermissions()), JOB_ID);
       assertThat(result).isEqualTo(List.of(createdMigrationRole()));
     }
 
     @Test
     void positive_roleFound() {
-      when(roleService.create(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
+      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
       when(roleService.search("name==" + ROLE_NAME, 0, 1)).thenReturn(createdMigrationRoles());
 
-      var result = migrationRoleCreator.createRoles(List.of(userPermissions()));
+      var result = migrationRoleCreator.createRoles(List.of(userPermissions()), JOB_ID);
 
       assertThat(result).isEqualTo(List.of(createdMigrationRole()));
     }
@@ -104,42 +109,54 @@ class MigrationRoleCreatorTest {
       var createdRole1 = createdMigrationRole();
       
       // Only role1 is created successfully, role2 fails
-      when(roleService.create(List.of(role1, role2)))
+      when(roleMigrationService.createRolesSafely(List.of(role1, role2)))
         .thenReturn(new Roles().addRolesItem(createdRole1).totalRecords(1L));
       
       // role2 search returns empty (not found)
       when(roleService.search("name==role2", 0, 1)).thenReturn(new Roles().totalRecords(0L));
       
-      var result = migrationRoleCreator.createRoles(List.of(userPerm1, userPerm2));
+      var result = migrationRoleCreator.createRoles(List.of(userPerm1, userPerm2), JOB_ID);
       
       // Only successfully created roles are returned
       assertThat(result).hasSize(1);
       assertThat(result.get(0)).isEqualTo(createdRole1);
       assertThat(output.getAll()).contains("Some roles failed to create or already existed");
       assertThat(output.getAll()).contains("Searching for 1 missing role(s)");
+      
+      // Verify error was logged for the missing role
+      verify(migrationErrorService).logError(JOB_ID, "ROLE_CREATION_FAILED", 
+        "Role not found after creation attempt", "ROLE", "role2");
     }
     
     @Test
     void positive_allRolesFailed_returnsEmpty(CapturedOutput output) {
-      when(roleService.create(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
+      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
       when(roleService.search("name==" + ROLE_NAME, 0, 1)).thenReturn(new Roles().totalRecords(0L));
       
-      var result = migrationRoleCreator.createRoles(List.of(userPermissions()));
+      var result = migrationRoleCreator.createRoles(List.of(userPermissions()), JOB_ID);
       
       assertThat(result).isEmpty();
       assertThat(output.getAll()).contains("Some roles failed to create or already existed");
+      
+      // Verify error was logged for the failed role
+      verify(migrationErrorService).logError(JOB_ID, "ROLE_CREATION_FAILED",
+        "Role not found after creation attempt", "ROLE", ROLE_NAME);
     }
     
     @Test
     void positive_searchThrowsException_skipsRole(CapturedOutput output) {
-      when(roleService.create(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
+      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
       when(roleService.search("name==" + ROLE_NAME, 0, 1))
         .thenThrow(new RuntimeException("Search failed"));
       
-      var result = migrationRoleCreator.createRoles(List.of(userPermissions()));
+      var result = migrationRoleCreator.createRoles(List.of(userPermissions()), JOB_ID);
       
       assertThat(result).isEmpty();
       assertThat(output.getAll()).contains("Failed to search for role: name = " + ROLE_NAME);
+      
+      // Verify error was logged with the exception message
+      verify(migrationErrorService).logError(JOB_ID, "ROLE_CREATION_FAILED",
+        "Search failed: Search failed", "ROLE", ROLE_NAME);
     }
   }
 

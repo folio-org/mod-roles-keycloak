@@ -11,6 +11,7 @@ import static org.folio.common.utils.CollectionUtils.toStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class MigrationRoleCreator {
 
   private final RoleService roleService;
+  private final org.folio.roles.service.role.RoleMigrationService roleMigrationService;
   private final UserRoleService userRoleService;
+  private final org.folio.roles.service.MigrationErrorService migrationErrorService;
 
   /**
    * Creates a list of role from user permissions.
@@ -39,23 +42,24 @@ public class MigrationRoleCreator {
    * <p>This method handles partial failures gracefully:
    * <ul>
    *   <li>If a role already exists in DB or Keycloak, it will be retrieved</li>
-   *   <li>If role creation fails, it will be skipped and logged</li>
+   *   <li>If role creation fails, it will be skipped and logged to database</li>
    *   <li>No partial data will be left (rollback is handled by RoleService)</li>
    * </ul>
    *
    * @param userPermissions - user permissions list
+   * @param jobId - migration job identifier for error logging
    * @return {@link List} with created {@link Role} objects (only successfully created or existing roles)
    */
   @Transactional
-  public List<Role> createRoles(List<UserPermissions> userPermissions) {
+  public List<Role> createRoles(List<UserPermissions> userPermissions, UUID jobId) {
     var roleNames = extractUniqueRoleNames(userPermissions);
     log.info("Creating {} role(s)...", roleNames.size());
     
     var roles = mapItems(roleNames, MigrationRoleCreator::createRole);
-    var createdRoles = roleService.create(roles).getRoles();
+    var createdRoles = roleMigrationService.createRolesSafely(roles).getRoles();
     log.info("Roles created successfully: {} out of {} requested", createdRoles.size(), roles.size());
 
-    return handlePartialFailures(roleNames, createdRoles);
+    return handlePartialFailures(roleNames, createdRoles, jobId);
   }
 
   private List<String> extractUniqueRoleNames(List<UserPermissions> userPermissions) {
@@ -65,7 +69,7 @@ public class MigrationRoleCreator {
       .toList();
   }
 
-  private List<Role> handlePartialFailures(List<String> expectedRoleNames, List<Role> createdRoles) {
+  private List<Role> handlePartialFailures(List<String> expectedRoleNames, List<Role> createdRoles, UUID jobId) {
     if (createdRoles.size() >= expectedRoleNames.size()) {
       return createdRoles;
     }
@@ -78,7 +82,7 @@ public class MigrationRoleCreator {
       return createdRoles;
     }
 
-    return searchAndCombineRoles(createdRoles, missingRoleNames);
+    return searchAndCombineRoles(createdRoles, missingRoleNames, jobId);
   }
 
   private List<String> findMissingRoleNames(List<String> expectedNames, List<Role> createdRoles) {
@@ -88,42 +92,58 @@ public class MigrationRoleCreator {
       .toList();
   }
 
-  private List<Role> searchAndCombineRoles(List<Role> createdRoles, List<String> missingRoleNames) {
+  private List<Role> searchAndCombineRoles(List<Role> createdRoles, List<String> missingRoleNames, UUID jobId) {
     log.info("Searching for {} missing role(s)...", missingRoleNames.size());
-    var foundRoles = findMissingRoles(missingRoleNames);
+    var foundRoles = searchForMissingRoles(missingRoleNames, jobId);
     
     if (isEmpty(foundRoles)) {
       return createdRoles;
     }
 
     log.info("Found {} existing role(s)", foundRoles.size());
+    return combineRoles(createdRoles, foundRoles);
+  }
+
+  private List<Role> searchForMissingRoles(List<String> roleNames, UUID jobId) {
+    var foundRoles = new ArrayList<Role>();
+    
+    for (String roleName : roleNames) {
+      searchSingleRole(roleName, jobId).ifPresent(foundRoles::add);
+    }
+    
+    return foundRoles;
+  }
+
+  private Optional<Role> searchSingleRole(String roleName, UUID jobId) {
+    try {
+      var rolesFound = roleService.search("name==" + roleName, 0, 1);
+      if (rolesFound.getRoles() != null && !rolesFound.getRoles().isEmpty()) {
+        return Optional.of(rolesFound.getRoles().get(0));
+      }
+      logRoleCreationError(jobId, roleName, "Role not found after creation attempt");
+    } catch (Exception e) {
+      log.warn("Failed to search for role: name = {}", roleName, e);
+      logRoleCreationError(jobId, roleName, "Search failed: " + e.getMessage());
+    }
+    return Optional.empty();
+  }
+
+  private List<Role> combineRoles(List<Role> createdRoles, List<Role> foundRoles) {
     var allRoles = new ArrayList<>(createdRoles);
     allRoles.addAll(foundRoles);
     return allRoles;
   }
-  
-  /**
-   * Searches for roles that might already exist in the system.
-   *
-   * @param roleNames - list of role names to search for
-   * @return list of found roles
-   */
-  private List<Role> findMissingRoles(List<String> roleNames) {
-    return roleNames.stream()
-      .map(roleName -> {
-        try {
-          var rolesFound = roleService.search("name==" + roleName, 0, 1);
-          if (rolesFound.getRoles() != null && !rolesFound.getRoles().isEmpty()) {
-            return rolesFound.getRoles().get(0);
-          }
-        } catch (Exception e) {
-          log.warn("Failed to search for role: name = {}", roleName, e);
-        }
-        return null;
-      })
-      .filter(role -> role != null)
-      .toList();
+
+  private void logRoleCreationError(UUID jobId, String roleName, String errorMessage) {
+    migrationErrorService.logError(
+      jobId,
+      "ROLE_CREATION_FAILED",
+      errorMessage,
+      "ROLE",
+      roleName
+    );
   }
+  
 
   /**
    * Assigns users to a role from the given list of {@link UserPermissions} objects.

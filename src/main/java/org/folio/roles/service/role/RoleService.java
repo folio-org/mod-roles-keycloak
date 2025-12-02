@@ -1,12 +1,9 @@
 package org.folio.roles.service.role;
 
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -103,8 +100,7 @@ public class RoleService {
   @Transactional
   public Roles create(List<Role> roles) {
     var createdRoles = roles.stream()
-      .map(this::createSafe)
-      .flatMap(Optional::stream)
+      .map(this::create)
       .toList();
     return buildRoles(createdRoles);
   }
@@ -147,72 +143,6 @@ public class RoleService {
       log.debug("Rollback deleted policy in db: id = {}, name = {}", actualRole.getId(), actualRole.getName());
       entityService.create(actualRole);
       throw e;
-    }
-  }
-
-  private Optional<Role> createSafe(Role role) {
-    if (hasDefaultRoleType(role)) {
-      log.debug("Skip role creation. Default role cannot be created via roles API: name = {}", role.getName());
-      return empty();
-    }
-    var createdRoleOpt = createSuppressingExceptions(role);
-    if (createdRoleOpt.isEmpty()) {
-      // Create role entity in DB if it doesn't exist, but exists in Keycloak
-      if (entityService.findByName(role.getName()).isEmpty()) {
-        keycloakService.findByName(role.getName()).ifPresent(existingKeycloakRole -> {
-          existingKeycloakRole.setType(role.getType());
-          getOrCreateRoleEntitySafe(existingKeycloakRole);
-        });
-      }
-      return empty();
-    }
-    var createdRole = createdRoleOpt.get();
-    createdRole.setType(role.getType());
-    return getOrCreateRoleEntitySafe(createdRole);
-  }
-
-  /**
-   * Creates a role, suppressing all exception during create process.
-   *
-   * @param role - role object to be created
-   * @return {@link Optional} with created {@link Role}, or {@link Optional#empty()} if exception occurred
-   */
-  private Optional<Role> createSuppressingExceptions(Role role) {
-    try {
-      return Optional.of(keycloakService.create(role));
-    } catch (Exception e) {
-      log.debug("Failed to create role: name = {}", role.getName(), e);
-      return empty();
-    }
-  }
-
-  private Optional<Role> getOrCreateRoleEntitySafe(Role role) {
-    try {
-      var existingRole = entityService.findByName(role.getName());
-      if (existingRole.isPresent()) {
-        return existingRole;
-      }
-      
-      var createdRole = entityService.create(role);
-      return of(createdRole);
-    } catch (Exception e) {
-      log.warn("Role entity creation failed for role name = {}, cleaning up Keycloak role", role.getName(), e);
-      rollbackKeycloakRole(role);
-      return empty();
-    }
-  }
-
-  private void rollbackKeycloakRole(Role role) {
-    if (role.getId() == null) {
-      return;
-    }
-
-    try {
-      keycloakService.deleteById(role.getId());
-      log.info("Successfully rolled back Keycloak role: id = {}, name = {}", role.getId(), role.getName());
-    } catch (Exception rollbackException) {
-      log.error("Failed to rollback Keycloak role: id = {}, name = {}", 
-        role.getId(), role.getName(), rollbackException);
     }
   }
 

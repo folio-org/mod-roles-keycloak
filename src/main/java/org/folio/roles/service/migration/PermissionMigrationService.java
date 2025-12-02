@@ -51,7 +51,7 @@ public class PermissionMigrationService {
     
     log.info("Loaded {} user permissions for migration: jobId = {}", totalRecords, jobId);
     
-    var createdRoles = migrationRoleCreator.createRoles(userPermissions);
+    var createdRoles = migrationRoleCreator.createRoles(userPermissions, jobId);
     userPermissions = validateAndGetUserPermissionsWithRoles(userPermissions, createdRoles);
 
     migrationRoleCreator.assignUsers(userPermissions);

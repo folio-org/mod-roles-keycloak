@@ -35,6 +35,7 @@ class MigrationControllerTest {
 
   @Autowired private MockMvc mockMvc;
   @MockBean private MigrationService migrationService;
+  @MockBean private org.folio.roles.service.MigrationErrorService migrationErrorService;
 
   @Test
   void getMigration_positive() throws Exception {
