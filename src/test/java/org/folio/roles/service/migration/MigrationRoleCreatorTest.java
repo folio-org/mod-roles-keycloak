@@ -44,7 +44,7 @@ class MigrationRoleCreatorTest {
   @Mock private RoleService roleService;
   @Mock private org.folio.roles.service.role.RoleMigrationService roleMigrationService;
   @Mock private UserRoleService userRoleService;
-  @Mock private org.folio.roles.service.MigrationErrorService migrationErrorService;
+  @Mock private MigrationErrorService migrationErrorService;
 
   @AfterEach
   void tearDown() {

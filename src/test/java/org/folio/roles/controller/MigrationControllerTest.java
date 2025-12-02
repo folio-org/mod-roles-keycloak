@@ -17,7 +17,8 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.roles.domain.dto.PermissionMigrationJob;
 import org.folio.roles.domain.dto.PermissionMigrationJobs;
-import org.folio.roles.service.MigrationService;
+import org.folio.roles.service.migration.MigrationErrorService;
+import org.folio.roles.service.migration.MigrationService;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ class MigrationControllerTest {
 
   @Autowired private MockMvc mockMvc;
   @MockBean private MigrationService migrationService;
-  @MockBean private org.folio.roles.service.MigrationErrorService migrationErrorService;
+  @MockBean private MigrationErrorService migrationErrorService;
 
   @Test
   void getMigration_positive() throws Exception {

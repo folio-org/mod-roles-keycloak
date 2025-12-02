@@ -34,7 +34,7 @@ public class MigrationRoleCreator {
   private final RoleService roleService;
   private final org.folio.roles.service.role.RoleMigrationService roleMigrationService;
   private final UserRoleService userRoleService;
-  private final org.folio.roles.service.MigrationErrorService migrationErrorService;
+  private final MigrationErrorService migrationErrorService;
 
   /**
    * Creates a list of role from user permissions.

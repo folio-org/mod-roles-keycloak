@@ -1,4 +1,4 @@
-package org.folio.roles.domain.entity;
+package org.folio.roles.domain.entity.migration;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

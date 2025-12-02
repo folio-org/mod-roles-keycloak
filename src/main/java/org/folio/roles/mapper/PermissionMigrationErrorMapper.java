@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.List;
 import org.folio.roles.domain.dto.PermissionMigrationError;
 import org.folio.roles.domain.dto.PermissionMigrationErrors;
-import org.folio.roles.domain.entity.PermissionMigrationErrorEntity;
+import org.folio.roles.domain.entity.migration.PermissionMigrationErrorEntity;
 import org.mapstruct.Mapper;
 import org.springframework.data.domain.Page;
 

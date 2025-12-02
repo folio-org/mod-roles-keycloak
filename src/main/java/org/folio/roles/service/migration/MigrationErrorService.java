@@ -1,11 +1,11 @@
-package org.folio.roles.service;
+package org.folio.roles.service.migration;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.PermissionMigrationErrors;
-import org.folio.roles.domain.entity.PermissionMigrationErrorEntity;
+import org.folio.roles.domain.entity.migration.PermissionMigrationErrorEntity;
 import org.folio.roles.mapper.PermissionMigrationErrorMapper;
 import org.folio.roles.repository.PermissionMigrationErrorRepository;
 import org.folio.spring.data.OffsetRequest;

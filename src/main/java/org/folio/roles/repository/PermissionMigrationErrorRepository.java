@@ -1,7 +1,7 @@
 package org.folio.roles.repository;
 
 import java.util.UUID;
-import org.folio.roles.domain.entity.PermissionMigrationErrorEntity;
+import org.folio.roles.domain.entity.migration.PermissionMigrationErrorEntity;
 import org.folio.spring.cql.JpaCqlRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

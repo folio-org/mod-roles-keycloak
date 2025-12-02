@@ -1,4 +1,4 @@
-package org.folio.roles.service;
+package org.folio.roles.service.migration;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
 import static org.folio.roles.domain.entity.type.EntityPermissionMigrationJobStatus.IN_PROGRESS;
@@ -19,12 +19,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.folio.roles.domain.dto.PermissionMigrationJob;
 import org.folio.roles.domain.dto.PermissionMigrationJobStatus;
 import org.folio.roles.domain.dto.PermissionMigrationJobs;
-import org.folio.roles.domain.entity.PermissionMigrationJobEntity;
+import org.folio.roles.domain.entity.migration.PermissionMigrationJobEntity;
 import org.folio.roles.domain.entity.type.EntityPermissionMigrationJobStatus;
 import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.PermissionMigrationMapper;
 import org.folio.roles.repository.PermissionMigrationJobRepository;
-import org.folio.roles.service.migration.PermissionMigrationService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.folio.spring.scope.FolioExecutionContextSetter;

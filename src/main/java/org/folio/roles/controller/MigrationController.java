@@ -9,8 +9,8 @@ import org.folio.roles.domain.dto.PermissionMigrationErrors;
 import org.folio.roles.domain.dto.PermissionMigrationJob;
 import org.folio.roles.domain.dto.PermissionMigrationJobs;
 import org.folio.roles.rest.resource.MigrationApi;
-import org.folio.roles.service.MigrationErrorService;
-import org.folio.roles.service.MigrationService;
+import org.folio.roles.service.migration.MigrationErrorService;
+import org.folio.roles.service.migration.MigrationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 

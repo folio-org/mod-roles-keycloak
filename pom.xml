@@ -478,6 +478,9 @@
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
           <groups>unit</groups>
+          <systemPropertyVariables>
+            <api.version>1.44</api.version>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
 

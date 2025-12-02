@@ -5,7 +5,7 @@ import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import java.util.List;
 import org.folio.roles.domain.dto.PermissionMigrationJob;
 import org.folio.roles.domain.dto.PermissionMigrationJobs;
-import org.folio.roles.domain.entity.PermissionMigrationJobEntity;
+import org.folio.roles.domain.entity.migration.PermissionMigrationJobEntity;
 import org.folio.roles.mapper.entity.DateConvertHelper;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
