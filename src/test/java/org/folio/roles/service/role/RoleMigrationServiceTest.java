@@ -42,8 +42,8 @@ class RoleMigrationServiceTest {
 
       var result = roleMigrationService.createRolesSafely(List.of(role));
 
-      assertThat(result.getRoles()).hasSize(1);
-      assertThat(result.getTotalRecords()).isEqualTo(1);
+      assertThat(result.getSuccessfulRoles()).hasSize(1);
+      assertThat(result.getFailures()).isEmpty();
       verify(keycloakRoleService).create(role);
       verify(roleEntityService).create(role);
     }
@@ -59,7 +59,10 @@ class RoleMigrationServiceTest {
 
       var result = roleMigrationService.createRolesSafely(List.of(role));
 
-      assertThat(result.getRoles()).isEmpty();
+      assertThat(result.getSuccessfulRoles()).hasSize(1);
+      assertThat(result.getFailures()).hasSize(1);
+      assertThat(result.getFailures().get(0).getRoleName()).isEqualTo(role.getName());
+      assertThat(result.getFailures().get(0).getErrorMessage()).contains("Failed to create role in Keycloak");
       verify(keycloakRoleService).create(role);
       verify(keycloakRoleService).findByName(role.getName());
       verify(roleEntityService, times(2)).findByName(role.getName());
@@ -75,7 +78,8 @@ class RoleMigrationServiceTest {
 
       var result = roleMigrationService.createRolesSafely(List.of(role));
 
-      assertThat(result.getRoles()).isEmpty();
+      assertThat(result.getSuccessfulRoles()).isEmpty();
+      assertThat(result.getFailures()).hasSize(1);
       verify(keycloakRoleService).create(role);
       verify(roleEntityService).findByName(role.getName());
       verifyNoMoreInteractions(keycloakRoleService);
@@ -90,7 +94,9 @@ class RoleMigrationServiceTest {
 
       var result = roleMigrationService.createRolesSafely(List.of(role));
 
-      assertThat(result.getRoles()).isEmpty();
+      assertThat(result.getSuccessfulRoles()).isEmpty();
+      assertThat(result.getFailures()).hasSize(1);
+      assertThat(result.getFailures().get(0).getErrorMessage()).contains("Failed to create role in database");
       verify(keycloakRoleService).create(role);
       verify(roleEntityService).findByName(role.getName());
       verify(roleEntityService).create(role);
@@ -108,7 +114,8 @@ class RoleMigrationServiceTest {
 
       var result = roleMigrationService.createRolesSafely(List.of(role));
 
-      assertThat(result.getRoles()).isEmpty();
+      assertThat(result.getSuccessfulRoles()).isEmpty();
+      assertThat(result.getFailures()).hasSize(1);
       verify(keycloakRoleService).create(role);
       verify(keycloakRoleService).findByName(role.getName());
       verify(roleEntityService).findByName(role.getName());
@@ -126,7 +133,8 @@ class RoleMigrationServiceTest {
 
       var result = roleMigrationService.createRolesSafely(List.of(role));
 
-      assertThat(result.getRoles()).isEmpty();
+      assertThat(result.getSuccessfulRoles()).isEmpty();
+      assertThat(result.getFailures()).hasSize(2);
       verify(keycloakRoleService).create(role);
       verify(keycloakRoleService).findByName(role.getName());
       verify(roleEntityService, times(2)).findByName(role.getName());
@@ -148,9 +156,10 @@ class RoleMigrationServiceTest {
 
       var result = roleMigrationService.createRolesSafely(List.of(role1, role2));
 
-      assertThat(result.getRoles()).hasSize(1);
-      assertThat(result.getTotalRecords()).isEqualTo(1);
-      assertThat(result.getRoles().get(0).getName()).isEqualTo(role1.getName());
+      assertThat(result.getSuccessfulRoles()).hasSize(1);
+      assertThat(result.getSuccessfulRoles().get(0).getName()).isEqualTo(role1.getName());
+      assertThat(result.getFailures()).hasSize(1);
+      assertThat(result.getFailures().get(0).getRoleName()).isEqualTo(role2.getName());
     }
   }
 }

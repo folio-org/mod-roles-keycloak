@@ -62,6 +62,16 @@ class MigrationRoleCreatorTest {
     return new Roles().addRolesItem(createdMigrationRole()).totalRecords(1L);
   }
 
+  private static org.folio.roles.service.role.RoleCreationResult successfulRoleCreation() {
+    var result = new org.folio.roles.service.role.RoleCreationResult();
+    result.addSuccess(createdMigrationRole());
+    return result;
+  }
+
+  private static org.folio.roles.service.role.RoleCreationResult emptyRoleCreation() {
+    return new org.folio.roles.service.role.RoleCreationResult();
+  }
+
   private static Role createdMigrationRole() {
     return new Role()
       .id(ROLE_ID)
@@ -80,14 +90,14 @@ class MigrationRoleCreatorTest {
 
     @Test
     void positive_roleCreated() {
-      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(createdMigrationRoles());
+      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(successfulRoleCreation());
       var result = migrationRoleCreator.createRoles(List.of(userPermissions()), JOB_ID);
       assertThat(result).isEqualTo(List.of(createdMigrationRole()));
     }
 
     @Test
     void positive_roleFound() {
-      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
+      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(emptyRoleCreation());
       when(roleService.search("name==" + ROLE_NAME, 0, 1)).thenReturn(createdMigrationRoles());
 
       var result = migrationRoleCreator.createRoles(List.of(userPermissions()), JOB_ID);
@@ -97,9 +107,6 @@ class MigrationRoleCreatorTest {
     
     @Test
     void positive_partialFailure_someRolesCreated(CapturedOutput output) {
-      var userPerm1 = userPermissions();
-      var userPerm2 = new UserPermissions().userId(USER_ID).roleName("role2").permissions(List.of("bar.item.get"));
-      
       var role1 = migrationRole();
       var role2 = new Role()
         .name("role2")
@@ -108,55 +115,65 @@ class MigrationRoleCreatorTest {
       
       var createdRole1 = createdMigrationRole();
       
-      // Only role1 is created successfully, role2 fails
-      when(roleMigrationService.createRolesSafely(List.of(role1, role2)))
-        .thenReturn(new Roles().addRolesItem(createdRole1).totalRecords(1L));
+      var partialResult = new org.folio.roles.service.role.RoleCreationResult();
+      partialResult.addSuccess(createdRole1);
+      partialResult.addFailure("role2", "Failed to create in Keycloak", new RuntimeException("Test error"));
       
-      // role2 search returns empty (not found)
+      when(roleMigrationService.createRolesSafely(List.of(role1, role2))).thenReturn(partialResult);
       when(roleService.search("name==role2", 0, 1)).thenReturn(new Roles().totalRecords(0L));
       
+      var userPerm1 = userPermissions();
+      var userPerm2 = new UserPermissions().userId(USER_ID).roleName("role2").permissions(List.of("bar.item.get"));
       var result = migrationRoleCreator.createRoles(List.of(userPerm1, userPerm2), JOB_ID);
       
       // Only successfully created roles are returned
       assertThat(result).hasSize(1);
       assertThat(result.get(0)).isEqualTo(createdRole1);
       assertThat(output.getAll()).contains("Some roles failed to create or already existed");
-      assertThat(output.getAll()).contains("Searching for 1 missing role(s)");
+      assertThat(output.getAll()).contains("Recording 1 role creation failure(s)");
       
-      // Verify error was logged for the missing role
-      verify(migrationErrorService).logError(JOB_ID, "ROLE_CREATION_FAILED", 
-        "Role not found after creation attempt", "ROLE", "role2");
+      // Verify error was logged
+      verify(migrationErrorService).logError(JOB_ID, "ROLE_CREATION_FAILED",
+        "Failed to create in Keycloak [Type: RuntimeException, Root cause: RuntimeException: Test error]",
+        "ROLE", "role2");
     }
     
     @Test
     void positive_allRolesFailed_returnsEmpty(CapturedOutput output) {
-      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
+      var failureResult = new org.folio.roles.service.role.RoleCreationResult();
+      failureResult.addFailure(ROLE_NAME, "Failed to create", new RuntimeException("Test error"));
+      
+      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(failureResult);
       when(roleService.search("name==" + ROLE_NAME, 0, 1)).thenReturn(new Roles().totalRecords(0L));
       
       var result = migrationRoleCreator.createRoles(List.of(userPermissions()), JOB_ID);
       
       assertThat(result).isEmpty();
-      assertThat(output.getAll()).contains("Some roles failed to create or already existed");
+      assertThat(output.getAll()).contains("Recording 1 role creation failure(s)");
       
-      // Verify error was logged for the failed role
+      // Verify error was logged
       verify(migrationErrorService).logError(JOB_ID, "ROLE_CREATION_FAILED",
-        "Role not found after creation attempt", "ROLE", ROLE_NAME);
+        "Failed to create [Type: RuntimeException, Root cause: RuntimeException: Test error]", "ROLE", ROLE_NAME);
     }
     
     @Test
     void positive_searchThrowsException_skipsRole(CapturedOutput output) {
-      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(new Roles().totalRecords(0L));
+      var failureResult = new org.folio.roles.service.role.RoleCreationResult();
+      failureResult.addFailure(ROLE_NAME, "Failed to create", new RuntimeException("Creation failed"));
+      
+      when(roleMigrationService.createRolesSafely(List.of(migrationRole()))).thenReturn(failureResult);
       when(roleService.search("name==" + ROLE_NAME, 0, 1))
         .thenThrow(new RuntimeException("Search failed"));
       
       var result = migrationRoleCreator.createRoles(List.of(userPermissions()), JOB_ID);
       
       assertThat(result).isEmpty();
+      assertThat(output.getAll()).contains("Recording 1 role creation failure(s)");
       assertThat(output.getAll()).contains("Failed to search for role: name = " + ROLE_NAME);
       
-      // Verify error was logged with the exception message
+      // Verify error was logged from creation result
       verify(migrationErrorService).logError(JOB_ID, "ROLE_CREATION_FAILED",
-        "Search failed: Search failed", "ROLE", ROLE_NAME);
+        "Failed to create [Type: RuntimeException, Root cause: RuntimeException: Creation failed]", "ROLE", ROLE_NAME);
     }
   }
 

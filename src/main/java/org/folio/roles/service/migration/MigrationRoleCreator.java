@@ -56,7 +56,11 @@ public class MigrationRoleCreator {
     log.info("Creating {} role(s)...", roleNames.size());
     
     var roles = mapItems(roleNames, MigrationRoleCreator::createRole);
-    var createdRoles = roleMigrationService.createRolesSafely(roles).getRoles();
+    var creationResult = roleMigrationService.createRolesSafely(roles);
+    
+    logCreationErrors(creationResult, jobId);
+    
+    var createdRoles = creationResult.getSuccessfulRoles();
     log.info("Roles created successfully: {} out of {} requested", createdRoles.size(), roles.size());
 
     return handlePartialFailures(roleNames, createdRoles, jobId);
@@ -67,6 +71,18 @@ public class MigrationRoleCreator {
       .map(UserPermissions::getRoleName)
       .distinct()
       .toList();
+  }
+
+  private void logCreationErrors(org.folio.roles.service.role.RoleCreationResult result, UUID jobId) {
+    if (!result.hasFailures()) {
+      return;
+    }
+
+    log.warn("Recording {} role creation failure(s)", result.getFailures().size());
+    
+    for (var failure : result.getFailures()) {
+      logRoleCreationError(jobId, failure.getRoleName(), failure.getFullErrorMessage());
+    }
   }
 
   private List<Role> handlePartialFailures(List<String> expectedRoleNames, List<Role> createdRoles, UUID jobId) {
@@ -120,10 +136,8 @@ public class MigrationRoleCreator {
       if (rolesFound.getRoles() != null && !rolesFound.getRoles().isEmpty()) {
         return Optional.of(rolesFound.getRoles().get(0));
       }
-      logRoleCreationError(jobId, roleName, "Role not found after creation attempt");
     } catch (Exception e) {
       log.warn("Failed to search for role: name = {}", roleName, e);
-      logRoleCreationError(jobId, roleName, "Search failed: " + e.getMessage());
     }
     return Optional.empty();
   }
