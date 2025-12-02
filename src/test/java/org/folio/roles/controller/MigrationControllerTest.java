@@ -48,7 +48,7 @@ class MigrationControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(permissionMigrationJob), true));
+      .andExpect(content().json(asJsonString(permissionMigrationJob)));
   }
 
   @Test
@@ -67,7 +67,7 @@ class MigrationControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(permissionMigrationJobs), true));
+      .andExpect(content().json(asJsonString(permissionMigrationJobs)));
   }
 
   @Test
@@ -91,7 +91,7 @@ class MigrationControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(permissionMigrationJob), true));
+      .andExpect(content().json(asJsonString(permissionMigrationJob)));
   }
 
   @Test
@@ -111,7 +111,7 @@ class MigrationControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(migrationErrors), true));
+      .andExpect(content().json(asJsonString(migrationErrors)));
   }
 
   private static PermissionMigrationJob permissionMigrationJob() {
