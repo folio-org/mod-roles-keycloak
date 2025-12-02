@@ -124,13 +124,13 @@ public class MigrationRoleCreator {
     var foundRoles = new ArrayList<Role>();
     
     for (String roleName : roleNames) {
-      searchSingleRole(roleName, jobId).ifPresent(foundRoles::add);
+      searchSingleRole(roleName).ifPresent(foundRoles::add);
     }
     
     return foundRoles;
   }
 
-  private Optional<Role> searchSingleRole(String roleName, UUID jobId) {
+  private Optional<Role> searchSingleRole(String roleName) {
     try {
       var rolesFound = roleService.search("name==" + roleName, 0, 1);
       if (rolesFound.getRoles() != null && !rolesFound.getRoles().isEmpty()) {

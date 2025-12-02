@@ -23,8 +23,8 @@ import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @UnitTest
@@ -35,8 +35,8 @@ class MigrationControllerTest {
   private static final UUID MIGRATION_ID = UUID.randomUUID();
 
   @Autowired private MockMvc mockMvc;
-  @MockBean private MigrationService migrationService;
-  @MockBean private MigrationErrorService migrationErrorService;
+  @MockitoBean private MigrationService migrationService;
+  @MockitoBean private MigrationErrorService migrationErrorService;
 
   @Test
   void getMigration_positive() throws Exception {

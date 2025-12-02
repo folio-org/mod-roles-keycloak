@@ -18,8 +18,8 @@ import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @UnitTest
@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class LoadableControllerTest {
 
   @Autowired private MockMvc mockMvc;
-  @MockBean private LoadableRoleService service;
+  @MockitoBean private LoadableRoleService service;
 
   @Test
   void findLoadableRoles_positive() throws Exception {

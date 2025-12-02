@@ -32,8 +32,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -43,10 +43,10 @@ import org.springframework.test.web.servlet.MockMvc;
 class RoleCapabilitySetControllerTest {
 
   @Autowired private MockMvc mockMvc;
-  @MockBean private RoleService roleService;
-  @MockBean private CapabilitySetService capabilitySetService;
+  @MockitoBean private RoleService roleService;
+  @MockitoBean private CapabilitySetService capabilitySetService;
   @Qualifier("apiRoleCapabilitySetService")
-  @MockBean private RoleCapabilitySetService roleCapabilitySetService;
+  @MockitoBean private RoleCapabilitySetService roleCapabilitySetService;
 
   @Test
   void createRoleCapabilitySets_positive() throws Exception {
