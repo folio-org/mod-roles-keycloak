@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "A collection of migration errors",
+  "type": "object",
+  "properties": {
+    "errors": {
+      "description": "List of migration errors",
+      "type": "array",
+      "items": {
+        "$ref": "permissionMigrationError.json"
+      }
+    },
+    "totalRecords": {
+      "description": "Total number of migration errors",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "errors",
+    "totalRecords"
+  ]
+}

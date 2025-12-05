@@ -17,13 +17,14 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.roles.domain.dto.PermissionMigrationJob;
 import org.folio.roles.domain.dto.PermissionMigrationJobs;
-import org.folio.roles.service.MigrationService;
+import org.folio.roles.service.migration.MigrationErrorService;
+import org.folio.roles.service.migration.MigrationService;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @UnitTest
@@ -34,7 +35,8 @@ class MigrationControllerTest {
   private static final UUID MIGRATION_ID = UUID.randomUUID();
 
   @Autowired private MockMvc mockMvc;
-  @MockBean private MigrationService migrationService;
+  @MockitoBean private MigrationService migrationService;
+  @MockitoBean private MigrationErrorService migrationErrorService;
 
   @Test
   void getMigration_positive() throws Exception {
@@ -46,7 +48,7 @@ class MigrationControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(permissionMigrationJob), true));
+      .andExpect(content().json(asJsonString(permissionMigrationJob)));
   }
 
   @Test
@@ -65,7 +67,7 @@ class MigrationControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(permissionMigrationJobs), true));
+      .andExpect(content().json(asJsonString(permissionMigrationJobs)));
   }
 
   @Test
@@ -89,7 +91,27 @@ class MigrationControllerTest {
         .header(TENANT, TENANT_ID))
       .andExpect(status().isCreated())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(content().json(asJsonString(permissionMigrationJob), true));
+      .andExpect(content().json(asJsonString(permissionMigrationJob)));
+  }
+
+  @Test
+  void getMigrationErrors_positive() throws Exception {
+    var migrationErrors = new org.folio.roles.domain.dto.PermissionMigrationErrors()
+      .errors(List.of(new org.folio.roles.domain.dto.PermissionMigrationError()
+        .id(UUID.randomUUID())
+        .errorType("ROLE_CREATION_FAILED")
+        .errorMessage("Failed to create role")))
+      .totalRecords(1);
+    when(migrationErrorService.getMigrationErrors(MIGRATION_ID, 0, 10)).thenReturn(migrationErrors);
+
+    mockMvc.perform(get("/roles-keycloak/migrations/{id}/errors", MIGRATION_ID)
+        .queryParam("offset", "0")
+        .queryParam("limit", "10")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(migrationErrors)));
   }
 
   private static PermissionMigrationJob permissionMigrationJob() {

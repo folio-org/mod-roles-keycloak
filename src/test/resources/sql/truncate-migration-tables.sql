@@ -1,0 +1,2 @@
+TRUNCATE TABLE test_mod_roles_keycloak.permission_migration_job CASCADE;
+TRUNCATE TABLE test_mod_roles_keycloak.permission_migration_error CASCADE;

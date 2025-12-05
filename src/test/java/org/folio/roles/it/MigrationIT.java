@@ -40,6 +40,7 @@ import org.springframework.test.context.jdbc.Sql;
   "classpath:/sql/truncate-policy-tables.sql",
   "classpath:/sql/truncate-capability-tables.sql",
   "classpath:/sql/truncate-role-capability-tables.sql",
+  "classpath:/sql/truncate-migration-tables.sql",
 })
 class MigrationIT extends BaseIntegrationTest {
 
@@ -122,6 +123,71 @@ class MigrationIT extends BaseIntegrationTest {
       .andExpect(status().isOk())
       .andExpect(content().contentType(MediaType.APPLICATION_JSON))
       .andExpect(jsonPath("$.totalRecords", is(0)));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capability-sets/populate-capability-sets.sql",
+  })
+  @WireMockStub(scripts = {
+    "/wiremock/stubs/perms/user-permissions-for-migrations-1.json",
+    "/wiremock/stubs/perms/user-permissions-for-migrations-2.json",
+    "/wiremock/stubs/perms/user-permissions-for-migrations-3.json"
+  })
+  @KeycloakRealms("/json/keycloak/test-realm-for-migration.json")
+  void getMigrationById_positive() throws Exception {
+    var mvcResult = attemptPost("/roles-keycloak/migrations", null).andExpect(status().isCreated()).andReturn();
+    var permissionMigrationJob = parseResponse(mvcResult, PermissionMigrationJob.class);
+    var migrationId = permissionMigrationJob.getId();
+
+    await()
+      .pollInterval(FIVE_HUNDRED_MILLISECONDS)
+      .atMost(TEN_SECONDS)
+      .untilAsserted(() -> doGet("/roles-keycloak/migrations/" + migrationId)
+        .andExpect(status().isOk())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id", is(migrationId.toString())))
+        .andExpect(jsonPath("$.status", is("finished"))));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capability-sets/populate-capability-sets.sql",
+  })
+  @WireMockStub(scripts = {
+    "/wiremock/stubs/perms/user-permissions-for-migrations-1.json",
+    "/wiremock/stubs/perms/user-permissions-for-migrations-2.json",
+    "/wiremock/stubs/perms/user-permissions-for-migrations-3.json"
+  })
+  @KeycloakRealms("/json/keycloak/test-realm-for-migration.json")
+  void searchMigrations_positive() throws Exception {
+    var mvcResult1 = attemptPost("/roles-keycloak/migrations", null).andExpect(status().isCreated()).andReturn();
+    var job1 = parseResponse(mvcResult1, PermissionMigrationJob.class);
+
+    await()
+      .pollInterval(FIVE_HUNDRED_MILLISECONDS)
+      .atMost(TEN_SECONDS)
+      .untilAsserted(() -> doGet("/roles-keycloak/migrations/" + job1.getId())
+        .andExpect(jsonPath("$.status", is("finished"))));
+
+    doGet("/roles-keycloak/migrations?query=cql.allRecords=1")
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+      .andExpect(jsonPath("$.totalRecords", is(1)))
+      .andExpect(jsonPath("$.migrations[0].id", is(job1.getId().toString())));
+  }
+
+  @Test
+  void getMigrationErrors_positive_emptyList() throws Exception {
+    var migrationId = UUID.randomUUID();
+
+    doGet("/roles-keycloak/migrations/" + migrationId + "/errors")
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+      .andExpect(jsonPath("$.totalRecords", is(0)))
+      .andExpect(jsonPath("$.errors").isEmpty());
   }
 
   private static UUID getRoleId(String name, List<Role> roles) {

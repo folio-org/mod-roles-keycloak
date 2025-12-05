@@ -1,7 +1,6 @@
-package org.folio.roles.service;
+package org.folio.roles.service.migration;
 
 import static java.util.concurrent.CompletableFuture.runAsync;
-import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.type.EntityPermissionMigrationJobStatus.IN_PROGRESS;
 import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.getRunnableWithCurrentFolioContext;
 
@@ -12,17 +11,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.roles.domain.dto.PermissionMigrationJob;
+import org.folio.roles.domain.dto.PermissionMigrationJobStatus;
 import org.folio.roles.domain.dto.PermissionMigrationJobs;
-import org.folio.roles.domain.entity.PermissionMigrationJobEntity;
+import org.folio.roles.domain.entity.migration.PermissionMigrationJobEntity;
 import org.folio.roles.domain.entity.type.EntityPermissionMigrationJobStatus;
+import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.PermissionMigrationMapper;
 import org.folio.roles.repository.PermissionMigrationJobRepository;
-import org.folio.roles.service.migration.PermissionMigrationService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.folio.spring.scope.FolioExecutionContextSetter;
@@ -60,8 +61,7 @@ public class MigrationService {
    * @param query - CQL query string
    * @param offset - offset in pagination from first record
    * @param limit - a number of results in response
-   * @return permission migration job by id
-   * @throws EntityNotFoundException when migration job is not found by id
+   * @return permission migration jobs collection
    */
   @Transactional(readOnly = true)
   public PermissionMigrationJobs findMigrations(String query, Integer offset, Integer limit) {
@@ -71,9 +71,7 @@ public class MigrationService {
       ? migrationJobRepository.findAll(offsetReq)
       : migrationJobRepository.findByCql(query, offsetReq);
 
-    return new PermissionMigrationJobs()
-      .migrations(mapItems(page.getContent(), migrationJobMapper::toDto))
-      .totalRecords((int) page.getTotalElements());
+    return migrationJobMapper.toDtoCollection(page);
   }
 
   /**
@@ -90,9 +88,12 @@ public class MigrationService {
    * Creates permission migration job.
    *
    * @return {@link PermissionMigrationJob} object
+   * @throws RequestValidationException if another migration is already in progress
    */
   @Transactional
   public PermissionMigrationJob createMigration() {
+    validateNoActiveMigration();
+
     var migrationEntity = buildPermissionMigrationsEntity();
     var savedEntity = migrationJobRepository.save(migrationEntity);
     migrationJobRepository.flush();
@@ -102,14 +103,30 @@ public class MigrationService {
     return migrationJobMapper.toDto(savedEntity);
   }
 
+  private void validateNoActiveMigration() {
+    if (migrationJobRepository.existsByStatus(IN_PROGRESS)) {
+      throw new RequestValidationException(
+        "There is already an active migration job in progress. Only one migration can run at a time.",
+        "status",
+        PermissionMigrationJobStatus.IN_PROGRESS);
+    }
+  }
+
   private void startMigration(PermissionMigrationJobEntity jobEntity) {
-    var migrationJob = (Runnable) () -> permissionMigrationService.migratePermissions(jobEntity.getId());
-    runAsync(getRunnableWithCurrentFolioContext(migrationJob), executor)
-      .whenComplete(handleMigrationComplete(jobEntity, (FolioExecutionContext) folioExecutionContext.getInstance()));
+    var totalRecordsHolder = new AtomicInteger(0);
+    
+    var migrationTask = getRunnableWithCurrentFolioContext(() -> {
+      var totalRecords = permissionMigrationService.migratePermissions(jobEntity.getId());
+      totalRecordsHolder.set(totalRecords);
+    });
+    
+    runAsync(migrationTask, executor)
+      .whenComplete(handleMigrationComplete(jobEntity, totalRecordsHolder, 
+          (FolioExecutionContext) folioExecutionContext.getInstance()));
   }
 
   private BiConsumer<Void, ? super Throwable> handleMigrationComplete(
-    PermissionMigrationJobEntity job, FolioExecutionContext ctx) {
+    PermissionMigrationJobEntity job, AtomicInteger totalRecordsHolder, FolioExecutionContext ctx) {
     return (unused, error) -> {
       try (var ignored = new FolioExecutionContextSetter(ctx)) {
         var status = getMigrationStatus(job, error);
@@ -118,6 +135,10 @@ public class MigrationService {
           .ifPresent(entity -> {
             entity.setStatus(status);
             entity.setFinishedAt(OffsetDateTime.now());
+            var totalRecords = totalRecordsHolder.get();
+            if (totalRecords > 0) {
+              entity.setTotalRecords(totalRecords);
+            }
             migrationJobRepository.save(entity);
           });
       }

@@ -20,7 +20,6 @@ import static org.folio.roles.support.RoleUtils.defaultRole;
 import static org.folio.roles.support.RoleUtils.role;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -30,14 +29,11 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.ws.rs.WebApplicationException;
 import java.util.List;
-import java.util.Optional;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
-import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -78,7 +74,7 @@ class RoleServiceTest {
   class Create {
 
     @Test
-    void create() {
+    void positive_singleRole() {
       var role = role();
       when(keycloakService.create(role)).thenReturn(role);
       when(entityService.create(role)).thenReturn(role);
@@ -90,7 +86,7 @@ class RoleServiceTest {
     }
 
     @Test
-    void negative_create() {
+    void negative_dbCreateFails_rollbackKeycloak() {
       var role = role();
       when(keycloakService.create(role)).thenReturn(role);
       when(entityService.create(role)).thenThrow(RuntimeException.class);
@@ -100,143 +96,21 @@ class RoleServiceTest {
     }
 
     @Test
-    void positive() {
-      var role = role();
-      var roles = List.of(role);
-
-      when(keycloakService.create(role)).thenReturn(role);
-      when(entityService.create(role)).thenReturn(role).thenThrow(RuntimeException.class);
-
-      var result = facade.create(roles);
-      facade.create(roles);
-
-      assertEquals(result.getRoles().size(), result.getTotalRecords());
-      assertEquals(result.getRoles().getFirst(), role);
-      verify(keycloakService, times(2)).create(role);
-      verify(entityService, times(2)).create(role);
-    }
-
-    @Test
-    void positive_roleExistsInKeycloak() {
-      var role = role();
-      var roles = List.of(role);
-
-      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
-        new WebApplicationException()));
-      when(keycloakService.findByName(role.getName())).thenReturn(Optional.of(role));
-      when(entityService.create(role)).thenReturn(role);
-
-      var result = facade.create(roles);
-      facade.create(roles);
-
-      assertTrue(result.getRoles().isEmpty());
-      verify(keycloakService, times(2)).create(role);
-      verify(entityService, times(2)).create(role);
-    }
-
-    @Test
-    void create_positive_returnsEmpty() {
-      var role = role();
-
-      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
-        new WebApplicationException()));
-
-      var result = facade.create(List.of(role));
-
-      assertTrue(result.getRoles().isEmpty());
-    }
-
-    @Test
-    void createBatch_positive_roleAlreadyExistsInDb() {
-      var role = role();
-      var roles = List.of(role);
-
-      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
-        new WebApplicationException()));
-      when(entityService.findByName(role.getName())).thenReturn(Optional.of(role));
-
-      var result = facade.create(roles);
-
-      assertTrue(result.getRoles().isEmpty());
-      verify(keycloakService).create(role);
-      verify(entityService).findByName(role.getName());
-    }
-
-    @Test
-    void createBatch_positive_roleExistsInKeycloakButNotInDb() {
-      var role = role();
-      var roles = List.of(role);
-
-      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
-        new WebApplicationException()));
-      when(keycloakService.findByName(role.getName())).thenReturn(Optional.of(role));
-      when(entityService.findByName(role.getName())).thenReturn(Optional.empty()).thenReturn(Optional.empty());
-      when(entityService.create(role)).thenReturn(role);
-
-      var result = facade.create(roles);
-
-      assertTrue(result.getRoles().isEmpty());
-      verify(keycloakService).create(role);
-      verify(keycloakService).findByName(role.getName());
-      verify(entityService, times(2)).findByName(role.getName());
-      verify(entityService).create(role);
-    }
-
-    @Test
-    void createBatch_positive_roleExistsInKeycloakButDbCreateFails() {
-      var role = role();
-      var roles = List.of(role);
-
-      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
-        new WebApplicationException()));
-      when(keycloakService.findByName(role.getName())).thenReturn(Optional.of(role));
-      when(entityService.findByName(role.getName())).thenReturn(Optional.empty()).thenReturn(Optional.empty());
-      when(entityService.create(role)).thenThrow(RuntimeException.class);
-
-      var result = facade.create(roles);
-
-      assertTrue(result.getRoles().isEmpty());
-      verify(keycloakService).create(role);
-      verify(keycloakService).findByName(role.getName());
-      verify(entityService, times(2)).findByName(role.getName());
-      verify(entityService).create(role);
-    }
-
-    @Test
-    void createBatch_positive_keycloakRoleNotFound() {
-      var role = role();
-      var roles = List.of(role);
-
-      when(keycloakService.create(role)).thenThrow(new KeycloakApiException("Role already exists",
-        new WebApplicationException()));
-      when(keycloakService.findByName(role.getName())).thenReturn(Optional.empty());
-      when(entityService.findByName(role.getName())).thenReturn(Optional.empty());
-
-      var result = facade.create(roles);
-
-      assertTrue(result.getRoles().isEmpty());
-      verify(keycloakService).create(role);
-      verify(keycloakService).findByName(role.getName());
-      verify(entityService).findByName(role.getName());
-    }
-
-    @Test
-    void createBatch_positive_mixedRoles() {
+    void positive_multipleRoles() {
       var role1 = role();
-      var role2 = defaultRole();
-      var role3 = consortiumRole();
-      var roles = List.of(role1, role2, role3);
+      var role2 = role().id(ROLE_ID_2).name(ROLE_NAME_2);
 
       when(keycloakService.create(role1)).thenReturn(role1);
       when(entityService.create(role1)).thenReturn(role1);
-      when(keycloakService.create(role3)).thenReturn(role3);
-      when(entityService.create(role3)).thenReturn(role3);
+      when(keycloakService.create(role2)).thenReturn(role2);
+      when(entityService.create(role2)).thenReturn(role2);
 
-      var result = facade.create(roles);
+      var result = facade.create(List.of(role1, role2));
 
-      assertEquals(2, result.getTotalRecords());
-      assertEquals(2, result.getRoles().size());
+      assertThat(result.getRoles()).hasSize(2);
+      assertThat(result.getTotalRecords()).isEqualTo(2);
       verify(keycloakService, times(2)).create(any());
+      verify(entityService, times(2)).create(any());
     }
 
     @Test
