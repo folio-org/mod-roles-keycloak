@@ -74,14 +74,14 @@ class CapabilityServiceTest {
   @Mock private CapabilitySetService capabilitySetService;
   @Mock private CapabilityEntityMapper capabilityEntityMapper;
   @Mock private ApplicationEventPublisher applicationEventPublisher;
-  @Mock private CapabilityCommitedService capabilityCommitedService;
+  @Mock private CapabilityFlushService capabilityFlushService;
   @Captor private ArgumentCaptor<CapabilityEvent> eventCaptor;
 
   @BeforeEach
   void setUp() {
     var folioExecutionContext = new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
     this.capabilityService = new CapabilityService(capabilityRepository, folioExecutionContext,
-      capabilityEntityMapper, applicationEventPublisher, capabilityCommitedService, capabilitySetService);
+      capabilityEntityMapper, applicationEventPublisher, capabilityFlushService, capabilitySetService);
   }
 
   @AfterEach

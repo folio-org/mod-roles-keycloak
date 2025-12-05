@@ -42,6 +42,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Log4j2
@@ -55,7 +57,7 @@ public class CapabilityService {
   private final FolioExecutionContext folioExecutionContext;
   private final CapabilityEntityMapper capabilityEntityMapper;
   private final ApplicationEventPublisher applicationEventPublisher;
-  private final CapabilityCommitedService capabilityCommitedService;
+  private final CapabilityFlushService capabilityFlushService;
 
   @Lazy private final CapabilitySetService capabilitySetService;
 
@@ -219,7 +221,7 @@ public class CapabilityService {
    * @param permissionNames - list of {@link String} permission names
    * @return list with {@link Capability} objects
    */
-  @Transactional(readOnly = true)
+  @Transactional(readOnly = true, isolation = Isolation.READ_UNCOMMITTED, propagation = Propagation.REQUIRES_NEW)
   public List<Capability> findByPermissionNamesNoTechnical(Collection<String> permissionNames) {
     var capabilityEntities = capabilityRepository.findAllByPermissionNames(permissionNames);
     return toStream(capabilityEntityMapper.convert(capabilityEntities))
@@ -459,7 +461,7 @@ public class CapabilityService {
     }
 
     var capabilityEntities = mapItems(capabilities, capabilityEntityMapper::convert);
-    var savedCapabilityEntities = capabilityCommitedService.saveAll(capabilityEntities);
+    var savedCapabilityEntities = capabilityFlushService.saveAll(capabilityEntities);
     for (var savedCapabilityEntity : savedCapabilityEntities) {
       var capability = capabilityEntityMapper.convert(savedCapabilityEntity);
       var event = CapabilityEvent.created(capability).withContext(folioExecutionContext);
