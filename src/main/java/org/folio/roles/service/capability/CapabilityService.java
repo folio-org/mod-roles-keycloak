@@ -55,6 +55,7 @@ public class CapabilityService {
   private final FolioExecutionContext folioExecutionContext;
   private final CapabilityEntityMapper capabilityEntityMapper;
   private final ApplicationEventPublisher applicationEventPublisher;
+  private final CapabilityCommitedService capabilityCommitedService;
 
   @Lazy private final CapabilitySetService capabilitySetService;
 
@@ -458,7 +459,7 @@ public class CapabilityService {
     }
 
     var capabilityEntities = mapItems(capabilities, capabilityEntityMapper::convert);
-    var savedCapabilityEntities = capabilityRepository.saveAll(capabilityEntities);
+    var savedCapabilityEntities = capabilityCommitedService.saveAll(capabilityEntities);
     for (var savedCapabilityEntity : savedCapabilityEntities) {
       var capability = capabilityEntityMapper.convert(savedCapabilityEntity);
       var event = CapabilityEvent.created(capability).withContext(folioExecutionContext);
