@@ -31,8 +31,8 @@ import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -42,9 +42,9 @@ import org.springframework.test.web.servlet.MockMvc;
 class UserCapabilityControllerTest {
 
   @Autowired private MockMvc mockMvc;
-  @MockBean private CapabilityService capabilityService;
-  @MockBean private KeycloakUserService keycloakUserService;
-  @MockBean private UserCapabilityService userCapabilityService;
+  @MockitoBean private CapabilityService capabilityService;
+  @MockitoBean private KeycloakUserService keycloakUserService;
+  @MockitoBean private UserCapabilityService userCapabilityService;
 
   @Test
   void createUserCapabilities_positive() throws Exception {

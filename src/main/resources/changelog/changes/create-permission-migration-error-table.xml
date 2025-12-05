@@ -1,0 +1,54 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+  <changeSet id="create-permission-migration-error-table" author="system">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <tableExists tableName="permission_migration_error"/>
+      </not>
+    </preConditions>
+
+    <createTable tableName="permission_migration_error">
+      <column name="id" type="uuid">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="migration_job_id" type="uuid">
+        <constraints nullable="false"/>
+      </column>
+      <column name="error_type" type="varchar(255)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="error_message" type="varchar(2000)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="failed_entity_type" type="varchar(100)">
+        <constraints nullable="true"/>
+      </column>
+      <column name="failed_entity_id" type="varchar(255)">
+        <constraints nullable="true"/>
+      </column>
+      <column name="occurred_at" type="timestamp with time zone">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <addForeignKeyConstraint baseTableName="permission_migration_error"
+                             baseColumnNames="migration_job_id"
+                             constraintName="fk_migration_error_job"
+                             referencedTableName="permission_migration_job"
+                             referencedColumnNames="id"
+                             onDelete="CASCADE"/>
+
+    <createIndex tableName="permission_migration_error" indexName="idx_migration_error_job_id">
+      <column name="migration_job_id"/>
+    </createIndex>
+
+    <createIndex tableName="permission_migration_error" indexName="idx_migration_error_occurred_at">
+      <column name="occurred_at"/>
+    </createIndex>
+  </changeSet>
+
+</databaseChangeLog>

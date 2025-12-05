@@ -49,7 +49,7 @@ class PermissionMigrationServiceTest {
     var userPermissionsList = List.of(userPermissions);
     var roles = List.of(new Role().id(UUID.randomUUID()).name("test"));
     when(userPermissionsLoader.loadUserPermissions()).thenReturn(userPermissionsList);
-    when(migrationRoleCreator.createRoles(userPermissionsList)).thenReturn(roles);
+    when(migrationRoleCreator.createRoles(userPermissionsList, MIGRATION_ID)).thenReturn(roles);
     doNothing().when(managePermissionsResolver).addManageCapabilities(any());
 
     permissionMigrationService.migratePermissions(MIGRATION_ID);
@@ -65,7 +65,7 @@ class PermissionMigrationServiceTest {
     var userPermissions = new UserPermissions().roleName("test").userId(USER_ID).permissions(permissions);
     var userPermissionsList = List.of(userPermissions);
     when(userPermissionsLoader.loadUserPermissions()).thenReturn(userPermissionsList);
-    when(migrationRoleCreator.createRoles(userPermissionsList)).thenReturn(Collections.emptyList());
+    when(migrationRoleCreator.createRoles(userPermissionsList, MIGRATION_ID)).thenReturn(Collections.emptyList());
 
     assertThatThrownBy(() -> permissionMigrationService.migratePermissions(MIGRATION_ID))
       .isInstanceOf(MigrationException.class)

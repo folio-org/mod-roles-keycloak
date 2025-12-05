@@ -39,4 +39,6 @@
   <include file="changes/populate-visible-field-in-capabilities-and-capsets.xml" relativeToChangelogFile="true"/>
   <include file="changes/add-loaded-from-file-field-to-loadable-roles.xml" relativeToChangelogFile="true"/>
   <include file="changes/remove-system-role-type.xml" relativeToChangelogFile="true"/>
+  <include file="changes/add-total-records-to-permission-migration-job.xml" relativeToChangelogFile="true"/>
+  <include file="changes/create-permission-migration-error-table.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

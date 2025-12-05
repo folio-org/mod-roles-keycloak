@@ -38,20 +38,28 @@ public class PermissionMigrationService {
    *   <li>Created roles based on hash (sha1) of ordered list of loaded permissions</li>
    *   <li>Assigns capabilities/capability sets to a role based on folio permission name</li>
    * </ul>
+   *
+   * @param jobId - migration job identifier
+   * @return total number of records migrated
    */
   @Transactional
-  public void migratePermissions(UUID jobId) {
+  public int migratePermissions(UUID jobId) {
     log.info("Starting permission migration: jobId = {}", jobId);
 
     var userPermissions = userPermissionsLoader.loadUserPermissions();
-    var createdRoles = migrationRoleCreator.createRoles(userPermissions);
+    var totalRecords = userPermissions.size();
+    
+    log.info("Loaded {} user permissions for migration: jobId = {}", totalRecords, jobId);
+    
+    var createdRoles = migrationRoleCreator.createRoles(userPermissions, jobId);
     userPermissions = validateAndGetUserPermissionsWithRoles(userPermissions, createdRoles);
 
     migrationRoleCreator.assignUsers(userPermissions);
     managePermissionsResolver.addManageCapabilities(userPermissions);
     rolePermissionAssignor.assignPermissions(userPermissions);
 
-    log.info("Migration of permissions is finished: jobId = {}", jobId);
+    log.info("Migration of permissions is finished: jobId = {}, totalRecords = {}", jobId, totalRecords);
+    return totalRecords;
   }
 
   private static List<UserPermissions> validateAndGetUserPermissionsWithRoles(

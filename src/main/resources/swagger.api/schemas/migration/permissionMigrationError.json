@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Permission migration error details",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Error log identifier",
+      "type": "string",
+      "format": "uuid"
+    },
+    "migrationJobId": {
+      "description": "Migration job identifier",
+      "type": "string",
+      "format": "uuid"
+    },
+    "errorType": {
+      "description": "Type of error",
+      "type": "string"
+    },
+    "errorMessage": {
+      "description": "Detailed error message",
+      "type": "string"
+    },
+    "failedEntityType": {
+      "description": "Type of entity that failed (e.g., ROLE, USER_ROLE)",
+      "type": "string"
+    },
+    "failedEntityId": {
+      "description": "Identifier or name of the failed entity",
+      "type": "string"
+    },
+    "occurredAt": {
+      "description": "When the error occurred",
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "id",
+    "migrationJobId",
+    "errorType",
+    "errorMessage",
+    "occurredAt"
+  ]
+}

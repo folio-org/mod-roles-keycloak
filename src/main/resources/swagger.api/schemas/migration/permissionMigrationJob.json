@@ -10,8 +10,12 @@
       "type": "string",
       "format": "uuid"
     },
+    "totalRecords": {
+      "description": "Total number of records to be migrated",
+      "type": "integer"
+    },
     "status": {
-      "description": "An permission migration job status",
+      "description": "A permission migration job status",
       "$ref": "permissionMigrationJobStatus.json"
     },
     "startedAt": {

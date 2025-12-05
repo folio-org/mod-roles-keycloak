@@ -135,6 +135,11 @@
           "methods": [ "DELETE" ],
           "pathPattern": "/roles-keycloak/migrations/{id}",
           "permissionsRequired": [ "roles-keycloak.migrations.item.delete" ]
+        },
+        {
+          "methods": [ "GET" ],
+          "pathPattern": "/roles-keycloak/migrations/{id}/errors",
+          "permissionsRequired": [ "roles-keycloak.migrations.errors.get" ]
         }
       ]
     },
@@ -475,6 +480,11 @@
       "permissionName": "roles-keycloak.migrations.collection.get",
       "displayName": "Migrations - search across user permission migration jobs",
       "description": "Retrieves permissions migration job by CQL query and paging parameters"
+    },
+    {
+      "permissionName": "roles-keycloak.migrations.errors.get",
+      "displayName": "Migrations - get migration errors by job id",
+      "description": "Retrieves migration errors for a specific job by id with optional CQL query"
     },
     {
       "permissionName": "roles.users.all",

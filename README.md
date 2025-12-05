@@ -8,6 +8,7 @@ more information.
 ## Table of contents
 
 * [Introduction](#introduction)
+* [Migration API](#migration-api)
 * [Environment Variables](#environment-variables)
   * [Secure storage environment variables](#secure-storage-environment-variables)
     * [AWS-SSM](#aws-ssm)
@@ -23,6 +24,46 @@ more information.
 For now, `mod-roles-keycloak` proxies requests to Keycloak. Service helps manage roles and policies: creating,
 updating, deleting and searching. The service can be used to associate roles with the user.`mod-roles-keycloak` stores
 metadata about who and when created a record.
+
+## Migration API
+
+The module provides asynchronous migration API to migrate legacy permissions to the new roles-based authorization model.
+
+### Key Features
+
+- **Asynchronous Processing**: Migration runs in the background, returning a job ID immediately
+- **Progress Tracking**: Monitor migration status via `GET /roles/migrations/{jobId}`
+- **Error Logging**: Detailed error tracking for failed operations with root cause analysis
+- **CQL Query Support**: Search jobs and errors using CQL queries
+- **Job Management**: List all jobs, get job details, and delete completed jobs
+
+### API Endpoints
+
+- `POST /roles/migrations` - Start a new migration job
+- `GET /roles/migrations` - List all migration jobs (supports CQL queries)
+- `GET /roles/migrations/{jobId}` - Get migration job details
+- `DELETE /roles/migrations/{jobId}` - Delete a migration job
+- `GET /roles/migrations/{jobId}/errors` - Get migration errors (supports CQL queries)
+
+### Migration Process
+
+1. **Role Creation**: Creates roles in both Keycloak and local database
+   - Automatic rollback if database creation fails after Keycloak success
+   - Detailed error logging with root cause extraction
+   - Continues processing remaining roles on individual failures
+
+2. **User Assignment**: Assigns created roles to users based on legacy permissions
+   - Batch processing for optimal performance
+   - Transactional to ensure data consistency
+
+3. **Error Handling**: Comprehensive error tracking
+   - Each failed role creation generates an error record
+   - Error details include: error type, message, root cause, entity information
+   - Query errors via REST API for debugging
+
+### Configuration
+
+Maximum concurrent migrations: **1** (configurable in code)
 
 ## Environment Variables
 
