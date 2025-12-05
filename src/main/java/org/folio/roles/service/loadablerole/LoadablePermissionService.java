@@ -8,6 +8,8 @@ import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadablePermissionRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -19,7 +21,7 @@ public class LoadablePermissionService {
   private final LoadablePermissionRepository repository;
   private final LoadableRoleMapper mapper;
 
-  @Transactional(readOnly = true)
+  @Transactional(readOnly = true, isolation = Isolation.READ_UNCOMMITTED, propagation = Propagation.REQUIRES_NEW)
   public List<LoadablePermission> findAllByPermissions(Collection<String> permissionNames) {
     var entities = repository.findAllByPermissionNameIn(permissionNames);
     return mapper.toPermission(entities);
