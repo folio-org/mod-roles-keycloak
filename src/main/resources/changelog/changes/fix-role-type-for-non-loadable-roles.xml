@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+  <changeSet id="fix-role-type-for-non-loadable-roles" author="Oleksii Kuzminov">
+    <comment>
+      Fix role types: only roles in role_loadable with loaded_from_file=true should have type=DEFAULT.
+      All other roles should have type=REGULAR.
+      This fixes issues introduced as recent as Sunflower CSP2 where some roles were incorrectly created with type=DEFAULT.
+    </comment>
+    <sql>
+      -- Set type to REGULAR for all roles that are NOT in role_loadable table
+      UPDATE role
+      SET type = 'REGULAR'
+      WHERE type = 'DEFAULT'
+        AND id NOT IN (SELECT id FROM role_loadable);
+    </sql>
+  </changeSet>
+
+  <changeSet id="set-default-type-for-loadable-roles-from-file" author="Oleksii Kuzminov">
+    <comment>
+      Set type to DEFAULT for roles in role_loadable that don't have DEFAULT type.
+      This ensures all system-provided loadable roles loaded from reference data files are properly marked as DEFAULT.
+    </comment>
+    <sql>
+      -- Set type to DEFAULT for roles in role_loadable with loaded_from_file=true
+      UPDATE role
+      SET type = 'DEFAULT'
+      WHERE type != 'DEFAULT'
+        AND id IN (
+          SELECT id 
+          FROM role_loadable
+        );
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>
