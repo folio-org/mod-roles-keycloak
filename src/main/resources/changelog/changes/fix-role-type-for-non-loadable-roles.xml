@@ -6,9 +6,8 @@
 
   <changeSet id="fix-role-type-for-non-loadable-roles" author="Oleksii Kuzminov">
     <comment>
-      Fix role types: only roles in role_loadable with loaded_from_file=true should have type=DEFAULT.
+      Fix role types: only roles in role_loadable should have type=DEFAULT.
       All other roles should have type=REGULAR.
-      This fixes issues introduced as recent as Sunflower CSP2 where some roles were incorrectly created with type=DEFAULT.
     </comment>
     <sql>
       -- Set type to REGULAR for all roles that are NOT in role_loadable table
@@ -19,13 +18,13 @@
     </sql>
   </changeSet>
 
-  <changeSet id="set-default-type-for-loadable-roles-from-file" author="Oleksii Kuzminov">
+  <changeSet id="set-default-type-for-loadable" author="Oleksii Kuzminov">
     <comment>
       Set type to DEFAULT for roles in role_loadable that don't have DEFAULT type.
       This ensures all system-provided loadable roles loaded from reference data files are properly marked as DEFAULT.
     </comment>
     <sql>
-      -- Set type to DEFAULT for roles in role_loadable with loaded_from_file=true
+      -- Set type to DEFAULT for roles in role_loadable table
       UPDATE role
       SET type = 'DEFAULT'
       WHERE type != 'DEFAULT'
