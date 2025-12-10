@@ -690,44 +690,24 @@ class CapabilityServiceTest {
     }
 
     @Test
+    void positive_includingTechnicalCapabilities() {
+      var capabilityEntity = capabilityEntity();
+      var permissionNames = List.of(PERMISSION_NAME);
+      when(capabilityRepository.findAllByPermissionNames(permissionNames)).thenReturn(List.of(capabilityEntity));
+      when(capabilityEntityMapper.convert(List.of(capabilityEntity))).thenReturn(List.of(technicalCapability()));
+
+      var result = capabilityService.findByPermissionNames(permissionNames);
+
+      assertThat(result).isEqualTo(List.of(technicalCapability()));
+    }
+
+    @Test
     void negative_permissionNotFound() {
       when(capabilityRepository.findByPermission(PERMISSION_NAME)).thenReturn(Optional.empty());
 
       var result = capabilityService.findByPermissionName(PERMISSION_NAME);
 
       assertThat(result).isEmpty();
-    }
-  }
-
-  @Nested
-  @DisplayName("findByPermissionNamesNoTechnical")
-  class FindByPermissionNamesNoTechnical {
-
-    @Test
-    void positive() {
-      var capability = capability();
-      var capabilityEntity = capabilityEntity();
-      var permissionNames = List.of(PERMISSION_NAME);
-      when(capabilityRepository.findAllByPermissionNames(permissionNames)).thenReturn(List.of(capabilityEntity));
-      when(capabilityEntityMapper.convert(List.of(capabilityEntity))).thenReturn(List.of(capability));
-
-      var result = capabilityService.findByPermissionNamesNoTechnical(permissionNames);
-
-      assertThat(result).containsExactly(capability);
-      verify(capabilityRepository).findAllByPermissionNames(permissionNames);
-    }
-
-    @Test
-    void positive_noTechnicalCapabilities() {
-      var capabilityEntity = capabilityEntity();
-      var permissionNames = List.of(PERMISSION_NAME);
-      when(capabilityRepository.findAllByPermissionNames(permissionNames)).thenReturn(List.of(capabilityEntity));
-      when(capabilityEntityMapper.convert(List.of(capabilityEntity))).thenReturn(List.of(technicalCapability()));
-
-      var result = capabilityService.findByPermissionNamesNoTechnical(permissionNames);
-
-      assertThat(result).isEmpty();
-      verify(capabilityRepository).findAllByPermissionNames(permissionNames);
     }
   }
 }

@@ -85,10 +85,6 @@ public class CapabilityUtils {
       .toList();
   }
 
-  public static boolean isTechnicalCapability(Capability capability) {
-    return isEmpty(capability.getEndpoints());
-  }
-
   public static String getNameFromAppOrModuleId(String appOrModuleId) {
     return appOrModuleId == null ? null : appOrModuleId.substring(0, appOrModuleId.lastIndexOf("-"));
   }

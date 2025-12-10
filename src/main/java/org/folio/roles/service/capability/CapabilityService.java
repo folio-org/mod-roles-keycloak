@@ -213,20 +213,6 @@ public class CapabilityService {
   }
 
   /**
-   * Retrieves capabilities by permission names no technical capabilities included.
-   *
-   * @param permissionNames - list of {@link String} permission names
-   * @return list with {@link Capability} objects
-   */
-  @Transactional(readOnly = true)
-  public List<Capability> findByPermissionNamesNoTechnical(Collection<String> permissionNames) {
-    var capabilityEntities = capabilityRepository.findAllByPermissionNames(permissionNames);
-    return toStream(capabilityEntityMapper.convert(capabilityEntities))
-      .filter(not(CapabilityUtils::isTechnicalCapability))
-      .toList();
-  }
-
-  /**
    * Retrieves capabilities by permission names.
    *
    * @param permissionNames - list of {@link String} permission names
