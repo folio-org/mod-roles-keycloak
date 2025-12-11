@@ -10,8 +10,8 @@
       {
         "permission": {
           "permissionName": "technical.item.get",
-          "displayName": "Notes - get individual note from storage",
-          "description": "Get individual note"
+          "displayName": "Permission without endpoint",
+          "description": "Permission without endpoint"
         }
       }
     ]
