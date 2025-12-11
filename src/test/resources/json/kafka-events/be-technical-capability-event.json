@@ -1,0 +1,19 @@
+{
+  "type": "CREATE",
+  "tenant": "test",
+  "resourceName": "Capability",
+  "new": {
+    "moduleId": "mod-notes-5.1.0",
+    "moduleType": "module",
+    "applicationId": "app-platform-minimal-0.0.9",
+    "resources": [
+      {
+        "permission": {
+          "permissionName": "technical.item.get",
+          "displayName": "Notes - get individual note from storage",
+          "description": "Get individual note"
+        }
+      }
+    ]
+  }
+}
