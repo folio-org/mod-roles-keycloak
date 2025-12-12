@@ -1,3 +1,7 @@
+## Version `v3.0.12` (12.12.2025)
+* bump applications-poc-tools to v3.0.9
+* Register JacksonProvider in ResteasyClient Keycloak for TLS connections (KEYCLOAK-90)
+
 ## Version `v3.0.11` (20.11.2025)
 * Improve role migration logic (MODROLESKC-340)
 * Multiple capabilities/sets exist for the same permission (MODROLESKC-343)
