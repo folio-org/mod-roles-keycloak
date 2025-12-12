@@ -17,6 +17,7 @@
 * Disallow transitioning role type to/from DEFAULT (MODROLESKC-338)
 * Remove keycloak-admin-client version and add applications-poc-tools version management (KEYCLOAK-73)
 * Implement migration error logging with detailed root cause tracking and rollback support (MODROLESKC-342)
+* Register JacksonProvider in ResteasyClient Keycloak for TLS connections (KEYCLOAK-90)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)
