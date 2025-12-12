@@ -162,6 +162,24 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
+  @Sql(scripts = "classpath:/sql/populate-role-loadable-with-be-technical-capabilities.sql")
+  void assignCapabilities_positive_includingTechnical() throws Exception {
+    sendCapabilityEvent("json/kafka-events/be-technical-capability-event.json");
+
+    await().untilAsserted(() -> {
+      int count = unassignedCapabilityCountForPermissionLike("technical.item.get");
+      assertThat(count).isZero();
+    });
+
+    var capabilitiesByPermission = getExistingCapabilities();
+
+    verifyAssignedCapabilities(CIRC_MANAGER_ROLE_NAME,
+      role -> selectPermissionsLike(role, "technical.item.get"),
+      capabilitiesByPermission);
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
   void upsertLoadableRole_positive() throws Exception {
     var role = new LoadableRole()
       .name("Test Loadable Role")

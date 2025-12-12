@@ -90,7 +90,7 @@ public class LoadableRoleCapabilityAssignmentHelper {
 
   private void assignCapabilitiesToPermissions(UUID roleId, Map<String, LoadablePermissionEntity> permsByName,
     List<LoadablePermissionEntity> changed) {
-    var capabilities = capabilityService.findByPermissionNamesNoTechnical(permsByName.keySet());
+    var capabilities = capabilityService.findByPermissionNames(permsByName.keySet());
 
     if (isNotEmpty(capabilities)) {
       roleCapabilityService.create(roleId, mapItems(capabilities, Capability::getId), false);
