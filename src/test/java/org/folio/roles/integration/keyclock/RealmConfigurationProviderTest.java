@@ -16,7 +16,7 @@ import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.test.types.UnitTest;
 import org.folio.tools.store.SecureStore;
-import org.folio.tools.store.exception.NotFoundException;
+import org.folio.tools.store.exception.SecretNotFoundException;
 import org.folio.tools.store.properties.SecureStoreProperties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -76,7 +76,7 @@ class RealmConfigurationProviderTest {
   void getRealmConfiguration_clientSecretNotFound() throws Exception {
     when(keycloakConfigurationProperties.getClientId()).thenReturn(CLIENT_ID);
     when(secureStoreProperties.getEnvironment()).thenReturn("test");
-    when(secureStore.get(KEY)).thenThrow(new NotFoundException("not found"));
+    when(secureStore.get(KEY)).thenThrow(new SecretNotFoundException("not found"));
 
     assertThatThrownBy(() -> realmConfigurationProvider.getRealmConfiguration())
       .isInstanceOf(IllegalStateException.class)
