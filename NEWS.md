@@ -1,3 +1,9 @@
+## Version `v3.0.13` (26.12.2025)
+* Role with null description becomes invalid (MODROLESKC-308)
+* Disallow transitioning role type to/from DEFAULT (Modroleskc 349)
+* Implement migration error logging with detailed root cause tracking and rollback support (MODROLESKC-342)
+* Disallow transitioning role type to/from DEFAULT (MODROLESKC-338)
+
 ## Version `v3.0.12` (12.12.2025)
 * bump applications-poc-tools to v3.0.9
 * Register JacksonProvider in ResteasyClient Keycloak for TLS connections (KEYCLOAK-90)
