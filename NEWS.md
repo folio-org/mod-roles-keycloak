@@ -3,6 +3,7 @@
 * Disallow transitioning role type to/from DEFAULT (Modroleskc 349)
 * Implement migration error logging with detailed root cause tracking and rollback support (MODROLESKC-342)
 * Disallow transitioning role type to/from DEFAULT (MODROLESKC-338)
+* Enhance migration error detection in Kafka configuration (MODROLESKC-354)
 
 ## Version `v3.0.12` (12.12.2025)
 * bump applications-poc-tools to v3.0.9
