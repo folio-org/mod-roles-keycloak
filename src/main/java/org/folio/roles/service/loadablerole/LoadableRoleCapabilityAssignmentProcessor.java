@@ -2,7 +2,6 @@ package org.folio.roles.service.loadablerole;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.folio.common.utils.CollectionUtils.mapItems;
-import static org.folio.roles.utils.CapabilityUtils.isTechnicalCapability;
 import static org.folio.roles.utils.CollectionUtils.findOne;
 
 import java.util.Collection;
@@ -90,12 +89,6 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
     log.info("Handling {} capability: capabilityName = {}, permission = {}", eventType, capability.getName(),
       capability.getPermission());
-
-    if (isTechnicalCapability(capability)) {
-      log.info("Technical capability found: capabilityName = {}, permission = {}. Skipping...", capability.getName(),
-        capability.getPermission());
-      return;
-    }
 
     var permission = capability.getPermission();
 
