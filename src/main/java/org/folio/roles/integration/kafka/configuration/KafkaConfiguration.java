@@ -63,17 +63,21 @@ public class KafkaConfiguration {
   }
 
   private BackOff getBackOff(Exception exception) {
-    log.warn("backoff applied");
-    var relationDoesNotExistsMessage = findRelationDoesNotExistsMessage(exception);
-    if (relationDoesNotExistsMessage.isPresent()) {
-      log.warn("Tenant table is not found, retrying until created [message: {}]", relationDoesNotExistsMessage.get());
+    var migrationErrorMessage = detectMigrationError(exception);
+    if (migrationErrorMessage.isPresent()) {
+      log.warn("Database migration in progress, retrying Kafka event [error: {}]", migrationErrorMessage.get());
       return new FixedBackOff(retryConfiguration.getRetryDelay().toMillis(), retryConfiguration.getRetryAttempts());
     }
 
+    log.warn("Non-retryable error, skipping message", exception);
     return new FixedBackOff(0L, 0L);
   }
 
-  private static Optional<String> findRelationDoesNotExistsMessage(Exception exception) {
+  /**
+   * Detects PostgreSQL errors indicating database migration is in progress.
+   * Covers schema objects not yet created (tables, columns, types, constraints, indexes).
+   */
+  private static Optional<String> detectMigrationError(Exception exception) {
     return Optional.of(exception)
       .filter(InvalidDataAccessResourceUsageException.class::isInstance)
       .map(Throwable::getCause)
@@ -81,7 +85,7 @@ public class KafkaConfiguration {
       .map(Throwable::getCause)
       .filter(throwable -> StringUtils.equals(throwable.getClass().getSimpleName(), "PSQLException"))
       .map(Throwable::getMessage)
-      .filter(errorMessage -> errorMessage.startsWith("ERROR: relation") && errorMessage.contains("does not exist"))
-      .map(errorMessage -> errorMessage.replaceAll("\\s+", " "));
+      .filter(msg -> msg.startsWith("ERROR:") && msg.contains("does not exist"))
+      .map(msg -> msg.replaceAll("\\s+", " "));
   }
 }
