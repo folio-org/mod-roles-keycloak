@@ -20,13 +20,13 @@ import org.springframework.cache.caffeine.CaffeineCache;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-class TenantScopedCacheEvictorTest {
+class UserPermissionsCacheEvictorTest {
 
   private static final String USER_PERMISSIONS_CACHE = "user-permissions";
   private static final String TENANT_1 = "tenant1";
   private static final String TENANT_2 = "tenant2";
 
-  @InjectMocks private TenantScopedCacheEvictor evictor;
+  @InjectMocks private UserPermissionsCacheEvictor evictor;
 
   @Mock private CacheManager cacheManager;
   @Mock private FolioExecutionContext folioExecutionContext;

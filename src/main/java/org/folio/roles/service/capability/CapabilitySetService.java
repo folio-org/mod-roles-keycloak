@@ -9,6 +9,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.domain.entity.CapabilitySetEntity.DEFAULT_CAPABILITY_SET_SORT;
+import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -31,6 +32,7 @@ import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.CapabilitySetEntityMapper;
 import org.folio.roles.repository.CapabilitySetRepository;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +44,7 @@ public class CapabilitySetService {
   private final CapabilityService capabilityService;
   private final CapabilitySetRepository repository;
   private final CapabilitySetEntityMapper capabilitySetEntityMapper;
-  private final TenantScopedCacheEvictor tenantScopedCacheEvictor;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates a capability set.
@@ -62,7 +64,7 @@ public class CapabilitySetService {
     var capabilityEntity = capabilitySetEntityMapper.convert(capabilitySet);
     var savedEntity = repository.save(capabilityEntity);
     var result = capabilitySetEntityMapper.convert(savedEntity);
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
     return result;
   }
 
@@ -88,7 +90,7 @@ public class CapabilitySetService {
       }
     }
 
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    // Event is published by create() for each capability set created
     return createdCapabilitySets;
   }
 
@@ -128,7 +130,7 @@ public class CapabilitySetService {
       .orElseThrow(() -> new EntityNotFoundException("Capability set is not found: id = " + id));
 
     repository.delete(capabilitySetEntity);
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   @Transactional(readOnly = true)
@@ -183,7 +185,7 @@ public class CapabilitySetService {
     }
 
     updateCapabilitySet(capabilitySet);
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -277,14 +279,14 @@ public class CapabilitySetService {
   @Transactional
   public void deleteById(UUID capabilitySetId) {
     repository.deleteById(capabilitySetId);
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   @Transactional
   public void deleteAllLinksToCapability(UUID capabilityId) {
     log.debug("Removing capability_set-capability links for capability: capabilityId = {}", capabilityId);
     repository.deleteCapabilityCapabilitySetLinks(capabilityId);
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -321,7 +323,7 @@ public class CapabilitySetService {
     for (var capabilityId : capabilityIds) {
       repository.addCapabilityById(capabilitySetId, capabilityId);
     }
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   @Transactional
@@ -334,7 +336,7 @@ public class CapabilitySetService {
 
     var capabilitySetEntities = capabilitySetEntityMapper.mapToEntities(capabilitySets);
     repository.saveAll(capabilitySetEntities);
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   private void checkByIds(Collection<UUID> capabilitySetIds) {

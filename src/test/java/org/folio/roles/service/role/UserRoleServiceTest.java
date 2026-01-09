@@ -2,11 +2,13 @@ package org.folio.roles.service.role;
 
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.folio.roles.domain.model.event.UserPermissionsChangedEvent.userPermissionsChanged;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.folio.roles.support.UserRoleTestUtils.userRole;
 import static org.folio.roles.support.UserRoleTestUtils.userRoles;
 import static org.folio.roles.support.UserRoleTestUtils.userRolesRequest;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -18,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.UserRole;
+import org.folio.roles.domain.model.event.UserPermissionsChangedEvent;
 import org.folio.roles.integration.keyclock.KeycloakRolesUserService;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
@@ -28,6 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +40,7 @@ class UserRoleServiceTest {
   @Mock private RoleService roleService;
   @Mock private UserRoleEntityService userRoleEntityService;
   @Mock private KeycloakRolesUserService keycloakRolesUserService;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks private UserRoleService userRoleService;
 
@@ -49,7 +54,7 @@ class UserRoleServiceTest {
 
   @AfterEach
   void tearDown() {
-    verifyNoMoreInteractions(roleService, userRoleEntityService, keycloakRolesUserService);
+    verifyNoMoreInteractions(roleService, userRoleEntityService, keycloakRolesUserService, eventPublisher);
   }
 
   @Nested
@@ -69,6 +74,7 @@ class UserRoleServiceTest {
 
       assertThat(result).isEqualTo(userRoles(userRole()));
       verify(keycloakRolesUserService).assignRolesToUser(USER_ID, roles);
+      verify(eventPublisher).publishEvent(any(UserPermissionsChangedEvent.class));
     }
   }
 
@@ -87,6 +93,7 @@ class UserRoleServiceTest {
 
       verify(keycloakRolesUserService).assignRolesToUser(USER_ID, List.of(role()));
       verify(userRoleEntityService).createSafe(request);
+      verify(eventPublisher).publishEvent(any(UserPermissionsChangedEvent.class));
     }
 
     @Test
@@ -100,6 +107,7 @@ class UserRoleServiceTest {
 
       verify(keycloakRolesUserService, never()).assignRolesToUser(USER_ID, List.of(role()));
       verify(userRoleEntityService, never()).createSafe(request);
+      verifyNoInteractions(eventPublisher);
     }
   }
 
@@ -129,6 +137,7 @@ class UserRoleServiceTest {
       verify(userRoleEntityService).delete(USER_ID, List.of(existingRoleId));
       verify(keycloakRolesUserService).assignRolesToUser(USER_ID, rolesToAssign);
       verify(keycloakRolesUserService).unlinkRolesFromUser(USER_ID, rolesToUnlink);
+      verify(eventPublisher).publishEvent(any(UserPermissionsChangedEvent.class));
     }
 
     @Test
@@ -147,6 +156,7 @@ class UserRoleServiceTest {
 
       verify(userRoleEntityService).create(USER_ID, List.of(roleId2));
       verify(keycloakRolesUserService).assignRolesToUser(USER_ID, rolesToAssign);
+      verify(eventPublisher).publishEvent(any(UserPermissionsChangedEvent.class));
     }
 
     @Test
@@ -165,6 +175,7 @@ class UserRoleServiceTest {
 
       verify(userRoleEntityService).delete(USER_ID, List.of(roleId1));
       verify(keycloakRolesUserService).unlinkRolesFromUser(USER_ID, rolesToUnlink);
+      verify(eventPublisher).publishEvent(any(UserPermissionsChangedEvent.class));
     }
 
     @Test
@@ -176,6 +187,7 @@ class UserRoleServiceTest {
       userRoleService.update(rolesUserRequest);
 
       verifyNoInteractions(keycloakRolesUserService);
+      verify(eventPublisher).publishEvent(any(UserPermissionsChangedEvent.class));
     }
   }
 
@@ -224,6 +236,7 @@ class UserRoleServiceTest {
 
       verify(keycloakRolesUserService).unlinkRolesFromUser(USER_ID, roles);
       verify(userRoleEntityService).deleteByUserId(USER_ID);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
   }
 }

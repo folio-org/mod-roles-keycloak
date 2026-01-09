@@ -5,6 +5,7 @@ import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
+import static org.folio.roles.domain.model.event.UserPermissionsChangedEvent.userPermissionsChanged;
 
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,7 +27,7 @@ import org.folio.roles.utils.CapabilityUtils;
 import org.folio.roles.utils.CollectionUtils;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +44,7 @@ public class UserCapabilityService {
   private final UserCapabilityRepository userCapabilityRepository;
   private final CapabilityEndpointService capabilityEndpointService;
   private final UserCapabilityEntityMapper userCapabilityEntityMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates a record(s) associating one or more capabilities with the user.
@@ -51,7 +53,6 @@ public class UserCapabilityService {
    * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
    * @return {@link UserCapabilities} object with created user-capability relations
    */
-  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public PageResult<UserCapability> create(UUID userId, List<UUID> capabilityIds) {
     if (isEmpty(capabilityIds)) {
@@ -66,7 +67,9 @@ public class UserCapabilityService {
         "Relation already exists for user='%s' and capabilities=%s", userId, existingCapabilitySetIds));
     }
 
-    return assignCapabilities(userId, capabilityIds, emptyList());
+    var result = assignCapabilities(userId, capabilityIds, emptyList());
+    eventPublisher.publishEvent(userPermissionsChanged(userId));
+    return result;
   }
 
   /**
@@ -91,7 +94,6 @@ public class UserCapabilityService {
    * @param userId - user identifier as {@link UUID} object
    * @param capabilityIds - list of capabilities that must be assigned to a user
    */
-  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public void update(UUID userId, List<UUID> capabilityIds) {
     keycloakUserService.getKeycloakUserByUserId(userId);
@@ -101,6 +103,7 @@ public class UserCapabilityService {
     UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "user-capability")
       .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(userId, newIds, assignedCapabilityIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
+    eventPublisher.publishEvent(userPermissionsChanged(userId));
   }
 
   /**
@@ -109,7 +112,6 @@ public class UserCapabilityService {
    * @param userId - user identifier as {@link UUID}
    * @param capabilityId - capability identifier as {@link UUID}
    */
-  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public void delete(UUID userId, UUID capabilityId) {
     var assignedUserCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
@@ -121,6 +123,7 @@ public class UserCapabilityService {
     assignedCapabilityIds.remove(capabilityId);
     userCapabilityRepository.findById(UserCapabilityKey.of(userId, capabilityId))
       .ifPresent(entity -> removeCapabilities(userId, List.of(entity.getCapabilityId()), assignedCapabilityIds));
+    eventPublisher.publishEvent(userPermissionsChanged(userId));
   }
 
   /**
@@ -129,7 +132,6 @@ public class UserCapabilityService {
    * @param userId - user identifier as {@link UUID}
    * @throws EntityNotFoundException if user is not found by id or there is no assigned values
    */
-  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public void deleteAll(UUID userId) {
     keycloakUserService.getKeycloakUserByUserId(userId);
@@ -139,6 +141,7 @@ public class UserCapabilityService {
     }
 
     removeCapabilities(userId, getCapabilityIds(userCapabilityEntities), emptyList());
+    eventPublisher.publishEvent(userPermissionsChanged(userId));
   }
 
   private PageResult<UserCapability> assignCapabilities(UUID userId, List<UUID> newIds, Collection<UUID> assignedIds) {

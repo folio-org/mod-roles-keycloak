@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.entity.CapabilitySetEntity.DEFAULT_CAPABILITY_SET_SORT;
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
+import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySetEntity;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 
 @UnitTest
@@ -55,15 +57,11 @@ class CapabilitySetServiceTest {
   @Mock private CapabilityService capabilityService;
   @Mock private CapabilitySetRepository capabilitySetRepository;
   @Mock private CapabilitySetEntityMapper mapper;
-  @Mock private TenantScopedCacheEvictor tenantScopedCacheEvictor;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @AfterEach
   void tearDown() {
     TestUtils.verifyNoMoreInteractions(this);
-  }
-
-  private void setupCacheEvictionMocks() {
-    doNothing().when(tenantScopedCacheEvictor).evictUserPermissionsForCurrentTenant();
   }
 
   @Nested
@@ -72,7 +70,7 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var capabilitySet = capabilitySet();
       var capabilitySetEntity = capabilitySetEntity();
 
@@ -85,6 +83,7 @@ class CapabilitySetServiceTest {
       var actual = capabilitySetService.create(capabilitySet);
 
       assertThat(actual).isEqualTo(capabilitySet);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -116,7 +115,6 @@ class CapabilitySetServiceTest {
 
     @Test
     void negative_nameIsTakenForExistingCapabilitySet() {
-      setupCacheEvictionMocks();
       var capabilitySet = capabilitySet();
       var capabilitySetEntity = capabilitySetEntity();
 
@@ -130,11 +128,11 @@ class CapabilitySetServiceTest {
       var actual = capabilitySetService.create(capabilitySet);
 
       assertThat(actual).isEqualTo(capabilitySet);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
     void positive_batchRequest() {
-      setupCacheEvictionMocks();
       var capabilitySet = capabilitySet();
       var capabilitySetEntity = capabilitySetEntity();
 
@@ -148,6 +146,7 @@ class CapabilitySetServiceTest {
       var actual = capabilitySetService.createAll(capabilitySets);
 
       assertThat(actual).isEqualTo(capabilitySets);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -158,8 +157,6 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive_batchRequest_nameIsTaken() {
-      setupCacheEvictionMocks();
-
       var capabilitySets = List.of(capabilitySet());
 
       when(capabilitySetRepository.existsByName("test_resource.create")).thenReturn(true);
@@ -168,6 +165,8 @@ class CapabilitySetServiceTest {
       var actual = capabilitySetService.createAll(capabilitySets);
 
       assertThat(actual).isEmpty();
+      // No events published since all creates failed
+      verifyNoInteractions(eventPublisher);
     }
   }
 
@@ -214,7 +213,6 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive() {
-      setupCacheEvictionMocks();
       var foundEntity = capabilitySetEntity();
       var updatedEntity = capabilitySetEntity(updatedCapabilityIds);
       var updatedCapabilitySet = capabilitySet(updatedCapabilityIds);
@@ -226,11 +224,11 @@ class CapabilitySetServiceTest {
       capabilitySetService.update(CAPABILITY_SET_ID, updatedCapabilitySet);
 
       verify(capabilityService).checkIds(updatedCapabilityIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
     void positive_setNameIfNull() {
-      setupCacheEvictionMocks();
       var foundEntity = capabilitySetEntity(updatedCapabilityIds);
       var updatedEntity = capabilitySetEntity(updatedCapabilityIds);
       var updatedCapabilitySet = capabilitySet(updatedCapabilityIds).name(null);
@@ -242,11 +240,11 @@ class CapabilitySetServiceTest {
       capabilitySetService.update(CAPABILITY_SET_ID, updatedCapabilitySet);
 
       verify(capabilityService).checkIds(updatedCapabilityIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
     void positive_actionIsChanged() {
-      setupCacheEvictionMocks();
       var foundEntity = capabilitySetEntity(RESOURCE_NAME, CapabilityAction.CREATE);
       var updatedEntity = capabilitySetEntity(RESOURCE_NAME, CapabilityAction.EDIT);
       var updatedCapabilitySet = capabilitySet(RESOURCE_NAME, CapabilityAction.EDIT);
@@ -259,6 +257,7 @@ class CapabilitySetServiceTest {
       capabilitySetService.update(CAPABILITY_SET_ID, updatedCapabilitySet);
 
       verify(capabilityService).checkIds(List.of(CAPABILITY_ID));
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -455,7 +454,6 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive() {
-      setupCacheEvictionMocks();
       var entity = capabilitySetEntity();
 
       when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(entity));
@@ -463,6 +461,7 @@ class CapabilitySetServiceTest {
       capabilitySetService.delete(CAPABILITY_SET_ID);
 
       verify(capabilitySetRepository).delete(entity);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -577,7 +576,6 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive() {
-      setupCacheEvictionMocks();
       var capabilityId1 = UUID.randomUUID();
       var capabilityId2 = UUID.randomUUID();
       var capabilitySetId = UUID.randomUUID();
@@ -586,6 +584,7 @@ class CapabilitySetServiceTest {
 
       verify(capabilitySetRepository).addCapabilityById(capabilitySetId, capabilityId1);
       verify(capabilitySetRepository).addCapabilityById(capabilitySetId, capabilityId2);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
   }
 

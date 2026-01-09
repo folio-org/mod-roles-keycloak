@@ -8,6 +8,7 @@ import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.domain.entity.UserCapabilityEntity.DEFAULT_USER_CAPABILITY_SORT;
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.domain.model.PageResult.empty;
+import static org.folio.roles.domain.model.event.UserPermissionsChangedEvent.userPermissionsChanged;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.EndpointUtils.endpoint;
@@ -47,6 +48,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 
 @UnitTest
@@ -62,6 +64,7 @@ class UserCapabilityServiceTest {
   @Mock private UserCapabilityRepository userCapabilityRepository;
   @Mock private CapabilityEndpointService capabilityEndpointService;
   @Mock private UserCapabilityEntityMapper userCapabilityEntityMapper;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @AfterEach
   void tearDown() {
@@ -135,6 +138,7 @@ class UserCapabilityServiceTest {
 
       assertThat(result).isEqualTo(asSinglePage(userCapability1, userCapability2));
       verify(capabilityService).checkIds(capabilityIds);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test
@@ -162,6 +166,7 @@ class UserCapabilityServiceTest {
 
       assertThat(result).isEqualTo(asSinglePage(userCapability1, userCapability2));
       verify(capabilityService).checkIds(capabilityIds);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test
@@ -217,6 +222,7 @@ class UserCapabilityServiceTest {
 
       verify(userCapabilityRepository).deleteUserCapabilities(USER_ID, List.of(capabilityId1));
       verify(userPermissionService).deletePermissions(USER_ID, endpoints);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test
@@ -236,6 +242,7 @@ class UserCapabilityServiceTest {
 
       verify(userCapabilityRepository).deleteUserCapabilities(USER_ID, deprecatedIds);
       verify(userPermissionService).deletePermissions(USER_ID, endpoints);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test
@@ -278,6 +285,7 @@ class UserCapabilityServiceTest {
 
       verify(userPermissionService).deletePermissions(USER_ID, endpoints);
       verify(userCapabilityRepository).deleteUserCapabilities(USER_ID, capabilitySetIds);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test
@@ -286,6 +294,7 @@ class UserCapabilityServiceTest {
       userCapabilityService.delete(USER_ID, CAPABILITY_ID);
       verifyNoInteractions(userPermissionService);
       verify(userCapabilityRepository, never()).deleteUserCapabilities(any(), anyList());
+      verifyNoInteractions(eventPublisher);
     }
 
     @Test
@@ -301,6 +310,7 @@ class UserCapabilityServiceTest {
 
       verifyNoInteractions(userPermissionService);
       verify(userCapabilityRepository, never()).deleteUserCapabilities(any(), anyList());
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
   }
 
@@ -342,6 +352,7 @@ class UserCapabilityServiceTest {
       verify(userCapabilityRepository).deleteUserCapabilities(USER_ID, deprecatedIds);
       verify(capabilityEndpointService).getByCapabilityIds(newIds, List.of(capabilityId1));
       verify(capabilityEndpointService).getByCapabilityIds(deprecatedIds, List.of(capabilityId2, capabilityId3));
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test

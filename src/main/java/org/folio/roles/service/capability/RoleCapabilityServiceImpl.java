@@ -8,6 +8,7 @@ import static org.apache.commons.collections4.ListUtils.intersection;
 import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
+import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
 import static org.folio.roles.utils.CollectionUtils.difference;
 
 import jakarta.persistence.EntityExistsException;
@@ -33,6 +34,7 @@ import org.folio.roles.utils.CapabilityUtils;
 import org.folio.roles.utils.CollectionUtils;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,7 +53,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   private final RoleCapabilityRepository roleCapabilityRepository;
   private final CapabilityEndpointService capabilityEndpointService;
   private final RoleCapabilityEntityMapper roleCapabilityEntityMapper;
-  private final TenantScopedCacheEvictor tenantScopedCacheEvictor;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates a record(s) associating one or more capabilities with the role.
@@ -65,7 +67,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Transactional
   public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
     var result = createRoleCapabilities(roleId, capabilityIds, safeCreate);
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
     return result;
   }
 
@@ -82,7 +84,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
     var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
     var result = createRoleCapabilities(request.getRoleId(), allCapabilityIds, safeCreate);
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
     return result;
   }
 
@@ -113,7 +115,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Transactional
   public void update(UUID roleId, List<UUID> capabilityIds) {
     updateRoleCapabilities(roleId, capabilityIds);
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -129,7 +131,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
     var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
     updateRoleCapabilities(roleId, allCapabilityIds);
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -150,7 +152,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     assignedCapabilityIds.remove(capabilityId);
     roleCapabilityRepository.findById(RoleCapabilityKey.of(roleId, capabilityId))
       .ifPresent(entity -> removeCapabilities(roleId, List.of(entity.getCapabilityId()), assignedCapabilityIds));
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -175,7 +177,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     }
 
     removeCapabilities(roleId, deprecatedIds, subtract(assignedCapabilityIds, deprecatedIds));
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -194,7 +196,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     }
 
     removeCapabilities(roleId, getCapabilityIds(roleCapabilityEntities), emptyList());
-    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   @Override

@@ -8,6 +8,7 @@ import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.domain.model.PageResult.empty;
+import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_ID;
 import static org.folio.roles.support.CapabilityUtils.CAPABILITY_NAME;
@@ -40,6 +41,7 @@ import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.RoleCapabilitiesRequest;
 import org.folio.roles.domain.entity.key.RoleCapabilityKey;
 import org.folio.roles.domain.model.PageResult;
+import org.folio.roles.domain.model.event.TenantPermissionsChangedEvent;
 import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.RoleCapabilityEntityMapper;
 import org.folio.roles.repository.RoleCapabilityRepository;
@@ -56,6 +58,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 
 @UnitTest
@@ -71,15 +74,11 @@ class RoleCapabilityServiceImplTest {
   @Mock private RoleCapabilityRepository roleCapabilityRepository;
   @Mock private CapabilityEndpointService capabilityEndpointService;
   @Mock private RoleCapabilityEntityMapper roleCapabilityEntityMapper;
-  @Mock private TenantScopedCacheEvictor tenantScopedCacheEvictor;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @AfterEach
   void tearDown() {
     TestUtils.verifyNoMoreInteractions(this);
-  }
-
-  private void setupCacheEvictionMocks() {
-    doNothing().when(tenantScopedCacheEvictor).evictUserPermissionsForCurrentTenant();
   }
 
   @Nested
@@ -128,7 +127,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_plainCapabilities() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var roleCapability1 = roleCapability(capabilityId1);
       var roleCapability2 = roleCapability(capabilityId2);
       var capabilityIds = List.of(capabilityId1, capabilityId2);
@@ -150,11 +149,13 @@ class RoleCapabilityServiceImplTest {
 
       assertThat(result).isEqualTo(asSinglePage(roleCapability1, roleCapability2));
       verify(capabilityService).checkIds(capabilityIds);
+      verify(eventPublisher).publishEvent(any(TenantPermissionsChangedEvent.class));
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
     void positive_plainCapabilitiesByNames() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var roleCapability = roleCapability(capabilityId1);
       var capability = capability(capabilityId1).name(CAPABILITY_NAME);
       var capabilities = List.of(capability);
@@ -178,11 +179,13 @@ class RoleCapabilityServiceImplTest {
 
       assertThat(result).isEqualTo(asSinglePage(roleCapability));
       verify(capabilityService).checkIds(capabilityIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
     void positive_plainCapabilitiesByNames_skipInvalidCapabilityNames() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var roleCapabilityEntity = roleCapabilityEntity(capabilityId1);
       var capability1 = capability().id(capabilityId1).name(CAPABILITY_NAME);
       var capabilities = List.of(capability1);
@@ -207,11 +210,12 @@ class RoleCapabilityServiceImplTest {
       verify(rolePermissionService).createPermissions(ROLE_ID, endpoints);
       verify(capabilityEndpointService).getByCapabilityIds(capabilityIds, List.of());
       assertThat(result).isEqualTo(asSinglePage(roleCapability(ROLE_ID, capabilityId1)));
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
     void positive_capabilitySetAssigned() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var roleCapability1 = roleCapability(capabilityId1);
       var roleCapability2 = roleCapability(capabilityId2);
       var capabilityIds = List.of(capabilityId1, capabilityId2);
@@ -235,6 +239,7 @@ class RoleCapabilityServiceImplTest {
 
       assertThat(result).isEqualTo(asSinglePage(roleCapability1, roleCapability2));
       verify(capabilityService).checkIds(capabilityIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -247,7 +252,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_existingAssignmentWithCreateSafe() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var capIds = List.of(capabilityId1);
       var roleCapabilityEntity = roleCapabilityEntity(ROLE_ID, capabilityId1);
 
@@ -257,6 +262,7 @@ class RoleCapabilityServiceImplTest {
       var result = roleCapabilityService.create(ROLE_ID, capIds, true);
 
       assertThat(result).isEqualTo(PageResult.empty());
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -308,7 +314,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_plainCapabilities() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var expectedEntities = List.of(roleCapabilityEntity(ROLE_ID, capabilityId1));
       var endpoints = List.of(endpoint("/c1", GET));
       when(roleService.getById(ROLE_ID)).thenReturn(role());
@@ -320,11 +326,12 @@ class RoleCapabilityServiceImplTest {
 
       verify(roleCapabilityRepository).deleteRoleCapabilities(ROLE_ID, List.of(capabilityId1));
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
     void positive_capabilitySetAssigned() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var expectedEntities = List.of(roleCapabilityEntity(capabilityId1), roleCapabilityEntity(capabilityId2));
       var endpoints = List.of(endpoint("/c2", GET));
       var assignedIds = List.of(capabilityId1, capabilityId3);
@@ -340,6 +347,7 @@ class RoleCapabilityServiceImplTest {
 
       verify(roleCapabilityRepository).deleteRoleCapabilities(ROLE_ID, deprecatedIds);
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -367,7 +375,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var existingEntity = roleCapabilityEntity();
       var existingEntities = List.of(existingEntity);
       var capabilitySetIds = List.of(CAPABILITY_ID);
@@ -383,6 +391,7 @@ class RoleCapabilityServiceImplTest {
 
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
       verify(roleCapabilityRepository).deleteRoleCapabilities(ROLE_ID, capabilitySetIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -395,7 +404,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_entityNotFoundById() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var existingEntity = roleCapabilityEntity();
       var existingEntities = List.of(existingEntity);
       var entityKey = RoleCapabilityKey.of(ROLE_ID, CAPABILITY_ID);
@@ -407,6 +416,7 @@ class RoleCapabilityServiceImplTest {
 
       verifyNoInteractions(rolePermissionService);
       verify(roleCapabilityRepository, never()).deleteRoleCapabilities(any(), anyList());
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
   }
 
@@ -420,7 +430,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var uce1 = roleCapabilityEntity(capabilityId1);
       var uce2 = roleCapabilityEntity(capabilityId2);
       var uce3 = roleCapabilityEntity(capabilityId3);
@@ -448,11 +458,12 @@ class RoleCapabilityServiceImplTest {
       verify(roleCapabilityRepository).deleteRoleCapabilities(ROLE_ID, deprecatedIds);
       verify(capabilityEndpointService).getByCapabilityIds(newIds, List.of(capabilityId1, capabilityId3));
       verify(capabilityEndpointService).getByCapabilityIds(deprecatedIds, List.of(capabilityId3, capabilityId2));
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
     void positiveByName() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var uce1 = roleCapabilityEntity(capabilityId1);
       var uce2 = roleCapabilityEntity(capabilityId2);
       var uce3 = roleCapabilityEntity(capabilityId3);
@@ -486,11 +497,12 @@ class RoleCapabilityServiceImplTest {
       verify(roleCapabilityRepository).deleteRoleCapabilities(ROLE_ID, deprecatedIds);
       verify(capabilityEndpointService).getByCapabilityIds(newIds, List.of(capabilityId1, capabilityId3));
       verify(capabilityEndpointService).getByCapabilityIds(deprecatedIds, List.of(capabilityId3, capabilityId2));
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
     void positiveByName_skipInvalidCapabilityNames() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var uce1 = roleCapabilityEntity(capabilityId1);
 
       var capability1 = capability().id(capabilityId1).name(CAPABILITY_NAME);
@@ -515,11 +527,12 @@ class RoleCapabilityServiceImplTest {
       verify(capabilityService).checkIds(List.of(capabilityId1));
       verify(rolePermissionService).createPermissions(ROLE_ID, endpointsToAssign);
       verify(capabilityEndpointService).getByCapabilityIds(newIds, List.of());
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
     void negative_notingToUpdate() {
-      setupCacheEvictionMocks();
+      // Event is published for cache eviction
       var roleCapabilityEntity = roleCapabilityEntity(ROLE_ID, capabilityId1);
       when(roleService.getById(ROLE_ID)).thenReturn(role());
       when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(List.of(roleCapabilityEntity));
@@ -527,6 +540,7 @@ class RoleCapabilityServiceImplTest {
       var capabilityIds = List.of(capabilityId1);
       roleCapabilityService.update(ROLE_ID, capabilityIds);
       verifyNoInteractions(rolePermissionService);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
