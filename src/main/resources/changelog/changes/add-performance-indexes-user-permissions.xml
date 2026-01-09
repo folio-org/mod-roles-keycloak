@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+  <changeSet id="add-performance-indexes-user-permissions-1" author="Yauhen Vavilkin">
+    <comment>
+      Covering index for user permission queries. Eliminates heap fetches by including all columns
+      needed by queries (id for JOINs, folio_permission for SELECT, dummy_capability for filtering).
+      Partial index (WHERE dummy_capability = false) reduces size by ~20%.
+      Write cost is minimal as capability table only changes during module deployments via Kafka events.
+    </comment>
+    <sql>
+      CREATE INDEX IF NOT EXISTS idx_capability_dummy_false
+      ON capability (id, folio_permission, dummy_capability)
+      WHERE dummy_capability = false;
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

@@ -26,6 +26,7 @@ import org.folio.roles.utils.CapabilityUtils;
 import org.folio.roles.utils.CollectionUtils;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +51,7 @@ public class UserCapabilityService {
    * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
    * @return {@link UserCapabilities} object with created user-capability relations
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public PageResult<UserCapability> create(UUID userId, List<UUID> capabilityIds) {
     if (isEmpty(capabilityIds)) {
@@ -89,6 +91,7 @@ public class UserCapabilityService {
    * @param userId - user identifier as {@link UUID} object
    * @param capabilityIds - list of capabilities that must be assigned to a user
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public void update(UUID userId, List<UUID> capabilityIds) {
     keycloakUserService.getKeycloakUserByUserId(userId);
@@ -106,6 +109,7 @@ public class UserCapabilityService {
    * @param userId - user identifier as {@link UUID}
    * @param capabilityId - capability identifier as {@link UUID}
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public void delete(UUID userId, UUID capabilityId) {
     var assignedUserCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
@@ -125,6 +129,7 @@ public class UserCapabilityService {
    * @param userId - user identifier as {@link UUID}
    * @throws EntityNotFoundException if user is not found by id or there is no assigned values
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public void deleteAll(UUID userId) {
     keycloakUserService.getKeycloakUserByUserId(userId);

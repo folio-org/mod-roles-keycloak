@@ -42,12 +42,13 @@ public class CapabilitySetService {
   private final CapabilityService capabilityService;
   private final CapabilitySetRepository repository;
   private final CapabilitySetEntityMapper capabilitySetEntityMapper;
+  private final TenantScopedCacheEvictor tenantScopedCacheEvictor;
 
   /**
-   * Creates a capability.
+   * Creates a capability set.
    *
-   * @param capabilitySet - capability object to create
-   * @return created {@link Capability} object
+   * @param capabilitySet - capability set to create
+   * @return created {@link CapabilitySet} object
    */
   @Transactional
   public CapabilitySet create(CapabilitySet capabilitySet) {
@@ -60,8 +61,9 @@ public class CapabilitySetService {
 
     var capabilityEntity = capabilitySetEntityMapper.convert(capabilitySet);
     var savedEntity = repository.save(capabilityEntity);
-
-    return capabilitySetEntityMapper.convert(savedEntity);
+    var result = capabilitySetEntityMapper.convert(savedEntity);
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    return result;
   }
 
   /**
@@ -86,6 +88,7 @@ public class CapabilitySetService {
       }
     }
 
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
     return createdCapabilitySets;
   }
 
@@ -125,6 +128,7 @@ public class CapabilitySetService {
       .orElseThrow(() -> new EntityNotFoundException("Capability set is not found: id = " + id));
 
     repository.delete(capabilitySetEntity);
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
 
   @Transactional(readOnly = true)
@@ -178,9 +182,8 @@ public class CapabilitySetService {
       capabilitySet.setName(foundEntity.getName());
     }
 
-    capabilityService.checkIds(capabilitySet.getCapabilities());
-    var entity = capabilitySetEntityMapper.convert(capabilitySet);
-    repository.saveAndFlush(entity);
+    updateCapabilitySet(capabilitySet);
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
 
   /**
@@ -274,12 +277,14 @@ public class CapabilitySetService {
   @Transactional
   public void deleteById(UUID capabilitySetId) {
     repository.deleteById(capabilitySetId);
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
 
   @Transactional
   public void deleteAllLinksToCapability(UUID capabilityId) {
     log.debug("Removing capability_set-capability links for capability: capabilityId = {}", capabilityId);
     repository.deleteCapabilityCapabilitySetLinks(capabilityId);
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
 
   /**
@@ -316,6 +321,7 @@ public class CapabilitySetService {
     for (var capabilityId : capabilityIds) {
       repository.addCapabilityById(capabilitySetId, capabilityId);
     }
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
 
   @Transactional
@@ -328,6 +334,7 @@ public class CapabilitySetService {
 
     var capabilitySetEntities = capabilitySetEntityMapper.mapToEntities(capabilitySets);
     repository.saveAll(capabilitySetEntities);
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
 
   private void checkByIds(Collection<UUID> capabilitySetIds) {
@@ -337,5 +344,11 @@ public class CapabilitySetService {
       var notFoundCapabilityIds = CollectionUtils.subtract(capabilityIdsToCheck, foundCapabilityIds);
       throw new EntityNotFoundException("Capability sets not found by ids: " + notFoundCapabilityIds);
     }
+  }
+
+  private void updateCapabilitySet(CapabilitySet capabilitySet) {
+    capabilityService.checkIds(capabilitySet.getCapabilities());
+    var entity = capabilitySetEntityMapper.convert(capabilitySet);
+    repository.saveAndFlush(entity);
   }
 }

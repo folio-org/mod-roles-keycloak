@@ -71,10 +71,15 @@ class RoleCapabilityServiceImplTest {
   @Mock private RoleCapabilityRepository roleCapabilityRepository;
   @Mock private CapabilityEndpointService capabilityEndpointService;
   @Mock private RoleCapabilityEntityMapper roleCapabilityEntityMapper;
+  @Mock private TenantScopedCacheEvictor tenantScopedCacheEvictor;
 
   @AfterEach
   void tearDown() {
     TestUtils.verifyNoMoreInteractions(this);
+  }
+
+  private void setupCacheEvictionMocks() {
+    doNothing().when(tenantScopedCacheEvictor).evictUserPermissionsForCurrentTenant();
   }
 
   @Nested
@@ -123,6 +128,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_plainCapabilities() {
+      setupCacheEvictionMocks();
       var roleCapability1 = roleCapability(capabilityId1);
       var roleCapability2 = roleCapability(capabilityId2);
       var capabilityIds = List.of(capabilityId1, capabilityId2);
@@ -148,6 +154,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_plainCapabilitiesByNames() {
+      setupCacheEvictionMocks();
       var roleCapability = roleCapability(capabilityId1);
       var capability = capability(capabilityId1).name(CAPABILITY_NAME);
       var capabilities = List.of(capability);
@@ -175,6 +182,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_plainCapabilitiesByNames_skipInvalidCapabilityNames() {
+      setupCacheEvictionMocks();
       var roleCapabilityEntity = roleCapabilityEntity(capabilityId1);
       var capability1 = capability().id(capabilityId1).name(CAPABILITY_NAME);
       var capabilities = List.of(capability1);
@@ -203,6 +211,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_capabilitySetAssigned() {
+      setupCacheEvictionMocks();
       var roleCapability1 = roleCapability(capabilityId1);
       var roleCapability2 = roleCapability(capabilityId2);
       var capabilityIds = List.of(capabilityId1, capabilityId2);
@@ -238,6 +247,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_existingAssignmentWithCreateSafe() {
+      setupCacheEvictionMocks();
       var capIds = List.of(capabilityId1);
       var roleCapabilityEntity = roleCapabilityEntity(ROLE_ID, capabilityId1);
 
@@ -298,6 +308,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_plainCapabilities() {
+      setupCacheEvictionMocks();
       var expectedEntities = List.of(roleCapabilityEntity(ROLE_ID, capabilityId1));
       var endpoints = List.of(endpoint("/c1", GET));
       when(roleService.getById(ROLE_ID)).thenReturn(role());
@@ -313,6 +324,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_capabilitySetAssigned() {
+      setupCacheEvictionMocks();
       var expectedEntities = List.of(roleCapabilityEntity(capabilityId1), roleCapabilityEntity(capabilityId2));
       var endpoints = List.of(endpoint("/c2", GET));
       var assignedIds = List.of(capabilityId1, capabilityId3);
@@ -355,6 +367,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive() {
+      setupCacheEvictionMocks();
       var existingEntity = roleCapabilityEntity();
       var existingEntities = List.of(existingEntity);
       var capabilitySetIds = List.of(CAPABILITY_ID);
@@ -382,6 +395,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive_entityNotFoundById() {
+      setupCacheEvictionMocks();
       var existingEntity = roleCapabilityEntity();
       var existingEntities = List.of(existingEntity);
       var entityKey = RoleCapabilityKey.of(ROLE_ID, CAPABILITY_ID);
@@ -406,6 +420,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positive() {
+      setupCacheEvictionMocks();
       var uce1 = roleCapabilityEntity(capabilityId1);
       var uce2 = roleCapabilityEntity(capabilityId2);
       var uce3 = roleCapabilityEntity(capabilityId3);
@@ -437,6 +452,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positiveByName() {
+      setupCacheEvictionMocks();
       var uce1 = roleCapabilityEntity(capabilityId1);
       var uce2 = roleCapabilityEntity(capabilityId2);
       var uce3 = roleCapabilityEntity(capabilityId3);
@@ -474,6 +490,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void positiveByName_skipInvalidCapabilityNames() {
+      setupCacheEvictionMocks();
       var uce1 = roleCapabilityEntity(capabilityId1);
 
       var capability1 = capability().id(capabilityId1).name(CAPABILITY_NAME);
@@ -502,6 +519,7 @@ class RoleCapabilityServiceImplTest {
 
     @Test
     void negative_notingToUpdate() {
+      setupCacheEvictionMocks();
       var roleCapabilityEntity = roleCapabilityEntity(ROLE_ID, capabilityId1);
       when(roleService.getById(ROLE_ID)).thenReturn(role());
       when(roleCapabilityRepository.findAllByRoleId(ROLE_ID)).thenReturn(List.of(roleCapabilityEntity));

@@ -25,6 +25,7 @@ import org.folio.roles.mapper.entity.DateConvertHelper;
 import org.folio.roles.mapper.entity.RoleEntityMapper;
 import org.folio.roles.mapper.entity.RoleEntityMapperImpl;
 import org.folio.roles.repository.RoleEntityRepository;
+import org.folio.roles.service.capability.TenantScopedCacheEvictor;
 import org.folio.spring.data.OffsetRequest;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
@@ -52,12 +53,13 @@ class RoleEntityServiceTest {
 
   @Spy private RoleEntityMapper mapper = new RoleEntityMapperImpl(new DateConvertHelper());
   @Mock private RoleEntityRepository repository;
+  @Mock private TenantScopedCacheEvictor tenantScopedCacheEvictor;
 
   @InjectMocks private RoleEntityService service;
 
   @AfterEach
   void afterEach() {
-    verifyNoMoreInteractions(repository);
+    verifyNoMoreInteractions(repository, tenantScopedCacheEvictor);
   }
 
   private static Role createRoleDto() {
@@ -151,6 +153,7 @@ class RoleEntityServiceTest {
 
     @Test
     void positive() {
+      doNothing().when(tenantScopedCacheEvictor).evictUserPermissionsForCurrentTenant();
       doNothing().when(repository).deleteById(ROLE_ID);
 
       service.deleteById(ROLE_ID);

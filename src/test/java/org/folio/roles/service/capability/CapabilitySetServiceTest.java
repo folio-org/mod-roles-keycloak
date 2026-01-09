@@ -55,10 +55,15 @@ class CapabilitySetServiceTest {
   @Mock private CapabilityService capabilityService;
   @Mock private CapabilitySetRepository capabilitySetRepository;
   @Mock private CapabilitySetEntityMapper mapper;
+  @Mock private TenantScopedCacheEvictor tenantScopedCacheEvictor;
 
   @AfterEach
   void tearDown() {
     TestUtils.verifyNoMoreInteractions(this);
+  }
+
+  private void setupCacheEvictionMocks() {
+    doNothing().when(tenantScopedCacheEvictor).evictUserPermissionsForCurrentTenant();
   }
 
   @Nested
@@ -67,6 +72,7 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive() {
+      setupCacheEvictionMocks();
       var capabilitySet = capabilitySet();
       var capabilitySetEntity = capabilitySetEntity();
 
@@ -110,6 +116,7 @@ class CapabilitySetServiceTest {
 
     @Test
     void negative_nameIsTakenForExistingCapabilitySet() {
+      setupCacheEvictionMocks();
       var capabilitySet = capabilitySet();
       var capabilitySetEntity = capabilitySetEntity();
 
@@ -127,6 +134,7 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive_batchRequest() {
+      setupCacheEvictionMocks();
       var capabilitySet = capabilitySet();
       var capabilitySetEntity = capabilitySetEntity();
 
@@ -150,6 +158,8 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive_batchRequest_nameIsTaken() {
+      setupCacheEvictionMocks();
+
       var capabilitySets = List.of(capabilitySet());
 
       when(capabilitySetRepository.existsByName("test_resource.create")).thenReturn(true);
@@ -204,6 +214,7 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive() {
+      setupCacheEvictionMocks();
       var foundEntity = capabilitySetEntity();
       var updatedEntity = capabilitySetEntity(updatedCapabilityIds);
       var updatedCapabilitySet = capabilitySet(updatedCapabilityIds);
@@ -219,6 +230,7 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive_setNameIfNull() {
+      setupCacheEvictionMocks();
       var foundEntity = capabilitySetEntity(updatedCapabilityIds);
       var updatedEntity = capabilitySetEntity(updatedCapabilityIds);
       var updatedCapabilitySet = capabilitySet(updatedCapabilityIds).name(null);
@@ -234,6 +246,7 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive_actionIsChanged() {
+      setupCacheEvictionMocks();
       var foundEntity = capabilitySetEntity(RESOURCE_NAME, CapabilityAction.CREATE);
       var updatedEntity = capabilitySetEntity(RESOURCE_NAME, CapabilityAction.EDIT);
       var updatedCapabilitySet = capabilitySet(RESOURCE_NAME, CapabilityAction.EDIT);
@@ -442,6 +455,7 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive() {
+      setupCacheEvictionMocks();
       var entity = capabilitySetEntity();
 
       when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(entity));
@@ -563,6 +577,7 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive() {
+      setupCacheEvictionMocks();
       var capabilityId1 = UUID.randomUUID();
       var capabilityId2 = UUID.randomUUID();
       var capabilitySetId = UUID.randomUUID();

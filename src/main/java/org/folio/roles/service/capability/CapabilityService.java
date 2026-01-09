@@ -4,7 +4,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.joining;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
@@ -49,12 +48,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CapabilityService {
 
-  public static final String VISIBLE_PERMISSION_PREFIXES = buildPrefixesParam(List.of("ui-", "module", "plugin"));
+  public static final List<String> VISIBLE_PERMISSION_PREFIXES = List.of("ui-", "module", "plugin");
 
   private final CapabilityRepository capabilityRepository;
   private final FolioExecutionContext folioExecutionContext;
   private final CapabilityEntityMapper capabilityEntityMapper;
   private final ApplicationEventPublisher applicationEventPublisher;
+  private final UserPermissionCacheService userPermissionCacheService;
 
   @Lazy private final CapabilitySetService capabilitySetService;
 
@@ -147,11 +147,11 @@ public class CapabilityService {
    * Retrieves capabilities by role id.
    *
    * @param roleId - role identifier as {@link UUID} object
-   * @param expand - defines if capability sets myst be expanded
+   * @param expand - defines if capability sets must be expanded
    * @param includeDummy - defines if capability set should include dummy capabilities
    * @param limit - a number of results in response
    * @param offset - offset in pagination from first record
-   * @return list with {@link Capability} objects
+   * @return {@link PageResult} object with found {@link Capability} relation descriptors
    */
   @Transactional(readOnly = true)
   public PageResult<Capability> findByRoleId(UUID roleId, boolean expand, boolean includeDummy, int limit, int offset) {
@@ -335,31 +335,26 @@ public class CapabilityService {
   }
 
   /**
-   * Retrieves user permissions by userId and onlyVisible flag. If desiredPermissions list is not empty, then all
-   * permissions matching the desired ones will be returned. Wildcard (*) is supported for desired permissions. Example:
-   * user has permission ["users.item.get", "users.item.post", "users.collection.put"] and requested permissions are
-   * ["users.item.*"] then resolved permissions will be ["users.item.get", "users.item.post"].
+   * Retrieves user permissions by userId and onlyVisible flag.
    *
    * @param userId - user identifier as {@link UUID} value
    * @param onlyVisible - defines if UI or all permissions must be returned
-   * @param desiredPermissions - list of desired permissions to find
+   * @param desiredPermissions - list of desired permissions to find (supports wildcards)
    * @return a {@link List} with folio permission names
    */
   @Transactional(readOnly = true)
   public List<String> getUserPermissions(UUID userId, boolean onlyVisible, List<String> desiredPermissions) {
+    var allPermissions = userPermissionCacheService.getAllUserPermissions(userId);
+
     if (onlyVisible) {
-      return capabilityRepository.findPermissionsByPrefixes(userId, VISIBLE_PERMISSION_PREFIXES);
+      return filterByVisiblePrefixes(allPermissions);
     }
 
     if (isNotEmpty(desiredPermissions)) {
-      var prefixes =
-        toStream(desiredPermissions).filter(s -> s.contains("*")).map(CapabilityService::trimWildcard).toList();
-      var permNames = toStream(desiredPermissions).filter(s -> !s.contains("*")).toList();
-      return capabilityRepository.findPermissionsByPrefixesAndPermissionNames(userId, buildPrefixesParam(permNames),
-        buildPrefixesParam(prefixes));
+      return filterByDesiredPermissions(allPermissions, desiredPermissions);
     }
 
-    return capabilityRepository.findAllFolioPermissions(userId);
+    return allPermissions;
   }
 
   @Transactional(readOnly = true)
@@ -437,10 +432,6 @@ public class CapabilityService {
 
   private static String trimWildcard(String param) {
     return param.endsWith("*") ? param.substring(0, param.length() - 1) : param;
-  }
-
-  private static String buildPrefixesParam(List<String> prefixes) {
-    return toStream(prefixes).collect(joining(", ", "{", "}"));
   }
 
   private Map<String, CapabilityEntity> findExistingCapabilitiesByNames(Set<String> capabilityNames) {
@@ -530,5 +521,32 @@ public class CapabilityService {
       var event = CapabilityEvent.deleted(deprecatedCapability).withContext(folioExecutionContext);
       applicationEventPublisher.publishEvent(event);
     }
+  }
+
+  private static List<String> filterByVisiblePrefixes(List<String> permissions) {
+    return permissions.stream()
+      .filter(perm -> VISIBLE_PERMISSION_PREFIXES.stream().anyMatch(perm::startsWith))
+      .toList();
+  }
+
+  private static List<String> filterByDesiredPermissions(List<String> permissions, List<String> desiredPermissions) {
+    var exactPermissions = toStream(desiredPermissions)
+      .filter(s -> !s.contains("*"))
+      .collect(Collectors.toSet());
+
+    var wildcardPrefixes = toStream(desiredPermissions)
+      .filter(s -> s.contains("*"))
+      .map(CapabilityService::trimWildcard)
+      .toList();
+
+    return permissions.stream()
+      .filter(perm -> matchesDesiredPermission(perm, exactPermissions, wildcardPrefixes))
+      .toList();
+  }
+
+  private static boolean matchesDesiredPermission(String permission, Set<String> exactPermissions,
+    List<String> wildcardPrefixes) {
+    return exactPermissions.contains(permission)
+      || wildcardPrefixes.stream().anyMatch(permission::startsWith);
   }
 }

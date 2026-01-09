@@ -42,6 +42,7 @@ coffee-boots:
       keycloak-users: maximumSize=250,expireAfterWrite=${KC_USER_ID_CACHE_TTL:180s}
       keycloak-user-id: maximumSize=250,expireAfterWrite=${KC_USER_ID_CACHE_TTL:180s}
       authorization-client-cache: maximumSize=100,expireAfterWrite=${KC_AUTHORIZATION_CLIENTS_CACHE_TTL:3600s}
+      user-permissions: maximumSize=1500,expireAfterWrite=${USER_PERMISSIONS_CACHE_TTL:3600s}
 
 server:
   port: 8081

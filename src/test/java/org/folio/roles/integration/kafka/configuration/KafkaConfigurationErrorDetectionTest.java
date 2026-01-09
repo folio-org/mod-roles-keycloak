@@ -2,7 +2,6 @@ package org.folio.roles.integration.kafka.configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.lang.reflect.Method;
 import java.util.Optional;
 import org.folio.test.types.UnitTest;
 import org.hibernate.exception.SQLGrammarException;

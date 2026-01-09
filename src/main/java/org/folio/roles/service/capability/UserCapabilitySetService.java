@@ -26,6 +26,7 @@ import org.folio.roles.repository.UserCapabilitySetRepository;
 import org.folio.roles.service.permission.UserPermissionService;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +51,7 @@ public class UserCapabilitySetService {
    * @param capabilitySetIds - capabilitySet identifiers as {@link List} of {@link UUID} objects
    * @return {@link PageResult} with created {@link UserCapabilitySet} relations
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public PageResult<UserCapabilitySet> create(UUID userId, List<UUID> capabilitySetIds) {
     if (isEmpty(capabilitySetIds)) {
@@ -89,6 +91,7 @@ public class UserCapabilitySetService {
    * @param userId - user identifier
    * @param capabilityIds - list with new capabilitySets, that should be assigned to a user
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public void update(UUID userId, List<UUID> capabilityIds) {
     keycloakUserService.getKeycloakUserByUserId(userId);
@@ -101,11 +104,12 @@ public class UserCapabilitySetService {
   }
 
   /**
-   * Removes user assigned capability set using user identifier and capability set id.
+   * Removes user assigned capability set.
    *
-   * @param userId - role identifier as {@link UUID}
+   * @param userId - user identifier as {@link UUID}
    * @param capabilitySetId - capability set identifier as {@link UUID}
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public void delete(UUID userId, UUID capabilitySetId) {
     var assignedUserCapabilitySetEntities = userCapabilitySetRepository.findAllByUserId(userId);
@@ -125,6 +129,7 @@ public class UserCapabilitySetService {
    * @param userId - user identifier as {@link UUID}
    * @throws jakarta.persistence.EntityNotFoundException if user is not found by id or there is no assigned values
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public void deleteAll(UUID userId) {
     keycloakUserService.getKeycloakUserByUserId(userId);

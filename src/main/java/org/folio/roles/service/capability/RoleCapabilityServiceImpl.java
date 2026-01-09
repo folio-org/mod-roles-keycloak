@@ -51,6 +51,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   private final RoleCapabilityRepository roleCapabilityRepository;
   private final CapabilityEndpointService capabilityEndpointService;
   private final RoleCapabilityEntityMapper roleCapabilityEntityMapper;
+  private final TenantScopedCacheEvictor tenantScopedCacheEvictor;
 
   /**
    * Creates a record(s) associating one or more capabilities with the role.
@@ -63,13 +64,15 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Override
   @Transactional
   public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
-    return createRoleCapabilities(roleId, capabilityIds, safeCreate);
+    var result = createRoleCapabilities(roleId, capabilityIds, safeCreate);
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    return result;
   }
 
   /**
-   * Create a record(s) associating one or moe capabilities with role.
+   * Creates record(s) associating one or more capabilities with a role.
    *
-   * @param request - request that contains roleId, capabilityIds or capabilityNames
+   * @param request - request containing roleId, capabilityIds or capabilityNames
    * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
    * @return {@link RoleCapability} object with created role-capability relations
    */
@@ -78,7 +81,9 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   public PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate) {
     var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
     var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
-    return createRoleCapabilities(request.getRoleId(), allCapabilityIds, safeCreate);
+    var result = createRoleCapabilities(request.getRoleId(), allCapabilityIds, safeCreate);
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
+    return result;
   }
 
   /**
@@ -108,8 +113,8 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Transactional
   public void update(UUID roleId, List<UUID> capabilityIds) {
     updateRoleCapabilities(roleId, capabilityIds);
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
-
 
   /**
    * Updates role-capability relations.
@@ -124,6 +129,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
     var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
     updateRoleCapabilities(roleId, allCapabilityIds);
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
 
   /**
@@ -144,6 +150,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     assignedCapabilityIds.remove(capabilityId);
     roleCapabilityRepository.findById(RoleCapabilityKey.of(roleId, capabilityId))
       .ifPresent(entity -> removeCapabilities(roleId, List.of(entity.getCapabilityId()), assignedCapabilityIds));
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
 
   /**
@@ -168,6 +175,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     }
 
     removeCapabilities(roleId, deprecatedIds, subtract(assignedCapabilityIds, deprecatedIds));
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
 
   /**
@@ -186,6 +194,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     }
 
     removeCapabilities(roleId, getCapabilityIds(roleCapabilityEntities), emptyList());
+    tenantScopedCacheEvictor.evictUserPermissionsForCurrentTenant();
   }
 
   @Override

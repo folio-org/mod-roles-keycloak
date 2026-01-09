@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
+import org.folio.roles.service.capability.TenantScopedCacheEvictor;
+import org.folio.roles.service.capability.UserPermissionCacheService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.context.ExecutionContextBuilder;
@@ -37,10 +39,12 @@ class KafkaMessageListenerTest {
   @Mock private CapabilityReplacementsService capabilityReplacementsService;
   @Mock private SystemUserScopedExecutionService systemUserScopedExecutionService;
   @Mock private ExecutionContextBuilder executionContextBuilder;
+  @Mock private UserPermissionCacheService userPermissionCacheService;
+  @Mock private TenantScopedCacheEvictor tenantScopedCacheEvictor;
 
   @AfterEach
   void tearDown() {
-    verifyNoMoreInteractions(folioModuleMetadata, capabilityKafkaEventHandler);
+    verifyNoMoreInteractions(folioModuleMetadata, capabilityKafkaEventHandler, tenantScopedCacheEvictor);
   }
 
   @Test
@@ -59,6 +63,7 @@ class KafkaMessageListenerTest {
     kafkaMessageListener.handleCapabilityEvent(resourceEvent);
 
     verify(capabilityKafkaEventHandler).handleEvent(resourceEvent);
+    verify(tenantScopedCacheEvictor).evictUserPermissionsForCurrentTenant();
   }
 
   private static Map<String, Object> capabilityEventBodyAsMap() {

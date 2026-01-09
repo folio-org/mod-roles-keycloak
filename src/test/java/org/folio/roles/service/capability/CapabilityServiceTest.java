@@ -6,10 +6,8 @@ import static java.util.Collections.emptySet;
 import static java.util.List.of;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.domain.entity.CapabilityEntity.DEFAULT_CAPABILITY_SORT;
 import static org.folio.roles.integration.kafka.model.ResourceEventType.CREATE;
-import static org.folio.roles.service.capability.CapabilityService.VISIBLE_PERMISSION_PREFIXES;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
@@ -21,8 +19,6 @@ import static org.folio.roles.support.CapabilityUtils.capabilityEntity;
 import static org.folio.roles.support.CapabilityUtils.technicalCapability;
 import static org.folio.roles.support.RoleUtils.ROLE_ID;
 import static org.folio.roles.support.TestConstants.USER_ID;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -32,7 +28,6 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.domain.model.event.CapabilityEvent;
@@ -73,13 +68,14 @@ class CapabilityServiceTest {
   @Mock private CapabilitySetService capabilitySetService;
   @Mock private CapabilityEntityMapper capabilityEntityMapper;
   @Mock private ApplicationEventPublisher applicationEventPublisher;
+  @Mock private UserPermissionCacheService userPermissionCacheService;
   @Captor private ArgumentCaptor<CapabilityEvent> eventCaptor;
 
   @BeforeEach
   void setUp() {
     var folioExecutionContext = new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
     this.capabilityService = new CapabilityService(capabilityRepository, folioExecutionContext,
-      capabilityEntityMapper, applicationEventPublisher, capabilitySetService);
+      capabilityEntityMapper, applicationEventPublisher, userPermissionCacheService, capabilitySetService);
   }
 
   @AfterEach
@@ -560,22 +556,20 @@ class CapabilityServiceTest {
   @DisplayName("getUserPermissions")
   class GetUserPermissions {
 
-    //request : prefixes from request : permission names from request : resolved permissions
+    //desiredPermissions : userPermissions : resolvedPermissions
     static Stream<Arguments> permissionsProvider() {
       return Stream.of(
-        Arguments.of(of("ui.all", "be.all"), of("ui.all", "be.all"), emptyList(), of("ui.all")),
-        Arguments.of(of("be.*"), emptyList(), of("be."), emptyList()),
-        Arguments.of(of("be.it.*", "ui.all"), of("ui.all"), of("be.it."), emptyList()),
-        Arguments.of(of("be.it.*", "ui.*"), emptyList(), of("be.it.", "ui."), emptyList()),
-        Arguments.of(of("be.it.view.*", "ui.all"), of("ui.all"), of("be.it.view."), emptyList()),
-        Arguments.of(of("be.it.*", "ui.all"), of("ui.all"), of("be.it."),
-          of("be.all", "ui.all", "replaced.ui.all.view"))
+        Arguments.of(of("ui.all", "be.all"), of("ui.all", "users.all"), of("ui.all")),
+        Arguments.of(of("be.*"), of("ui.all", "be.get", "be.post"), of("be.get", "be.post")),
+        Arguments.of(of("be.it.*", "ui.all"), of("be.all", "be.it.get", "be.it.post"), of("be.it.get", "be.it.post")),
+        Arguments.of(of("be.it.*", "ui.all"), emptyList(), emptyList()),
+        Arguments.of(of("be.it.*", "ui.all"), of("be.all", "users.item.all"), emptyList())
       );
     }
 
     @Test
     void positive() {
-      when(capabilityRepository.findAllFolioPermissions(USER_ID)).thenReturn(List.of(PERMISSION_NAME));
+      when(userPermissionCacheService.getAllUserPermissions(USER_ID)).thenReturn(List.of(PERMISSION_NAME));
       var result = capabilityService.getUserPermissions(USER_ID, false, emptyList());
 
       assertThat(result).containsExactly(PERMISSION_NAME);
@@ -583,28 +577,23 @@ class CapabilityServiceTest {
 
     @Test
     void positive_onlyVisiblePermissions() {
-      var permissions = List.of(PERMISSION_NAME);
-      when(capabilityRepository.findPermissionsByPrefixes(USER_ID, VISIBLE_PERMISSION_PREFIXES))
-        .thenReturn(permissions);
+      var uiPermission = "ui-users.view";
+      when(userPermissionCacheService.getAllUserPermissions(USER_ID))
+        .thenReturn(List.of(PERMISSION_NAME, uiPermission));
       var result = capabilityService.getUserPermissions(USER_ID, true, emptyList());
 
-      assertThat(result).containsExactly(PERMISSION_NAME);
+      assertThat(result).containsExactly(uiPermission);
     }
 
-    @ParameterizedTest(name = "{index} request: {0}, permission names: {1}, prefixes: {2}, result: {3}")
+    @ParameterizedTest(name = "{index} desired: {0}, user's: {1}, resolved: {2}")
     @MethodSource("permissionsProvider")
-    void positive_desiredPermissions(List<String> request, List<String> permNames, List<String> prefixes,
-      List<String> resolvedPerms) {
-      var names = toStream(permNames).collect(Collectors.joining(", ", "{", "}"));
-      var prefs = toStream(prefixes).collect(Collectors.joining(", ", "{", "}"));
+    void positive_desiredPermissions(List<String> desiredPerms, List<String> userPerms, List<String> resolvedPerms) {
+      // Mock the cache to return the user's permissions
+      when(userPermissionCacheService.getAllUserPermissions(USER_ID)).thenReturn(userPerms);
 
-      when(capabilityRepository.findPermissionsByPrefixesAndPermissionNames(eq(USER_ID), anyString(), anyString()))
-        .thenReturn(resolvedPerms);
-
-      var result = capabilityService.getUserPermissions(USER_ID, false, request);
+      var result = capabilityService.getUserPermissions(USER_ID, false, desiredPerms);
 
       assertThat(result).containsExactlyInAnyOrderElementsOf(resolvedPerms);
-      verify(capabilityRepository).findPermissionsByPrefixesAndPermissionNames(USER_ID, names, prefs);
     }
   }
 

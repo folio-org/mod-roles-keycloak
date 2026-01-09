@@ -12,6 +12,7 @@ import org.folio.roles.domain.dto.UserRoles;
 import org.folio.roles.domain.dto.UserRolesRequest;
 import org.folio.roles.integration.keyclock.KeycloakRolesUserService;
 import org.folio.roles.utils.UpdateOperationHelper;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ public class UserRoleService {
    * @param userRolesRequest - {@link List} with {@link UserRole} records to create
    * @return created {@link UserRoles} relations object
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userRolesRequest.userId")
   @Transactional
   public UserRoles create(UserRolesRequest userRolesRequest) {
     var userId = userRolesRequest.getUserId();
@@ -61,6 +63,7 @@ public class UserRoleService {
    *
    * @param request {@link UserRolesRequest} containing the updated information about user-role relations
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #request.userId")
   @Transactional
   public void update(UserRolesRequest request) {
     var userId = request.getUserId();
@@ -98,6 +101,7 @@ public class UserRoleService {
    *
    * @param userId - user identifier as {@link UUID} value.
    */
+  @CacheEvict(value = "user-permissions", key = "@folioExecutionContext.tenantId + ':' + #userId")
   @Transactional
   public void deleteById(UUID userId) {
     var roleIds = mapItems(userRoleEntityService.findByUserId(userId), UserRole::getRoleId);

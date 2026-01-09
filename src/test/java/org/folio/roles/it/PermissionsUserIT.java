@@ -83,9 +83,10 @@ class PermissionsUserIT extends BaseIntegrationTest {
     var userId5 = UUID.fromString("1cc7f14f-28f9-4110-be6c-51d782d32ba4");
     var userId6 = UUID.fromString("fe0d0b41-c743-44c9-8842-9a190a0cf568");
 
+    // MODROLESKC-333: replaced permissions are not returned when filtering is applied
     return Stream.of(
       arguments(userId1, true, List.of("module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete",
-          "ui-foo.item.put", "replaced.ui-foo.item.put"),
+          "ui-foo.item.put"),
         List.of("ui-foo.item.*", "module.foo.item.post")),
       arguments(userId1, false, List.of(
         "foo.item.delete", "replaced.foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put",
@@ -93,14 +94,13 @@ class PermissionsUserIT extends BaseIntegrationTest {
         "replaced.ui-foo.item.put"), emptyList()),
 
       arguments(userId2, true, List.of(
-        "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put", "replaced.ui-foo.item.put"), emptyList()),
+        "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
       arguments(userId2, false, List.of(
         "foo.item.delete", "replaced.foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put",
         "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put", "replaced.ui-foo.item.put"), emptyList()),
 
       arguments(userId3, true, List.of(
-        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put",
-        "replaced.ui-foo.item.put"), emptyList()),
+        "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put"), emptyList()),
       arguments(userId3, false, List.of(
         "module.foo.item.post", "plugin.foo.item.get", "ui-foo.item.delete", "ui-foo.item.put",
         "replaced.ui-foo.item.put"), emptyList()),
@@ -110,7 +110,7 @@ class PermissionsUserIT extends BaseIntegrationTest {
         "foo.item.delete", "replaced.foo.item.delete", "foo.item.get", "foo.item.post",
         "foo.item.put", "ui-foo.item.delete"), emptyList()),
 
-      arguments(userId5, true, List.of("plugin.foo.item.get", "ui-foo.item.put", "replaced.ui-foo.item.put"),
+      arguments(userId5, true, List.of("plugin.foo.item.get", "ui-foo.item.put"),
         emptyList()),
       arguments(userId5, false, List.of(
         "foo.item.delete", "replaced.foo.item.delete", "foo.item.get", "foo.item.post",
@@ -119,15 +119,15 @@ class PermissionsUserIT extends BaseIntegrationTest {
       arguments(userId6, true, emptyList(), emptyList()),
       arguments(userId6, false, emptyList(), emptyList()),
       arguments(userId1, false, List.of(
-          "foo.item.delete", "replaced.foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put",
+          "foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put",
           "ui-foo.item.delete"),
         List.of("foo.item.*", "ui-foo.item.delete")),
       arguments(userId1, false, List.of(
-          "foo.item.delete", "replaced.foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put",
-          "ui-foo.item.delete", "ui-foo.item.put", "replaced.ui-foo.item.put"),
+          "foo.item.delete", "foo.item.get", "foo.item.post", "foo.item.put",
+          "ui-foo.item.delete", "ui-foo.item.put"),
         List.of("foo.item.*", "ui-foo.item.*")),
       arguments(userId1, false, List.of(
-          "foo.item.delete", "replaced.foo.item.delete", "ui-foo.item.delete"),
+          "foo.item.delete", "ui-foo.item.delete"),
         List.of("foo.item.delete", "ui-foo.item.delete"))
     );
   }

@@ -42,4 +42,5 @@
   <include file="changes/add-total-records-to-permission-migration-job.xml" relativeToChangelogFile="true"/>
   <include file="changes/create-permission-migration-error-table.xml" relativeToChangelogFile="true"/>
   <include file="changes/fix-role-type-for-non-loadable-roles.xml" relativeToChangelogFile="true"/>
+  <include file="changes/add-performance-indexes-user-permissions.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
