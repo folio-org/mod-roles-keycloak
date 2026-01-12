@@ -80,6 +80,8 @@ class UserPermissionsCacheEvictorTest {
 
   @Test
   void evictUserPermissionsForCurrentTenant_negative_handlesNullTenantId() {
+    when(folioExecutionContext.getTenantId()).thenReturn(null);
+
     evictor.evictUserPermissionsForCurrentTenant();
 
     verifyNoInteractions(cacheManager, caffeineCache, nativeCache);
@@ -87,6 +89,8 @@ class UserPermissionsCacheEvictorTest {
 
   @Test
   void evictUserPermissionsForCurrentTenant_negative_handlesBlankTenantId() {
+    when(folioExecutionContext.getTenantId()).thenReturn("  ");
+
     evictor.evictUserPermissionsForCurrentTenant();
 
     verifyNoInteractions(cacheManager, caffeineCache, nativeCache);
