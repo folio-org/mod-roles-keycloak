@@ -13,6 +13,9 @@ import org.folio.spring.FolioExecutionContext;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -78,18 +81,11 @@ class UserPermissionsCacheEvictorTest {
     verify(nativeCache, org.mockito.Mockito.never()).invalidate(org.mockito.ArgumentMatchers.any());
   }
 
-  @Test
-  void evictUserPermissionsForCurrentTenant_negative_handlesNullTenantId() {
-    when(folioExecutionContext.getTenantId()).thenReturn(null);
-
-    evictor.evictUserPermissionsForCurrentTenant();
-
-    verifyNoInteractions(cacheManager, caffeineCache, nativeCache);
-  }
-
-  @Test
-  void evictUserPermissionsForCurrentTenant_negative_handlesBlankTenantId() {
-    when(folioExecutionContext.getTenantId()).thenReturn("  ");
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = "  ")
+  void evictUserPermissionsForCurrentTenant_negative_handlesInvalidTenantId(String tenantId) {
+    when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
 
     evictor.evictUserPermissionsForCurrentTenant();
 
@@ -227,18 +223,12 @@ class UserPermissionsCacheEvictorTest {
     verify(cacheManager).getCache(USER_PERMISSIONS_CACHE);
   }
 
-  @Test
-  void evictUserPermissions_negative_handlesNullTenantId() {
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = "  ")
+  void evictUserPermissions_negative_handlesInvalidTenantId(String tenantId) {
     var userId = java.util.UUID.randomUUID();
-
-    evictor.evictUserPermissions(userId);
-
-    verifyNoInteractions(cacheManager, caffeineCache, nativeCache);
-  }
-
-  @Test
-  void evictUserPermissions_negative_handlesBlankTenantId() {
-    var userId = java.util.UUID.randomUUID();
+    when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
 
     evictor.evictUserPermissions(userId);
 
