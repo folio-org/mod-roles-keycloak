@@ -70,7 +70,6 @@ class CapabilitySetServiceTest {
 
     @Test
     void positive() {
-      // Event is published for cache eviction
       var capabilitySet = capabilitySet();
       var capabilitySetEntity = capabilitySetEntity();
 

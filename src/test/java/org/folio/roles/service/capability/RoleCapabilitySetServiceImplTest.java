@@ -123,7 +123,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positive() {
-      // Event is published for cache eviction
       var roleCapability1 = roleCapabilitySet(capabilitySetId1);
       var roleCapability2 = roleCapabilitySet(capabilitySetId2);
       var capabilitySetIds = List.of(capabilitySetId1, capabilitySetId2);
@@ -150,7 +149,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positive_capabilityNamesInRequest() {
-      // Event is published for cache eviction
       var roleCapability = roleCapabilitySet(capabilitySetId1);
       var capabilitySet = capabilitySet(capabilitySetId1).name(CAPABILITY_SET_NAME);
       var capabilitySets = List.of(capabilitySet);
@@ -179,7 +177,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positive_capabilityNamesInRequest_skipInvalidNames() {
-      // Event is published for cache eviction
       var roleCapability = roleCapabilitySet(capabilitySetId1);
       var capabilitySet = capabilitySet(capabilitySetId1).name(CAPABILITY_SET_NAME);
       var capabilitySets = List.of(capabilitySet);
@@ -220,7 +217,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positive_existingAssignmentWithCreateSafe() {
-      // Event is published for cache eviction
       var capIds = List.of(capabilitySetId1);
       var roleCapabilityEntity = roleCapabilitySetEntity(ROLE_ID, capabilitySetId1);
       var foundEntities = List.of(roleCapabilityEntity);
@@ -280,7 +276,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positive() {
-      // Event is published for cache eviction
       var expectedEntities = List.of(roleCapabilitySetEntity());
       var capabilitySetIds = List.of(CAPABILITY_SET_ID);
       var endpoints = List.of(endpoint());
@@ -322,7 +317,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positive() {
-      // Event is published for cache eviction
       var existingEntity = roleCapabilitySetEntity();
       var existingEntities = List.of(existingEntity);
       var capabilitySetIds = List.of(CAPABILITY_SET_ID);
@@ -343,7 +337,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positive_collection() {
-      // Event is published for cache eviction
       var existingEntity = roleCapabilitySetEntity();
       var existingEntities = List.of(existingEntity);
       var capabilitySetIds = List.of(CAPABILITY_SET_ID);
@@ -388,7 +381,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positive_entityNotFoundById() {
-      // Event is published for cache eviction
       var existingEntity = roleCapabilitySetEntity();
       var existingEntities = List.of(existingEntity);
       var entityKey = RoleCapabilitySetKey.of(ROLE_ID, CAPABILITY_SET_ID);
@@ -414,7 +406,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positive() {
-      // Event is published for cache eviction
       var ucse1 = roleCapabilitySetEntity(capabilitySetId1);
       var ucse2 = roleCapabilitySetEntity(capabilitySetId2);
       var ucse3 = roleCapabilitySetEntity(capabilitySetId3);
@@ -449,7 +440,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positiveByName() {
-      // Event is published for cache eviction
       var ucse1 = roleCapabilitySetEntity(capabilitySetId1);
       var ucse2 = roleCapabilitySetEntity(capabilitySetId2);
       var ucse3 = roleCapabilitySetEntity(capabilitySetId3);
@@ -490,7 +480,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void positiveByName_SkipInvalidName() {
-      // Event is published for cache eviction
       var ucse1 = roleCapabilitySetEntity(capabilitySetId1);
       var ucse2 = roleCapabilitySetEntity(capabilitySetId2);
       var ucse3 = roleCapabilitySetEntity(capabilitySetId3);
@@ -533,7 +522,6 @@ class RoleCapabilitySetServiceImplTest {
 
     @Test
     void negative_notingToUpdate() {
-      // Event is published for cache eviction
       var capabilityIds = List.of(CAPABILITY_SET_ID);
 
       when(roleService.getById(ROLE_ID)).thenReturn(role());
