@@ -1,5 +1,6 @@
 package org.folio.roles.service.capability;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -78,21 +79,21 @@ class UserPermissionsCacheEvictorTest {
   }
 
   @Test
-  void evictUserPermissionsForCurrentTenant_positive_handlesNullTenantId() {
+  void evictUserPermissionsForCurrentTenant_negative_handlesNullTenantId() {
     evictor.evictUserPermissionsForCurrentTenant();
 
     verifyNoInteractions(cacheManager, caffeineCache, nativeCache);
   }
 
   @Test
-  void evictUserPermissionsForCurrentTenant_positive_handlesBlankTenantId() {
+  void evictUserPermissionsForCurrentTenant_negative_handlesBlankTenantId() {
     evictor.evictUserPermissionsForCurrentTenant();
 
     verifyNoInteractions(cacheManager, caffeineCache, nativeCache);
   }
 
   @Test
-  void evictUserPermissionsForCurrentTenant_positive_handlesMissingCache() {
+  void evictUserPermissionsForCurrentTenant_negative_handlesMissingCache() {
     when(folioExecutionContext.getTenantId()).thenReturn(TENANT_1);
     when(cacheManager.getCache(USER_PERMISSIONS_CACHE)).thenReturn(null);
 
@@ -103,7 +104,7 @@ class UserPermissionsCacheEvictorTest {
   }
 
   @Test
-  void evictUserPermissionsForCurrentTenant_positive_handlesNonCaffeineCache() {
+  void evictUserPermissionsForCurrentTenant_negative_handlesNonCaffeineCache() {
     when(folioExecutionContext.getTenantId()).thenReturn(TENANT_1);
     var nonCaffeineCache = new org.springframework.cache.concurrent.ConcurrentMapCache(USER_PERMISSIONS_CACHE);
     when(cacheManager.getCache(USER_PERMISSIONS_CACHE)).thenReturn(nonCaffeineCache);
@@ -169,7 +170,7 @@ class UserPermissionsCacheEvictorTest {
   }
 
   @Test
-  void evictUserPermissionsForCurrentTenant_positive_handlesNullExceptionDuringEviction() {
+  void evictUserPermissionsForCurrentTenant_negative_handlesExceptionDuringEviction() {
     var userId1 = "user1";
     var tenant1User1Key = TENANT_1 + ":" + userId1;
 
@@ -207,5 +208,63 @@ class UserPermissionsCacheEvictorTest {
     evictor.evictUserPermissionsForCurrentTenant();
 
     verify(nativeCache).invalidate(tenant1User1Key);
+  }
+
+  @Test
+  void evictUserPermissions_positive_evictsCorrectKey() {
+    var userId = java.util.UUID.randomUUID();
+
+    when(folioExecutionContext.getTenantId()).thenReturn(TENANT_1);
+    when(cacheManager.getCache(USER_PERMISSIONS_CACHE)).thenReturn(caffeineCache);
+
+    evictor.evictUserPermissions(userId);
+
+    verify(caffeineCache).evict(TENANT_1 + ":" + userId);
+    verify(cacheManager).getCache(USER_PERMISSIONS_CACHE);
+  }
+
+  @Test
+  void evictUserPermissions_negative_handlesNullTenantId() {
+    var userId = java.util.UUID.randomUUID();
+
+    evictor.evictUserPermissions(userId);
+
+    verifyNoInteractions(cacheManager, caffeineCache, nativeCache);
+  }
+
+  @Test
+  void evictUserPermissions_negative_handlesBlankTenantId() {
+    var userId = java.util.UUID.randomUUID();
+
+    evictor.evictUserPermissions(userId);
+
+    verifyNoInteractions(cacheManager, caffeineCache, nativeCache);
+  }
+
+  @Test
+  void evictUserPermissions_negative_handlesMissingCache() {
+    var userId = java.util.UUID.randomUUID();
+
+    when(folioExecutionContext.getTenantId()).thenReturn(TENANT_1);
+    when(cacheManager.getCache(USER_PERMISSIONS_CACHE)).thenReturn(null);
+
+    evictor.evictUserPermissions(userId);
+
+    verify(cacheManager).getCache(USER_PERMISSIONS_CACHE);
+    verifyNoInteractions(caffeineCache, nativeCache);
+  }
+
+  @Test
+  void evictUserPermissions_negative_handlesExceptionDuringEviction() {
+    var userId = java.util.UUID.randomUUID();
+
+    when(folioExecutionContext.getTenantId()).thenReturn(TENANT_1);
+    when(cacheManager.getCache(USER_PERMISSIONS_CACHE)).thenReturn(caffeineCache);
+    doThrow(new RuntimeException("cache error")).when(caffeineCache).evict(org.mockito.ArgumentMatchers.any());
+
+    evictor.evictUserPermissions(userId);
+
+    verify(cacheManager).getCache(USER_PERMISSIONS_CACHE);
+    verify(caffeineCache).evict(TENANT_1 + ":" + userId);
   }
 }

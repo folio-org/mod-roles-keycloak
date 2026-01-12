@@ -1,5 +1,6 @@
 package org.folio.roles.service.capability;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 
 import java.util.UUID;
@@ -36,5 +37,12 @@ class UserPermissionCacheEventHandlerTest {
     handler.handleTenantPermissionsChanged(event);
 
     verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
+  }
+
+  @Test
+  void userPermissionsChanged_negative_nullUserIdThrowsException() {
+    assertThatThrownBy(() -> UserPermissionsChangedEvent.userPermissionsChanged(null))
+      .isInstanceOf(NullPointerException.class)
+      .hasMessageContaining("userId cannot be null");
   }
 }
