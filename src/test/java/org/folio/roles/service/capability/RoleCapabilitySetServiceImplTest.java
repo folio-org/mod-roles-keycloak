@@ -8,6 +8,7 @@ import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.domain.entity.RoleCapabilitySetEntity.DEFAULT_ROLE_CAPABILITY_SET_SORT;
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.domain.model.PageResult.empty;
+import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_NAME;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_NAME_2;
@@ -54,6 +55,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 
 @UnitTest
@@ -69,6 +71,7 @@ class RoleCapabilitySetServiceImplTest {
   @Mock private RolePermissionService rolePermissionService;
   @Mock private RoleCapabilitySetRepository roleCapabilitySetRepository;
   @Mock private RoleCapabilitySetEntityMapper roleCapabilitySetEntityMapper;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @AfterEach
   void tearDown() {
@@ -141,6 +144,7 @@ class RoleCapabilitySetServiceImplTest {
 
       assertThat(result).isEqualTo(asSinglePage(roleCapability1, roleCapability2));
       verify(capabilitySetService).checkIds(capabilitySetIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -168,6 +172,7 @@ class RoleCapabilitySetServiceImplTest {
 
       assertThat(result).isEqualTo(asSinglePage(roleCapability));
       verify(capabilitySetService).checkIds(capabilitySetIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -199,6 +204,7 @@ class RoleCapabilitySetServiceImplTest {
       verify(capabilitySetService).checkIds(capabilitySetIds);
       verify(rolePermissionService).createPermissions(ROLE_ID, endpoints);
       verify(endpointService).getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList());
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -221,6 +227,7 @@ class RoleCapabilitySetServiceImplTest {
       var result = roleCapabilitySetService.create(ROLE_ID, capIds, true);
 
       assertThat(result).isEqualTo(PageResult.empty());
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -282,6 +289,7 @@ class RoleCapabilitySetServiceImplTest {
 
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
       verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, capabilitySetIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -324,6 +332,7 @@ class RoleCapabilitySetServiceImplTest {
 
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
       verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, capabilitySetIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -341,6 +350,7 @@ class RoleCapabilitySetServiceImplTest {
 
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpoints);
       verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, capabilitySetIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -382,6 +392,7 @@ class RoleCapabilitySetServiceImplTest {
 
       verifyNoInteractions(rolePermissionService);
       verify(roleCapabilitySetRepository, never()).deleteRoleCapabilitySets(any(), anyList());
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
   }
 
@@ -424,6 +435,7 @@ class RoleCapabilitySetServiceImplTest {
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpointsToDel);
       verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, deprecatedIds);
       verify(capabilityService, times(2)).findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -463,6 +475,7 @@ class RoleCapabilitySetServiceImplTest {
       verify(rolePermissionService).deletePermissions(ROLE_ID, endpointsToDel);
       verify(roleCapabilitySetRepository).deleteRoleCapabilitySets(ROLE_ID, deprecatedIds);
       verify(capabilityService, times(2)).findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -504,6 +517,7 @@ class RoleCapabilitySetServiceImplTest {
       verify(capabilityService, times(2)).findByRoleId(ROLE_ID, false, false, MAX_VALUE, 0);
       verify(endpointService).getByCapabilitySetIds(newIds, idsToAssign, emptyList());
       verify(endpointService).getByCapabilitySetIds(deprecatedIds, assignedIds, emptyList());
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -516,6 +530,7 @@ class RoleCapabilitySetServiceImplTest {
       roleCapabilitySetService.update(ROLE_ID, capabilityIds);
 
       verifyNoInteractions(rolePermissionService);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test

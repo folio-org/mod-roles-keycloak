@@ -6,6 +6,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.UserCapabilitySetEntity.DEFAULT_USER_CAPABILITY_SET_SORT;
+import static org.folio.roles.domain.model.event.UserPermissionsChangedEvent.userPermissionsChanged;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityEndpoints;
 
 import jakarta.persistence.EntityExistsException;
@@ -26,6 +27,7 @@ import org.folio.roles.repository.UserCapabilitySetRepository;
 import org.folio.roles.service.permission.UserPermissionService;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +44,7 @@ public class UserCapabilitySetService {
   private final CapabilityEndpointService capabilityEndpointService;
   private final UserCapabilitySetRepository userCapabilitySetRepository;
   private final UserCapabilitySetEntityMapper userCapabilitySetEntityMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates a record(s) associating one or more capabilitySets with a user.
@@ -64,7 +67,9 @@ public class UserCapabilitySetService {
         "Relation already exists for user='%s' and capabilitySets=%s", userId, existingCapabilitySetIds));
     }
 
-    return assignCapabilities(userId, capabilitySetIds, emptyList());
+    var result = assignCapabilities(userId, capabilitySetIds, emptyList());
+    eventPublisher.publishEvent(userPermissionsChanged(userId));
+    return result;
   }
 
   /**
@@ -98,12 +103,13 @@ public class UserCapabilitySetService {
     UpdateOperationHelper.create(assignedSetIds, capabilityIds, "user-capability set")
       .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(userId, newIds, assignedSetIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
+    eventPublisher.publishEvent(userPermissionsChanged(userId));
   }
 
   /**
-   * Removes user assigned capability set using user identifier and capability set id.
+   * Removes user assigned capability set.
    *
-   * @param userId - role identifier as {@link UUID}
+   * @param userId - user identifier as {@link UUID}
    * @param capabilitySetId - capability set identifier as {@link UUID}
    */
   @Transactional
@@ -117,6 +123,7 @@ public class UserCapabilitySetService {
     assignedCapabilitySetIds.remove(capabilitySetId);
     userCapabilitySetRepository.findById(UserCapabilitySetKey.of(userId, capabilitySetId))
       .ifPresent(entity -> removeCapabilities(userId, List.of(entity.getCapabilitySetId()), assignedCapabilitySetIds));
+    eventPublisher.publishEvent(userPermissionsChanged(userId));
   }
 
   /**
@@ -135,6 +142,7 @@ public class UserCapabilitySetService {
 
     var capabilitySetIds = getCapabilitySetIds(userCapabilitySetEntities);
     removeCapabilities(userId, capabilitySetIds, emptyList());
+    eventPublisher.publishEvent(userPermissionsChanged(userId));
   }
 
   private PageResult<UserCapabilitySet> assignCapabilities(
