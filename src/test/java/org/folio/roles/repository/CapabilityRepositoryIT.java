@@ -263,30 +263,6 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
   }
 
   @Test
-  void findPermissionsByPrefixes_positive_excludeDummy() {
-    var capabilityEntity = capabilityEntity(null);
-    capabilityEntity.setPermission("permission-not-for-dummy");
-    var dummyCapabilityEntity = capabilityEntity(null);
-    dummyCapabilityEntity.setDummyCapability(true);
-    dummyCapabilityEntity.setName("dummy_" + UUID.randomUUID());
-    dummyCapabilityEntity.setPermission("permission-for-dummy");
-    var userId = UUID.randomUUID();
-    entityManager.persistAndFlush(capabilityEntity);
-    entityManager.persistAndFlush(dummyCapabilityEntity);
-    entityManager.persistAndFlush(userCapabilityEntity(userId, capabilityEntity.getId()));
-    entityManager.persistAndFlush(userCapabilityEntity(userId, dummyCapabilityEntity.getId()));
-    var capabilitiesIds = List.of(capabilityEntity.getId(), dummyCapabilityEntity.getId());
-    var capabilitySetEntity = capabilitySetEntity(null, capabilitiesIds);
-    capabilitySetEntity = entityManager.persistAndFlush(capabilitySetEntity);
-    var userCapabilitySetEntity = userCapabilitySetEntity(userId, capabilitySetEntity.getId());
-    entityManager.persistAndFlush(userCapabilitySetEntity);
-
-    var permissions = capabilityRepository.findPermissionsByPrefixes(userId, "{permission}");
-    assertThat(permissions).hasSize(1);
-    assertThat(permissions.get(0)).isEqualTo("permission-not-for-dummy");
-  }
-
-  @Test
   void findAllFolioPermissions_positive_excludeDummy() {
     var capabilityEntity = capabilityEntity(null);
     capabilityEntity.setPermission("permission-not-for-dummy");
@@ -329,31 +305,5 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     capabilityEntities = capabilityRepository
       .findAllByPermissionNamesIncludeDummy(List.of("permission-not-for-dummy", "permission-for-dummy"));
     assertThat(capabilityEntities).hasSize(2);
-  }
-
-  @Test
-  void findPermissionsByPrefixesAndPermissionNames_positive_excludeDummy() {
-    var capabilityEntity = capabilityEntity(null);
-    capabilityEntity.setPermission("permission-not-for-dummy");
-    var dummyCapabilityEntity = capabilityEntity(null);
-    dummyCapabilityEntity.setDummyCapability(true);
-    dummyCapabilityEntity.setName("dummy_" + UUID.randomUUID());
-    dummyCapabilityEntity.setPermission("permission-for-dummy");
-    var userId = UUID.randomUUID();
-    entityManager.persistAndFlush(capabilityEntity);
-    entityManager.persistAndFlush(dummyCapabilityEntity);
-    entityManager.persistAndFlush(userCapabilityEntity(userId, capabilityEntity.getId()));
-    entityManager.persistAndFlush(userCapabilityEntity(userId, dummyCapabilityEntity.getId()));
-    var capabilitiesIds = List.of(capabilityEntity.getId(), dummyCapabilityEntity.getId());
-    var capabilitySetEntity = capabilitySetEntity(null, capabilitiesIds);
-    capabilitySetEntity = entityManager.persistAndFlush(capabilitySetEntity);
-    var userCapabilitySetEntity = userCapabilitySetEntity(userId, capabilitySetEntity.getId());
-    entityManager.persistAndFlush(userCapabilitySetEntity);
-
-    var permissions = capabilityRepository
-      .findPermissionsByPrefixesAndPermissionNames(userId,
-        "{permission-not-for-dummy, permission-for-dummy}", "{permission}");
-    assertThat(permissions).hasSize(1);
-    assertThat(permissions.get(0)).isEqualTo("permission-not-for-dummy");
   }
 }

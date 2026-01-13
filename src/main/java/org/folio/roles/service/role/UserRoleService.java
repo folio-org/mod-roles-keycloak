@@ -10,8 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.folio.roles.domain.dto.UserRole;
 import org.folio.roles.domain.dto.UserRoles;
 import org.folio.roles.domain.dto.UserRolesRequest;
+import org.folio.roles.domain.model.event.UserPermissionsChangedEvent;
 import org.folio.roles.integration.keyclock.KeycloakRolesUserService;
 import org.folio.roles.utils.UpdateOperationHelper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class UserRoleService {
   private final RoleService roleService;
   private final UserRoleEntityService userRoleEntityService;
   private final KeycloakRolesUserService keycloakRolesUserService;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates a new user-role relation based on the provided {@link UserRolesRequest} object.
@@ -36,6 +39,7 @@ public class UserRoleService {
     var foundRoles = roleService.findByIds(roleIds);
     var createdUserRoles = userRoleEntityService.create(userId, roleIds);
     keycloakRolesUserService.assignRolesToUser(userId, foundRoles);
+    eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userId));
     return buildUserRoles(createdUserRoles);
   }
 
@@ -54,6 +58,7 @@ public class UserRoleService {
 
     keycloakRolesUserService.assignRolesToUser(userRole.getUserId(), singletonList(roleById));
     userRoleEntityService.createSafe(userRole);
+    eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userRole.getUserId()));
   }
 
   /**
@@ -69,6 +74,7 @@ public class UserRoleService {
     UpdateOperationHelper.create(existingRoleIds, request.getRoleIds(), "user-role")
       .consumeNewEntities(newValues -> createNewRoles(newValues, userId))
       .consumeDeprecatedEntities(deprecatedValues -> deleteDeprecatedRoles(deprecatedValues, userId));
+    eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userId));
   }
 
   /**
@@ -104,6 +110,7 @@ public class UserRoleService {
     userRoleEntityService.deleteByUserId(userId);
     var roles = roleService.findByIds(roleIds);
     keycloakRolesUserService.unlinkRolesFromUser(userId, roles);
+    eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userId));
   }
 
   private static UserRoles buildUserRoles(List<UserRole> userRoles) {

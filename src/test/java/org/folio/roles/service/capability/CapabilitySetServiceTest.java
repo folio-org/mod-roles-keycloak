@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.entity.CapabilitySetEntity.DEFAULT_CAPABILITY_SET_SORT;
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
+import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySetEntity;
@@ -45,6 +46,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 
 @UnitTest
@@ -55,6 +57,7 @@ class CapabilitySetServiceTest {
   @Mock private CapabilityService capabilityService;
   @Mock private CapabilitySetRepository capabilitySetRepository;
   @Mock private CapabilitySetEntityMapper mapper;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @AfterEach
   void tearDown() {
@@ -79,6 +82,7 @@ class CapabilitySetServiceTest {
       var actual = capabilitySetService.create(capabilitySet);
 
       assertThat(actual).isEqualTo(capabilitySet);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -123,6 +127,7 @@ class CapabilitySetServiceTest {
       var actual = capabilitySetService.create(capabilitySet);
 
       assertThat(actual).isEqualTo(capabilitySet);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -140,6 +145,7 @@ class CapabilitySetServiceTest {
       var actual = capabilitySetService.createAll(capabilitySets);
 
       assertThat(actual).isEqualTo(capabilitySets);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -158,6 +164,8 @@ class CapabilitySetServiceTest {
       var actual = capabilitySetService.createAll(capabilitySets);
 
       assertThat(actual).isEmpty();
+      // No events published since all creates failed
+      verifyNoInteractions(eventPublisher);
     }
   }
 
@@ -215,6 +223,7 @@ class CapabilitySetServiceTest {
       capabilitySetService.update(CAPABILITY_SET_ID, updatedCapabilitySet);
 
       verify(capabilityService).checkIds(updatedCapabilityIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -230,6 +239,7 @@ class CapabilitySetServiceTest {
       capabilitySetService.update(CAPABILITY_SET_ID, updatedCapabilitySet);
 
       verify(capabilityService).checkIds(updatedCapabilityIds);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -246,6 +256,7 @@ class CapabilitySetServiceTest {
       capabilitySetService.update(CAPABILITY_SET_ID, updatedCapabilitySet);
 
       verify(capabilityService).checkIds(List.of(CAPABILITY_ID));
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -449,6 +460,7 @@ class CapabilitySetServiceTest {
       capabilitySetService.delete(CAPABILITY_SET_ID);
 
       verify(capabilitySetRepository).delete(entity);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
 
     @Test
@@ -571,6 +583,7 @@ class CapabilitySetServiceTest {
 
       verify(capabilitySetRepository).addCapabilityById(capabilitySetId, capabilityId1);
       verify(capabilitySetRepository).addCapabilityById(capabilitySetId, capabilityId2);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
   }
 

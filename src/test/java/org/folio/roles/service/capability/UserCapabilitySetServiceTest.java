@@ -8,6 +8,7 @@ import static org.folio.roles.domain.dto.HttpMethod.GET;
 import static org.folio.roles.domain.entity.UserCapabilitySetEntity.DEFAULT_USER_CAPABILITY_SET_SORT;
 import static org.folio.roles.domain.model.PageResult.asSinglePage;
 import static org.folio.roles.domain.model.PageResult.empty;
+import static org.folio.roles.domain.model.event.UserPermissionsChangedEvent.userPermissionsChanged;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.KeycloakUserUtils.keycloakUser;
@@ -47,6 +48,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 
 @UnitTest
@@ -62,6 +64,7 @@ class UserCapabilitySetServiceTest {
   @Mock private CapabilityEndpointService endpointService;
   @Mock private UserCapabilitySetRepository userCapabilitySetRepository;
   @Mock private UserCapabilitySetEntityMapper userCapabilitySetEntityMapper;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @AfterEach
   void tearDown() {
@@ -126,7 +129,7 @@ class UserCapabilitySetServiceTest {
       when(userCapabilitySetEntityMapper.convert(userCapabilityEntity2)).thenReturn(userCapability2);
       when(userCapabilitySetRepository.findUserCapabilitySets(USER_ID, capabilitySetIds)).thenReturn(emptyList());
       when(userCapabilitySetRepository.saveAll(entities)).thenReturn(entities);
-      when(capabilityService.findByUserId(USER_ID, false,  false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByUserId(USER_ID, false, false, MAX_VALUE, 0)).thenReturn(empty());
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
       doNothing().when(userPermissionService).createPermissions(USER_ID, endpoints);
 
@@ -134,6 +137,7 @@ class UserCapabilitySetServiceTest {
 
       assertThat(result).isEqualTo(asSinglePage(userCapability1, userCapability2));
       verify(capabilitySetService).checkIds(capabilitySetIds);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test
@@ -183,13 +187,14 @@ class UserCapabilitySetServiceTest {
 
       when(userCapabilitySetRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
       when(userCapabilitySetRepository.findById(entityKey)).thenReturn(Optional.of(existingEntity));
-      when(capabilityService.findByUserId(USER_ID, false,  false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByUserId(USER_ID, false, false, MAX_VALUE, 0)).thenReturn(empty());
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
 
       userCapabilitySetService.delete(USER_ID, CAPABILITY_SET_ID);
 
       verify(userPermissionService).deletePermissions(USER_ID, endpoints);
       verify(userCapabilitySetRepository).deleteUserCapabilitySets(USER_ID, capabilitySetIds);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test
@@ -198,6 +203,7 @@ class UserCapabilitySetServiceTest {
       userCapabilitySetService.delete(USER_ID, CAPABILITY_SET_ID);
       verifyNoInteractions(userPermissionService);
       verify(userCapabilitySetRepository, never()).deleteUserCapabilitySets(any(), anyList());
+      verifyNoInteractions(eventPublisher);
     }
 
     @Test
@@ -213,6 +219,7 @@ class UserCapabilitySetServiceTest {
 
       verifyNoInteractions(userPermissionService);
       verify(userCapabilitySetRepository, never()).deleteUserCapabilitySets(any(), anyList());
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
   }
 
@@ -228,13 +235,14 @@ class UserCapabilitySetServiceTest {
 
       when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
       when(userCapabilitySetRepository.findAllByUserId(USER_ID)).thenReturn(expectedEntities);
-      when(capabilityService.findByUserId(USER_ID, false,  false, MAX_VALUE, 0)).thenReturn(empty());
+      when(capabilityService.findByUserId(USER_ID, false, false, MAX_VALUE, 0)).thenReturn(empty());
       when(endpointService.getByCapabilitySetIds(capabilitySetIds, emptyList(), emptyList())).thenReturn(endpoints);
 
       userCapabilitySetService.deleteAll(USER_ID);
 
       verify(userPermissionService).deletePermissions(USER_ID, endpoints);
       verify(userCapabilitySetRepository).deleteUserCapabilitySets(USER_ID, capabilitySetIds);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test
@@ -295,6 +303,7 @@ class UserCapabilitySetServiceTest {
       verify(userPermissionService).deletePermissions(USER_ID, endpointsToDel);
       verify(userCapabilitySetRepository).deleteUserCapabilitySets(USER_ID, deprecatedIds);
       verify(capabilityService, times(2)).findByUserId(USER_ID, false, false, MAX_VALUE, 0);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test
@@ -306,6 +315,7 @@ class UserCapabilitySetServiceTest {
       userCapabilitySetService.update(USER_ID, capabilityIds);
 
       verifyNoInteractions(userPermissionService);
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 
     @Test
