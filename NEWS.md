@@ -21,6 +21,7 @@
 * Enhance DB migration error detection in Kafka Event handling (MODROLESKC-354)
 * Optimization SQL for `/permissions/users/{id}`, local cache added (MODROLESKC-333)
 * UI permissions are not assigned to the system user of mod-data-export-spring (MODROLESKC-350)
+* Implement Kafka listener suspension during tenant initialization (MODROLESKC-355)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)

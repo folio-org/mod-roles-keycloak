@@ -10,7 +10,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import org.folio.roles.integration.kafka.KafkaAdminService;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.service.migration.CapabilitiesMergeService;
 import org.folio.roles.service.reference.PoliciesDataLoader;
@@ -42,8 +41,6 @@ class CustomTenantServiceTest {
   @Mock
   private FolioSpringLiquibase folioSpringLiquibase;
   @Mock
-  private KafkaAdminService kafkaAdminService;
-  @Mock
   private FolioExecutionContext context;
   @Mock
   private LoadableRoleService loadableRoleService;
@@ -56,7 +53,7 @@ class CustomTenantServiceTest {
   @BeforeEach
   void setUp() {
     var referenceDataLoader = of(rolesDataLoader, policiesDataLoader);
-    customTenantService = new TestCustomTenantService(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService,
+    customTenantService = new TestCustomTenantService(jdbcTemplate, context, folioSpringLiquibase,
       referenceDataLoader, loadableRoleService, keycloak, capabilitiesMergeService);
   }
 
@@ -72,12 +69,11 @@ class CustomTenantServiceTest {
   }
 
   @Test
-  void loadReferenceData_negative_if_error() {
+  void loadReferenceData_negative_exceptionPropagates() {
     doNothing().when(rolesDataLoader).loadReferenceData();
     doThrow(RuntimeException.class).when(policiesDataLoader).loadReferenceData();
 
-    assertThatThrownBy(() -> customTenantService.loadReferenceData()).isInstanceOf(IllegalStateException.class)
-      .hasMessage("Unable to load reference data");
+    assertThatThrownBy(() -> customTenantService.loadReferenceData()).isInstanceOf(RuntimeException.class);
 
     verify(rolesDataLoader).loadReferenceData();
     verify(policiesDataLoader).loadReferenceData();
@@ -120,24 +116,23 @@ class CustomTenantServiceTest {
   void afterTenantUpdate_positive() {
     var tokenManager = mock(TokenManager.class);
     when(keycloak.tokenManager()).thenReturn(tokenManager);
-    doNothing().when(kafkaAdminService).restartEventListeners();
     doNothing().when(capabilitiesMergeService).mergeDuplicateCapabilities();
 
     var attributes = new TenantAttributes();
     customTenantService.afterTenantUpdate(attributes);
 
-    verify(kafkaAdminService).restartEventListeners();
+    verify(keycloak).tokenManager();
+    verify(tokenManager).grantToken();
     verify(capabilitiesMergeService).mergeDuplicateCapabilities();
   }
 
   public static class TestCustomTenantService extends CustomTenantService {
 
     TestCustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
-      FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
-      List<ReferenceDataLoader> referenceDataLoaders, LoadableRoleService loadableRoleService, Keycloak keycloak,
-      CapabilitiesMergeService capabilitiesMergeService) {
+      FolioSpringLiquibase folioSpringLiquibase, List<ReferenceDataLoader> referenceDataLoaders,
+      LoadableRoleService loadableRoleService, Keycloak keycloak, CapabilitiesMergeService capabilitiesMergeService) {
 
-      super(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService, referenceDataLoaders, loadableRoleService,
+      super(jdbcTemplate, context, folioSpringLiquibase, referenceDataLoaders, loadableRoleService,
         keycloak, capabilitiesMergeService);
     }
 
