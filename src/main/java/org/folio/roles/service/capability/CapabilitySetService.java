@@ -9,6 +9,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.domain.entity.CapabilitySetEntity.DEFAULT_CAPABILITY_SET_SORT;
+import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
 import static org.folio.roles.utils.CapabilityUtils.getCapabilityName;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -31,6 +32,7 @@ import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.mapper.entity.CapabilitySetEntityMapper;
 import org.folio.roles.repository.CapabilitySetRepository;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,12 +44,13 @@ public class CapabilitySetService {
   private final CapabilityService capabilityService;
   private final CapabilitySetRepository repository;
   private final CapabilitySetEntityMapper capabilitySetEntityMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
-   * Creates a capability.
+   * Creates a capability set.
    *
-   * @param capabilitySet - capability object to create
-   * @return created {@link Capability} object
+   * @param capabilitySet - capability set to create
+   * @return created {@link CapabilitySet} object
    */
   @Transactional
   public CapabilitySet create(CapabilitySet capabilitySet) {
@@ -60,8 +63,9 @@ public class CapabilitySetService {
 
     var capabilityEntity = capabilitySetEntityMapper.convert(capabilitySet);
     var savedEntity = repository.save(capabilityEntity);
-
-    return capabilitySetEntityMapper.convert(savedEntity);
+    var result = capabilitySetEntityMapper.convert(savedEntity);
+    eventPublisher.publishEvent(tenantPermissionsChanged());
+    return result;
   }
 
   /**
@@ -86,6 +90,7 @@ public class CapabilitySetService {
       }
     }
 
+    // Event is published by create() for each capability set created
     return createdCapabilitySets;
   }
 
@@ -125,6 +130,7 @@ public class CapabilitySetService {
       .orElseThrow(() -> new EntityNotFoundException("Capability set is not found: id = " + id));
 
     repository.delete(capabilitySetEntity);
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   @Transactional(readOnly = true)
@@ -178,9 +184,8 @@ public class CapabilitySetService {
       capabilitySet.setName(foundEntity.getName());
     }
 
-    capabilityService.checkIds(capabilitySet.getCapabilities());
-    var entity = capabilitySetEntityMapper.convert(capabilitySet);
-    repository.saveAndFlush(entity);
+    updateCapabilitySet(capabilitySet);
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -274,12 +279,14 @@ public class CapabilitySetService {
   @Transactional
   public void deleteById(UUID capabilitySetId) {
     repository.deleteById(capabilitySetId);
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   @Transactional
   public void deleteAllLinksToCapability(UUID capabilityId) {
     log.debug("Removing capability_set-capability links for capability: capabilityId = {}", capabilityId);
     repository.deleteCapabilityCapabilitySetLinks(capabilityId);
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -316,6 +323,7 @@ public class CapabilitySetService {
     for (var capabilityId : capabilityIds) {
       repository.addCapabilityById(capabilitySetId, capabilityId);
     }
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   @Transactional
@@ -328,6 +336,7 @@ public class CapabilitySetService {
 
     var capabilitySetEntities = capabilitySetEntityMapper.mapToEntities(capabilitySets);
     repository.saveAll(capabilitySetEntities);
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   private void checkByIds(Collection<UUID> capabilitySetIds) {
@@ -337,5 +346,11 @@ public class CapabilitySetService {
       var notFoundCapabilityIds = CollectionUtils.subtract(capabilityIdsToCheck, foundCapabilityIds);
       throw new EntityNotFoundException("Capability sets not found by ids: " + notFoundCapabilityIds);
     }
+  }
+
+  private void updateCapabilitySet(CapabilitySet capabilitySet) {
+    capabilityService.checkIds(capabilitySet.getCapabilities());
+    var entity = capabilitySetEntityMapper.convert(capabilitySet);
+    repository.saveAndFlush(entity);
   }
 }

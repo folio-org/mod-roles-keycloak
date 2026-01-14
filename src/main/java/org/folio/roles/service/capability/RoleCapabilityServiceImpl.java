@@ -8,6 +8,7 @@ import static org.apache.commons.collections4.ListUtils.intersection;
 import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
+import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
 import static org.folio.roles.utils.CollectionUtils.difference;
 
 import jakarta.persistence.EntityExistsException;
@@ -33,6 +34,7 @@ import org.folio.roles.utils.CapabilityUtils;
 import org.folio.roles.utils.CollectionUtils;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +53,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   private final RoleCapabilityRepository roleCapabilityRepository;
   private final CapabilityEndpointService capabilityEndpointService;
   private final RoleCapabilityEntityMapper roleCapabilityEntityMapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Creates a record(s) associating one or more capabilities with the role.
@@ -63,13 +66,15 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Override
   @Transactional
   public PageResult<RoleCapability> create(UUID roleId, List<UUID> capabilityIds, boolean safeCreate) {
-    return createRoleCapabilities(roleId, capabilityIds, safeCreate);
+    var result = createRoleCapabilities(roleId, capabilityIds, safeCreate);
+    eventPublisher.publishEvent(tenantPermissionsChanged());
+    return result;
   }
 
   /**
-   * Create a record(s) associating one or moe capabilities with role.
+   * Creates record(s) associating one or more capabilities with a role.
    *
-   * @param request - request that contains roleId, capabilityIds or capabilityNames
+   * @param request - request containing roleId, capabilityIds or capabilityNames
    * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
    * @return {@link RoleCapability} object with created role-capability relations
    */
@@ -78,7 +83,9 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   public PageResult<RoleCapability> create(RoleCapabilitiesRequest request, boolean safeCreate) {
     var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
     var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
-    return createRoleCapabilities(request.getRoleId(), allCapabilityIds, safeCreate);
+    var result = createRoleCapabilities(request.getRoleId(), allCapabilityIds, safeCreate);
+    eventPublisher.publishEvent(tenantPermissionsChanged());
+    return result;
   }
 
   /**
@@ -108,8 +115,8 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   @Transactional
   public void update(UUID roleId, List<UUID> capabilityIds) {
     updateRoleCapabilities(roleId, capabilityIds);
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
-
 
   /**
    * Updates role-capability relations.
@@ -124,6 +131,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     var resolvedCapabilitiesIds = resolveCapabilitiesByNames(request.getCapabilityNames());
     var allCapabilityIds = CollectionUtils.union(resolvedCapabilitiesIds, request.getCapabilityIds());
     updateRoleCapabilities(roleId, allCapabilityIds);
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -144,6 +152,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     assignedCapabilityIds.remove(capabilityId);
     roleCapabilityRepository.findById(RoleCapabilityKey.of(roleId, capabilityId))
       .ifPresent(entity -> removeCapabilities(roleId, List.of(entity.getCapabilityId()), assignedCapabilityIds));
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -168,6 +177,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     }
 
     removeCapabilities(roleId, deprecatedIds, subtract(assignedCapabilityIds, deprecatedIds));
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
@@ -186,6 +196,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     }
 
     removeCapabilities(roleId, getCapabilityIds(roleCapabilityEntities), emptyList());
+    eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   @Override

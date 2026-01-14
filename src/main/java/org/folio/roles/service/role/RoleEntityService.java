@@ -10,9 +10,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.model.PageResult;
+import org.folio.roles.domain.model.event.TenantPermissionsChangedEvent;
 import org.folio.roles.mapper.entity.RoleEntityMapper;
 import org.folio.roles.repository.RoleEntityRepository;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class RoleEntityService {
 
   private final RoleEntityRepository repository;
   private final RoleEntityMapper mapper;
+  private final ApplicationEventPublisher eventPublisher;
 
   public Role create(Role role) {
     var roleEntity = mapper.toRoleEntity(role);
@@ -48,6 +51,7 @@ public class RoleEntityService {
 
   public void deleteById(UUID id) {
     repository.deleteById(id);
+    eventPublisher.publishEvent(TenantPermissionsChangedEvent.tenantPermissionsChanged());
   }
 
   @Transactional(readOnly = true)

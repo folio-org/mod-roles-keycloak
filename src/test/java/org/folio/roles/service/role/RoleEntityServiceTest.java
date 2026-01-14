@@ -3,6 +3,7 @@ package org.folio.roles.service.role;
 import static java.util.UUID.fromString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.roles.domain.dto.RoleType.REGULAR;
+import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
@@ -38,6 +39,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -52,12 +54,13 @@ class RoleEntityServiceTest {
 
   @Spy private RoleEntityMapper mapper = new RoleEntityMapperImpl(new DateConvertHelper());
   @Mock private RoleEntityRepository repository;
+  @Mock private ApplicationEventPublisher eventPublisher;
 
   @InjectMocks private RoleEntityService service;
 
   @AfterEach
   void afterEach() {
-    verifyNoMoreInteractions(repository);
+    verifyNoMoreInteractions(repository, eventPublisher);
   }
 
   private static Role createRoleDto() {
@@ -156,6 +159,7 @@ class RoleEntityServiceTest {
       service.deleteById(ROLE_ID);
 
       verify(repository).deleteById(ROLE_ID);
+      verify(eventPublisher).publishEvent(tenantPermissionsChanged());
     }
   }
 

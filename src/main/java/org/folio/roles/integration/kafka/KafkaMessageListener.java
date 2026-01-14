@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
+import org.folio.roles.service.capability.UserPermissionsCacheEvictor;
 import org.folio.spring.context.ExecutionContextBuilder;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.spring.service.SystemUserScopedExecutionService;
@@ -19,6 +20,7 @@ public class KafkaMessageListener {
   private final CapabilityKafkaEventHandler capabilityKafkaEventHandler;
   private final CapabilityReplacementsService capabilityReplacementsService;
   private final SystemUserScopedExecutionService systemUserScopedExecutionService;
+  private final UserPermissionsCacheEvictor userPermissionsCacheEvictor;
 
   /**
    * Handles capability event.
@@ -36,6 +38,8 @@ public class KafkaMessageListener {
       systemUserScopedExecutionService.executeSystemUserScoped(() -> {
         var capabilityReplacements = capabilityKafkaEventHandler.handleEvent(resourceEvent);
         capabilityReplacements.ifPresent(capabilityReplacementsService::processReplacements);
+
+        userPermissionsCacheEvictor.evictUserPermissionsForCurrentTenant();
         return null;
       });
     }
