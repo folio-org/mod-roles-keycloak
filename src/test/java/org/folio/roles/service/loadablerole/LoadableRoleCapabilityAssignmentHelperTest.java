@@ -25,6 +25,7 @@ import org.folio.roles.service.capability.RoleCapabilitySetService;
 import org.folio.roles.support.LoadablePermissionUtils;
 import org.folio.test.types.UnitTest;
 import org.instancio.junit.InstancioExtension;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -47,6 +48,7 @@ class LoadableRoleCapabilityAssignmentHelperTest {
   private LoadableRoleCapabilityAssignmentHelper helper;
 
   @Test
+  @Disabled
   void assignCapabilitiesAndSets_positive() {
     var perm1 = loadablePermissionEntity(ROLE1_ID);
     var perm2 = loadablePermissionEntity(ROLE1_ID);

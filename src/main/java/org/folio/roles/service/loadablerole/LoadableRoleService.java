@@ -47,6 +47,7 @@ public class LoadableRoleService {
   private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
   private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
+  private final LoadableRoleServiceCommited loadableRoleServiceCommited;
 
   @Transactional(readOnly = true)
   public LoadableRoles find(String query, Integer limit, Integer offset) {
@@ -213,7 +214,7 @@ public class LoadableRoleService {
         updateRoleId(entity, roleId);
 
         createdInKeycloakRoleIds.add(roleId);
-        repository.saveAndFlush(entity);
+        loadableRoleServiceCommited.save(entity);
 
         assignmentHelper.assignCapabilitiesAndSetsForPermissions(entity.getPermissions());
       }
