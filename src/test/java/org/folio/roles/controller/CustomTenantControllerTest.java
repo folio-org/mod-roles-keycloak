@@ -52,6 +52,23 @@ class CustomTenantControllerTest {
   }
 
   @Test
+  void postTenant_positive_logsErrorOnKafkaRestartFailure() {
+    var attributes = tenantAttributes();
+    doNothing().when(kafkaAdminService).stopKafkaListeners();
+    doThrow(new RuntimeException("Restart failed")).when(kafkaAdminService).startKafkaListeners();
+    doNothing().when(tenantService).createOrUpdateTenant(attributes);
+
+    var result = controller.postTenant(attributes);
+
+    assertThat(result.getStatusCode()).isEqualTo(NO_CONTENT);
+
+    var inOrder = inOrder(kafkaAdminService, tenantService);
+    inOrder.verify(kafkaAdminService).stopKafkaListeners();
+    inOrder.verify(tenantService).createOrUpdateTenant(attributes);
+    inOrder.verify(kafkaAdminService).startKafkaListeners();
+  }
+
+  @Test
   void postTenant_negative_startsKafkaListenersOnException() {
     var attributes = tenantAttributes();
     doNothing().when(kafkaAdminService).stopKafkaListeners();
