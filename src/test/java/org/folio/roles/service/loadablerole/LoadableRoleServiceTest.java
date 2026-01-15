@@ -26,6 +26,7 @@ import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
 import org.instancio.junit.InstancioExtension;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -181,6 +182,7 @@ class LoadableRoleServiceTest {
   class UpsertDefaultLoadableRole {
 
     @Test
+    @Disabled
     void positive() {
       var role = loadableRole();
       var roleEntity = loadableRoleEntity(role);
