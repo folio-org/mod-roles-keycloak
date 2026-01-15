@@ -1,5 +1,6 @@
 package org.folio.roles.service.capability;
 
+import static java.util.UUID.randomUUID;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -212,7 +213,7 @@ class UserPermissionsCacheEvictorTest {
 
   @Test
   void evictUserPermissions_positive_evictsCorrectKey() {
-    var userId = java.util.UUID.randomUUID();
+    var userId = randomUUID();
 
     when(folioExecutionContext.getTenantId()).thenReturn(TENANT_1);
     when(cacheManager.getCache(USER_PERMISSIONS_CACHE)).thenReturn(caffeineCache);
@@ -227,7 +228,7 @@ class UserPermissionsCacheEvictorTest {
   @NullAndEmptySource
   @ValueSource(strings = "  ")
   void evictUserPermissions_negative_handlesInvalidTenantId(String tenantId) {
-    var userId = java.util.UUID.randomUUID();
+    var userId = randomUUID();
     when(folioExecutionContext.getTenantId()).thenReturn(tenantId);
 
     evictor.evictUserPermissions(userId);
@@ -237,7 +238,7 @@ class UserPermissionsCacheEvictorTest {
 
   @Test
   void evictUserPermissions_negative_handlesMissingCache() {
-    var userId = java.util.UUID.randomUUID();
+    var userId = randomUUID();
 
     when(folioExecutionContext.getTenantId()).thenReturn(TENANT_1);
     when(cacheManager.getCache(USER_PERMISSIONS_CACHE)).thenReturn(null);
@@ -250,7 +251,7 @@ class UserPermissionsCacheEvictorTest {
 
   @Test
   void evictUserPermissions_negative_handlesExceptionDuringEviction() {
-    var userId = java.util.UUID.randomUUID();
+    final var userId = randomUUID();
 
     when(folioExecutionContext.getTenantId()).thenReturn(TENANT_1);
     when(cacheManager.getCache(USER_PERMISSIONS_CACHE)).thenReturn(caffeineCache);
