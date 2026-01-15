@@ -1,3 +1,6 @@
+## Version `v3.0.14` (15.01.2026)
+* Optimization SQL for `/permissions/users/{id}`, local cache added (MODROLESKC-333)
+
 ## Version `v3.0.13` (26.12.2025)
 * Role with null description becomes invalid (MODROLESKC-308)
 * Disallow transitioning role type to/from DEFAULT (Modroleskc 349)
