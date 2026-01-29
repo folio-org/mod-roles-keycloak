@@ -114,6 +114,11 @@ application:
     capability-event:
       retry-attempts: ${CAPABILITY_TOPIC_RETRY_ATTEMPTS:9223372036854775807}
       retry-delay: ${CAPABILITY_TOPIC_RETRY_DELAY:1s}
+  loadable-role:
+    retry:
+      max-attempts: ${LOADABLE_ROLE_RETRY_MAX_ATTEMPTS:5}
+      backoff:
+        delay-ms: ${LOADABLE_ROLE_RETRY_BACKOFF_DELAY_MS:60000}
   folio-permissions:
     mapping:
       source-path: ${FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH:https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json}

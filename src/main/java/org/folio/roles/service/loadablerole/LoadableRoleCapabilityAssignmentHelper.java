@@ -16,24 +16,17 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
-import org.folio.roles.exception.ServiceException;
-import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Log4j2
 @Component
@@ -44,7 +37,6 @@ public class LoadableRoleCapabilityAssignmentHelper {
   private final CapabilityService capabilityService;
   private final RoleCapabilityService roleCapabilityService;
   private final RoleCapabilitySetService roleCapabilitySetService;
-  private final LoadableRoleRepository loadableRoleRepository;
 
   public Set<LoadablePermissionEntity> assignCapabilitiesAndSetsForPermissions(
     Collection<LoadablePermissionEntity> perms) {
@@ -54,32 +46,6 @@ public class LoadableRoleCapabilityAssignmentHelper {
   public Set<LoadablePermissionEntity> removeCapabilitiesAndSetsForPermissions(
     Collection<LoadablePermissionEntity> perms) {
     return processPermissionsByRoleId(perms, this::removeCapabilitiesAndSets);
-  }
-
-  @Retryable(
-    maxAttempts = 3,
-    backoff = @Backoff(delay = 30000, multiplier = 2)
-  )
-  @Transactional
-  @Async("executorForLoadableRolesAssignmentsRetry")
-  public void retryAssignCapabilitiesAndSetsForPermissions(UUID loadableRoleId, String loadableRoleName)  {
-    log.info("Retrying assignment of capabilities and capability sets for loadable role: roleName = {}",
-      loadableRoleName);
-    var updateLoadableRoleEntity = loadableRoleRepository.findByIdOrName(loadableRoleId, loadableRoleName)
-      .orElseThrow(() -> new ServiceException("Loadable role not found in DB"));
-    var permissionsNotAssigned = toStream(updateLoadableRoleEntity.getPermissions())
-      .filter(per -> per.getCapabilityId() == null)
-      .toList();
-    assignCapabilitiesAndSetsForPermissions(permissionsNotAssigned);
-    loadableRoleRepository.save(updateLoadableRoleEntity );
-    if (isExistNotAssignedPermissions(permissionsNotAssigned)) {
-      var permissionsAsStr = getPermissionNamesAsStr(permissionsNotAssigned);
-      throw new RuntimeException(
-        String.format("Exist not assigned permissions %s after retrying assignment for loadable role: %s",
-         permissionsAsStr, loadableRoleName));
-    }
-    log.info("Complete assignment of capabilities and capability sets by retry: roleName = {}",
-      loadableRoleName);
   }
 
   private Stream<LoadablePermissionEntity> assignCapabilitiesAndSets(UUID roleId,
@@ -185,15 +151,5 @@ public class LoadableRoleCapabilityAssignmentHelper {
 
   private static Map<String, LoadablePermissionEntity> permissionsByName(List<LoadablePermissionEntity> perms) {
     return toStream(perms).collect(toMap(LoadablePermissionEntity::getPermissionName, identity()));
-  }
-
-  private static boolean isExistNotAssignedPermissions(List<LoadablePermissionEntity> permissions) {
-    return permissions.stream().anyMatch(per -> per.getCapabilityId() == null);
-  }
-
-  private static String getPermissionNamesAsStr(Collection<LoadablePermissionEntity> permissions) {
-    return permissions.stream()
-      .map(LoadablePermissionEntity::getPermissionName)
-      .collect(Collectors.joining(", "));
   }
 }
