@@ -105,10 +105,9 @@ public class LoadableRoleService {
     var saved = repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
       .orElseThrow(() -> new ServiceException("Loadable role not found in DB"));
 
-    var permissionsNotAssigned = toStream(saved.getPermissions())
-      .filter(per -> per.getCapabilityId() == null)
-      .toList();
-    if (isNotEmpty(permissionsNotAssigned)) {
+    var isPermissionNotAssignedExist = toStream(saved.getPermissions())
+      .anyMatch(per -> per.getCapabilityId() == null);
+    if (isPermissionNotAssignedExist) {
       loadableRoleAssignmentRetrier.retryAssignCapabilitiesAndSetsForPermissions(saved.getId(), saved.getName());
     }
 
