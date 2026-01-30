@@ -29,8 +29,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class LoadableRoleAssignmentRetrierTest {
 
   private static final String TEST_ROLE_NAME = "test-role";
-  private static final String ERROR_MESSAGE_UNASSIGNED = 
-    "Unassigned permissions still exist after retrying assignment for loadable role: " + TEST_ROLE_NAME;
+  private static final String ERROR_MESSAGE_UNASSIGNED =
+    "Unassigned permissions still exist for loadable role: " + TEST_ROLE_NAME;
   private static final String ERROR_MESSAGE_DATABASE = "Database error";
 
   @InjectMocks private LoadableRoleAssignmentRetrier retrier;
