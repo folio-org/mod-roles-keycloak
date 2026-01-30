@@ -26,7 +26,6 @@ public class LoadableRoleAssignmentRetrier {
   private final LoadableRoleCapabilityAssignmentHelper loadableRoleCapabilityAssignmentHelper;
 
   @Retryable(
-    retryFor = {UnassignedPermissionsException.class},
     maxAttemptsExpression = "#{@loadableRoleRetryProperties.maxAttempts}",
     backoff = @Backoff(delayExpression = "#{@loadableRoleRetryProperties.backoff.delayMs}")
   )
@@ -53,7 +52,7 @@ public class LoadableRoleAssignmentRetrier {
   }
 
   @Recover
-  public void recoverFromFailedAssignment(UnassignedPermissionsException exception,
+  public void recoverFromFailedAssignment(Exception exception,
     UUID loadableRoleId, String loadableRoleName) {
     log.warn("Failed to assign capabilities and "
         + "capability sets after all retry attempts: roleId = {}, roleName = {}, error = {}",
