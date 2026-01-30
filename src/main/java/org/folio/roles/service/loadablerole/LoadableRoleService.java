@@ -97,8 +97,9 @@ public class LoadableRoleService {
   public LoadableRole upsertDefaultLoadableRole(LoadableRole loadableRole) {
     prepareLoadableRole(loadableRole);
     var incoming = mapper.toRoleEntity(loadableRole);
-    var existing = findAllDefaultRolesNotLoadedFromFiles();
-
+    var existing = repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
+      .map(List::of)
+      .orElse(List.of());
     mergeInBatch(List.of(incoming), existing, comparatorById(), this::createAll, this::updateAll, nothing());
 
     var saved = repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
