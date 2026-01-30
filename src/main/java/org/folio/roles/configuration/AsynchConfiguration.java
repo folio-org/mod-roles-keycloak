@@ -12,9 +12,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @Configuration
 public class AsynchConfiguration {
 
-  @Bean("executorForLoadableRolesAssignmentsRetry")
+  @Bean("executorForLoadableRolesAssignmentRetry")
   public Executor executorForLoadableRolesAssignmentsRetry() {
     var virtualThreadTaskExecutor = new VirtualThreadTaskExecutor();
-    return command -> virtualThreadTaskExecutor.execute(getRunnableWithCurrentFolioContext(command));
+    return task -> virtualThreadTaskExecutor.execute(getRunnableWithCurrentFolioContext(task));
   }
 }

@@ -33,17 +33,10 @@ class LoadableRoleAssignmentRetrierTest {
     "Unassigned permissions still exist after retrying assignment for loadable role: " + TEST_ROLE_NAME;
   private static final String ERROR_MESSAGE_DATABASE = "Database error";
 
-  @InjectMocks
-  private LoadableRoleAssignmentRetrier retrier;
-
-  @Mock
-  private LoadablePermissionRepository loadablePermissionRepository;
-
-  @Mock
-  private LoadableRoleCapabilityAssignmentHelper loadableRoleCapabilityAssignmentHelper;
-
-  @Mock
-  private LoadableRoleRetryProperties retryProperties;
+  @InjectMocks private LoadableRoleAssignmentRetrier retrier;
+  @Mock private LoadablePermissionRepository loadablePermissionRepository;
+  @Mock private LoadableRoleCapabilityAssignmentHelper loadableRoleCapabilityAssignmentHelper;
+  @Mock private LoadableRoleRetryProperties retryProperties;
 
   @AfterEach
   void tearDown() {

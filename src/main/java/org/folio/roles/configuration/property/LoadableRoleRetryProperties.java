@@ -1,7 +1,6 @@
 package org.folio.roles.configuration.property;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -15,7 +14,6 @@ import org.springframework.validation.annotation.Validated;
 public class LoadableRoleRetryProperties {
 
   @Min(value = 1, message = "Max attempts must be at least 1")
-  @Max(value = 10, message = "Max attempts must be at most 10")
   private int maxAttempts;
   
   @Valid
@@ -24,7 +22,6 @@ public class LoadableRoleRetryProperties {
   @Data
   public static class Backoff {
     @Min(value = 1000, message = "Backoff delay must be at least 1000ms")
-    @Max(value = 120000, message = "Backoff delay must be at most 120000ms")
     private long delayMs;
   }
 }

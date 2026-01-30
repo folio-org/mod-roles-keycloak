@@ -26,11 +26,12 @@ public class LoadableRoleAssignmentRetrier {
   private final LoadableRoleCapabilityAssignmentHelper loadableRoleCapabilityAssignmentHelper;
 
   @Retryable(
+    retryFor = {UnassignedPermissionsException.class},
     maxAttemptsExpression = "#{@loadableRoleRetryProperties.maxAttempts}",
     backoff = @Backoff(delayExpression = "#{@loadableRoleRetryProperties.backoff.delayMs}")
   )
   @Transactional
-  @Async("executorForLoadableRolesAssignmentsRetry")
+  @Async("executorForLoadableRolesAssignmentRetry")
   public void retryAssignCapabilitiesAndSetsForPermissions(UUID loadableRoleId, String loadableRoleName)  {
     log.info("Retrying assignment of capabilities and capability sets for loadable role: roleName = {}",
       loadableRoleName);
@@ -44,16 +45,19 @@ public class LoadableRoleAssignmentRetrier {
     }
     if (loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(loadableRoleId)) {
       throw new UnassignedPermissionsException(
-        String.format("Unassigned permissions still exist after retrying assignment for loadable role: %s",
+        String.format("Unassigned permissions still exist for loadable role: %s",
           loadableRoleName));
     }
-    log.info("Complete all assignment of capabilities and capability sets by retry: roleName = {}",
+    log.info("Complete all assignment of capabilities and capability sets within retry: roleName = {}",
       loadableRoleName);
   }
 
   @Recover
-  public void recoverFromFailedAssignment(Exception e) {
-    log.warn(e.getMessage());
+  public void recoverFromFailedAssignment(UnassignedPermissionsException exception,
+    UUID loadableRoleId, String loadableRoleName) {
+    log.warn("Failed to assign capabilities and "
+        + "capability sets after all retry attempts: roleId = {}, roleName = {}, error = {}",
+      loadableRoleId, loadableRoleName, exception.getMessage());
   }
 
   private static String getPermissionNamesAsStr(Collection<LoadablePermissionEntity> permissions) {
