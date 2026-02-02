@@ -199,12 +199,6 @@ public class LoadableRoleService {
     }
   }
 
-  private List<LoadableRoleEntity> findAllDefaultRolesNotLoadedFromFiles() {
-    try (var defaultRoles = repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, false)) {
-      return defaultRoles.toList();
-    }
-  }
-
   private Collection<LoadableRoleEntity> createAll(Collection<LoadableRoleEntity> entities) {
     if (isEmpty(entities)) {
       log.debug("No loadable roles to create");
