@@ -43,7 +43,7 @@ public class LoadableRoleAssignmentRetrier {
       .findAllPermissionsWhereCapabilityExistByRoleId(loadableRoleId);
     if (isNotEmpty(permissionsNotAssigned)) {
       loadableRoleCapabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(permissionsNotAssigned);
-      loadablePermissionRepository.saveAllAndFlush(permissionsNotAssigned);
+      loadablePermissionRepository.saveAll(permissionsNotAssigned);
       log.info("Assigned capabilities and capabilities set by permissions: roleName = {}, permissions [{}]",
         loadableRoleName, getPermissionNamesAsStr(permissionsNotAssigned));
     }

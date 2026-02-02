@@ -56,12 +56,12 @@ class LoadableRoleAssignmentRetrierTest {
       .thenReturn(permissions);
     when(loadableRoleCapabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions))
       .thenReturn(Set.of());
-    when(loadablePermissionRepository.saveAllAndFlush(permissions)).thenReturn(permissions);
+    when(loadablePermissionRepository.saveAll(permissions)).thenReturn(permissions);
     when(loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(roleId)).thenReturn(false);
 
     retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    verify(loadablePermissionRepository).saveAllAndFlush(permissions);
+    verify(loadablePermissionRepository).saveAll(permissions);
   }
 
   @Test
@@ -76,7 +76,7 @@ class LoadableRoleAssignmentRetrierTest {
     retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
     verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissions(any());
-    verify(loadablePermissionRepository, never()).saveAllAndFlush(any());
+    verify(loadablePermissionRepository, never()).saveAll(any());
   }
 
   @Test
@@ -89,14 +89,14 @@ class LoadableRoleAssignmentRetrierTest {
       .thenReturn(permissions);
     when(loadableRoleCapabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions))
       .thenReturn(Set.of());
-    when(loadablePermissionRepository.saveAllAndFlush(permissions)).thenReturn(permissions);
+    when(loadablePermissionRepository.saveAll(permissions)).thenReturn(permissions);
     when(loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(roleId)).thenReturn(true);
 
     assertThatThrownBy(() -> retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME))
       .isInstanceOf(UnassignedPermissionsException.class)
       .hasMessage(ERROR_MESSAGE_UNASSIGNED);
 
-    verify(loadablePermissionRepository).saveAllAndFlush(permissions);
+    verify(loadablePermissionRepository).saveAll(permissions);
   }
 
   @Test
@@ -127,7 +127,7 @@ class LoadableRoleAssignmentRetrierTest {
 
     verify(loadablePermissionRepository, never()).findAllPermissionsWhereCapabilityExistByRoleId(any());
     verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissions(any());
-    verify(loadablePermissionRepository, never()).saveAllAndFlush(any());
+    verify(loadablePermissionRepository, never()).saveAll(any());
   }
 
   private static List<LoadablePermissionEntity> createPermissionsWithAssignments(UUID roleId) {
