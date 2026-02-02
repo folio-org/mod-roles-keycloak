@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.configuration.property.LoadableRoleRetryProperties;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
+import org.folio.roles.exception.ServiceException;
 import org.folio.roles.exception.UnassignedPermissionsException;
 import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.support.TestUtils;
@@ -32,6 +33,8 @@ class LoadableRoleAssignmentRetrierTest {
   private static final String ERROR_MESSAGE_UNASSIGNED =
     "Unassigned permissions still exist for loadable role: " + TEST_ROLE_NAME;
   private static final String ERROR_MESSAGE_DATABASE = "Database error";
+  private static final String ERROR_MESSAGE_NOT_FOUND =
+    "Loadable permissions not found in DB for loadable role: roleName = " + TEST_ROLE_NAME;
 
   @InjectMocks private LoadableRoleAssignmentRetrier retrier;
   @Mock private LoadablePermissionRepository loadablePermissionRepository;
@@ -48,6 +51,7 @@ class LoadableRoleAssignmentRetrierTest {
     var roleId = randomUUID();
     var permissions = createPermissionsWithAssignments(roleId);
 
+    when(loadablePermissionRepository.existsByRoleId(roleId)).thenReturn(true);
     when(loadablePermissionRepository.findAllPermissionsWhereCapabilityExistByRoleId(roleId))
       .thenReturn(permissions);
     when(loadableRoleCapabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions))
@@ -64,6 +68,7 @@ class LoadableRoleAssignmentRetrierTest {
   void retryAssignCapabilitiesAndSetsForPermissions_positive_noPermissionsToAssign() {
     var roleId = randomUUID();
 
+    when(loadablePermissionRepository.existsByRoleId(roleId)).thenReturn(true);
     when(loadablePermissionRepository.findAllPermissionsWhereCapabilityExistByRoleId(roleId))
       .thenReturn(List.of());
     when(loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(roleId)).thenReturn(false);
@@ -79,6 +84,7 @@ class LoadableRoleAssignmentRetrierTest {
     var roleId = randomUUID();
     var permissions = createPermissionsWithAssignments(roleId);
 
+    when(loadablePermissionRepository.existsByRoleId(roleId)).thenReturn(true);
     when(loadablePermissionRepository.findAllPermissionsWhereCapabilityExistByRoleId(roleId))
       .thenReturn(permissions);
     when(loadableRoleCapabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions))
@@ -98,6 +104,7 @@ class LoadableRoleAssignmentRetrierTest {
     var roleId = randomUUID();
     var expectedException = new RuntimeException(ERROR_MESSAGE_DATABASE);
 
+    when(loadablePermissionRepository.existsByRoleId(roleId)).thenReturn(true);
     when(loadablePermissionRepository.findAllPermissionsWhereCapabilityExistByRoleId(roleId))
       .thenThrow(expectedException);
 
@@ -106,6 +113,21 @@ class LoadableRoleAssignmentRetrierTest {
       .hasMessage(ERROR_MESSAGE_DATABASE);
 
     verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissions(any());
+  }
+
+  @Test
+  void retryAssignCapabilitiesAndSetsForPermissions_negative_roleNotFoundInDb() {
+    var roleId = randomUUID();
+
+    when(loadablePermissionRepository.existsByRoleId(roleId)).thenReturn(false);
+
+    assertThatThrownBy(() -> retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME))
+      .isInstanceOf(ServiceException.class)
+      .hasMessage(ERROR_MESSAGE_NOT_FOUND);
+
+    verify(loadablePermissionRepository, never()).findAllPermissionsWhereCapabilityExistByRoleId(any());
+    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissions(any());
+    verify(loadablePermissionRepository, never()).saveAllAndFlush(any());
   }
 
   private static List<LoadablePermissionEntity> createPermissionsWithAssignments(UUID roleId) {

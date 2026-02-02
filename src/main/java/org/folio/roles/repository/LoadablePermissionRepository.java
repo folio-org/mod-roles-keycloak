@@ -34,5 +34,7 @@ public interface LoadablePermissionRepository
       AND c.dummy_capability = false""")
   List<LoadablePermissionEntity> findAllPermissionsWhereCapabilityExistByRoleId(UUID roleId);
 
+  boolean existsByRoleId(UUID roleId);
+
   boolean existsByRoleIdAndCapabilityIdIsNull(UUID roleId);
 }

@@ -8,6 +8,7 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
+import org.folio.roles.exception.ServiceException;
 import org.folio.roles.exception.UnassignedPermissionsException;
 import org.folio.roles.repository.LoadablePermissionRepository;
 import org.springframework.retry.annotation.Backoff;
@@ -34,6 +35,10 @@ public class LoadableRoleAssignmentRetrier {
   public void retryAssignCapabilitiesAndSetsForPermissions(UUID loadableRoleId, String loadableRoleName)  {
     log.info("Retrying assignment of capabilities and capability sets for loadable role: roleName = {}",
       loadableRoleName);
+    if (!loadablePermissionRepository.existsByRoleId(loadableRoleId)) {
+      throw new ServiceException("Loadable permissions not found in DB for loadable role: "
+        + "roleName = " + loadableRoleName);
+    }
     var permissionsNotAssigned = loadablePermissionRepository
       .findAllPermissionsWhereCapabilityExistByRoleId(loadableRoleId);
     if (isNotEmpty(permissionsNotAssigned)) {
