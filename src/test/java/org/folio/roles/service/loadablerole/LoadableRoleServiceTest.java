@@ -206,7 +206,7 @@ class LoadableRoleServiceTest {
       when(repository.saveAndFlush(roleEntity)).thenReturn(roleEntity);
       when(capabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(any()))
         .thenReturn(roleEntity.getPermissions());
-      when(repository.saveAllAndFlush(anyList())).thenReturn(List.of(roleEntity));
+      when(repository.saveAll(anyList())).thenReturn(List.of(roleEntity));
       when(mapper.toRole(roleEntity)).thenReturn(role);
 
       var actual = service.upsertDefaultLoadableRole(role);
@@ -235,7 +235,7 @@ class LoadableRoleServiceTest {
       when(repository.saveAndFlush(roleEntity)).thenReturn(roleEntity);
       when(capabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(any()))
         .thenReturn(roleEntity.getPermissions());
-      when(repository.saveAllAndFlush(anyList())).thenReturn(List.of(roleEntity));
+      when(repository.saveAll(anyList())).thenReturn(List.of(roleEntity));
       doNothing().when(loadableRoleAssignmentRetrier)
         .retryAssignCapabilitiesAndSetsForPermissions(roleEntity.getId(), roleEntity.getName());
       when(mapper.toRole(roleEntity)).thenReturn(role);

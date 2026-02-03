@@ -221,7 +221,7 @@ public class LoadableRoleService {
         assignmentHelper.assignCapabilitiesAndSetsForPermissions(entity.getPermissions());
       }
 
-      var result = repository.saveAllAndFlush(entities);
+      var result = repository.saveAll(entities);
       log.info("Loadable roles created: {}", () -> toIdNames(result));
 
       return result;
@@ -250,7 +250,7 @@ public class LoadableRoleService {
       }
     }
 
-    repository.saveAllAndFlush(changedRoles);
+    repository.saveAll(changedRoles);
     log.info("Loadable roles updated: {}", () -> toIdNames(changedRoles));
   }
 
