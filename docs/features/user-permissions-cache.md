@@ -2,7 +2,7 @@
 feature_id: user-permissions-cache
 title: User Permissions Cache
 status: active
-updated: 2025-01-12
+updated: 02-02-2026
 ---
 
 # User Permissions Cache
@@ -38,10 +38,10 @@ The complete list of FOLIO permission names for a user (all permissions inherite
   - Capability registry changes (affects all users in tenant)
 
 ### Configuration variables controlling cache behavior
-| Variable                          | Default            | Purpose                                                                                                                                      |
-|-----------------------------------|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| `USER_PERMISSIONS_CACHE_TTL`      | 1800s (30 minutes) | Time after which cache entries expire if not evicted. Should be set to average user session length + 10% threshold.                          |
-| `USER_PERMISSIONS_CACHE_MAX_SIZE` | 1000               | Maximum number of cache entries. **This limit is shared across all tenants** - estimate based on concurrent active users across all tenants. |
+| Variable                          | Default | Purpose                                                                                                                                      |
+|-----------------------------------|---------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| `USER_PERMISSIONS_CACHE_TTL`      | 30s     | Time after which cache entries expire if not evicted. Should be set to average user session length + 10% threshold.                          |
+| `USER_PERMISSIONS_CACHE_MAX_SIZE` | 1000    | Maximum number of cache entries. **This limit is shared across all tenants** - estimate based on concurrent active users across all tenants. |
 
 ## Dependencies and interactions
 - **Consumed by**: `CapabilityService.getUserPermissions()` - the main entry point for permission lookups
