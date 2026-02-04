@@ -90,7 +90,7 @@ class LoadableRoleCapabilityAssignmentHelperTest {
   }
 
   @Test
-  void assignCapabilitiesAndSetsForPermissionsCommited_positive() {
+  void assignCapabilitiesAndSetsForPermissionsCommitted_positive() {
     var perm1 = loadablePermissionEntity(ROLE1_ID);
     var perm2 = loadablePermissionEntity(ROLE1_ID);
     var perm3 = loadablePermissionEntity(ROLE2_ID);
