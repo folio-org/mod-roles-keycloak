@@ -88,7 +88,7 @@ class LoadableRoleAssignmentRetrierTest {
       .thenReturn(permissions);
     when(loadableRoleCapabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions))
       .thenReturn(Set.of());
-     when(loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(roleId)).thenReturn(true);
+    when(loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(roleId)).thenReturn(true);
 
     assertThatThrownBy(() -> retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME))
       .isInstanceOf(UnassignedPermissionsException.class)
