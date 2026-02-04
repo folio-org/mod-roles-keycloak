@@ -8,8 +8,6 @@ import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface LoadablePermissionRepository
@@ -39,9 +37,4 @@ public interface LoadablePermissionRepository
   boolean existsByRoleId(UUID roleId);
 
   boolean existsByRoleIdAndCapabilityIdIsNull(UUID roleId);
-
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  default void saveAllCommited(List<LoadablePermissionEntity> loadablePermissionEntities) {
-    saveAll(loadablePermissionEntities);
-  }
 }

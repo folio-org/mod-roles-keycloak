@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.configuration.property.LoadableRoleRetryProperties;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
@@ -54,13 +53,11 @@ class LoadableRoleAssignmentRetrierTest {
     when(loadablePermissionRepository.existsByRoleId(roleId)).thenReturn(true);
     when(loadablePermissionRepository.findAllPermissionsWhereCapabilityExistByRoleId(roleId))
       .thenReturn(permissions);
-    when(loadableRoleCapabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions))
-      .thenReturn(Set.of());
     when(loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(roleId)).thenReturn(false);
 
     retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    verify(loadablePermissionRepository).saveAllCommited(permissions);
+    verify(loadableRoleCapabilityAssignmentHelper).assignCapabilitiesAndSetsForPermissionsCommited(permissions);
   }
 
   @Test
@@ -74,8 +71,7 @@ class LoadableRoleAssignmentRetrierTest {
 
     retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissions(any());
-    verify(loadablePermissionRepository, never()).saveAll(any());
+    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissionsCommited(any());
   }
 
   @Test
@@ -86,15 +82,13 @@ class LoadableRoleAssignmentRetrierTest {
     when(loadablePermissionRepository.existsByRoleId(roleId)).thenReturn(true);
     when(loadablePermissionRepository.findAllPermissionsWhereCapabilityExistByRoleId(roleId))
       .thenReturn(permissions);
-    when(loadableRoleCapabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions))
-      .thenReturn(Set.of());
     when(loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(roleId)).thenReturn(true);
 
     assertThatThrownBy(() -> retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME))
       .isInstanceOf(UnassignedPermissionsException.class)
       .hasMessage(ERROR_MESSAGE_UNASSIGNED);
 
-    verify(loadablePermissionRepository).saveAllCommited(permissions);
+    verify(loadableRoleCapabilityAssignmentHelper).assignCapabilitiesAndSetsForPermissionsCommited(permissions);
   }
 
   @Test
@@ -110,7 +104,7 @@ class LoadableRoleAssignmentRetrierTest {
       .isInstanceOf(RuntimeException.class)
       .hasMessage(ERROR_MESSAGE_DATABASE);
 
-    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissions(any());
+    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissionsCommited(any());
   }
 
   @Test
@@ -124,7 +118,7 @@ class LoadableRoleAssignmentRetrierTest {
       .hasMessage(ERROR_MESSAGE_NOT_FOUND);
 
     verify(loadablePermissionRepository, never()).findAllPermissionsWhereCapabilityExistByRoleId(any());
-    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissions(any());
+    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissionsCommited(any());
     verify(loadablePermissionRepository, never()).saveAll(any());
   }
 
