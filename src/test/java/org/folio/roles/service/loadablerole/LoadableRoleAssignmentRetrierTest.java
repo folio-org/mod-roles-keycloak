@@ -56,12 +56,11 @@ class LoadableRoleAssignmentRetrierTest {
       .thenReturn(permissions);
     when(loadableRoleCapabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions))
       .thenReturn(Set.of());
-    when(loadablePermissionRepository.saveAll(permissions)).thenReturn(permissions);
     when(loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(roleId)).thenReturn(false);
 
     retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    verify(loadablePermissionRepository).saveAll(permissions);
+    verify(loadablePermissionRepository).saveAllCommited(permissions);
   }
 
   @Test
@@ -89,14 +88,13 @@ class LoadableRoleAssignmentRetrierTest {
       .thenReturn(permissions);
     when(loadableRoleCapabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions))
       .thenReturn(Set.of());
-    when(loadablePermissionRepository.saveAll(permissions)).thenReturn(permissions);
-    when(loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(roleId)).thenReturn(true);
+     when(loadablePermissionRepository.existsByRoleIdAndCapabilityIdIsNull(roleId)).thenReturn(true);
 
     assertThatThrownBy(() -> retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME))
       .isInstanceOf(UnassignedPermissionsException.class)
       .hasMessage(ERROR_MESSAGE_UNASSIGNED);
 
-    verify(loadablePermissionRepository).saveAll(permissions);
+    verify(loadablePermissionRepository).saveAllCommited(permissions);
   }
 
   @Test
