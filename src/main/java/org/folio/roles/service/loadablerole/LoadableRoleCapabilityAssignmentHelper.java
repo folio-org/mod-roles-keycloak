@@ -48,7 +48,7 @@ public class LoadableRoleCapabilityAssignmentHelper {
   }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void assignCapabilitiesAndSetsForPermissionsCommited(
+  public void assignCapabilitiesAndSetsForPermissionsCommitted(
     Collection<LoadablePermissionEntity> perms) {
     var updated = processPermissionsByRoleId(perms, this::assignCapabilitiesAndSets);
     loadablePermissionRepository.saveAll(updated);

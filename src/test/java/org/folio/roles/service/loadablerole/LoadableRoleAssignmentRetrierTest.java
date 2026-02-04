@@ -57,7 +57,7 @@ class LoadableRoleAssignmentRetrierTest {
 
     retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    verify(loadableRoleCapabilityAssignmentHelper).assignCapabilitiesAndSetsForPermissionsCommited(permissions);
+    verify(loadableRoleCapabilityAssignmentHelper).assignCapabilitiesAndSetsForPermissionsCommitted(permissions);
   }
 
   @Test
@@ -71,7 +71,7 @@ class LoadableRoleAssignmentRetrierTest {
 
     retrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissionsCommited(any());
+    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissionsCommitted(any());
   }
 
   @Test
@@ -88,7 +88,7 @@ class LoadableRoleAssignmentRetrierTest {
       .isInstanceOf(UnassignedPermissionsException.class)
       .hasMessage(ERROR_MESSAGE_UNASSIGNED);
 
-    verify(loadableRoleCapabilityAssignmentHelper).assignCapabilitiesAndSetsForPermissionsCommited(permissions);
+    verify(loadableRoleCapabilityAssignmentHelper).assignCapabilitiesAndSetsForPermissionsCommitted(permissions);
   }
 
   @Test
@@ -104,7 +104,7 @@ class LoadableRoleAssignmentRetrierTest {
       .isInstanceOf(RuntimeException.class)
       .hasMessage(ERROR_MESSAGE_DATABASE);
 
-    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissionsCommited(any());
+    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissionsCommitted(any());
   }
 
   @Test
@@ -118,7 +118,7 @@ class LoadableRoleAssignmentRetrierTest {
       .hasMessage(ERROR_MESSAGE_NOT_FOUND);
 
     verify(loadablePermissionRepository, never()).findAllPermissionsWhereCapabilityExistByRoleId(any());
-    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissionsCommited(any());
+    verify(loadableRoleCapabilityAssignmentHelper, never()).assignCapabilitiesAndSetsForPermissionsCommitted(any());
     verify(loadablePermissionRepository, never()).saveAll(any());
   }
 
