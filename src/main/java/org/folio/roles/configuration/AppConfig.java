@@ -1,17 +1,10 @@
 package org.folio.roles.configuration;
 
-import org.folio.roles.integration.permissions.PermissionsClient;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 @EnableCaching
 @Configuration
 public class AppConfig {
 
-  @Bean
-  public PermissionsClient permissionsClient(HttpServiceProxyFactory factory) {
-    return factory.createClient(PermissionsClient.class);
-  }
 }
