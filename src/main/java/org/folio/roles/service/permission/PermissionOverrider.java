@@ -2,8 +2,6 @@ package org.folio.roles.service.permission;
 
 import static java.util.stream.Collectors.toMap;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -17,6 +15,8 @@ import org.folio.roles.exception.ServiceException;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 @Service
 @Log4j2

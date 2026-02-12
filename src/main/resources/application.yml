@@ -18,10 +18,6 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   cache:
     type: caffeine
-  cloud:
-    openfeign:
-      okhttp:
-        enabled: true
   kafka:
     bootstrap-servers: ${KAFKA_HOST:kafka}:${KAFKA_PORT:9092}
     security:
@@ -49,6 +45,15 @@ server:
 
 folio:
   environment: ${ENV:folio}
+  exchange:
+    enabled: true
+  logging:
+    request:
+      enabled: true
+      level: HEADERS
+    exchange:
+      enabled: true
+      level: BASIC
   jpa:
     repository:
       base-packages: org.folio.roles.repository
