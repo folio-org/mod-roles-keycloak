@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
@@ -83,7 +84,7 @@ class PermissionOverriderTest {
     when(resourceLoader.getResource(sourcePath)).thenReturn(resource);
     when(resource.exists()).thenReturn(true);
     when(resource.getInputStream()).thenReturn(inputStream);
-    when(objectMapper.readValue(eq(inputStream), any(TypeReference.class))).thenThrow(IOException.class);
+    when(objectMapper.readValue(eq(inputStream), any(TypeReference.class))).thenThrow(JacksonException.class);
 
     assertThatThrownBy(() -> permissionOverrider.getPermissionMappings())
       .isInstanceOf(ServiceException.class)

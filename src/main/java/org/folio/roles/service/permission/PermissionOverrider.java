@@ -15,6 +15,7 @@ import org.folio.roles.exception.ServiceException;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
@@ -41,7 +42,7 @@ public class PermissionOverrider {
         log.warn("Source not found: {}", sourcePath);
         throw new ServiceException("Source is empty: " + sourcePath);
       }
-    } catch (IOException e) {
+    } catch (IOException | JacksonException e) {
       log.warn("Failed to load resource: {}", sourcePath, e);
       throw new ServiceException("Failed to load resource: " + sourcePath, e);
     }

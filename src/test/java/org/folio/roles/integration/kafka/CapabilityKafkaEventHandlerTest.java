@@ -133,7 +133,7 @@ class CapabilityKafkaEventHandlerTest {
 
   @Test
   void handleEvent_positive_resourcesAddedWithSameModuleId() {
-    var oldEvent = capabilityEvent(MODULE_ID, null);
+    var oldEvent = capabilityEvent(MODULE_ID, emptyList());
     var newEvent = capabilityEvent(MODULE_ID, List.of(folioResource()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
@@ -157,7 +157,7 @@ class CapabilityKafkaEventHandlerTest {
   @Test
   void handleEvent_positive_resourcesDeletedWithSameModuleId() {
     var oldEvent = capabilityEvent(MODULE_ID, List.of(folioResource()));
-    var newEvent = capabilityEvent(MODULE_ID, null);
+    var newEvent = capabilityEvent(MODULE_ID, emptyList());
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
@@ -179,7 +179,7 @@ class CapabilityKafkaEventHandlerTest {
 
   @Test
   void handleEvent_positive_capabilityUpdatedEventResourcesCreated() {
-    var oldEvent = capabilityEvent(MODULE_ID, null);
+    var oldEvent = capabilityEvent(MODULE_ID, emptyList());
     var newEvent = capabilityEvent(MODULE_ID_V2, List.of(folioResource()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
@@ -202,7 +202,7 @@ class CapabilityKafkaEventHandlerTest {
 
   @Test
   void handleEvent_positive_capabilityUpdatedEventResourcesDeleted() {
-    var newEvent = capabilityEvent(MODULE_ID_V2, null);
+    var newEvent = capabilityEvent(MODULE_ID_V2, emptyList());
     var oldEvent = capabilityEvent(MODULE_ID, List.of(folioResource()));
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
