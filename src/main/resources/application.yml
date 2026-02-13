@@ -49,10 +49,9 @@ folio:
     enabled: true
   logging:
     request:
-      enabled: true
-      level: HEADERS
+      enabled: false
     exchange:
-      enabled: true
+      enabled: false
       level: BASIC
   jpa:
     repository:
