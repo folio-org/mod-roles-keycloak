@@ -31,15 +31,6 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
-coffee-boots:
-  cache:
-    spec:
-      keycloak-configuration: maximumSize=100,expireAfterWrite=${KC_CONFIG_TTL:3600s}
-      keycloak-users: maximumSize=250,expireAfterWrite=${KC_USER_ID_CACHE_TTL:180s}
-      keycloak-user-id: maximumSize=250,expireAfterWrite=${KC_USER_ID_CACHE_TTL:180s}
-      authorization-client-cache: maximumSize=100,expireAfterWrite=${KC_AUTHORIZATION_CLIENTS_CACHE_TTL:3600s}
-      user-permissions: maximumSize=${USER_PERMISSIONS_CACHE_MAX_SIZE:1000},expireAfterWrite=${USER_PERMISSIONS_CACHE_TTL:30s}
-
 server:
   port: 8081
 
@@ -124,3 +115,19 @@ application:
 cache:
   permission-mappings:
     ttl: ${CACHE_PERMISSION_MAPPINGS_TTL:60}
+    max-size: 1
+  keycloak-configuration:
+    ttl: ${KC_CONFIG_TTL:3600}
+    max-size: 100
+  keycloak-users:
+    ttl: ${KC_USER_ID_CACHE_TTL:180}
+    max-size: 250
+  keycloak-user-id:
+    ttl: ${KC_USER_ID_CACHE_TTL:180}
+    max-size: 250
+  authorization-client:
+    ttl: ${KC_AUTHORIZATION_CLIENTS_CACHE_TTL:3600}
+    max-size: 100
+  user-permissions:
+    ttl: ${USER_PERMISSIONS_CACHE_TTL:30}
+    max-size: ${USER_PERMISSIONS_CACHE_MAX_SIZE:1000}
