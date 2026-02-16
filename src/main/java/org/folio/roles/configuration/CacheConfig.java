@@ -13,40 +13,40 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CacheConfig {
 
-  @Value("${cache.permission-mappings.ttl:60}")
-  private int permissionMappingsTtl;
+  @Value("${cache.permission-mappings.ttl}")
+  private Duration permissionMappingsTtl;
 
-  @Value("${cache.permission-mappings.max-size:1}")
+  @Value("${cache.permission-mappings.max-size}")
   private int permissionMappingsMaxSize;
 
-  @Value("${cache.keycloak-configuration.ttl:3600}")
-  private int keycloakConfigTtl;
+  @Value("${cache.keycloak-configuration.ttl}")
+  private Duration keycloakConfigTtl;
 
-  @Value("${cache.keycloak-configuration.max-size:100}")
+  @Value("${cache.keycloak-configuration.max-size}")
   private int keycloakConfigMaxSize;
 
-  @Value("${cache.keycloak-users.ttl:180}")
-  private int keycloakUsersTtl;
+  @Value("${cache.keycloak-users.ttl}")
+  private Duration keycloakUsersTtl;
 
-  @Value("${cache.keycloak-users.max-size:250}")
+  @Value("${cache.keycloak-users.max-size}")
   private int keycloakUsersMaxSize;
 
-  @Value("${cache.keycloak-user-id.ttl:180}")
-  private int keycloakUserIdTtl;
+  @Value("${cache.keycloak-user-id.ttl}")
+  private Duration keycloakUserIdTtl;
 
-  @Value("${cache.keycloak-user-id.max-size:250}")
+  @Value("${cache.keycloak-user-id.max-size}")
   private int keycloakUserIdMaxSize;
 
-  @Value("${cache.authorization-client.ttl:3600}")
-  private int authorizationClientTtl;
+  @Value("${cache.authorization-client.ttl}")
+  private Duration authorizationClientTtl;
 
-  @Value("${cache.authorization-client.max-size:100}")
+  @Value("${cache.authorization-client.max-size}")
   private int authorizationClientMaxSize;
 
-  @Value("${cache.user-permissions.ttl:30}")
-  private int userPermissionsTtl;
+  @Value("${cache.user-permissions.ttl}")
+  private Duration userPermissionsTtl;
 
-  @Value("${cache.user-permissions.max-size:1000}")
+  @Value("${cache.user-permissions.max-size}")
   private int userPermissionsMaxSize;
 
   @Bean
@@ -66,12 +66,12 @@ public class CacheConfig {
     return cacheManager;
   }
 
-  private CaffeineCache buildCache(String name, int maxSize, int ttlSeconds) {
+  private CaffeineCache buildCache(String name, int maxSize, Duration ttl) {
     return new CaffeineCache(
       name,
       Caffeine.newBuilder()
         .maximumSize(maxSize)
-        .expireAfterWrite(Duration.ofSeconds(ttlSeconds))
+        .expireAfterWrite(ttl)
         .build()
     );
   }

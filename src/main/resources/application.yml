@@ -114,20 +114,20 @@ application:
       source-path: ${FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH:https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json}
 cache:
   permission-mappings:
-    ttl: ${CACHE_PERMISSION_MAPPINGS_TTL:60}
+    ttl: ${CACHE_PERMISSION_MAPPINGS_TTL:60s}
     max-size: 1
   keycloak-configuration:
-    ttl: ${KC_CONFIG_TTL:3600}
+    ttl: ${KC_CONFIG_TTL:3600s}
     max-size: 100
   keycloak-users:
-    ttl: ${KC_USER_ID_CACHE_TTL:180}
+    ttl: ${KC_USER_ID_CACHE_TTL:180s}
     max-size: 250
   keycloak-user-id:
-    ttl: ${KC_USER_ID_CACHE_TTL:180}
+    ttl: ${KC_USER_ID_CACHE_TTL:180s}
     max-size: 250
   authorization-client:
-    ttl: ${KC_AUTHORIZATION_CLIENTS_CACHE_TTL:3600}
+    ttl: ${KC_AUTHORIZATION_CLIENTS_CACHE_TTL:3600s}
     max-size: 100
   user-permissions:
-    ttl: ${USER_PERMISSIONS_CACHE_TTL:30}
+    ttl: ${USER_PERMISSIONS_CACHE_TTL:30s}
     max-size: ${USER_PERMISSIONS_CACHE_MAX_SIZE:1000}
