@@ -28,7 +28,7 @@ public class LoadableRoleAssignmentRetrier {
     delayString = "#{@loadableRoleRetryProperties.backoff.delayMs}"
   )
   @Transactional
-  void retryAssignCapabilitiesAndSetsForPermissions(UUID loadableRoleId, String loadableRoleName)  {
+  public void retryAssignCapabilitiesAndSetsForPermissions(UUID loadableRoleId, String loadableRoleName)  {
     log.info("Retrying assignment of capabilities and capability sets for loadable role: roleName = {}",
       loadableRoleName);
     if (!loadablePermissionRepository.existsByRoleId(loadableRoleId)) {
