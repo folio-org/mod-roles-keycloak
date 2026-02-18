@@ -61,8 +61,6 @@ import tools.jackson.databind.ObjectMapper;
 class PolicyIT extends BaseIntegrationTest {
 
   private static final Policy USER_POLICY = buildUserPolicy();
-  private static final Policy TIME_POLICY = buildTimePolicy();
-  private static final Policy ROLE_POLICY = buildRolePolicy();
   private static final String NOT_EXISTED_POLICY_ID = "1e222e11-e9ca-401c-ad8e-0d121a11111e";
 
   @Resource private ObjectMapper objectMapper;
