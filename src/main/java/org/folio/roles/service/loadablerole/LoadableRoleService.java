@@ -47,6 +47,7 @@ public class LoadableRoleService {
   private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
   private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
+  private final LoadableRoleAssignmentRetrier loadableRoleAssignmentRetrier;
 
   @Transactional(readOnly = true)
   public LoadableRoles find(String query, Integer limit, Integer offset) {
@@ -96,12 +97,20 @@ public class LoadableRoleService {
   public LoadableRole upsertDefaultLoadableRole(LoadableRole loadableRole) {
     prepareLoadableRole(loadableRole);
     var incoming = mapper.toRoleEntity(loadableRole);
-    var existing = findAllDefaultRolesNotLoadedFromFiles();
-
+    var existing = repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
+      .map(List::of)
+      .orElse(List.of());
     mergeInBatch(List.of(incoming), existing, comparatorById(), this::createAll, this::updateAll, nothing());
 
     var saved = repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
       .orElseThrow(() -> new ServiceException("Loadable role not found in DB"));
+
+    var isPermissionNotAssignedExist = toStream(saved.getPermissions())
+      .anyMatch(per -> per.getCapabilityId() == null);
+    if (isPermissionNotAssignedExist) {
+      loadableRoleAssignmentRetrier.retryAssignCapabilitiesAndSetsForPermissions(saved.getId(), saved.getName());
+    }
+
     return mapper.toRole(saved);
   }
 
@@ -190,12 +199,6 @@ public class LoadableRoleService {
     }
   }
 
-  private List<LoadableRoleEntity> findAllDefaultRolesNotLoadedFromFiles() {
-    try (var defaultRoles = repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, false)) {
-      return defaultRoles.toList();
-    }
-  }
-
   private Collection<LoadableRoleEntity> createAll(Collection<LoadableRoleEntity> entities) {
     if (isEmpty(entities)) {
       log.debug("No loadable roles to create");
@@ -218,7 +221,7 @@ public class LoadableRoleService {
         assignmentHelper.assignCapabilitiesAndSetsForPermissions(entity.getPermissions());
       }
 
-      var result = repository.saveAllAndFlush(entities);
+      var result = repository.saveAll(entities);
       log.info("Loadable roles created: {}", () -> toIdNames(result));
 
       return result;
@@ -247,7 +250,7 @@ public class LoadableRoleService {
       }
     }
 
-    repository.saveAllAndFlush(changedRoles);
+    repository.saveAll(changedRoles);
     log.info("Loadable roles updated: {}", () -> toIdNames(changedRoles));
   }
 

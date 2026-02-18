@@ -154,7 +154,7 @@ public class KeycloakAuthorizationService {
     }
 
     if (statusInfo.toEnum() == CONFLICT) {
-      log.info("Permission already exists in Keycloak [name: {}]", permission.getName());
+      log.debug("Permission already exists in Keycloak [name: {}]", permission.getName());
       return;
     }
 
