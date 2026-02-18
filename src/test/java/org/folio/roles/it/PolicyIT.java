@@ -129,23 +129,27 @@ class PolicyIT extends BaseIntegrationTest {
   @KeycloakRealms("classpath:json/keycloak/test-realm-policies-empty.json")
   @Sql("classpath:/sql/populate-roles-for-policies-batch.sql")
   void createPolicies_positive() throws Exception {
+    var userPolicy = buildUserPolicy().id(null);
+    var rolePolicy = buildRolePolicy().id(null);
+    var timePolicy = buildTimePolicy().id(null);
     var response = mockMvc.perform(post("/policies/batch")
         .content(objectMapper.writeValueAsString(new PoliciesRequest()
-          .addPoliciesItem(USER_POLICY)
-          .addPoliciesItem(ROLE_POLICY)
-          .addPoliciesItem(TIME_POLICY)))
+          .addPoliciesItem(userPolicy)
+          .addPoliciesItem(rolePolicy)
+          .addPoliciesItem(timePolicy)))
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER)
         .contentType(APPLICATION_JSON))
       .andExpect(status().isCreated())
-      .andExpect(content().json(objectMapper.writeValueAsString(new Policies()
-        .addPoliciesItem(USER_POLICY)
-        .addPoliciesItem(ROLE_POLICY)
-        .addPoliciesItem(TIME_POLICY))))
+      .andExpect(jsonPath("$.policies.length()").value(3))
+      .andExpect(jsonPath("$.totalRecords").value(3))
       .andReturn();
 
     var policies = parseResponse(response, Policies.class);
+    assertEquals(3, policies.getPolicies().size());
+
     policies.getPolicies().forEach(policy -> {
+      assertNotNull(policy.getId());
       var metadata = policy.getMetadata();
       assertNotNull(metadata.getCreatedByUserId());
       assertNotNull(metadata.getCreatedDate());
@@ -232,7 +236,7 @@ class PolicyIT extends BaseIntegrationTest {
         .contentType(APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(jsonPath("$.errors[0].type", is("JpaObjectRetrievalFailureException")))
+      .andExpect(jsonPath("$.errors[0].type", is("ObjectRetrievalFailureException")))
       .andExpect(jsonPath("$.errors[0].code", is("not_found_error")));
   }
 
