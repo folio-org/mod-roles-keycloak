@@ -9,14 +9,14 @@ import org.springframework.stereotype.Component;
 @Log4j2
 @Component
 @AllArgsConstructor
-public class LoadableRoleAsyncAssignmentRetrier {
+public class LoadableRoleAsyncAssignmentRetryer {
 
-  private final LoadableRoleAssignmentRetrier retrier;
+  private final LoadableRoleAssignmentRetryer retryer;
 
   @Async("executorForLoadableRolesAssignmentRetry")
   public void retryAssignCapabilitiesAndSetsForPermissions(UUID loadableRoleId, String loadableRoleName)  {
     try {
-      retrier.retryAssignCapabilitiesAndSetsForPermissions(loadableRoleId, loadableRoleName);
+      retryer.retryAssignCapabilitiesAndSetsForPermissions(loadableRoleId, loadableRoleName);
     } catch (Exception exception) {
       log.warn("Failed to assign capabilities and "
           + "capability sets after all retry attempts: roleId = {}, roleName = {}, error = {}",

@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Log4j2
 @Component
 @AllArgsConstructor
-public class LoadableRoleAssignmentRetrier {
+public class LoadableRoleAssignmentRetryer {
 
   private final LoadablePermissionRepository loadablePermissionRepository;
   private final LoadableRoleCapabilityAssignmentHelper loadableRoleCapabilityAssignmentHelper;

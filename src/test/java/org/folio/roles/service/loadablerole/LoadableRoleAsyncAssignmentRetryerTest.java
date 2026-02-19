@@ -16,13 +16,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-class LoadableRoleAsyncAssignmentRetrierTest {
+class LoadableRoleAsyncAssignmentRetryerTest {
 
   private static final String TEST_ROLE_NAME = "test-async-role";
 
-  @InjectMocks private LoadableRoleAsyncAssignmentRetrier asyncRetrier;
+  @InjectMocks private LoadableRoleAsyncAssignmentRetryer asyncRetryer;
 
-  @Mock private LoadableRoleAssignmentRetrier retrier;
+  @Mock private LoadableRoleAssignmentRetryer retryer;
 
   @AfterEach
   void tearDown() {
@@ -33,11 +33,11 @@ class LoadableRoleAsyncAssignmentRetrierTest {
   void retryAssignCapabilitiesAndSetsForPermissions_positive_delegatesToRetrier() {
     var roleId = randomUUID();
 
-    doNothing().when(retrier).retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
+    doNothing().when(retryer).retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    asyncRetrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
+    asyncRetryer.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    verify(retrier).retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
+    verify(retryer).retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
   }
 
   @Test
@@ -45,11 +45,11 @@ class LoadableRoleAsyncAssignmentRetrierTest {
     var roleId = randomUUID();
     var expectedException = new RuntimeException("Assignment failed");
 
-    doThrow(expectedException).when(retrier).retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
+    doThrow(expectedException).when(retryer).retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    asyncRetrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
+    asyncRetryer.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    verify(retrier).retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
+    verify(retryer).retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
   }
 
   @Test
@@ -58,12 +58,12 @@ class LoadableRoleAsyncAssignmentRetrierTest {
     var unassignedPermissionsException =
       new RuntimeException("Unassigned permissions still exist for loadable role: " + TEST_ROLE_NAME);
 
-    doThrow(unassignedPermissionsException).when(retrier)
+    doThrow(unassignedPermissionsException).when(retryer)
       .retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    asyncRetrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
+    asyncRetryer.retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
 
-    verify(retrier).retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
+    verify(retryer).retryAssignCapabilitiesAndSetsForPermissions(roleId, TEST_ROLE_NAME);
   }
 
   @Test
@@ -71,10 +71,10 @@ class LoadableRoleAsyncAssignmentRetrierTest {
     var roleId = randomUUID();
     String nullRoleName = null;
 
-    doNothing().when(retrier).retryAssignCapabilitiesAndSetsForPermissions(roleId, nullRoleName);
+    doNothing().when(retryer).retryAssignCapabilitiesAndSetsForPermissions(roleId, nullRoleName);
 
-    asyncRetrier.retryAssignCapabilitiesAndSetsForPermissions(roleId, nullRoleName);
+    asyncRetryer.retryAssignCapabilitiesAndSetsForPermissions(roleId, nullRoleName);
 
-    verify(retrier).retryAssignCapabilitiesAndSetsForPermissions(roleId, nullRoleName);
+    verify(retryer).retryAssignCapabilitiesAndSetsForPermissions(roleId, nullRoleName);
   }
 }

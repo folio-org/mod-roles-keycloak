@@ -48,7 +48,7 @@ class LoadableRoleServiceTest {
   @Mock private LoadableRoleMapper mapper;
   @Mock private KeycloakRoleService keycloakService;
   @Mock private LoadableRoleCapabilityAssignmentHelper capabilityAssignmentHelper;
-  @Mock private LoadableRoleAsyncAssignmentRetrier loadableRoleAsyncAssignmentRetrier;
+  @Mock private LoadableRoleAsyncAssignmentRetryer loadableRoleAsyncAssignmentRetryer;
 
   @AfterEach
   void tearDown() {
@@ -212,7 +212,7 @@ class LoadableRoleServiceTest {
       var actual = service.upsertDefaultLoadableRole(role);
 
       assertThat(actual).isEqualTo(role);
-      verify(loadableRoleAsyncAssignmentRetrier, never()).retryAssignCapabilitiesAndSetsForPermissions(
+      verify(loadableRoleAsyncAssignmentRetryer, never()).retryAssignCapabilitiesAndSetsForPermissions(
         any(), any());
     }
 
@@ -236,14 +236,14 @@ class LoadableRoleServiceTest {
       when(capabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(any()))
         .thenReturn(roleEntity.getPermissions());
       when(repository.saveAll(anyList())).thenReturn(List.of(roleEntity));
-      doNothing().when(loadableRoleAsyncAssignmentRetrier)
+      doNothing().when(loadableRoleAsyncAssignmentRetryer)
         .retryAssignCapabilitiesAndSetsForPermissions(roleEntity.getId(), roleEntity.getName());
       when(mapper.toRole(roleEntity)).thenReturn(role);
 
       var actual = service.upsertDefaultLoadableRole(role);
 
       assertThat(actual).isEqualTo(role);
-      verify(loadableRoleAsyncAssignmentRetrier).retryAssignCapabilitiesAndSetsForPermissions(
+      verify(loadableRoleAsyncAssignmentRetryer).retryAssignCapabilitiesAndSetsForPermissions(
         roleEntity.getId(), roleEntity.getName());
     }
 
