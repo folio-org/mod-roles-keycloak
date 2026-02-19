@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 
-@HttpExchange(url = "perms", contentType = MediaType.APPLICATION_JSON_VALUE)
+@HttpExchange(url = "perms")
 public interface PermissionsClient {
 
   @GetExchange("/users/{userId}/permissions")

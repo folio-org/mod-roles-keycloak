@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class KeycloakMethodRetryPredicateTest {
 
   @Nested
-  @DisplayName("shouldRetry with Method parameter")
+  @DisplayName("shouldRetry")
   class ShouldRetry {
 
     @Test
