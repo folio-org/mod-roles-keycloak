@@ -6,10 +6,10 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZE
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.hibernate.exception.SQLGrammarException;
@@ -83,7 +83,7 @@ public class KafkaConfiguration {
       .map(Throwable::getCause)
       .filter(SQLGrammarException.class::isInstance)
       .map(Throwable::getCause)
-      .filter(throwable -> StringUtils.equals(throwable.getClass().getSimpleName(), "PSQLException"))
+      .filter(throwable -> Objects.equals(throwable.getClass().getSimpleName(), "PSQLException"))
       .map(Throwable::getMessage)
       .filter(msg -> msg.startsWith("ERROR:") && msg.contains("does not exist"))
       .map(msg -> msg.replaceAll("\\s+", " "));

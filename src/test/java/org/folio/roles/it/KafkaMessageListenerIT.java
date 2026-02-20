@@ -452,21 +452,6 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .description(capabilityName + " - description");
   }
 
-  private static CapabilitySet fooItemCapabilitySet(CapabilityAction action) {
-    return fooItemCapabilitySet(action, APPLICATION_ID);
-  }
-
-  private static CapabilitySet fooItemCapabilitySet(CapabilityAction action, String applicationId) {
-    var capabilityName = getCapabilityName(FOO_RESOURCE, action);
-    return new CapabilitySet()
-      .name(capabilityName)
-      .action(action)
-      .applicationId(applicationId)
-      .resource(FOO_RESOURCE)
-      .type(DATA)
-      .description(capabilityName + " - description");
-  }
-
   private static CapabilitySet fooItemCapabilitySetWithCapabilities(CapabilityAction action,
     String applicationId, List<UUID> capabilityIds) {
     var capabilityName = getCapabilityName(FOO_RESOURCE, action);

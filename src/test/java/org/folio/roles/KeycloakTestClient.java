@@ -83,7 +83,7 @@ public class KeycloakTestClient {
 
     assertThat(jsonNode.isArray()).isTrue();
     return StreamSupport.stream(jsonNode.spliterator(), false)
-      .map(permission -> permission.path("name").asText())
+      .map(permission -> permission.path("name").asString())
       .filter(Objects::nonNull)
       .collect(toList());
   }
