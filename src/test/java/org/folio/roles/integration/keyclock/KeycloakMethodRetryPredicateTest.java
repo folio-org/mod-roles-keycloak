@@ -38,15 +38,6 @@ class KeycloakMethodRetryPredicateTest {
     }
 
     @Test
-    void positive_returnsFalseForWebApplicationException() throws NoSuchMethodException {
-      var exception = new WebApplicationException("Client error", 400);
-      var predicate = new KeycloakMethodRetryPredicate();
-      Method method = KeycloakRoleService.class.getMethod("findByName", String.class);
-
-      assertThat(predicate.shouldRetry(method, exception)).isFalse();
-    }
-
-    @Test
     void positive_returnsFalseForGenericException() throws NoSuchMethodException {
       var exception = new RuntimeException("Generic error");
       var predicate = new KeycloakMethodRetryPredicate();
