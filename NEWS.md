@@ -24,6 +24,7 @@
 * Implement Kafka listener suspension during tenant initialization (MODROLESKC-355)
 * (Cypress/Snapshot envs) Missing permissions for system user roles (MODROLESKC-347)
 * Use GitHub Workflows for Maven (MODROLESKC-366)
+* Upgrade module to SpringBoot4.0 and Spring7.0 (MODROLESKC-335)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)
