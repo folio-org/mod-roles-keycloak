@@ -380,16 +380,12 @@ class KeycloakAuthorizationServiceTest {
       var path1 = "/foo/entities";
       var path2 = "/bar/items";
 
-      // path1 resolves normally
       when(authResourcesClient.find(path1, null, null, null, null, 0, MAX_VALUE))
         .thenReturn(List.of(resourceRepresentation()));
-      // path2 throws EntityNotFoundException (resource not registered in Keycloak)
       when(authResourcesClient.find(path2, null, null, null, null, 0, MAX_VALUE))
         .thenReturn(emptyList());
-
-      // path1 may or may not complete — stubs are lenient to avoid "unnecessary stubbing" errors
-      lenient().when(scopePermissionsClient.create(any())).thenReturn(response);
-      lenient().when(response.getStatusInfo()).thenReturn(Status.CREATED);
+      when(scopePermissionsClient.create(any())).thenReturn(response);
+      when(response.getStatusInfo()).thenReturn(Status.CREATED);
 
       var policy = rolePolicy();
       var endpoints = List.of(endpoint(path1, GET), endpoint(path2, GET));
@@ -402,9 +398,6 @@ class KeycloakAuthorizationServiceTest {
       })
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Keycloak resource is not found by static path: " + path2);
-
-      // path1 may or may not have completed before path2 failed — clear any non-deterministic
-      // invocations so verifyNoMoreInteractions in tearDown does not flag them
       clearInvocations(response, scopePermissionsClient, jsonHelper);
     }
 

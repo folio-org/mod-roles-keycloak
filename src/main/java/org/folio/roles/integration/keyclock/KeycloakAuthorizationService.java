@@ -6,6 +6,7 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.getRunnableWithCurrentFolioContext;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -57,7 +58,9 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    var endpointsByPath = endpoints.stream().collect(Collectors.groupingBy(Endpoint::getPath));
+    var endpointsByPath = endpoints.stream()
+      .filter(endpoint -> isNotBlank(endpoint.getPath()))
+      .collect(Collectors.groupingBy(Endpoint::getPath));
 
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var futures = endpointsByPath.entrySet().stream()
@@ -111,9 +114,8 @@ public class KeycloakAuthorizationService {
 
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var futures = endpoints.stream()
+        .filter(endpoint -> isNotBlank(endpoint.getPath()))
         .map(endpoint -> CompletableFuture.runAsync(
-          // KC proxy objects are RESTEasy stateless HTTP proxies: safe to call concurrently.
-          // FolioExecutionContext is propagated to each virtual thread via getRunnableWithCurrentFolioContext().
           getRunnableWithCurrentFolioContext(
             () -> removeKeycloakPermission(getAuthorizationClient().permissions().scope(), endpoint, nameGenerator)),
           executor))
