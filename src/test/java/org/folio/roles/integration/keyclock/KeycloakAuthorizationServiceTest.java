@@ -2,6 +2,7 @@ package org.folio.roles.integration.keyclock;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
@@ -33,7 +34,11 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.support.TestUtils;
+import org.folio.roles.support.TestUtils.TestModRolesKeycloakModuleMetadata;
 import org.folio.roles.utils.JsonHelper;
+import org.folio.spring.DefaultFolioExecutionContext;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +86,8 @@ class KeycloakAuthorizationServiceTest {
   @Mock private KeycloakAuthorizationClientProvider authResourceProvider;
 
   @Spy private final JsonHelper jsonHelper = new JsonHelper(OBJECT_MAPPER);
+  @Spy private final FolioExecutionContext folioExecutionContext =
+    new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
   @Captor private ArgumentCaptor<ScopePermissionRepresentation> scopePermissionCaptor;
 
   @BeforeEach
@@ -90,6 +97,7 @@ class KeycloakAuthorizationServiceTest {
 
   @AfterEach
   void tearDown() {
+    clearInvocations(folioExecutionContext);
     TestUtils.verifyNoMoreInteractions(this);
   }
 
@@ -148,7 +156,10 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
 
-      keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      }
 
       verify(response).close();
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
@@ -186,7 +197,10 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET), endpoint("/foo/entities", POST));
 
-      keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      }
 
       // resource lookup called ONCE not twice
       verify(authResourcesClient).find(path, null, null, null, null, 0, MAX_VALUE);
@@ -213,7 +227,12 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
 
-      assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      assertThatThrownBy(() -> {
+        try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+          keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+        }
+      })
         .isInstanceOf(ServiceException.class)
         .hasMessage("Error during scope-based permission creation in Keycloak. "
           + "Details: status = 500, message = Internal Server Error");
@@ -238,7 +257,12 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
 
-      assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      assertThatThrownBy(() -> {
+        try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+          keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+        }
+      })
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Keycloak resource is not found by static path: /foo/entities");
 
@@ -261,7 +285,12 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
 
-      assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      assertThatThrownBy(() -> {
+        try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+          keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+        }
+      })
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Keycloak resource is not found by static path: /foo/entities");
 
@@ -284,7 +313,10 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
 
-      keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      }
 
       verifyNoInteractions(scopePermissionsClient);
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
@@ -325,7 +357,10 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint(path1, GET), endpoint(path2, POST));
 
-      keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      }
 
       verify(authResourcesClient).find(path1, null, null, null, null, 0, MAX_VALUE);
       verify(authResourcesClient).find(path2, null, null, null, null, 0, MAX_VALUE);
@@ -359,7 +394,12 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint(path1, GET), endpoint(path2, GET));
 
-      assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      assertThatThrownBy(() -> {
+        try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+          keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+        }
+      })
         .isInstanceOf(EntityNotFoundException.class)
         .hasMessage("Keycloak resource is not found by static path: " + path2);
 
@@ -407,7 +447,10 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
 
-      keycloakAuthService.deletePermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        keycloakAuthService.deletePermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      }
 
       verify(scopePermissionClient).remove();
     }
@@ -422,7 +465,10 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
 
-      keycloakAuthService.deletePermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        keycloakAuthService.deletePermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      }
 
       verifyNoInteractions(scopePermissionClient);
     }
@@ -469,7 +515,10 @@ class KeycloakAuthorizationServiceTest {
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET), endpoint("/bar/items", GET));
 
-      keycloakAuthService.deletePermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        keycloakAuthService.deletePermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+      }
 
       verify(scopePermissionClient).remove();
       verify(scopePermissionClient2).remove();

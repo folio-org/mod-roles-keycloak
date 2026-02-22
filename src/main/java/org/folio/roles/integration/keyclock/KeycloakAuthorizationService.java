@@ -6,6 +6,7 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.getRunnableWithCurrentFolioContext;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -61,7 +62,8 @@ public class KeycloakAuthorizationService {
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var futures = endpointsByPath.entrySet().stream()
         .map(entry -> CompletableFuture.runAsync(
-          () -> createPermissionsForPath(policy, entry.getKey(), entry.getValue(), nameGenerator),
+          getRunnableWithCurrentFolioContext(
+            () -> createPermissionsForPath(policy, entry.getKey(), entry.getValue(), nameGenerator)),
           executor))
         .toList();
       joinAll(futures);
@@ -71,7 +73,7 @@ public class KeycloakAuthorizationService {
   private void createPermissionsForPath(Policy policy, String path, List<Endpoint> endpointsForPath,
     Function<Endpoint, String> nameGenerator) {
     // KC proxy objects are RESTEasy stateless HTTP proxies: safe to call concurrently.
-    // FolioExecutionContext (tenantId) is inherited via InheritableThreadLocal from the parent thread.
+    // FolioExecutionContext is propagated to each virtual thread via getRunnableWithCurrentFolioContext().
     var scopePermissionsClient = getAuthorizationClient().permissions().scope();
     var resource = getAuthResourceByStaticPath(path);
     for (var endpoint : endpointsForPath) {
@@ -111,8 +113,9 @@ public class KeycloakAuthorizationService {
       var futures = endpoints.stream()
         .map(endpoint -> CompletableFuture.runAsync(
           // KC proxy objects are RESTEasy stateless HTTP proxies: safe to call concurrently.
-          // FolioExecutionContext (tenantId) is inherited via InheritableThreadLocal from the parent thread.
-          () -> removeKeycloakPermission(getAuthorizationClient().permissions().scope(), endpoint, nameGenerator),
+          // FolioExecutionContext is propagated to each virtual thread via getRunnableWithCurrentFolioContext().
+          getRunnableWithCurrentFolioContext(
+            () -> removeKeycloakPermission(getAuthorizationClient().permissions().scope(), endpoint, nameGenerator)),
           executor))
         .toList();
       joinAll(futures);
