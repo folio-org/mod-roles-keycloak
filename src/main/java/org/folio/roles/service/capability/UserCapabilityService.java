@@ -99,7 +99,6 @@ public class UserCapabilityService {
     keycloakUserService.getKeycloakUserByUserId(userId);
     var assignedUserCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
     var assignedCapabilityIds = getCapabilityIds(assignedUserCapabilityEntities);
-    assignedCapabilityIds.removeAll(capabilityIds);
     UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "user-capability")
       .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(userId, newIds, assignedCapabilityIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
