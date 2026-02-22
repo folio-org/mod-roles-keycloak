@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -53,25 +56,37 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    var scopePermissionsClient = getAuthorizationClient().permissions().scope();
     var endpointsByPath = endpoints.stream().collect(Collectors.groupingBy(Endpoint::getPath));
 
-    for (var entry : endpointsByPath.entrySet()) {
-      var resource = getAuthResourceByStaticPath(entry.getKey());
-      for (var endpoint : entry.getValue()) {
-        var scope = getScopeByMethod(resource, endpoint.getMethod());
-        if (scope.isEmpty()) {
-          log.warn(
-            "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
-            endpoint.getMethod(), endpoint.getPath());
-          continue;
-        }
-        var policyName = nameGenerator.apply(endpoint);
-        var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policy.getId());
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      var futures = endpointsByPath.entrySet().stream()
+        .map(entry -> CompletableFuture.runAsync(
+          () -> createPermissionsForPath(policy, entry.getKey(), entry.getValue(), nameGenerator),
+          executor))
+        .toList();
+      joinAll(futures);
+    }
+  }
 
-        try (var response = scopePermissionsClient.create(permission)) {
-          processKeycloakResponse(permission, response);
-        }
+  private void createPermissionsForPath(Policy policy, String path, List<Endpoint> endpointsForPath,
+    Function<Endpoint, String> nameGenerator) {
+    // KC proxy objects are RESTEasy stateless HTTP proxies: safe to call concurrently.
+    // FolioExecutionContext (tenantId) is inherited via InheritableThreadLocal from the parent thread.
+    var scopePermissionsClient = getAuthorizationClient().permissions().scope();
+    var resource = getAuthResourceByStaticPath(path);
+    for (var endpoint : endpointsForPath) {
+      var scope = getScopeByMethod(resource, endpoint.getMethod());
+      if (scope.isEmpty()) {
+        log.warn(
+          "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
+          endpoint.getMethod(), endpoint.getPath());
+        continue;
+      }
+      var policyName = nameGenerator.apply(endpoint);
+      var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policy.getId());
+
+      try (var response = scopePermissionsClient.create(permission)) {
+        processKeycloakResponse(permission, response);
       }
     }
   }
@@ -167,5 +182,17 @@ public class KeycloakAuthorizationService {
       "Error during scope-based permission creation in Keycloak. Details: status = %s, message = %s",
       statusInfo.getStatusCode(), statusInfo.getReasonPhrase()),
       "permission", permission.getName());
+  }
+
+  private static void joinAll(List<CompletableFuture<Void>> futures) {
+    try {
+      CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+    } catch (CompletionException ex) {
+      var cause = ex.getCause();
+      if (cause instanceof RuntimeException runtimeException) {
+        throw runtimeException;
+      }
+      throw ex;
+    }
   }
 }

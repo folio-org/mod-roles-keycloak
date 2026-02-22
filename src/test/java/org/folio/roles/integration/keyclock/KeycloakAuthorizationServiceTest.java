@@ -11,6 +11,8 @@ import static org.folio.roles.support.PolicyUtils.POLICY_ID;
 import static org.folio.roles.support.PolicyUtils.rolePolicy;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -284,6 +286,84 @@ class KeycloakAuthorizationServiceTest {
 
       verifyNoInteractions(scopePermissionsClient);
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
+    }
+
+    @Test
+    void positive_twoEndpointsDifferentPaths_bothPermissionsCreated() {
+      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authorizationClient.resources()).thenReturn(authResourcesClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
+
+      var path1 = "/foo/entities";
+      var resource1 = new ResourceRepresentation();
+      resource1.setId(RESOURCE_ID);
+      resource1.setName(path1);
+      var scope1 = new ScopeRepresentation();
+      scope1.setId(SCOPE_ID);
+      scope1.setName("GET");
+      resource1.setScopes(Set.of(scope1));
+      when(authResourcesClient.find(path1, null, null, null, null, 0, MAX_VALUE))
+        .thenReturn(List.of(resource1));
+
+      var path2 = "/bar/items";
+      var resource2 = new ResourceRepresentation();
+      resource2.setId(UUID.randomUUID().toString());
+      resource2.setName(path2);
+      var scope2 = new ScopeRepresentation();
+      scope2.setId(SCOPE_ID);
+      scope2.setName("POST");
+      resource2.setScopes(Set.of(scope2));
+      when(authResourcesClient.find(path2, null, null, null, null, 0, MAX_VALUE))
+        .thenReturn(List.of(resource2));
+
+      when(response.getStatusInfo()).thenReturn(Status.CREATED);
+      when(scopePermissionsClient.create(any())).thenReturn(response);
+
+      var policy = rolePolicy();
+      var endpoints = List.of(endpoint(path1, GET), endpoint(path2, POST));
+
+      keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+
+      verify(authResourcesClient).find(path1, null, null, null, null, 0, MAX_VALUE);
+      verify(authResourcesClient).find(path2, null, null, null, null, 0, MAX_VALUE);
+      verify(scopePermissionsClient, times(2)).create(any());
+      verify(response, times(2)).close();
+      verify(jsonHelper).asJsonStringSafe(resource1);
+      verify(jsonHelper).asJsonStringSafe(resource2);
+    }
+
+    @Test
+    void negative_resourceNotFound_exceptionPropagatedThroughJoinAll() {
+      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authorizationClient.resources()).thenReturn(authResourcesClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
+
+      var path1 = "/foo/entities";
+      var path2 = "/bar/items";
+
+      // path1 resolves normally
+      when(authResourcesClient.find(path1, null, null, null, null, 0, MAX_VALUE))
+        .thenReturn(List.of(resourceRepresentation()));
+      // path2 throws EntityNotFoundException (resource not registered in Keycloak)
+      when(authResourcesClient.find(path2, null, null, null, null, 0, MAX_VALUE))
+        .thenReturn(emptyList());
+
+      // path1 may or may not complete — stubs are lenient to avoid "unnecessary stubbing" errors
+      lenient().when(scopePermissionsClient.create(any())).thenReturn(response);
+      lenient().when(response.getStatusInfo()).thenReturn(Status.CREATED);
+
+      var policy = rolePolicy();
+      var endpoints = List.of(endpoint(path1, GET), endpoint(path2, GET));
+
+      assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+        .isInstanceOf(EntityNotFoundException.class)
+        .hasMessage("Keycloak resource is not found by static path: " + path2);
+
+      // path1 may or may not have completed before path2 failed — clear any non-deterministic
+      // invocations so verifyNoMoreInteractions in tearDown does not flag them
+      clearInvocations(response, scopePermissionsClient, jsonHelper);
     }
 
     @Test
