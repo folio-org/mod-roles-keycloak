@@ -107,9 +107,15 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    var scopePermissionsClient = getAuthorizationClient().permissions().scope();
-    for (var endpoint : endpoints) {
-      removeKeycloakPermission(scopePermissionsClient, endpoint, nameGenerator);
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      var futures = endpoints.stream()
+        .map(endpoint -> CompletableFuture.runAsync(
+          // KC proxy objects are RESTEasy stateless HTTP proxies: safe to call concurrently.
+          // FolioExecutionContext (tenantId) is inherited via InheritableThreadLocal from the parent thread.
+          () -> removeKeycloakPermission(getAuthorizationClient().permissions().scope(), endpoint, nameGenerator),
+          executor))
+        .toList();
+      joinAll(futures);
     }
   }
 

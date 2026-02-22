@@ -13,9 +13,11 @@ import static org.folio.test.TestUtils.OBJECT_MAPPER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -446,6 +448,33 @@ class KeycloakAuthorizationServiceTest {
       verifyNoInteractions(authResourceProvider);
       verify(jsonHelper).asJsonString(rolePolicy);
       verify(jsonHelper).asJsonString(endpoints);
+    }
+
+    @Test
+    void positive_twoEndpoints_bothDeleted() {
+      var scopePermissionClient2 = mock(ScopePermissionResource.class);
+      var scopePermission2Id = UUID.randomUUID().toString();
+      var scopePermission2 = new ScopePermissionRepresentation();
+      scopePermission2.setId(scopePermission2Id);
+      scopePermission2.setName("GET access to /bar/items");
+
+      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
+      when(scopePermissionsClient.findByName("GET access to /foo/entities")).thenReturn(scopePermission());
+      when(scopePermissionsClient.findByName("GET access to /bar/items")).thenReturn(scopePermission2);
+      when(scopePermissionsClient.findById(SCOPE_PERMISSION_ID)).thenReturn(scopePermissionClient);
+      when(scopePermissionsClient.findById(scopePermission2Id)).thenReturn(scopePermissionClient2);
+
+      var policy = rolePolicy();
+      var endpoints = List.of(endpoint("/foo/entities", GET), endpoint("/bar/items", GET));
+
+      keycloakAuthService.deletePermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+
+      verify(scopePermissionClient).remove();
+      verify(scopePermissionClient2).remove();
+      verify(authPermissionsClient, times(2)).scope();
+      verifyNoMoreInteractions(scopePermissionClient2);
     }
   }
 }
