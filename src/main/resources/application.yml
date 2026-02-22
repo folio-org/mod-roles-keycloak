@@ -1,6 +1,9 @@
 spring:
   application:
     name: mod-roles-keycloak
+  threads:
+    virtual:
+      enabled: true
   jackson:
     default-property-inclusion: non_null
     deserialization:
