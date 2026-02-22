@@ -5,10 +5,13 @@ import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
+import static org.folio.roles.domain.dto.HttpMethod.POST;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.PolicyUtils.POLICY_ID;
 import static org.folio.roles.support.PolicyUtils.rolePolicy;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -149,6 +152,44 @@ class KeycloakAuthorizationServiceTest {
         .usingRecursiveComparison()
         .ignoringFields("id")
         .isEqualTo(scopePermission());
+    }
+
+    @Test
+    void positive_twoEndpointsSamePath_singleResourceLookup() {
+      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authorizationClient.resources()).thenReturn(authResourcesClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
+
+      var path = "/foo/entities";
+      var resourceRepresentation = new ResourceRepresentation();
+      resourceRepresentation.setId(RESOURCE_ID);
+      resourceRepresentation.setName(path);
+      var getScope = new ScopeRepresentation();
+      getScope.setId(SCOPE_ID);
+      getScope.setName("GET");
+      var postScope = new ScopeRepresentation();
+      postScope.setId(SCOPE_ID);
+      postScope.setName("POST");
+      resourceRepresentation.setScopes(Set.of(getScope, postScope));
+
+      // Must be called exactly once even though there are two endpoints for the same path
+      when(authResourcesClient.find(path, null, null, null, null, 0, MAX_VALUE))
+        .thenReturn(List.of(resourceRepresentation));
+      when(response.getStatusInfo()).thenReturn(Status.CREATED);
+      when(scopePermissionsClient.create(any())).thenReturn(response);
+
+      var policy = rolePolicy();
+      var endpoints = List.of(endpoint("/foo/entities", GET), endpoint("/foo/entities", POST));
+
+      keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+
+      // resource lookup called ONCE not twice
+      verify(authResourcesClient).find(path, null, null, null, null, 0, MAX_VALUE);
+      // two permissions created
+      verify(scopePermissionsClient, times(2)).create(any());
+      verify(response, times(2)).close();
+      verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
     }
 
     @Test

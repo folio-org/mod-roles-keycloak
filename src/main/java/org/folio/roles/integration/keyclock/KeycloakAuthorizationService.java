@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -53,20 +54,24 @@ public class KeycloakAuthorizationService {
     }
 
     var scopePermissionsClient = getAuthorizationClient().permissions().scope();
-    for (var endpoint : endpoints) {
-      var resource = getAuthResourceByStaticPath(endpoint.getPath());
-      var scope = getScopeByMethod(resource, endpoint.getMethod());
-      if (scope.isEmpty()) {
-        log.warn(
-          "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
-          endpoint.getMethod(), endpoint.getPath());
-        continue;
-      }
-      var policyName = nameGenerator.apply(endpoint);
-      var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policy.getId());
+    var endpointsByPath = endpoints.stream().collect(Collectors.groupingBy(Endpoint::getPath));
 
-      try (var response = scopePermissionsClient.create(permission)) {
-        processKeycloakResponse(permission, response);
+    for (var entry : endpointsByPath.entrySet()) {
+      var resource = getAuthResourceByStaticPath(entry.getKey());
+      for (var endpoint : entry.getValue()) {
+        var scope = getScopeByMethod(resource, endpoint.getMethod());
+        if (scope.isEmpty()) {
+          log.warn(
+            "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
+            endpoint.getMethod(), endpoint.getPath());
+          continue;
+        }
+        var policyName = nameGenerator.apply(endpoint);
+        var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policy.getId());
+
+        try (var response = scopePermissionsClient.create(permission)) {
+          processKeycloakResponse(permission, response);
+        }
       }
     }
   }
