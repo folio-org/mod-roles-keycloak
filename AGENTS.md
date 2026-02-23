@@ -95,9 +95,11 @@ The system operates on three main abstractions:
 **Keycloak Integration** (src/main/java/org/folio/roles/integration/keyclock/):
 - Keycloak serves as the source of truth for roles and authorization policies
 - All role/policy operations are dual-written: Keycloak first, then local DB
-- Rollback mechanism: If DB write fails after Keycloak succeeds, Keycloak changes are reverted
+- Compensation mechanism: Use `KeycloakTransactionHelper` to register a compensating action that reverts Keycloak changes if the enclosing Spring transaction rolls back
 - Retry logic: Configurable via `KC_RETRY_MAX_ATTEMPTS` and `KC_RETRY_BACKOFF_DELAY_MS`
-- Key services: `KeycloakRoleService`, `KeycloakPolicyService`, `KeycloakRolesUserService`
+- Bulk Keycloak operations (create/delete scope permissions) are parallelized using Java 21 virtual threads via `Executors.newVirtualThreadPerTaskExecutor()`, with `FolioExecutionContext` propagated to preserve tenant isolation
+- Blank endpoint paths are automatically filtered out before Keycloak permission registration
+- Key services: `KeycloakRoleService`, `KeycloakPolicyService`, `KeycloakRolesUserService`, `KeycloakAuthorizationService`
 
 **Kafka Event Processing** (src/main/java/org/folio/roles/integration/kafka/):
 - Listens to capability events from `mgr-tenant-entitlements` module
@@ -245,18 +247,44 @@ Always use the abstraction services in `src/main/java/org/folio/roles/integratio
 - Don't directly instantiate Keycloak clients
 - Use `@Retryable` annotation for resilience
 - Handle `KeycloakApiException` appropriately
-- Implement dual-write pattern: Keycloak first, DB second, rollback on failure
+- Implement dual-write pattern: Keycloak first, DB second, with compensation on failure
 
-Example pattern:
+**Preferred pattern — use `KeycloakTransactionHelper`** (`src/main/java/org/folio/roles/utils/KeycloakTransactionHelper.java`):
+
+When inside an active Spring transaction, `executeWithCompensation` registers a
+`TransactionSynchronization` that calls the compensation action on rollback. If called
+outside a transaction (e.g., from a test or migration helper), compensation runs eagerly
+if the DB action throws.
+
 ```java
-// 1. Create in Keycloak
+// KC action → DB action → compensating KC action registered for rollback
+return KeycloakTransactionHelper.executeWithCompensation(
+    () -> keycloakRoleService.create(tenantId, roleRequest),  // KC WRITE
+    () -> roleEntityService.create(roleRequest),              // DB WRITE (result returned)
+    () -> keycloakRoleService.deleteById(tenantId, roleId)    // compensation on rollback
+);
+```
+
+Void overload (when DB action returns nothing):
+```java
+KeycloakTransactionHelper.executeWithCompensation(
+    () -> keycloakAuthService.createPermissions(policy, endpoints),  // KC WRITE
+    () -> repository.saveAll(entities),                              // DB WRITE
+    () -> keycloakAuthService.deletePermissions(policy, endpoints)   // compensation
+);
+```
+
+**Important caveats**:
+- The compensation action fires on `STATUS_ROLLED_BACK` only, not on `STATUS_UNKNOWN` (connection reset during commit — log at ERROR and investigate manually).
+- Nesting multiple `executeWithCompensation` calls registers independent synchronizations; ensure the combined compensation sequence is safe and idempotent.
+- For simple cases where there is no enclosing transaction (e.g., `RoleService.create()`), a plain `try/catch` with an explicit compensation call is still acceptable.
+
+**Legacy pattern** (for simple cases without a Spring TX):
+```java
 var keycloakRole = keycloakRoleService.create(tenantId, roleRequest);
 try {
-  // 2. Create in local DB
-  var entity = roleEntityService.create(roleRequest);
-  return entity;
+  return roleEntityService.create(roleRequest);
 } catch (Exception e) {
-  // 3. Rollback from Keycloak
   keycloakRoleService.deleteById(tenantId, keycloakRole.getId());
   throw e;
 }
@@ -314,6 +342,7 @@ class MyIntegrationTest extends BaseIT {
 - `descriptors/ModuleDescriptor-template.json` - FOLIO module descriptor
 - `checkstyle/checkstyle-suppressions.xml` - Checkstyle rule suppressions
 - `pom.xml` - Maven build configuration
+- `docs/features.md` - Index of feature-level documentation
 
 ## Code Organization
 
@@ -332,13 +361,19 @@ src/main/java/org/folio/roles/
 │   └── permissions/     # Permission system integration
 ├── mapper/              # MapStruct entity-DTO mappers
 ├── repository/          # Spring Data JPA repositories
-└── service/             # Business logic services
-    ├── capability/      # Capability-related services
-    ├── migration/       # Migration services
-    ├── permission/      # Permission resolution services
-    ├── policy/          # Policy management services
-    ├── reference/       # Reference data loaders
-    └── role/            # Role management services
+├── service/             # Business logic services
+│   ├── capability/      # Capability-related services
+│   ├── migration/       # Migration services
+│   ├── permission/      # Permission resolution services
+│   ├── policy/          # Policy management services
+│   ├── reference/       # Reference data loaders
+│   └── role/            # Role management services
+└── utils/               # Stateless utility helpers
+    ├── KeycloakTransactionHelper  # KC/DB dual-write with TX-aware compensation
+    ├── UpdateOperationHelper      # Context-aware diff for replace-all update operations
+    ├── CapabilityUtils
+    ├── CollectionUtils
+    └── …
 ```
 
 ## Key Environment Variables for Development
