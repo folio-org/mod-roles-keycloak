@@ -68,7 +68,7 @@ public final class KeycloakTransactionHelper {
       if (dbException instanceof RuntimeException runtimeException) {
         throw runtimeException;
       }
-      throw new RuntimeException("Database action failed", dbException);
+      throw new RuntimeException("Database action failed in KeycloakTransactionHelper", dbException);
     }
   }
 
@@ -93,7 +93,14 @@ public final class KeycloakTransactionHelper {
   }
 
   private static void handleFallbackCompensation(Exception dbException, Runnable compensationAction) {
-    if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      // The DB action failed inside an active Spring-managed transaction.
+      // Spring will call afterCompletion(STATUS_ROLLED_BACK) on the registered
+      // CompensationSynchronization, which will execute the compensation action.
+      // Nothing to do here — compensation is deferred to the transaction callback.
+      log.debug("Database action failed inside an active transaction; "
+          + "Keycloak compensation is deferred to Spring rollback callback.", dbException);
+    } else {
       log.warn("Database operation failed outside of an active transaction. "
           + "Attempting to execute Keycloak compensation action.", dbException);
       try {

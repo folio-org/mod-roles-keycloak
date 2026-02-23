@@ -80,6 +80,10 @@ public class KeycloakAuthorizationService {
     // concurrently.
     // FolioExecutionContext is propagated to each virtual thread via
     // getRunnableWithCurrentFolioContext().
+    var policyId = policy.getId();
+    if (policyId == null) {
+      throw new IllegalArgumentException("Policy must have a non-null id before permissions can be created");
+    }
     var scopePermissionsClient = getAuthorizationClient().permissions().scope();
     var resource = getAuthResourceByStaticPath(path);
     for (var endpoint : endpointsForPath) {
@@ -91,8 +95,8 @@ public class KeycloakAuthorizationService {
         continue;
       }
       var policyName = nameGenerator.apply(endpoint);
-      var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policy.getId());
-
+      var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policyId);
+  
       try (var response = scopePermissionsClient.create(permission)) {
         processKeycloakResponse(permission, response);
       }
@@ -119,17 +123,9 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    // Endpoints with blank paths have no matching Keycloak resource; skip them.
-    // Note: the original sequential implementation processed blank-path endpoints
-    // (which would
-    // fail at findByName). The parallel implementation intentionally skips them,
-    // making this
-    // behaviour consistent with createPermissions.
+    // Endpoints with blank paths have no matching Keycloak resource; skip them
+    // (consistent with createPermissions which also filters blank paths).
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      // getAuthorizationClient() is called once per virtual-thread task (not per
-      // endpoint) to keep
-      // the number of client-creation calls proportional to concurrent tasks, not
-      // endpoint count.
       var futures = endpoints.stream()
           .filter(endpoint -> isNotBlank(endpoint.getPath()))
           .map(endpoint -> CompletableFuture.runAsync(
@@ -231,15 +227,16 @@ public class KeycloakAuthorizationService {
         .map(f -> {
           try {
             f.join();
-            return (Throwable) null;
+            // Unreachable: isCompletedExceptionally guarantees join() throws.
+            throw new IllegalStateException("Future was exceptionally completed but join() did not throw");
           } catch (CompletionException ex) {
             return ex.getCause() != null ? ex.getCause() : ex;
           }
         })
         .toList();
-
+    
     if (!exceptions.isEmpty()) {
-      var primary = exceptions.get(0);
+      var primary = exceptions.getFirst();
       for (int i = 1; i < exceptions.size(); i++) {
         primary.addSuppressed(exceptions.get(i));
       }

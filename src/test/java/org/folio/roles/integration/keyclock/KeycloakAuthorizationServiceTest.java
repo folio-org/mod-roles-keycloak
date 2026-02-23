@@ -387,20 +387,21 @@ class KeycloakAuthorizationServiceTest {
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-
+    
       var path1 = "/foo/entities";
       var path2 = "/bar/items";
-
+    
+      // path1 succeeds, path2 fails with resource-not-found — only one future fails
       when(authResourcesClient.find(path1, null, null, null, null, 0, MAX_VALUE))
           .thenReturn(List.of(resourceRepresentation()));
       when(authResourcesClient.find(path2, null, null, null, null, 0, MAX_VALUE))
           .thenReturn(emptyList());
       when(scopePermissionsClient.create(any())).thenReturn(response);
       when(response.getStatusInfo()).thenReturn(Status.CREATED);
-
+    
       var policy = rolePolicy();
       var endpoints = List.of(endpoint(path1, GET), endpoint(path2, GET));
-
+    
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
       assertThatThrownBy(() -> {
         try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
@@ -409,7 +410,43 @@ class KeycloakAuthorizationServiceTest {
       })
           .isInstanceOf(EntityNotFoundException.class)
           .hasMessage("Keycloak resource is not found by static path: " + path2);
-      clearInvocations(response, scopePermissionsClient, jsonHelper);
+    
+      // Verify only what was actually invoked on the successful path so no
+      // clearInvocations is needed.
+      verify(response).close();
+      verify(response).getStatusInfo();
+      verify(jsonHelper).asJsonStringSafe(any());
+    }
+    
+    @Test
+    void negative_twoResourcesNotFound_bothExceptionsCollectedViaSuppressed() {
+      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authorizationClient.resources()).thenReturn(authResourcesClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
+    
+      var path1 = "/foo/entities";
+      var path2 = "/bar/items";
+    
+      // Both paths fail with resource-not-found so joinAll must collect both.
+      when(authResourcesClient.find(path1, null, null, null, null, 0, MAX_VALUE)).thenReturn(emptyList());
+      when(authResourcesClient.find(path2, null, null, null, null, 0, MAX_VALUE)).thenReturn(emptyList());
+    
+      var policy = rolePolicy();
+      var endpoints = List.of(endpoint(path1, GET), endpoint(path2, GET));
+    
+      when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
+      assertThatThrownBy(() -> {
+        try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+          keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+        }
+      })
+          .isInstanceOf(EntityNotFoundException.class)
+          .satisfies(ex -> assertThat(ex.getSuppressed())
+              .hasSize(1)
+              .allMatch(s -> s instanceof EntityNotFoundException));
+    
+      verifyNoInteractions(scopePermissionsClient);
     }
 
     @Test

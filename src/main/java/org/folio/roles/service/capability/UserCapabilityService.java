@@ -56,7 +56,6 @@ public class UserCapabilityService {
    * @return {@link UserCapabilities} object with created user-capability
    *         relations
    */
-  @Transactional
   public PageResult<UserCapability> create(UUID userId, List<UUID> capabilityIds) {
     if (isEmpty(capabilityIds)) {
       throw new IllegalArgumentException("Capability id list is empty");
@@ -98,7 +97,6 @@ public class UserCapabilityService {
    * @param userId        - user identifier as {@link UUID} object
    * @param capabilityIds - list of capabilities that must be assigned to a user
    */
-  @Transactional
   public void update(UUID userId, List<UUID> capabilityIds) {
     keycloakUserService.getKeycloakUserByUserId(userId);
     var assignedUserCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
@@ -117,7 +115,6 @@ public class UserCapabilityService {
    * @param userId       - user identifier as {@link UUID}
    * @param capabilityId - capability identifier as {@link UUID}
    */
-  @Transactional
   public void delete(UUID userId, UUID capabilityId) {
     var assignedUserCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
     var assignedCapabilityIds = getCapabilityIds(assignedUserCapabilityEntities);
@@ -138,7 +135,6 @@ public class UserCapabilityService {
    * @throws EntityNotFoundException if user is not found by id or there is no
    *                                 assigned values
    */
-  @Transactional
   public void deleteAll(UUID userId) {
     keycloakUserService.getKeycloakUserByUserId(userId);
     var userCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
@@ -178,7 +174,7 @@ public class UserCapabilityService {
         () -> userCapabilityRepository.deleteUserCapabilities(userId, deprecatedIds),
         () -> userPermissionService.createPermissions(userId, endpoints));
 
-    log.info("Capabilities are revoked to user: userId = {}, ids = {}", userId, deprecatedIds);
+    log.info("Capabilities are revoked from user: userId = {}, ids = {}", userId, deprecatedIds);
   }
 
   private static List<UUID> getCapabilityIds(List<UserCapabilityEntity> userCapabilityEntities) {
