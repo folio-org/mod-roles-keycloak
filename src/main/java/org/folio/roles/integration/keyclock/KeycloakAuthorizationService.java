@@ -79,10 +79,6 @@ public class KeycloakAuthorizationService {
 
   private void createPermissionsForPath(Policy policy, String path, List<Endpoint> endpointsForPath,
                                         Function<Endpoint, String> nameGenerator) {
-    // KC proxy objects are RESTEasy stateless HTTP proxies: safe to call
-    // concurrently.
-    // FolioExecutionContext is propagated to each virtual thread via
-    // getRunnableWithCurrentFolioContext().
     var policyId = policy.getId();
     var scopePermissionsClient = getAuthorizationClient().permissions().scope();
     var resource = getAuthResourceByStaticPath(path);
