@@ -47,9 +47,8 @@ public class KeycloakAuthorizationService {
   /**
    * Creates keycloak permissions based on provided policy and list of endpoints.
    *
-   * @param policy        - {@link Policy} to be used to assign keycloak
-   *                      permission to resource/scope
-   * @param endpoints     - list with resource-scope identifiers
+   * @param policy - {@link Policy} to be used to assign keycloak permission to resource/scope
+   * @param endpoints - list with resource-scope identifiers
    * @param nameGenerator - keycloak permission name generator
    */
   public void createPermissions(Policy policy, List<Endpoint> endpoints, Function<Endpoint, String> nameGenerator) {
@@ -107,14 +106,10 @@ public class KeycloakAuthorizationService {
   /**
    * Deletes keycloak permissions based on provided policy and list of endpoints.
    *
-   * <p>
-   * If Keycloak permission is not found, implementation ignores this case and
-   * proceeds with the next permission
-   * </p>
+   * <p>If Keycloak permission is not found, implementation ignores this case and proceeds with the next permission</p>
    *
-   * @param policy        - {@link Policy} to be used to assign keycloak
-   *                      permission to resource/scope
-   * @param endpoints     - list with resource-scope identifiers
+   * @param policy - {@link Policy} to be used to assign keycloak permission to resource/scope
+   * @param endpoints - list with resource-scope identifiers
    * @param nameGenerator - keycloak permission name generator
    */
   public void deletePermissions(Policy policy, List<Endpoint> endpoints, Function<Endpoint, String> nameGenerator) {
@@ -181,7 +176,7 @@ public class KeycloakAuthorizationService {
   }
 
   private static void removeKeycloakPermission(ScopePermissionsResource client,
-                                               Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
+    Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
     var permissionName = nameGenerator.apply(endpoint);
     var foundPermission = client.findByName(permissionName);
     if (foundPermission == null) {

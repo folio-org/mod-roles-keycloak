@@ -50,11 +50,9 @@ public class UserCapabilityService {
   /**
    * Creates a record(s) associating one or more capabilities with the user.
    *
-   * @param userId        - user identifier as {@link UUID} object
-   * @param capabilityIds - capability identifiers as {@link List} of {@link UUID}
-   *                      objects
-   * @return {@link UserCapabilities} object with created user-capability
-   *         relations
+   * @param userId - user identifier as {@link UUID} object
+   * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
+   * @return {@link UserCapabilities} object with created user-capability relations
    */
   public PageResult<UserCapability> create(UUID userId, List<UUID> capabilityIds) {
     if (isEmpty(capabilityIds)) {
@@ -66,7 +64,7 @@ public class UserCapabilityService {
     var existingCapabilitySetIds = getCapabilityIds(existingEntities);
     if (isNotEmpty(existingCapabilitySetIds)) {
       throw new EntityExistsException(String.format(
-          "Relation already exists for user='%s' and capabilities=%s", userId, existingCapabilitySetIds));
+        "Relation already exists for user='%s' and capabilities=%s", userId, existingCapabilitySetIds));
     }
 
     var result = assignCapabilities(userId, capabilityIds, emptyList());
@@ -77,11 +75,10 @@ public class UserCapabilityService {
   /**
    * Retrieves user-capability items by CQL query.
    *
-   * @param query  - CQL query as {@link String} object
-   * @param limit  - a number of results in response
+   * @param query - CQL query as {@link String} object
+   * @param limit - a number of results in response
    * @param offset - offset in pagination from first record.
-   * @return {@link PageResult} object with found {@link UserCapability} relation
-   *         descriptors.
+   * @return {@link PageResult} object with found {@link UserCapability} relation descriptors.
    */
   @Transactional(readOnly = true)
   public PageResult<UserCapability> find(String query, Integer limit, Integer offset) {
@@ -94,7 +91,7 @@ public class UserCapabilityService {
   /**
    * Updates user-capability relations.
    *
-   * @param userId        - user identifier as {@link UUID} object
+   * @param userId - user identifier as {@link UUID} object
    * @param capabilityIds - list of capabilities that must be assigned to a user
    */
   public void update(UUID userId, List<UUID> capabilityIds) {
@@ -102,17 +99,15 @@ public class UserCapabilityService {
     var assignedUserCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
     var assignedCapabilityIds = getCapabilityIds(assignedUserCapabilityEntities);
     UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "user-capability")
-        .consumeAndCacheNewEntities(
-            newIds -> getCapabilityIds(assignCapabilities(userId, newIds, assignedCapabilityIds)))
-        .consumeDeprecatedEntities(
-            (deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
+      .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(userId, newIds, assignedCapabilityIds)))
+      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
     eventPublisher.publishEvent(userPermissionsChanged(userId));
   }
 
   /**
    * Removes user-capability relations by user and capability identifiers.
    *
-   * @param userId       - user identifier as {@link UUID}
+   * @param userId - user identifier as {@link UUID}
    * @param capabilityId - capability identifier as {@link UUID}
    */
   public void delete(UUID userId, UUID capabilityId) {
@@ -124,7 +119,7 @@ public class UserCapabilityService {
 
     assignedCapabilityIds.remove(capabilityId);
     userCapabilityRepository.findById(UserCapabilityKey.of(userId, capabilityId))
-        .ifPresent(entity -> removeCapabilities(userId, List.of(entity.getCapabilityId()), assignedCapabilityIds));
+      .ifPresent(entity -> removeCapabilities(userId, List.of(entity.getCapabilityId()), assignedCapabilityIds));
     eventPublisher.publishEvent(userPermissionsChanged(userId));
   }
 
@@ -132,8 +127,7 @@ public class UserCapabilityService {
    * Removes all user-capability relations by user identifier.
    *
    * @param userId - user identifier as {@link UUID}
-   * @throws EntityNotFoundException if user is not found by id or there is no
-   *                                 assigned values
+   * @throws EntityNotFoundException if user is not found by id or there is no assigned values
    */
   public void deleteAll(UUID userId) {
     keycloakUserService.getKeycloakUserByUserId(userId);

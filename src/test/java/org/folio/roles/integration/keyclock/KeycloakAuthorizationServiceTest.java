@@ -71,34 +71,23 @@ class KeycloakAuthorizationServiceTest {
   private static final String RESOURCE_ID = UUID.randomUUID().toString();
   private static final String SCOPE_PERMISSION_ID = UUID.randomUUID().toString();
 
-  private static final Function<Endpoint, String> PERMISSION_NAME_GENERATOR = endpoint -> String
-      .format("%s access to %s", endpoint.getMethod(), endpoint.getPath());
+  private static final Function<Endpoint, String> PERMISSION_NAME_GENERATOR =
+    endpoint -> String.format("%s access to %s", endpoint.getMethod(), endpoint.getPath());
 
-  @InjectMocks
-  private KeycloakAuthorizationService keycloakAuthService;
+  @InjectMocks private KeycloakAuthorizationService keycloakAuthService;
 
-  @Mock
-  private Response response;
-  @Mock
-  private ResourcesResource authResourcesClient;
-  @Mock
-  private PermissionsResource authPermissionsClient;
-  @Mock
-  private AuthorizationResource authorizationClient;
-  @Mock
-  private ScopePermissionResource scopePermissionClient;
-  @Mock
-  private ScopePermissionsResource scopePermissionsClient;
-  @Mock
-  private KeycloakAuthorizationClientProvider authResourceProvider;
+  @Mock private Response response;
+  @Mock private ResourcesResource authResourcesClient;
+  @Mock private PermissionsResource authPermissionsClient;
+  @Mock private AuthorizationResource authorizationClient;
+  @Mock private ScopePermissionResource scopePermissionClient;
+  @Mock private ScopePermissionsResource scopePermissionsClient;
+  @Mock private KeycloakAuthorizationClientProvider authResourceProvider;
 
-  @Spy
-  private final JsonHelper jsonHelper = new JsonHelper(OBJECT_MAPPER);
-  @Spy
-  private final FolioExecutionContext folioExecutionContext = new DefaultFolioExecutionContext(
-      new TestModRolesKeycloakModuleMetadata(), emptyMap());
-  @Captor
-  private ArgumentCaptor<ScopePermissionRepresentation> scopePermissionCaptor;
+  @Spy private final JsonHelper jsonHelper = new JsonHelper(OBJECT_MAPPER);
+  @Spy private final FolioExecutionContext folioExecutionContext = new DefaultFolioExecutionContext(
+    new TestModRolesKeycloakModuleMetadata(), emptyMap());
+  @Captor private ArgumentCaptor<ScopePermissionRepresentation> scopePermissionCaptor;
 
   @BeforeEach
   void setUp() {
@@ -149,7 +138,7 @@ class KeycloakAuthorizationServiceTest {
 
     @DisplayName("positive_parameterized")
     @ParameterizedTest(name = "[{index}] responseStatus = {0}")
-    @EnumSource(value = Status.class, names = { "CREATED", "CONFLICT" }, mode = Mode.INCLUDE)
+    @EnumSource(value = Status.class, names = {"CREATED", "CONFLICT"}, mode = Mode.INCLUDE)
     void positive_parameterized(Status responseStatus) {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
@@ -174,9 +163,9 @@ class KeycloakAuthorizationServiceTest {
       verify(response).close();
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
       assertThat(scopePermissionCaptor.getValue())
-          .usingRecursiveComparison()
-          .ignoringFields("id")
-          .isEqualTo(scopePermission());
+        .usingRecursiveComparison()
+        .ignoringFields("id")
+        .isEqualTo(scopePermission());
     }
 
     @Test
@@ -201,7 +190,7 @@ class KeycloakAuthorizationServiceTest {
       // Must be called exactly once even though there are two endpoints for the same
       // path
       when(authResourcesClient.find(path, null, null, null, null, 0, MAX_VALUE))
-          .thenReturn(List.of(resourceRepresentation));
+        .thenReturn(List.of(resourceRepresentation));
       when(response.getStatusInfo()).thenReturn(Status.CREATED);
       when(scopePermissionsClient.create(any())).thenReturn(response);
 
@@ -240,19 +229,18 @@ class KeycloakAuthorizationServiceTest {
 
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
       try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
-        assertThatThrownBy(
-          () -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
-            .isInstanceOf(ServiceException.class)
-            .hasMessage("Error during scope-based permission creation in Keycloak. "
-                + "Details: status = 500, message = Internal Server Error");
+        assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+          .isInstanceOf(ServiceException.class)
+          .hasMessage("Error during scope-based permission creation in Keycloak. "
+            + "Details: status = 500, message = Internal Server Error");
       }
 
       verify(response).close();
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
       assertThat(scopePermissionCaptor.getValue())
-          .usingRecursiveComparison()
-          .ignoringFields("id")
-          .isEqualTo(scopePermission());
+        .usingRecursiveComparison()
+        .ignoringFields("id")
+        .isEqualTo(scopePermission());
     }
 
     @Test
@@ -269,37 +257,35 @@ class KeycloakAuthorizationServiceTest {
 
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
       try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
-        assertThatThrownBy(
-          () -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
-            .isInstanceOf(EntityNotFoundException.class)
-            .hasMessage("Keycloak resource is not found by static path: /foo/entities");
+        assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+          .isInstanceOf(EntityNotFoundException.class)
+          .hasMessage("Keycloak resource is not found by static path: /foo/entities");
       }
-    
+
       verifyNoInteractions(scopePermissionsClient);
     }
-    
+
     @Test
     void negative_resourceIsFoundByInvalidPath() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-    
+
       var path = "/foo/entities";
       var resourceRepresentation = resourceRepresentation();
       resourceRepresentation.setName("/foo/entities/{id}");
       var resourceRepresentations = List.of(resourceRepresentation);
       when(authResourcesClient.find(path, null, null, null, null, 0, MAX_VALUE)).thenReturn(resourceRepresentations);
-    
+
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
-    
+
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
       try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
-        assertThatThrownBy(
-          () -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
-            .isInstanceOf(EntityNotFoundException.class)
-            .hasMessage("Keycloak resource is not found by static path: /foo/entities");
+        assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+          .isInstanceOf(EntityNotFoundException.class)
+          .hasMessage("Keycloak resource is not found by static path: /foo/entities");
       }
 
       verifyNoInteractions(scopePermissionsClient);
@@ -346,7 +332,7 @@ class KeycloakAuthorizationServiceTest {
       scope1.setName("GET");
       resource1.setScopes(Set.of(scope1));
       when(authResourcesClient.find(path1, null, null, null, null, 0, MAX_VALUE))
-          .thenReturn(List.of(resource1));
+        .thenReturn(List.of(resource1));
 
       var path2 = "/bar/items";
       var resource2 = new ResourceRepresentation();
@@ -357,7 +343,7 @@ class KeycloakAuthorizationServiceTest {
       scope2.setName("POST");
       resource2.setScopes(Set.of(scope2));
       when(authResourcesClient.find(path2, null, null, null, null, 0, MAX_VALUE))
-          .thenReturn(List.of(resource2));
+        .thenReturn(List.of(resource2));
 
       when(response.getStatusInfo()).thenReturn(Status.CREATED);
       when(scopePermissionsClient.create(any())).thenReturn(response);
@@ -384,63 +370,61 @@ class KeycloakAuthorizationServiceTest {
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-    
+
       var path1 = "/foo/entities";
       var path2 = "/bar/items";
-    
+
       // path1 succeeds, path2 fails with resource-not-found — only one future fails
       when(authResourcesClient.find(path1, null, null, null, null, 0, MAX_VALUE))
-          .thenReturn(List.of(resourceRepresentation()));
+        .thenReturn(List.of(resourceRepresentation()));
       when(authResourcesClient.find(path2, null, null, null, null, 0, MAX_VALUE))
-          .thenReturn(emptyList());
+        .thenReturn(emptyList());
       when(scopePermissionsClient.create(any())).thenReturn(response);
       when(response.getStatusInfo()).thenReturn(Status.CREATED);
-    
+
       var policy = rolePolicy();
       var endpoints = List.of(endpoint(path1, GET), endpoint(path2, GET));
-    
+
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
       try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
-        assertThatThrownBy(
-          () -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
-            .isInstanceOf(EntityNotFoundException.class)
-            .hasMessage("Keycloak resource is not found by static path: " + path2);
+        assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+          .isInstanceOf(EntityNotFoundException.class)
+          .hasMessage("Keycloak resource is not found by static path: " + path2);
       }
-    
+
       // Verify only what was actually invoked on the successful path so no
       // clearInvocations is needed.
       verify(response).close();
       verify(response).getStatusInfo();
       verify(jsonHelper).asJsonStringSafe(any());
     }
-    
+
     @Test
     void negative_twoResourcesNotFound_bothExceptionsCollectedViaSuppressed() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-    
+
       var path1 = "/foo/entities";
       var path2 = "/bar/items";
-    
+
       // Both paths fail with resource-not-found so joinAll must collect both.
       when(authResourcesClient.find(path1, null, null, null, null, 0, MAX_VALUE)).thenReturn(emptyList());
       when(authResourcesClient.find(path2, null, null, null, null, 0, MAX_VALUE)).thenReturn(emptyList());
-    
+
       var policy = rolePolicy();
       var endpoints = List.of(endpoint(path1, GET), endpoint(path2, GET));
-    
+
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
       try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
-        assertThatThrownBy(
-          () -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
-            .isInstanceOf(EntityNotFoundException.class)
-            .satisfies(ex -> assertThat(ex.getSuppressed())
-                .hasSize(1)
-                .allMatch(s -> s instanceof EntityNotFoundException));
+        assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+          .isInstanceOf(EntityNotFoundException.class)
+          .satisfies(ex -> assertThat(ex.getSuppressed())
+            .hasSize(1)
+            .allMatch(EntityNotFoundException.class::isInstance));
       }
-    
+
       verifyNoInteractions(scopePermissionsClient);
     }
 

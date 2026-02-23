@@ -47,8 +47,6 @@ public final class KeycloakTransactionHelper {
 
     keycloakAction.run();
 
-    // Register compensation BEFORE the DB action so that any rollback
-    // (whether caused by this DB action or a subsequent one) will trigger it.
     if (TransactionSynchronizationManager.isSynchronizationActive()) {
       TransactionSynchronizationManager
         .registerSynchronization(new CompensationSynchronization(compensationAction));
@@ -84,10 +82,6 @@ public final class KeycloakTransactionHelper {
 
   private static void handleFallbackCompensation(Exception dbException, Runnable compensationAction) {
     if (TransactionSynchronizationManager.isSynchronizationActive()) {
-      // The DB action failed inside an active Spring-managed transaction.
-      // A CompensationSynchronization was already registered before the DB action
-      // ran, so Spring will call afterCompletion(STATUS_ROLLED_BACK) which will
-      // execute the compensation action. Nothing to do here.
       log.debug("Database action failed inside an active transaction; "
         + "Keycloak compensation is deferred to Spring rollback callback.", dbException);
     } else {
@@ -117,13 +111,6 @@ public final class KeycloakTransactionHelper {
             compensationException);
         }
       } else if (status == TransactionSynchronization.STATUS_UNKNOWN) {
-        // Transaction outcome is indeterminate (e.g., connection reset during commit).
-        // The Keycloak action may or may not have been committed; the DB state is
-        // unknown.
-        // Compensation is intentionally NOT run here to avoid creating a new
-        // inconsistency;
-        // instead we log at error level so on-call teams can investigate and reconcile
-        // manually.
         log.error("CRITICAL: Transaction completed with UNKNOWN status. "
           + "Keycloak and database states may be inconsistent. "
           + "Manual reconciliation may be required.");
