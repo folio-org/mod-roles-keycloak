@@ -38,6 +38,7 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectRetrievalFailureException;
 import org.springframework.orm.jpa.JpaObjectRetrievalFailureException;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
@@ -200,7 +201,7 @@ public class ApiExceptionHandler {
    * @return {@link org.springframework.http.ResponseEntity} with {@link ErrorResponse} body.
    */
   @ExceptionHandler({
-    JpaObjectRetrievalFailureException.class, EmptyResultDataAccessException.class, EntityNotFoundException.class
+    ObjectRetrievalFailureException.class, EmptyResultDataAccessException.class, EntityNotFoundException.class
   })
   public ResponseEntity<ErrorResponse> handleJpaNotFoundExceptions(Exception exception) {
     logException(DEBUG, exception);

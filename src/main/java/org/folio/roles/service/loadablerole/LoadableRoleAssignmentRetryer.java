@@ -11,27 +11,23 @@ import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.exception.UnassignedPermissionsException;
 import org.folio.roles.repository.LoadablePermissionRepository;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Log4j2
 @Component
 @AllArgsConstructor
-public class LoadableRoleAssignmentRetrier {
+public class LoadableRoleAssignmentRetryer {
 
   private final LoadablePermissionRepository loadablePermissionRepository;
   private final LoadableRoleCapabilityAssignmentHelper loadableRoleCapabilityAssignmentHelper;
 
   @Retryable(
-    maxAttemptsExpression = "#{@loadableRoleRetryProperties.maxAttempts}",
-    backoff = @Backoff(delayExpression = "#{@loadableRoleRetryProperties.backoff.delayMs}")
+    maxRetriesString = "#{@loadableRoleRetryProperties.maxAttempts}",
+    delayString = "#{@loadableRoleRetryProperties.backoff.delayMs}"
   )
   @Transactional
-  @Async("executorForLoadableRolesAssignmentRetry")
   public void retryAssignCapabilitiesAndSetsForPermissions(UUID loadableRoleId, String loadableRoleName)  {
     log.info("Retrying assignment of capabilities and capability sets for loadable role: roleName = {}",
       loadableRoleName);
@@ -53,14 +49,6 @@ public class LoadableRoleAssignmentRetrier {
     }
     log.info("Complete all assignment of capabilities and capability sets within retry: roleName = {}",
       loadableRoleName);
-  }
-
-  @Recover
-  public void recoverFromFailedAssignment(Exception exception,
-    UUID loadableRoleId, String loadableRoleName) {
-    log.warn("Failed to assign capabilities and "
-        + "capability sets after all retry attempts: roleId = {}, roleName = {}, error = {}",
-      loadableRoleId, loadableRoleName, exception.getMessage());
   }
 
   private static String getPermissionNamesAsStr(Collection<LoadablePermissionEntity> permissions) {

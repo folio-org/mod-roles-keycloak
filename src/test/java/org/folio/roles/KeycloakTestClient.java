@@ -10,7 +10,6 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.web.util.UriComponentsBuilder.fromUriString;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.net.Socket;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Version;
@@ -36,6 +35,7 @@ import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.keycloak.admin.client.Keycloak;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
 
 @Log4j2
 @Component
@@ -83,7 +83,7 @@ public class KeycloakTestClient {
 
     assertThat(jsonNode.isArray()).isTrue();
     return StreamSupport.stream(jsonNode.spliterator(), false)
-      .map(permission -> permission.path("name").asText())
+      .map(permission -> permission.path("name").asString())
       .filter(Objects::nonNull)
       .collect(toList());
   }
