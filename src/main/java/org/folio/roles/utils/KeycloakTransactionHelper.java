@@ -16,15 +16,12 @@ public final class KeycloakTransactionHelper {
    * executes a compensating Keycloak action.
    *
    * <p>
-   * When called inside an active Spring transaction, the compensation action is
-   * registered as a
-   * {@link TransactionSynchronization} and will be triggered by Spring on
+   * When called inside an active Spring transaction, a {@link TransactionSynchronization}
+   * is registered so that compensation fires on
    * {@link TransactionSynchronization#STATUS_ROLLED_BACK}. The synchronization is
-   * registered <em>after</em>
-   * {@code databaseAction} succeeds, so it will only fire if the enclosing
-   * transaction rolls back due to a
-   * <em>subsequent</em> failure — not due to a failure originating inside this
-   * method.
+   * registered regardless of whether {@code databaseAction} succeeds or fails,
+   * because the Keycloak side-effect has already occurred and must be reversed
+   * whenever the enclosing transaction does not commit.
    *
    * <p>
    * <strong>Note:</strong> Nesting {@code executeWithCompensation} calls inside
@@ -44,25 +41,21 @@ public final class KeycloakTransactionHelper {
    * @return The result of the database action
    */
   public static <T> T executeWithCompensation(
-      Runnable keycloakAction,
-      Supplier<T> databaseAction,
-      Runnable compensationAction) {
+    Runnable keycloakAction,
+    Supplier<T> databaseAction,
+    Runnable compensationAction) {
 
     keycloakAction.run();
 
+    // Register compensation BEFORE the DB action so that any rollback
+    // (whether caused by this DB action or a subsequent one) will trigger it.
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager
+        .registerSynchronization(new CompensationSynchronization(compensationAction));
+    }
+
     try {
-      T result = databaseAction.get();
-
-      // Register compensation AFTER the DB action succeeds.
-      // This guarantees the synchronization is only triggered if a *subsequent*
-      // operation in the same transaction causes a rollback, not by this DB action
-      // itself.
-      if (TransactionSynchronizationManager.isSynchronizationActive()) {
-        TransactionSynchronizationManager
-            .registerSynchronization(new CompensationSynchronization(compensationAction));
-      }
-
-      return result;
+      return databaseAction.get();
     } catch (Exception dbException) {
       handleFallbackCompensation(dbException, compensationAction);
       if (dbException instanceof RuntimeException runtimeException) {
@@ -83,9 +76,9 @@ public final class KeycloakTransactionHelper {
    *                           transaction rolls back
    */
   public static void executeWithCompensation(
-      Runnable keycloakAction,
-      Runnable databaseAction,
-      Runnable compensationAction) {
+    Runnable keycloakAction,
+    Runnable databaseAction,
+    Runnable compensationAction) {
     executeWithCompensation(keycloakAction, () -> {
       databaseAction.run();
       return null;
@@ -95,30 +88,25 @@ public final class KeycloakTransactionHelper {
   private static void handleFallbackCompensation(Exception dbException, Runnable compensationAction) {
     if (TransactionSynchronizationManager.isSynchronizationActive()) {
       // The DB action failed inside an active Spring-managed transaction.
-      // Spring will call afterCompletion(STATUS_ROLLED_BACK) on the registered
-      // CompensationSynchronization, which will execute the compensation action.
-      // Nothing to do here — compensation is deferred to the transaction callback.
+      // A CompensationSynchronization was already registered before the DB action
+      // ran, so Spring will call afterCompletion(STATUS_ROLLED_BACK) which will
+      // execute the compensation action. Nothing to do here.
       log.debug("Database action failed inside an active transaction; "
-          + "Keycloak compensation is deferred to Spring rollback callback.", dbException);
+        + "Keycloak compensation is deferred to Spring rollback callback.", dbException);
     } else {
       log.warn("Database operation failed outside of an active transaction. "
-          + "Attempting to execute Keycloak compensation action.", dbException);
+        + "Attempting to execute Keycloak compensation action.", dbException);
       try {
         compensationAction.run();
       } catch (Exception compensationException) {
         log.error("CRITICAL: Keycloak compensation action failed after database operation failure! "
-            + "System may be in an inconsistent state.", compensationException);
+          + "System may be in an inconsistent state.", compensationException);
         dbException.addSuppressed(compensationException);
       }
     }
   }
 
-  private static class CompensationSynchronization implements TransactionSynchronization {
-    private final Runnable compensationAction;
-
-    CompensationSynchronization(Runnable compensationAction) {
-      this.compensationAction = compensationAction;
-    }
+  private record CompensationSynchronization(Runnable compensationAction) implements TransactionSynchronization {
 
     @Override
     public void afterCompletion(int status) {
@@ -129,7 +117,7 @@ public final class KeycloakTransactionHelper {
         } catch (Exception compensationException) {
           log.error("CRITICAL: Keycloak compensation action failed "
               + "during transaction rollback! System may be in an inconsistent state.",
-              compensationException);
+            compensationException);
         }
       } else if (status == TransactionSynchronization.STATUS_UNKNOWN) {
         // Transaction outcome is indeterminate (e.g., connection reset during commit).
@@ -140,8 +128,8 @@ public final class KeycloakTransactionHelper {
         // instead we log at error level so on-call teams can investigate and reconcile
         // manually.
         log.error("CRITICAL: Transaction completed with UNKNOWN status. "
-            + "Keycloak and database states may be inconsistent. "
-            + "Manual reconciliation may be required.");
+          + "Keycloak and database states may be inconsistent. "
+          + "Manual reconciliation may be required.");
       }
     }
   }

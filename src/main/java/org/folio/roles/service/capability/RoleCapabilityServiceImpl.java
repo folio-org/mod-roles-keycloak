@@ -292,7 +292,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
         () -> roleCapabilityRepository.deleteRoleCapabilities(roleId, deprecatedIds),
         () -> rolePermissionService.createPermissions(roleId, endpoints));
 
-    log.info("Capabilities are revoked to role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
+    log.info("Capabilities are revoked from role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
   }
 
   private static List<UUID> getCapabilityIds(List<RoleCapabilityEntity> roleCapabilityEntities) {

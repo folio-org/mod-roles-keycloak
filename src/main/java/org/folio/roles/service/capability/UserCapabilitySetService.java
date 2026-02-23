@@ -180,7 +180,7 @@ public class UserCapabilitySetService {
         () -> userCapabilitySetRepository.deleteUserCapabilitySets(userId, deprecatedSetIds),
         () -> userPermissionService.createPermissions(userId, changedEndpoints));
 
-    log.info("Capability sets are revoked to user: userId = {}, ids = {}", userId, deprecatedSetIds);
+    log.info("Capability sets are revoked from user: userId = {}, ids = {}", userId, deprecatedSetIds);
   }
 
   private List<Endpoint> getChangedEndpoints(UUID userId, List<UUID> deprecatedIds, Collection<UUID> assignedIds) {

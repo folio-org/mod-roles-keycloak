@@ -55,48 +55,49 @@ public class KeycloakAuthorizationService {
   public void createPermissions(Policy policy, List<Endpoint> endpoints, Function<Endpoint, String> nameGenerator) {
     if (policy == null || isEmpty(endpoints)) {
       log.debug("Keycloak permissions creation skipped [policy: {}, endpoints: {}]",
-          () -> toJson(policy), () -> toJson(endpoints));
+        () -> toJson(policy), () -> toJson(endpoints));
       return;
     }
 
+    if (policy.getId() == null) {
+      throw new IllegalArgumentException("Policy must have a non-null id before permissions can be created");
+    }
+
     var endpointsByPath = endpoints.stream()
-        .filter(endpoint -> isNotBlank(endpoint.getPath()))
-        .collect(Collectors.groupingBy(Endpoint::getPath));
+      .filter(endpoint -> isNotBlank(endpoint.getPath()))
+      .collect(Collectors.groupingBy(Endpoint::getPath));
 
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var futures = endpointsByPath.entrySet().stream()
-          .map(entry -> CompletableFuture.runAsync(
-              getRunnableWithCurrentFolioContext(
-                  () -> createPermissionsForPath(policy, entry.getKey(), entry.getValue(), nameGenerator)),
-              executor))
-          .toList();
+        .map(entry -> CompletableFuture.runAsync(
+          getRunnableWithCurrentFolioContext(
+            () -> createPermissionsForPath(policy, entry.getKey(), entry.getValue(), nameGenerator)),
+          executor))
+        .toList();
       joinAll(futures);
     }
   }
 
   private void createPermissionsForPath(Policy policy, String path, List<Endpoint> endpointsForPath,
-      Function<Endpoint, String> nameGenerator) {
+                                        Function<Endpoint, String> nameGenerator) {
     // KC proxy objects are RESTEasy stateless HTTP proxies: safe to call
     // concurrently.
     // FolioExecutionContext is propagated to each virtual thread via
     // getRunnableWithCurrentFolioContext().
     var policyId = policy.getId();
-    if (policyId == null) {
-      throw new IllegalArgumentException("Policy must have a non-null id before permissions can be created");
-    }
     var scopePermissionsClient = getAuthorizationClient().permissions().scope();
     var resource = getAuthResourceByStaticPath(path);
     for (var endpoint : endpointsForPath) {
       var scope = getScopeByMethod(resource, endpoint.getMethod());
       if (scope.isEmpty()) {
         log.warn(
-            "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
-            endpoint.getMethod(), endpoint.getPath());
+          "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
+          endpoint.getMethod(), endpoint.getPath());
         continue;
       }
       var policyName = nameGenerator.apply(endpoint);
       var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policyId);
-  
+
       try (var response = scopePermissionsClient.create(permission)) {
         processKeycloakResponse(permission, response);
       }
@@ -119,7 +120,7 @@ public class KeycloakAuthorizationService {
   public void deletePermissions(Policy policy, List<Endpoint> endpoints, Function<Endpoint, String> nameGenerator) {
     if (policy == null || isEmpty(endpoints)) {
       log.debug("Keycloak permissions deletion skipped [policy: {}, endpoints: {}]",
-          () -> toJson(policy), () -> toJson(endpoints));
+        () -> toJson(policy), () -> toJson(endpoints));
       return;
     }
 
@@ -127,14 +128,14 @@ public class KeycloakAuthorizationService {
     // (consistent with createPermissions which also filters blank paths).
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var futures = endpoints.stream()
-          .filter(endpoint -> isNotBlank(endpoint.getPath()))
-          .map(endpoint -> CompletableFuture.runAsync(
-              getRunnableWithCurrentFolioContext(() -> {
-                var scopePermissionsClient = getAuthorizationClient().permissions().scope();
-                removeKeycloakPermission(scopePermissionsClient, endpoint, nameGenerator);
-              }),
-              executor))
-          .toList();
+        .filter(endpoint -> isNotBlank(endpoint.getPath()))
+        .map(endpoint -> CompletableFuture.runAsync(
+          getRunnableWithCurrentFolioContext(() -> {
+            var scopePermissionsClient = getAuthorizationClient().permissions().scope();
+            removeKeycloakPermission(scopePermissionsClient, endpoint, nameGenerator);
+          }),
+          executor))
+        .toList();
       joinAll(futures);
     }
   }
@@ -144,9 +145,9 @@ public class KeycloakAuthorizationService {
     var resources = getAuthorizationClient().resources().find(staticPath, null, null, null, null, 0, MAX_VALUE);
 
     var resourceRepresentation = resources.stream()
-        .filter(resource -> StringUtils.equals(staticPath, resource.getName()))
-        .findFirst()
-        .orElseThrow(() -> new EntityNotFoundException("Keycloak resource is not found by static path: " + staticPath));
+      .filter(resource -> StringUtils.equals(staticPath, resource.getName()))
+      .findFirst()
+      .orElseThrow(() -> new EntityNotFoundException("Keycloak resource is not found by static path: " + staticPath));
 
     log.debug("Keycloak resource found [value: {}]", () -> jsonHelper.asJsonStringSafe(resourceRepresentation));
     return resourceRepresentation;
@@ -154,8 +155,8 @@ public class KeycloakAuthorizationService {
 
   private static Optional<ScopeRepresentation> getScopeByMethod(ResourceRepresentation resource, HttpMethod method) {
     return resource.getScopes().stream()
-        .filter(scope -> equalsIgnoreCase(scope.getName(), method.toString()))
-        .findFirst();
+      .filter(scope -> equalsIgnoreCase(scope.getName(), method.toString()))
+      .findFirst();
   }
 
   private AuthorizationResource getAuthorizationClient() {
@@ -167,7 +168,7 @@ public class KeycloakAuthorizationService {
   }
 
   private static ScopePermissionRepresentation buildPermissionFor(
-      String name, String resId, String scopeId, UUID policyId) {
+    String name, String resId, String scopeId, UUID policyId) {
     var permission = new ScopePermissionRepresentation();
 
     permission.setName(name);
@@ -180,7 +181,7 @@ public class KeycloakAuthorizationService {
   }
 
   private static void removeKeycloakPermission(ScopePermissionsResource client,
-      Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
+                                               Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
     var permissionName = nameGenerator.apply(endpoint);
     var foundPermission = client.findByName(permissionName);
     if (foundPermission == null) {
@@ -205,9 +206,9 @@ public class KeycloakAuthorizationService {
     }
 
     throw new ServiceException(format(
-        "Error during scope-based permission creation in Keycloak. Details: status = %s, message = %s",
-        statusInfo.getStatusCode(), statusInfo.getReasonPhrase()),
-        "permission", permission.getName());
+      "Error during scope-based permission creation in Keycloak. Details: status = %s, message = %s",
+      statusInfo.getStatusCode(), statusInfo.getReasonPhrase()),
+      "permission", permission.getName());
   }
 
   private static void joinAll(List<CompletableFuture<Void>> futures) {
@@ -223,18 +224,18 @@ public class KeycloakAuthorizationService {
     // Collect ALL failures so that no errors are silently lost when multiple
     // futures fail.
     var exceptions = futures.stream()
-        .filter(CompletableFuture::isCompletedExceptionally)
-        .map(f -> {
-          try {
-            f.join();
-            // Unreachable: isCompletedExceptionally guarantees join() throws.
-            throw new IllegalStateException("Future was exceptionally completed but join() did not throw");
-          } catch (CompletionException ex) {
-            return ex.getCause() != null ? ex.getCause() : ex;
-          }
-        })
-        .toList();
-    
+      .filter(CompletableFuture::isCompletedExceptionally)
+      .map(f -> {
+        try {
+          f.join();
+          // Unreachable: isCompletedExceptionally guarantees join() throws.
+          throw new IllegalStateException("Future was exceptionally completed but join() did not throw");
+        } catch (CompletionException ex) {
+          return ex.getCause() != null ? ex.getCause() : ex;
+        }
+      })
+      .toList();
+
     if (!exceptions.isEmpty()) {
       var primary = exceptions.getFirst();
       for (int i = 1; i < exceptions.size(); i++) {

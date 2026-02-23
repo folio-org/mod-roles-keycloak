@@ -290,7 +290,7 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
         () -> roleCapabilitySetRepository.deleteRoleCapabilitySets(roleId, deprecatedSetIds),
         () -> rolePermissionService.createPermissions(roleId, changedEndpoints));
 
-    log.info("Capability sets are revoked to role: roleId = {}, ids = {}", roleId, deprecatedSetIds);
+    log.info("Capability sets are revoked from role: roleId = {}, ids = {}", roleId, deprecatedSetIds);
   }
 
   private List<Endpoint> getChangedEndpoints(UUID roleId, List<UUID> deprecatedIds, Collection<UUID> assignedIds) {

@@ -1,7 +1,7 @@
 ---
 feature_id: keycloak-assignment-compensation
 title: Keycloak Assignment Compensation
-updated: 2026-02-23
+updated: 2025-02-23
 ---
 
 # Keycloak Assignment Compensation
@@ -61,9 +61,11 @@ All REST endpoints that modify role or user assignments trigger this behavior:
   transaction is active, the compensation runs synchronously and its result is logged; any
   compensation failure is attached as a suppressed exception on the primary DB exception.
 - **Compensation on transaction rollback (active transaction)**: when a Spring transaction is
-  active, a `TransactionSynchronization` is registered after the DB write succeeds. If the
-  enclosing transaction is later rolled back (by any cause), `afterCompletion(STATUS_ROLLED_BACK)`
-  fires the compensation. The compensation exception is caught and logged; it does not propagate.
+  active, a `TransactionSynchronization` is registered before the DB write executes. If the
+  enclosing transaction is rolled back (whether due to a failure in the DB write itself or any
+  subsequent cause), `afterCompletion(STATUS_ROLLED_BACK)` fires the compensation. If the
+  transaction commits successfully, the synchronization is a no-op. The compensation exception is
+  caught and logged; it does not propagate.
 - **Unknown transaction status**: if `afterCompletion` receives `STATUS_UNKNOWN` (e.g., connection
   reset during commit), compensation is intentionally skipped. The event is logged at ERROR level
   for manual reconciliation.

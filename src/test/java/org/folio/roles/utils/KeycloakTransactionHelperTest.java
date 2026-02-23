@@ -57,7 +57,7 @@ class KeycloakTransactionHelperTest {
       when(databaseAction.get()).thenReturn("success");
 
       var result = KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
-          compensationAction);
+        compensationAction);
 
       assertThat(result).isEqualTo("success");
       verify(keycloakAction).run();
@@ -93,9 +93,9 @@ class KeycloakTransactionHelperTest {
       when(databaseAction.get()).thenThrow(dbException);
 
       assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
-          compensationAction))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessage("DB failed");
+        compensationAction))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("DB failed");
 
       verify(keycloakAction).run();
       verify(databaseAction).get();
@@ -113,9 +113,9 @@ class KeycloakTransactionHelperTest {
       doThrow(dbException).when(databaseAction).run();
 
       assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
-          compensationAction))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessage("Runnable DB failed");
+        compensationAction))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("Runnable DB failed");
 
       verify(keycloakAction).run();
       verify(databaseAction).run();
@@ -136,10 +136,10 @@ class KeycloakTransactionHelperTest {
       doThrow(compException).when(compensationAction).run();
 
       assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
-          compensationAction))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessage("DB failed")
-          .satisfies(ex -> assertThat(ex.getSuppressed()).containsExactly(compException));
+        compensationAction))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("DB failed")
+        .satisfies(ex -> assertThat(ex.getSuppressed()).containsExactly(compException));
 
       verify(keycloakAction).run();
       verify(databaseAction).run();
@@ -160,10 +160,10 @@ class KeycloakTransactionHelperTest {
       }).when(databaseAction).get();
 
       assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
-          compensationAction))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessage("Database action failed in KeycloakTransactionHelper")
-          .hasCause(checkedException);
+        compensationAction))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("Database action failed in KeycloakTransactionHelper")
+        .hasCause(checkedException);
 
       verify(keycloakAction).run();
       verify(databaseAction).get();
@@ -186,7 +186,7 @@ class KeycloakTransactionHelperTest {
       when(databaseAction.get()).thenReturn("success");
 
       var result = KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
-          compensationAction);
+        compensationAction);
 
       assertThat(result).isEqualTo("success");
       verify(keycloakAction).run();
@@ -293,13 +293,21 @@ class KeycloakTransactionHelperTest {
       when(databaseAction.get()).thenThrow(dbException);
 
       assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
-          compensationAction))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessage("DB failed");
+        compensationAction))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("DB failed");
 
-      // Compensation is NOT triggered inline; deferred to Spring's
-      // afterCompletion(STATUS_ROLLED_BACK)
+      // Compensation is NOT triggered inline; it is deferred to Spring's
+      // afterCompletion(STATUS_ROLLED_BACK) via a registered synchronization.
       verify(compensationAction, never()).run();
+
+      // Verify that a synchronization WAS registered so compensation will fire on rollback.
+      var syncCaptor = ArgumentCaptor.forClass(TransactionSynchronization.class);
+      txManagerMock.verify(() -> TransactionSynchronizationManager.registerSynchronization(syncCaptor.capture()));
+
+      // Simulate rollback and verify compensation runs.
+      syncCaptor.getValue().afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK);
+      verify(compensationAction).run();
     }
   }
 }
