@@ -3,22 +3,31 @@ package org.folio.roles.utils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.function.Supplier;
+import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+@UnitTest
+@ExtendWith(MockitoExtension.class)
 class KeycloakTransactionHelperTest {
 
   private MockedStatic<TransactionSynchronizationManager> txManagerMock;
@@ -33,150 +42,240 @@ class KeycloakTransactionHelperTest {
     txManagerMock.close();
   }
 
-  @Test
-  void executeWithCompensation_success_withReturnValue() {
-    var keycloakAction = mock(Runnable.class);
-    @SuppressWarnings("unchecked")
-    var databaseAction = (Supplier<String>) mock(Supplier.class);
-    var compensationAction = mock(Runnable.class);
+  @Nested
+  @DisplayName("executeWithCompensation - no active transaction")
+  class NoActiveTransaction {
 
-    txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(true);
-    when(databaseAction.get()).thenReturn("success");
+    @Test
+    void positive_withReturnValue() {
+      var keycloakAction = mock(Runnable.class);
+      @SuppressWarnings("unchecked")
+      var databaseAction = (Supplier<String>) mock(Supplier.class);
+      var compensationAction = mock(Runnable.class);
 
-    var result = KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
-      compensationAction);
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(false);
+      when(databaseAction.get()).thenReturn("success");
 
-    assertThat(result).isEqualTo("success");
-    verify(keycloakAction).run();
-    verify(databaseAction).get();
-    txManagerMock.verify(() -> TransactionSynchronizationManager.registerSynchronization(any()));
-    verifyNoInteractions(compensationAction);
-  }
+      var result = KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
+          compensationAction);
 
-  @Test
-  void executeWithCompensation_success_withoutReturnValue() {
-    var keycloakAction = mock(Runnable.class);
-    var databaseAction = mock(Runnable.class);
-    var compensationAction = mock(Runnable.class);
-
-    txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(false);
-
-    KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction, compensationAction);
-
-    verify(keycloakAction).run();
-    verify(databaseAction).run();
-    verifyNoInteractions(compensationAction);
-  }
-
-  @Test
-  void executeWithCompensation_dbFails_noActiveTransaction_compensationSucceeds() {
-    var keycloakAction = mock(Runnable.class);
-    @SuppressWarnings("unchecked")
-    var databaseAction = (Supplier<String>) mock(Supplier.class);
-    var compensationAction = mock(Runnable.class);
-
-    var dbException = new RuntimeException("DB failed");
-    txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(false);
-    when(databaseAction.get()).thenThrow(dbException);
-
-    assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
-      compensationAction))
-      .isInstanceOf(RuntimeException.class)
-      .hasMessage("DB failed");
-
-    verify(keycloakAction).run();
-    verify(databaseAction).get();
-    verify(compensationAction).run();
-  }
-
-  @Test
-  void executeWithCompensation_dbFails_noActiveTransaction_compensationFails() {
-    var keycloakAction = mock(Runnable.class);
-    var databaseAction = mock(Runnable.class);
-    var compensationAction = mock(Runnable.class);
-
-    var dbException = new RuntimeException("DB failed");
-    var compException = new RuntimeException("Compensation failed");
-
-    txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(false);
-    doThrow(dbException).when(databaseAction).run();
-    doThrow(compException).when(compensationAction).run();
-
-    try {
-      KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction, compensationAction);
-    } catch (RuntimeException ex) {
-      assertThat(ex.getMessage()).isEqualTo("DB failed");
-      assertThat(ex.getSuppressed()).hasSize(1).containsExactly(compException);
+      assertThat(result).isEqualTo("success");
+      verify(keycloakAction).run();
+      verify(databaseAction).get();
+      txManagerMock.verify(() -> TransactionSynchronizationManager.registerSynchronization(any()), never());
+      verifyNoInteractions(compensationAction);
     }
 
-    verify(keycloakAction).run();
-    verify(databaseAction).run();
-    verify(compensationAction).run();
+    @Test
+    void positive_withoutReturnValue() {
+      var keycloakAction = mock(Runnable.class);
+      var databaseAction = mock(Runnable.class);
+      var compensationAction = mock(Runnable.class);
+
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(false);
+
+      KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction, compensationAction);
+
+      verify(keycloakAction).run();
+      verify(databaseAction).run();
+      verifyNoInteractions(compensationAction);
+    }
+
+    @Test
+    void negative_dbFails_compensationSucceeds() {
+      var keycloakAction = mock(Runnable.class);
+      @SuppressWarnings("unchecked")
+      var databaseAction = (Supplier<String>) mock(Supplier.class);
+      var compensationAction = mock(Runnable.class);
+
+      var dbException = new RuntimeException("DB failed");
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(false);
+      when(databaseAction.get()).thenThrow(dbException);
+
+      assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
+          compensationAction))
+          .isInstanceOf(RuntimeException.class)
+          .hasMessage("DB failed");
+
+      verify(keycloakAction).run();
+      verify(databaseAction).get();
+      verify(compensationAction).run();
+    }
+
+    @Test
+    void negative_runnableDbFails_compensationSucceeds() {
+      var keycloakAction = mock(Runnable.class);
+      var databaseAction = mock(Runnable.class);
+      var compensationAction = mock(Runnable.class);
+
+      var dbException = new RuntimeException("Runnable DB failed");
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(false);
+      doThrow(dbException).when(databaseAction).run();
+
+      assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
+          compensationAction))
+          .isInstanceOf(RuntimeException.class)
+          .hasMessage("Runnable DB failed");
+
+      verify(keycloakAction).run();
+      verify(databaseAction).run();
+      verify(compensationAction).run();
+    }
+
+    @Test
+    void negative_dbFails_compensationAlsoFails_exceptionSuppressed() {
+      var keycloakAction = mock(Runnable.class);
+      var databaseAction = mock(Runnable.class);
+      var compensationAction = mock(Runnable.class);
+
+      var dbException = new RuntimeException("DB failed");
+      var compException = new RuntimeException("Compensation failed");
+
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(false);
+      doThrow(dbException).when(databaseAction).run();
+      doThrow(compException).when(compensationAction).run();
+
+      assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
+          compensationAction))
+          .isInstanceOf(RuntimeException.class)
+          .hasMessage("DB failed")
+          .satisfies(ex -> assertThat(ex.getSuppressed()).containsExactly(compException));
+
+      verify(keycloakAction).run();
+      verify(databaseAction).run();
+      verify(compensationAction).run();
+    }
+
+    @Test
+    void negative_dbThrowsCheckedException_wrappedInRuntimeException() {
+      var keycloakAction = mock(Runnable.class);
+      @SuppressWarnings("unchecked")
+      var databaseAction = (Supplier<String>) mock(Supplier.class);
+      var compensationAction = mock(Runnable.class);
+
+      var checkedException = new Exception("Checked DB failure");
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(false);
+      doAnswer(invocation -> {
+        throw checkedException;
+      }).when(databaseAction).get();
+
+      assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
+          compensationAction))
+          .isInstanceOf(RuntimeException.class)
+          .hasMessage("Database action failed")
+          .hasCause(checkedException);
+
+      verify(keycloakAction).run();
+      verify(databaseAction).get();
+      verify(compensationAction).run();
+    }
   }
 
-  @Test
-  void executeWithCompensation_activeTransaction_rollbackExecutesCompensation() {
-    var keycloakAction = mock(Runnable.class);
-    @SuppressWarnings("unchecked")
-    var databaseAction = (Supplier<String>) mock(Supplier.class);
-    var compensationAction = mock(Runnable.class);
+  @Nested
+  @DisplayName("executeWithCompensation - active transaction")
+  class ActiveTransaction {
 
-    txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(true);
-    when(databaseAction.get()).thenReturn("success");
+    @Test
+    void positive_synchronizationRegistered() {
+      var keycloakAction = mock(Runnable.class);
+      @SuppressWarnings("unchecked")
+      var databaseAction = (Supplier<String>) mock(Supplier.class);
+      var compensationAction = mock(Runnable.class);
 
-    KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction, compensationAction);
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(true);
+      when(databaseAction.get()).thenReturn("success");
 
-    ArgumentCaptor<TransactionSynchronization> syncCaptor = ArgumentCaptor.forClass(TransactionSynchronization.class);
-    txManagerMock.verify(() -> TransactionSynchronizationManager.registerSynchronization(syncCaptor.capture()));
+      var result = KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
+          compensationAction);
 
-    // Simulate rollback
-    TransactionSynchronization sync = syncCaptor.getValue();
-    sync.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK);
+      assertThat(result).isEqualTo("success");
+      verify(keycloakAction).run();
+      verify(databaseAction).get();
+      txManagerMock.verify(() -> TransactionSynchronizationManager.registerSynchronization(any()));
+      verifyNoInteractions(compensationAction);
+    }
 
-    verify(compensationAction).run();
-  }
+    @Test
+    void positive_rollbackExecutesCompensation() {
+      var keycloakAction = mock(Runnable.class);
+      @SuppressWarnings("unchecked")
+      var databaseAction = (Supplier<String>) mock(Supplier.class);
+      var compensationAction = mock(Runnable.class);
 
-  @Test
-  void executeWithCompensation_activeTransaction_commitIgnoresCompensation() {
-    var keycloakAction = mock(Runnable.class);
-    @SuppressWarnings("unchecked")
-    var databaseAction = (Supplier<String>) mock(Supplier.class);
-    var compensationAction = mock(Runnable.class);
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(true);
+      when(databaseAction.get()).thenReturn("success");
 
-    txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(true);
-    when(databaseAction.get()).thenReturn("success");
+      KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction, compensationAction);
 
-    KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction, compensationAction);
+      var syncCaptor = ArgumentCaptor.forClass(TransactionSynchronization.class);
+      txManagerMock.verify(() -> TransactionSynchronizationManager.registerSynchronization(syncCaptor.capture()));
 
-    ArgumentCaptor<TransactionSynchronization> syncCaptor = ArgumentCaptor.forClass(TransactionSynchronization.class);
-    txManagerMock.verify(() -> TransactionSynchronizationManager.registerSynchronization(syncCaptor.capture()));
+      syncCaptor.getValue().afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK);
 
-    // Simulate successful commit
-    TransactionSynchronization sync = syncCaptor.getValue();
-    sync.afterCompletion(TransactionSynchronization.STATUS_COMMITTED);
+      verify(compensationAction).run();
+    }
 
-    verifyNoInteractions(compensationAction);
-  }
+    @Test
+    void negative_rollbackCompensationFails_exceptionSwallowed() {
+      var keycloakAction = mock(Runnable.class);
+      @SuppressWarnings("unchecked")
+      var databaseAction = (Supplier<String>) mock(Supplier.class);
+      var compensationAction = mock(Runnable.class);
 
-  @Test
-  void executeWithCompensation_activeTransaction_dbFails_throwsException_doesNotCompensateYet() {
-    // Note: the Spring container handles the rollback hook later,
-    // the helper itself does not manually trigger compensation inside catch block
-    // when sync is active.
-    var keycloakAction = mock(Runnable.class);
-    @SuppressWarnings("unchecked")
-    var databaseAction = (Supplier<String>) mock(Supplier.class);
-    var compensationAction = mock(Runnable.class);
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(true);
+      when(databaseAction.get()).thenReturn("success");
+      doThrow(new RuntimeException("Compensation failed during rollback")).when(compensationAction).run();
 
-    var dbException = new RuntimeException("DB failed");
-    txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(true);
-    when(databaseAction.get()).thenThrow(dbException);
+      KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction, compensationAction);
 
-    assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
-      compensationAction))
-      .isInstanceOf(RuntimeException.class)
-      .hasMessage("DB failed");
+      var syncCaptor = ArgumentCaptor.forClass(TransactionSynchronization.class);
+      txManagerMock.verify(() -> TransactionSynchronizationManager.registerSynchronization(syncCaptor.capture()));
 
-    verify(compensationAction, org.mockito.Mockito.never()).run(); // Deferred until Spring Tx Rollback
+      // Exception is caught and logged inside afterCompletion: must NOT propagate
+      syncCaptor.getValue().afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK);
+
+      verify(compensationAction).run();
+    }
+
+    @Test
+    void positive_commitIgnoresCompensation() {
+      var keycloakAction = mock(Runnable.class);
+      @SuppressWarnings("unchecked")
+      var databaseAction = (Supplier<String>) mock(Supplier.class);
+      var compensationAction = mock(Runnable.class);
+
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(true);
+      when(databaseAction.get()).thenReturn("success");
+
+      KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction, compensationAction);
+
+      var syncCaptor = ArgumentCaptor.forClass(TransactionSynchronization.class);
+      txManagerMock.verify(() -> TransactionSynchronizationManager.registerSynchronization(syncCaptor.capture()));
+
+      syncCaptor.getValue().afterCompletion(TransactionSynchronization.STATUS_COMMITTED);
+
+      verifyNoInteractions(compensationAction);
+    }
+
+    @Test
+    void negative_dbFails_compensationDeferredToSpringRollback() {
+      var keycloakAction = mock(Runnable.class);
+      @SuppressWarnings("unchecked")
+      var databaseAction = (Supplier<String>) mock(Supplier.class);
+      var compensationAction = mock(Runnable.class);
+
+      var dbException = new RuntimeException("DB failed");
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(true);
+      when(databaseAction.get()).thenThrow(dbException);
+
+      assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
+          compensationAction))
+          .isInstanceOf(RuntimeException.class)
+          .hasMessage("DB failed");
+
+      // Compensation is NOT triggered inline; deferred to Spring's
+      // afterCompletion(STATUS_ROLLED_BACK)
+      verify(compensationAction, never()).run();
+    }
   }
 }

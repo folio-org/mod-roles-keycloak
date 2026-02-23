@@ -13,7 +13,6 @@ import static org.folio.roles.support.PolicyUtils.rolePolicy;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -72,23 +71,34 @@ class KeycloakAuthorizationServiceTest {
   private static final String RESOURCE_ID = UUID.randomUUID().toString();
   private static final String SCOPE_PERMISSION_ID = UUID.randomUUID().toString();
 
-  private static final Function<Endpoint, String> PERMISSION_NAME_GENERATOR =
-    endpoint -> String.format("%s access to %s", endpoint.getMethod(), endpoint.getPath());
+  private static final Function<Endpoint, String> PERMISSION_NAME_GENERATOR = endpoint -> String
+      .format("%s access to %s", endpoint.getMethod(), endpoint.getPath());
 
-  @InjectMocks private KeycloakAuthorizationService keycloakAuthService;
+  @InjectMocks
+  private KeycloakAuthorizationService keycloakAuthService;
 
-  @Mock private Response response;
-  @Mock private ResourcesResource authResourcesClient;
-  @Mock private PermissionsResource authPermissionsClient;
-  @Mock private AuthorizationResource authorizationClient;
-  @Mock private ScopePermissionResource scopePermissionClient;
-  @Mock private ScopePermissionsResource scopePermissionsClient;
-  @Mock private KeycloakAuthorizationClientProvider authResourceProvider;
+  @Mock
+  private Response response;
+  @Mock
+  private ResourcesResource authResourcesClient;
+  @Mock
+  private PermissionsResource authPermissionsClient;
+  @Mock
+  private AuthorizationResource authorizationClient;
+  @Mock
+  private ScopePermissionResource scopePermissionClient;
+  @Mock
+  private ScopePermissionsResource scopePermissionsClient;
+  @Mock
+  private KeycloakAuthorizationClientProvider authResourceProvider;
 
-  @Spy private final JsonHelper jsonHelper = new JsonHelper(OBJECT_MAPPER);
-  @Spy private final FolioExecutionContext folioExecutionContext =
-    new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
-  @Captor private ArgumentCaptor<ScopePermissionRepresentation> scopePermissionCaptor;
+  @Spy
+  private final JsonHelper jsonHelper = new JsonHelper(OBJECT_MAPPER);
+  @Spy
+  private final FolioExecutionContext folioExecutionContext = new DefaultFolioExecutionContext(
+      new TestModRolesKeycloakModuleMetadata(), emptyMap());
+  @Captor
+  private ArgumentCaptor<ScopePermissionRepresentation> scopePermissionCaptor;
 
   @BeforeEach
   void setUp() {
@@ -139,7 +149,7 @@ class KeycloakAuthorizationServiceTest {
 
     @DisplayName("positive_parameterized")
     @ParameterizedTest(name = "[{index}] responseStatus = {0}")
-    @EnumSource(value = Status.class, names = {"CREATED", "CONFLICT"}, mode = Mode.INCLUDE)
+    @EnumSource(value = Status.class, names = { "CREATED", "CONFLICT" }, mode = Mode.INCLUDE)
     void positive_parameterized(Status responseStatus) {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
@@ -164,9 +174,9 @@ class KeycloakAuthorizationServiceTest {
       verify(response).close();
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
       assertThat(scopePermissionCaptor.getValue())
-        .usingRecursiveComparison()
-        .ignoringFields("id")
-        .isEqualTo(scopePermission());
+          .usingRecursiveComparison()
+          .ignoringFields("id")
+          .isEqualTo(scopePermission());
     }
 
     @Test
@@ -188,9 +198,10 @@ class KeycloakAuthorizationServiceTest {
       postScope.setName("POST");
       resourceRepresentation.setScopes(Set.of(getScope, postScope));
 
-      // Must be called exactly once even though there are two endpoints for the same path
+      // Must be called exactly once even though there are two endpoints for the same
+      // path
       when(authResourcesClient.find(path, null, null, null, null, 0, MAX_VALUE))
-        .thenReturn(List.of(resourceRepresentation));
+          .thenReturn(List.of(resourceRepresentation));
       when(response.getStatusInfo()).thenReturn(Status.CREATED);
       when(scopePermissionsClient.create(any())).thenReturn(response);
 
@@ -233,16 +244,16 @@ class KeycloakAuthorizationServiceTest {
           keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
         }
       })
-        .isInstanceOf(ServiceException.class)
-        .hasMessage("Error during scope-based permission creation in Keycloak. "
-          + "Details: status = 500, message = Internal Server Error");
+          .isInstanceOf(ServiceException.class)
+          .hasMessage("Error during scope-based permission creation in Keycloak. "
+              + "Details: status = 500, message = Internal Server Error");
 
       verify(response).close();
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
       assertThat(scopePermissionCaptor.getValue())
-        .usingRecursiveComparison()
-        .ignoringFields("id")
-        .isEqualTo(scopePermission());
+          .usingRecursiveComparison()
+          .ignoringFields("id")
+          .isEqualTo(scopePermission());
     }
 
     @Test
@@ -263,8 +274,8 @@ class KeycloakAuthorizationServiceTest {
           keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
         }
       })
-        .isInstanceOf(EntityNotFoundException.class)
-        .hasMessage("Keycloak resource is not found by static path: /foo/entities");
+          .isInstanceOf(EntityNotFoundException.class)
+          .hasMessage("Keycloak resource is not found by static path: /foo/entities");
 
       verifyNoInteractions(scopePermissionsClient);
     }
@@ -291,8 +302,8 @@ class KeycloakAuthorizationServiceTest {
           keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
         }
       })
-        .isInstanceOf(EntityNotFoundException.class)
-        .hasMessage("Keycloak resource is not found by static path: /foo/entities");
+          .isInstanceOf(EntityNotFoundException.class)
+          .hasMessage("Keycloak resource is not found by static path: /foo/entities");
 
       verifyNoInteractions(scopePermissionsClient);
     }
@@ -338,7 +349,7 @@ class KeycloakAuthorizationServiceTest {
       scope1.setName("GET");
       resource1.setScopes(Set.of(scope1));
       when(authResourcesClient.find(path1, null, null, null, null, 0, MAX_VALUE))
-        .thenReturn(List.of(resource1));
+          .thenReturn(List.of(resource1));
 
       var path2 = "/bar/items";
       var resource2 = new ResourceRepresentation();
@@ -349,7 +360,7 @@ class KeycloakAuthorizationServiceTest {
       scope2.setName("POST");
       resource2.setScopes(Set.of(scope2));
       when(authResourcesClient.find(path2, null, null, null, null, 0, MAX_VALUE))
-        .thenReturn(List.of(resource2));
+          .thenReturn(List.of(resource2));
 
       when(response.getStatusInfo()).thenReturn(Status.CREATED);
       when(scopePermissionsClient.create(any())).thenReturn(response);
@@ -381,9 +392,9 @@ class KeycloakAuthorizationServiceTest {
       var path2 = "/bar/items";
 
       when(authResourcesClient.find(path1, null, null, null, null, 0, MAX_VALUE))
-        .thenReturn(List.of(resourceRepresentation()));
+          .thenReturn(List.of(resourceRepresentation()));
       when(authResourcesClient.find(path2, null, null, null, null, 0, MAX_VALUE))
-        .thenReturn(emptyList());
+          .thenReturn(emptyList());
       when(scopePermissionsClient.create(any())).thenReturn(response);
       when(response.getStatusInfo()).thenReturn(Status.CREATED);
 
@@ -396,8 +407,8 @@ class KeycloakAuthorizationServiceTest {
           keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
         }
       })
-        .isInstanceOf(EntityNotFoundException.class)
-        .hasMessage("Keycloak resource is not found by static path: " + path2);
+          .isInstanceOf(EntityNotFoundException.class)
+          .hasMessage("Keycloak resource is not found by static path: " + path2);
       clearInvocations(response, scopePermissionsClient, jsonHelper);
     }
 
