@@ -258,6 +258,30 @@ class KeycloakTransactionHelperTest {
     }
 
     @Test
+    @DisplayName("STATUS_UNKNOWN: compensation is NOT run and no exception propagates")
+    void positive_statusUnknown_doesNotRunCompensation() {
+      var keycloakAction = mock(Runnable.class);
+      @SuppressWarnings("unchecked")
+      var databaseAction = (Supplier<String>) mock(Supplier.class);
+      var compensationAction = mock(Runnable.class);
+
+      txManagerMock.when(TransactionSynchronizationManager::isSynchronizationActive).thenReturn(true);
+      when(databaseAction.get()).thenReturn("success");
+
+      KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction, compensationAction);
+
+      var syncCaptor = ArgumentCaptor.forClass(TransactionSynchronization.class);
+      txManagerMock.verify(() -> TransactionSynchronizationManager.registerSynchronization(syncCaptor.capture()));
+
+      // Should NOT throw and should NOT call compensation: outcome is indeterminate,
+      // so we log at ERROR level and do nothing to avoid creating a new
+      // inconsistency.
+      syncCaptor.getValue().afterCompletion(TransactionSynchronization.STATUS_UNKNOWN);
+
+      verifyNoInteractions(compensationAction);
+    }
+
+    @Test
     void negative_dbFails_compensationDeferredToSpringRollback() {
       var keycloakAction = mock(Runnable.class);
       @SuppressWarnings("unchecked")

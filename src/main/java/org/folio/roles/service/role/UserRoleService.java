@@ -53,6 +53,11 @@ public class UserRoleService {
   /**
    * Creates a relation between user and role by their identifiers.
    *
+   * <p>
+   * Idempotent: if the relation already exists in the DB, the method returns
+   * without touching Keycloak. The compensation action is therefore only ever
+   * registered for <em>new</em> assignments, making it safe.
+   *
    * @param userRole - user-role relation
    */
   @Transactional
@@ -60,6 +65,7 @@ public class UserRoleService {
     var roleById = roleService.getById(userRole.getRoleId());
     var foundUserRole = userRoleEntityService.find(userRole);
     if (foundUserRole.isPresent()) {
+      // Relation already exists; nothing to do and no Keycloak call is made.
       return;
     }
 
@@ -115,6 +121,18 @@ public class UserRoleService {
 
   /**
    * Deletes a `RolesUser` with the specified id.
+   *
+   * <p>
+   * The compensation action re-assigns roles in Keycloak if the DB delete fails.
+   * If this method is called inside a larger transaction that later rolls back
+   * due to an
+   * <em>unrelated</em> failure, the Spring synchronization registered by
+   * {@link KeycloakTransactionHelper} will also run the compensation — restoring
+   * the
+   * Keycloak assignment even though the DB delete was rolled back automatically.
+   * This is safe
+   * because {@code assignRolesToUser} is idempotent with respect to existing
+   * assignments.
    *
    * @param userId - user identifier as {@link UUID} value.
    */
