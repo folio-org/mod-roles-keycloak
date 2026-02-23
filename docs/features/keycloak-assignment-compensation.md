@@ -1,7 +1,7 @@
 ---
 feature_id: keycloak-assignment-compensation
 title: Keycloak Assignment Compensation
-updated: 2025-02-23
+updated: 2026-02-23
 ---
 
 # Keycloak Assignment Compensation
@@ -32,25 +32,21 @@ All REST endpoints that modify role or user assignments trigger this behavior:
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | `/roles/{roleId}/capabilities` | Assign capabilities to a role |
+| POST | `/roles/capabilities` | Assign capabilities to a role |
 | PUT | `/roles/{roleId}/capabilities` | Update capabilities assigned to a role |
 | DELETE | `/roles/{roleId}/capabilities` | Remove all capability assignments from a role |
-| DELETE | `/roles/{roleId}/capabilities/{capabilityId}` | Remove a single capability from a role |
-| POST | `/roles/{roleId}/capability-sets` | Assign capability sets to a role |
+| POST | `/roles/capability-sets` | Assign capability sets to a role |
 | PUT | `/roles/{roleId}/capability-sets` | Update capability sets assigned to a role |
 | DELETE | `/roles/{roleId}/capability-sets` | Remove all capability set assignments from a role |
-| DELETE | `/roles/{roleId}/capability-sets/{capabilitySetId}` | Remove a single capability set from a role |
-| POST | `/users/{userId}/capabilities` | Assign capabilities to a user |
+| POST | `/users/capabilities` | Assign capabilities to a user |
 | PUT | `/users/{userId}/capabilities` | Update capabilities assigned to a user |
 | DELETE | `/users/{userId}/capabilities` | Remove all capability assignments from a user |
-| DELETE | `/users/{userId}/capabilities/{capabilityId}` | Remove a single capability from a user |
-| POST | `/users/{userId}/capability-sets` | Assign capability sets to a user |
+| POST | `/users/capability-sets` | Assign capability sets to a user |
 | PUT | `/users/{userId}/capability-sets` | Update capability sets assigned to a user |
 | DELETE | `/users/{userId}/capability-sets` | Remove all capability set assignments from a user |
-| DELETE | `/users/{userId}/capability-sets/{capabilitySetId}` | Remove a single capability set from a user |
-| POST | `/users/roles` | Assign roles to a user |
-| PUT | `/users/roles` | Update roles assigned to a user |
-| DELETE | `/users/{userId}/roles` | Remove all role assignments from a user |
+| POST | `/roles/users` | Assign roles to a user |
+| PUT | `/roles/users/{userId}` | Update roles assigned to a user |
+| DELETE | `/roles/users/{userId}` | Remove all role assignments from a user |
 
 ## Business rules and constraints
 
@@ -58,8 +54,9 @@ All REST endpoints that modify role or user assignments trigger this behavior:
   compensation action is the logical inverse (e.g., if Keycloak permissions were created, the
   compensation deletes them).
 - **Compensation on DB failure (no active transaction)**: if the DB write fails and no Spring
-  transaction is active, the compensation runs synchronously and its result is logged; any
-  compensation failure is attached as a suppressed exception on the primary DB exception.
+  transaction is active, the compensation is attempted (a WARN is logged before the attempt);
+  any compensation failure is logged at ERROR level and added as a suppressed exception on the
+  primary DB exception before it is rethrown.
 - **Compensation on transaction rollback (active transaction)**: when a Spring transaction is
   active, a `TransactionSynchronization` is registered before the DB write executes. If the
   enclosing transaction is rolled back (whether due to a failure in the DB write itself or any
