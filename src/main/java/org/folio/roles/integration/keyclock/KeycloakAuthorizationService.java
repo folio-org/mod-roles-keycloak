@@ -244,7 +244,7 @@ public class KeycloakAuthorizationService {
       if (primary instanceof RuntimeException runtimeException) {
         throw runtimeException;
       }
-      throw new RuntimeException("Keycloak operation failed", primary);
+      throw new ServiceException("Keycloak operation failed", primary);
     }
   }
 }

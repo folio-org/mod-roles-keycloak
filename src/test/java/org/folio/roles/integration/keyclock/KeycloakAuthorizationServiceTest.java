@@ -239,14 +239,13 @@ class KeycloakAuthorizationServiceTest {
       var endpoints = List.of(endpoint("/foo/entities", GET));
 
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
-      assertThatThrownBy(() -> {
-        try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
-          keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
-        }
-      })
-          .isInstanceOf(ServiceException.class)
-          .hasMessage("Error during scope-based permission creation in Keycloak. "
-              + "Details: status = 500, message = Internal Server Error");
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        assertThatThrownBy(
+          () -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+            .isInstanceOf(ServiceException.class)
+            .hasMessage("Error during scope-based permission creation in Keycloak. "
+                + "Details: status = 500, message = Internal Server Error");
+      }
 
       verify(response).close();
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
@@ -269,41 +268,39 @@ class KeycloakAuthorizationServiceTest {
       var endpoints = List.of(endpoint("/foo/entities", GET));
 
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
-      assertThatThrownBy(() -> {
-        try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
-          keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
-        }
-      })
-          .isInstanceOf(EntityNotFoundException.class)
-          .hasMessage("Keycloak resource is not found by static path: /foo/entities");
-
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        assertThatThrownBy(
+          () -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+            .isInstanceOf(EntityNotFoundException.class)
+            .hasMessage("Keycloak resource is not found by static path: /foo/entities");
+      }
+    
       verifyNoInteractions(scopePermissionsClient);
     }
-
+    
     @Test
     void negative_resourceIsFoundByInvalidPath() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-
+    
       var path = "/foo/entities";
       var resourceRepresentation = resourceRepresentation();
       resourceRepresentation.setName("/foo/entities/{id}");
       var resourceRepresentations = List.of(resourceRepresentation);
       when(authResourcesClient.find(path, null, null, null, null, 0, MAX_VALUE)).thenReturn(resourceRepresentations);
-
+    
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
-
+    
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
-      assertThatThrownBy(() -> {
-        try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
-          keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
-        }
-      })
-          .isInstanceOf(EntityNotFoundException.class)
-          .hasMessage("Keycloak resource is not found by static path: /foo/entities");
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        assertThatThrownBy(
+          () -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+            .isInstanceOf(EntityNotFoundException.class)
+            .hasMessage("Keycloak resource is not found by static path: /foo/entities");
+      }
 
       verifyNoInteractions(scopePermissionsClient);
     }
@@ -403,13 +400,12 @@ class KeycloakAuthorizationServiceTest {
       var endpoints = List.of(endpoint(path1, GET), endpoint(path2, GET));
     
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
-      assertThatThrownBy(() -> {
-        try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
-          keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
-        }
-      })
-          .isInstanceOf(EntityNotFoundException.class)
-          .hasMessage("Keycloak resource is not found by static path: " + path2);
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        assertThatThrownBy(
+          () -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+            .isInstanceOf(EntityNotFoundException.class)
+            .hasMessage("Keycloak resource is not found by static path: " + path2);
+      }
     
       // Verify only what was actually invoked on the successful path so no
       // clearInvocations is needed.
@@ -436,15 +432,14 @@ class KeycloakAuthorizationServiceTest {
       var endpoints = List.of(endpoint(path1, GET), endpoint(path2, GET));
     
       when(folioExecutionContext.getInstance()).thenReturn(folioExecutionContext);
-      assertThatThrownBy(() -> {
-        try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
-          keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
-        }
-      })
-          .isInstanceOf(EntityNotFoundException.class)
-          .satisfies(ex -> assertThat(ex.getSuppressed())
-              .hasSize(1)
-              .allMatch(s -> s instanceof EntityNotFoundException));
+      try (var ignored = new FolioExecutionContextSetter(folioExecutionContext)) {
+        assertThatThrownBy(
+          () -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
+            .isInstanceOf(EntityNotFoundException.class)
+            .satisfies(ex -> assertThat(ex.getSuppressed())
+                .hasSize(1)
+                .allMatch(s -> s instanceof EntityNotFoundException));
+      }
     
       verifyNoInteractions(scopePermissionsClient);
     }

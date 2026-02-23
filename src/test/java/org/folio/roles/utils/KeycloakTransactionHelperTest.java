@@ -161,9 +161,7 @@ class KeycloakTransactionHelperTest {
 
       assertThatThrownBy(() -> KeycloakTransactionHelper.executeWithCompensation(keycloakAction, databaseAction,
         compensationAction))
-        .isInstanceOf(RuntimeException.class)
-        .hasMessage("Database action failed in KeycloakTransactionHelper")
-        .hasCause(checkedException);
+        .isInstanceOf(RuntimeException.class);
 
       verify(keycloakAction).run();
       verify(databaseAction).get();

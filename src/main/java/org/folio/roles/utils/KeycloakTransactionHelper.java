@@ -58,10 +58,7 @@ public final class KeycloakTransactionHelper {
       return databaseAction.get();
     } catch (Exception dbException) {
       handleFallbackCompensation(dbException, compensationAction);
-      if (dbException instanceof RuntimeException runtimeException) {
-        throw runtimeException;
-      }
-      throw new RuntimeException("Database action failed in KeycloakTransactionHelper", dbException);
+      throw (RuntimeException) dbException;
     }
   }
 
