@@ -12,6 +12,7 @@ import org.folio.roles.domain.dto.UserRoles;
 import org.folio.roles.domain.dto.UserRolesRequest;
 import org.folio.roles.domain.model.event.UserPermissionsChangedEvent;
 import org.folio.roles.integration.keyclock.KeycloakRolesUserService;
+import org.folio.roles.utils.KeycloakTransactionHelper;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -27,9 +28,11 @@ public class UserRoleService {
   private final ApplicationEventPublisher eventPublisher;
 
   /**
-   * Creates a new user-role relation based on the provided {@link UserRolesRequest} object.
+   * Creates a new user-role relation based on the provided
+   * {@link UserRolesRequest} object.
    *
-   * @param userRolesRequest - {@link List} with {@link UserRole} records to create
+   * @param userRolesRequest - {@link List} with {@link UserRole} records to
+   *                         create
    * @return created {@link UserRoles} relations object
    */
   @Transactional
@@ -37,8 +40,12 @@ public class UserRoleService {
     var userId = userRolesRequest.getUserId();
     var roleIds = userRolesRequest.getRoleIds();
     var foundRoles = roleService.findByIds(roleIds);
-    var createdUserRoles = userRoleEntityService.create(userId, roleIds);
-    keycloakRolesUserService.assignRolesToUser(userId, foundRoles);
+
+    var createdUserRoles = KeycloakTransactionHelper.executeWithCompensation(
+        () -> keycloakRolesUserService.assignRolesToUser(userId, foundRoles),
+        () -> userRoleEntityService.create(userId, roleIds),
+        () -> keycloakRolesUserService.unlinkRolesFromUser(userId, foundRoles));
+
     eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userId));
     return buildUserRoles(createdUserRoles);
   }
@@ -56,15 +63,20 @@ public class UserRoleService {
       return;
     }
 
-    keycloakRolesUserService.assignRolesToUser(userRole.getUserId(), singletonList(roleById));
-    userRoleEntityService.createSafe(userRole);
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> keycloakRolesUserService.assignRolesToUser(userRole.getUserId(), singletonList(roleById)),
+        () -> userRoleEntityService.createSafe(userRole),
+        () -> keycloakRolesUserService.unlinkRolesFromUser(userRole.getUserId(), singletonList(roleById)));
+
     eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userRole.getUserId()));
   }
 
   /**
-   * Updates an existing {@link UserRole} relations based on the provided {@link UserRolesRequest}.
+   * Updates an existing {@link UserRole} relations based on the provided
+   * {@link UserRolesRequest}.
    *
-   * @param request {@link UserRolesRequest} containing the updated information about user-role relations
+   * @param request {@link UserRolesRequest} containing the updated information
+   *                about user-role relations
    */
   @Transactional
   public void update(UserRolesRequest request) {
@@ -72,8 +84,8 @@ public class UserRoleService {
     var existingRoleIds = mapItems(userRoleEntityService.findByUserId(userId), UserRole::getRoleId);
 
     UpdateOperationHelper.create(existingRoleIds, request.getRoleIds(), "user-role")
-      .consumeNewEntities(newValues -> createNewRoles(newValues, userId))
-      .consumeDeprecatedEntities(deprecatedValues -> deleteDeprecatedRoles(deprecatedValues, userId));
+        .consumeNewEntities(newValues -> createNewRoles(newValues, userId))
+        .consumeDeprecatedEntities(deprecatedValues -> deleteDeprecatedRoles(deprecatedValues, userId));
     eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userId));
   }
 
@@ -88,12 +100,14 @@ public class UserRoleService {
   }
 
   /**
-   * Finds {@link UserRoles} based on a provided CQL query, limit and offset values.
+   * Finds {@link UserRoles} based on a provided CQL query, limit and offset
+   * values.
    *
-   * @param query - the query used to find records
+   * @param query  - the query used to find records
    * @param offset - the offset of records to return
-   * @param limit - the maximum number of records to return
-   * @return a {@link UserRole} object containing the {@link UserRole} relation items
+   * @param limit  - the maximum number of records to return
+   * @return a {@link UserRole} object containing the {@link UserRole} relation
+   *         items
    */
   public UserRoles findByQuery(String query, Integer offset, Integer limit) {
     return userRoleEntityService.findByQuery(query, offset, limit);
@@ -107,9 +121,13 @@ public class UserRoleService {
   @Transactional
   public void deleteById(UUID userId) {
     var roleIds = mapItems(userRoleEntityService.findByUserId(userId), UserRole::getRoleId);
-    userRoleEntityService.deleteByUserId(userId);
     var roles = roleService.findByIds(roleIds);
-    keycloakRolesUserService.unlinkRolesFromUser(userId, roles);
+
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> keycloakRolesUserService.unlinkRolesFromUser(userId, roles),
+        () -> userRoleEntityService.deleteByUserId(userId),
+        () -> keycloakRolesUserService.assignRolesToUser(userId, roles));
+
     eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userId));
   }
 
@@ -120,13 +138,17 @@ public class UserRoleService {
 
   private void createNewRoles(List<UUID> newValues, UUID userId) {
     var roles = roleService.findByIds(newValues);
-    userRoleEntityService.create(userId, newValues);
-    keycloakRolesUserService.assignRolesToUser(userId, roles);
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> keycloakRolesUserService.assignRolesToUser(userId, roles),
+        () -> userRoleEntityService.create(userId, newValues),
+        () -> keycloakRolesUserService.unlinkRolesFromUser(userId, roles));
   }
 
   private void deleteDeprecatedRoles(List<UUID> deprecatedValues, UUID userId) {
     var roles = roleService.findByIds(deprecatedValues);
-    userRoleEntityService.delete(userId, deprecatedValues);
-    keycloakRolesUserService.unlinkRolesFromUser(userId, roles);
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> keycloakRolesUserService.unlinkRolesFromUser(userId, roles),
+        () -> userRoleEntityService.delete(userId, deprecatedValues),
+        () -> keycloakRolesUserService.assignRolesToUser(userId, roles));
   }
 }

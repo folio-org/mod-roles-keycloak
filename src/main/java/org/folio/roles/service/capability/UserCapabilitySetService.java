@@ -25,6 +25,7 @@ import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.roles.mapper.entity.UserCapabilitySetEntityMapper;
 import org.folio.roles.repository.UserCapabilitySetRepository;
 import org.folio.roles.service.permission.UserPermissionService;
+import org.folio.roles.utils.KeycloakTransactionHelper;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -49,8 +50,9 @@ public class UserCapabilitySetService {
   /**
    * Creates a record(s) associating one or more capabilitySets with a user.
    *
-   * @param userId - user identifier as {@link UUID} object
-   * @param capabilitySetIds - capabilitySet identifiers as {@link List} of {@link UUID} objects
+   * @param userId           - user identifier as {@link UUID} object
+   * @param capabilitySetIds - capabilitySet identifiers as {@link List} of
+   *                         {@link UUID} objects
    * @return {@link PageResult} with created {@link UserCapabilitySet} relations
    */
   @Transactional
@@ -64,7 +66,7 @@ public class UserCapabilitySetService {
     var existingCapabilitySetIds = getCapabilitySetIds(existingEntities);
     if (isNotEmpty(existingCapabilitySetIds)) {
       throw new EntityExistsException(String.format(
-        "Relation already exists for user='%s' and capabilitySets=%s", userId, existingCapabilitySetIds));
+          "Relation already exists for user='%s' and capabilitySets=%s", userId, existingCapabilitySetIds));
     }
 
     var result = assignCapabilities(userId, capabilitySetIds, emptyList());
@@ -75,8 +77,8 @@ public class UserCapabilitySetService {
   /**
    * Retrieves user-capabilitySets items by CQL query.
    *
-   * @param query - CQL query as {@link String} object
-   * @param limit - a number of results in response
+   * @param query  - CQL query as {@link String} object
+   * @param limit  - a number of results in response
    * @param offset - offset in pagination from first record.
    * @return {@link PageResult} with found {@link UserCapabilitySet} relations
    */
@@ -91,8 +93,9 @@ public class UserCapabilitySetService {
   /**
    * Updates a list of assigned to a user capabilitySets.
    *
-   * @param userId - user identifier
-   * @param capabilityIds - list with new capabilitySets, that should be assigned to a user
+   * @param userId        - user identifier
+   * @param capabilityIds - list with new capabilitySets, that should be assigned
+   *                      to a user
    */
   @Transactional
   public void update(UUID userId, List<UUID> capabilityIds) {
@@ -101,15 +104,16 @@ public class UserCapabilitySetService {
 
     var assignedSetIds = getCapabilitySetIds(assignedUserCapabilitySetEntities);
     UpdateOperationHelper.create(assignedSetIds, capabilityIds, "user-capability set")
-      .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(userId, newIds, assignedSetIds)))
-      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
+        .consumeAndCacheNewEntities(newIds -> getCapabilitySetIds(assignCapabilities(userId, newIds, assignedSetIds)))
+        .consumeDeprecatedEntities(
+            (deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
     eventPublisher.publishEvent(userPermissionsChanged(userId));
   }
 
   /**
    * Removes user assigned capability set.
    *
-   * @param userId - user identifier as {@link UUID}
+   * @param userId          - user identifier as {@link UUID}
    * @param capabilitySetId - capability set identifier as {@link UUID}
    */
   @Transactional
@@ -122,7 +126,8 @@ public class UserCapabilitySetService {
 
     assignedCapabilitySetIds.remove(capabilitySetId);
     userCapabilitySetRepository.findById(UserCapabilitySetKey.of(userId, capabilitySetId))
-      .ifPresent(entity -> removeCapabilities(userId, List.of(entity.getCapabilitySetId()), assignedCapabilitySetIds));
+        .ifPresent(
+            entity -> removeCapabilities(userId, List.of(entity.getCapabilitySetId()), assignedCapabilitySetIds));
     eventPublisher.publishEvent(userPermissionsChanged(userId));
   }
 
@@ -130,7 +135,9 @@ public class UserCapabilitySetService {
    * Removes user assigned capabilities using user identifier.
    *
    * @param userId - user identifier as {@link UUID}
-   * @throws jakarta.persistence.EntityNotFoundException if user is not found by id or there is no assigned values
+   * @throws jakarta.persistence.EntityNotFoundException if user is not found by
+   *                                                     id or there is no
+   *                                                     assigned values
    */
   @Transactional
   public void deleteAll(UUID userId) {
@@ -146,15 +153,18 @@ public class UserCapabilitySetService {
   }
 
   private PageResult<UserCapabilitySet> assignCapabilities(
-    UUID userId, List<UUID> newSetIds, Collection<UUID> assignedSetIds) {
+      UUID userId, List<UUID> newSetIds, Collection<UUID> assignedSetIds) {
     log.debug("Assigning capabilities to user: userId = {}, ids = {}", userId, newSetIds);
     capabilitySetService.checkIds(newSetIds);
 
     var entities = mapItems(newSetIds, capabilitySetId -> new UserCapabilitySetEntity(userId, capabilitySetId));
     var changedEndpoints = getChangedEndpoints(userId, newSetIds, assignedSetIds);
-    userPermissionService.createPermissions(userId, changedEndpoints);
 
-    var resultEntities = userCapabilitySetRepository.saveAll(entities);
+    var resultEntities = KeycloakTransactionHelper.executeWithCompensation(
+        () -> userPermissionService.createPermissions(userId, changedEndpoints),
+        () -> userCapabilitySetRepository.saveAll(entities),
+        () -> userPermissionService.deletePermissions(userId, changedEndpoints));
+
     var createdUserCapabilities = mapItems(resultEntities, userCapabilitySetEntityMapper::convert);
     log.info("Capabilities assigned to user: userId = {}, ids = {}", userId, newSetIds);
 
@@ -164,8 +174,12 @@ public class UserCapabilitySetService {
   private void removeCapabilities(UUID userId, List<UUID> deprecatedSetIds, Collection<UUID> assignedSetIds) {
     log.debug("Revoking capabilities from user: userId = {}, ids = {}", userId, deprecatedSetIds);
     var changedEndpoints = getChangedEndpoints(userId, deprecatedSetIds, assignedSetIds);
-    userPermissionService.deletePermissions(userId, changedEndpoints);
-    userCapabilitySetRepository.deleteUserCapabilitySets(userId, deprecatedSetIds);
+
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> userPermissionService.deletePermissions(userId, changedEndpoints),
+        () -> userCapabilitySetRepository.deleteUserCapabilitySets(userId, deprecatedSetIds),
+        () -> userPermissionService.createPermissions(userId, changedEndpoints));
+
     log.info("Capability sets are revoked to user: userId = {}, ids = {}", userId, deprecatedSetIds);
   }
 

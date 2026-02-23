@@ -4,8 +4,8 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.apache.commons.collections4.CollectionUtils.subtract;
 import static org.apache.commons.collections4.ListUtils.intersection;
-import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
 import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
@@ -32,6 +32,7 @@ import org.folio.roles.service.permission.RolePermissionService;
 import org.folio.roles.service.role.RoleService;
 import org.folio.roles.utils.CapabilityUtils;
 import org.folio.roles.utils.CollectionUtils;
+import org.folio.roles.utils.KeycloakTransactionHelper;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -58,9 +59,11 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   /**
    * Creates a record(s) associating one or more capabilities with the role.
    *
-   * @param roleId - role identifier as {@link UUID} object
-   * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
-   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @param roleId        - role identifier as {@link UUID} object
+   * @param capabilityIds - capability identifiers as {@link List} of {@link UUID}
+   *                      objects
+   * @param safeCreate    - defines if new capabilities must be added or error
+   *                      thrown if any already exists
    * @return {@link RoleCapability} object with created role-capability relations
    */
   @Override
@@ -74,8 +77,10 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   /**
    * Creates record(s) associating one or more capabilities with a role.
    *
-   * @param request - request containing roleId, capabilityIds or capabilityNames
-   * @param safeCreate - defines if new capabilities must be added or error thrown if any already exists
+   * @param request    - request containing roleId, capabilityIds or
+   *                   capabilityNames
+   * @param safeCreate - defines if new capabilities must be added or error thrown
+   *                   if any already exists
    * @return {@link RoleCapability} object with created role-capability relations
    */
   @Override
@@ -91,10 +96,11 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   /**
    * Retrieves role-capability items by CQL query.
    *
-   * @param query - CQL query as {@link String} object
-   * @param limit - a number of results in response
+   * @param query  - CQL query as {@link String} object
+   * @param limit  - a number of results in response
    * @param offset - offset in pagination from first record.
-   * @return {@link PageResult} object with found {@link RoleCapability} relation descriptors.
+   * @return {@link PageResult} object with found {@link RoleCapability} relation
+   *         descriptors.
    */
   @Override
   @Transactional(readOnly = true)
@@ -108,7 +114,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   /**
    * Updates role-capability relations.
    *
-   * @param roleId - role identifier as {@link UUID} object
+   * @param roleId        - role identifier as {@link UUID} object
    * @param capabilityIds - list of capabilities that must be assigned to a role
    */
   @Override
@@ -121,9 +127,10 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   /**
    * Updates role-capability relations.
    *
-   * @param roleId - role identifier as {@link UUID} object
-   * @param request - CapabilitiesUpdateRequest that contains either capability IDs or names, to be assigned to a
-   *   role
+   * @param roleId  - role identifier as {@link UUID} object
+   * @param request - CapabilitiesUpdateRequest that contains either capability
+   *                IDs or names, to be assigned to a
+   *                role
    */
   @Override
   @Transactional
@@ -137,7 +144,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
   /**
    * Removes role-capability relations by role and capability identifiers.
    *
-   * @param roleId - role identifier as {@link UUID}
+   * @param roleId       - role identifier as {@link UUID}
    * @param capabilityId - capability identifier as {@link UUID}
    */
   @Override
@@ -151,15 +158,16 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
     assignedCapabilityIds.remove(capabilityId);
     roleCapabilityRepository.findById(RoleCapabilityKey.of(roleId, capabilityId))
-      .ifPresent(entity -> removeCapabilities(roleId, List.of(entity.getCapabilityId()), assignedCapabilityIds));
+        .ifPresent(entity -> removeCapabilities(roleId, List.of(entity.getCapabilityId()), assignedCapabilityIds));
     eventPublisher.publishEvent(tenantPermissionsChanged());
   }
 
   /**
    * Removes role-capability relations by role identifier and capability ids.
    *
-   * @param roleId - role identifier as {@link UUID}
-   * @param capabilityIds - list with capabilities, that should be removed from a role
+   * @param roleId        - role identifier as {@link UUID}
+   * @param capabilityIds - list with capabilities, that should be removed from a
+   *                      role
    */
   @Override
   @Transactional
@@ -184,7 +192,8 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
    * Removes all role-capability relations by role identifier.
    *
    * @param roleId - role identifier as {@link UUID}
-   * @throws EntityNotFoundException if role is not found by id or there is no assigned values
+   * @throws EntityNotFoundException if role is not found by id or there is no
+   *                                 assigned values
    */
   @Override
   @Transactional
@@ -215,7 +224,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     var existingCapabilityIds = getCapabilityIds(existingEntities);
     if (!safeCreate && isNotEmpty(existingCapabilityIds)) {
       throw new EntityExistsException(String.format(
-        "Relation already exists for role='%s' and capabilities=%s", roleId, existingCapabilityIds));
+          "Relation already exists for role='%s' and capabilities=%s", roleId, existingCapabilityIds));
     }
 
     var newCapabilityIds = difference(capabilityIds, existingCapabilityIds);
@@ -227,8 +236,10 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     var assignedRoleCapabilityEntities = roleCapabilityRepository.findAllByRoleId(roleId);
     var assignedCapabilityIds = getCapabilityIds(assignedRoleCapabilityEntities);
     UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "role-capability")
-      .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(roleId, newIds, assignedCapabilityIds)))
-      .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
+        .consumeAndCacheNewEntities(
+            newIds -> getCapabilityIds(assignCapabilities(roleId, newIds, assignedCapabilityIds)))
+        .consumeDeprecatedEntities(
+            (deprecatedIds, createdIds) -> removeCapabilities(roleId, deprecatedIds, createdIds));
   }
 
   private List<UUID> resolveCapabilitiesByNames(List<String> capabilityNames) {
@@ -242,7 +253,7 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
 
     if (isEmpty(foundCapabilitiesNames)) {
       throw new RequestValidationException("Capabilities by name are not found",
-        "capabilityNames", notFoundCapabilities);
+          "capabilityNames", notFoundCapabilities);
     }
 
     if (isNotEmpty(notFoundCapabilities)) {
@@ -259,9 +270,12 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     var entities = mapItems(newIds, id -> new RoleCapabilityEntity(roleId, id));
     var assignedCapabilityIds = CollectionUtils.union(assignedIds, getAssignedCapabilityIds(roleId));
     var endpoints = capabilityEndpointService.getByCapabilityIds(newIds, assignedCapabilityIds);
-    rolePermissionService.createPermissions(roleId, endpoints);
 
-    var resultEntities = roleCapabilityRepository.saveAll(entities);
+    var resultEntities = KeycloakTransactionHelper.executeWithCompensation(
+        () -> rolePermissionService.createPermissions(roleId, endpoints),
+        () -> roleCapabilityRepository.saveAll(entities),
+        () -> rolePermissionService.deletePermissions(roleId, endpoints));
+
     var createdRoleCapabilities = mapItems(resultEntities, roleCapabilityEntityMapper::convert);
     log.info("Capabilities are assigned to role: roleId = {}, capabilityIds = {}", roleId, newIds);
 
@@ -272,8 +286,12 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     log.debug("Revoking capabilities from role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
     var assignedCapabilityIds = CollectionUtils.union(assignedIds, getAssignedCapabilityIds(roleId));
     var endpoints = capabilityEndpointService.getByCapabilityIds(deprecatedIds, assignedCapabilityIds);
-    rolePermissionService.deletePermissions(roleId, endpoints);
-    roleCapabilityRepository.deleteRoleCapabilities(roleId, deprecatedIds);
+
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> rolePermissionService.deletePermissions(roleId, endpoints),
+        () -> roleCapabilityRepository.deleteRoleCapabilities(roleId, deprecatedIds),
+        () -> rolePermissionService.createPermissions(roleId, endpoints));
+
     log.info("Capabilities are revoked to role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
   }
 
