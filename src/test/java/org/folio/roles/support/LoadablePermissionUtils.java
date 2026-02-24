@@ -66,6 +66,12 @@ public class LoadablePermissionUtils {
     return entity;
   }
 
+  public static LoadablePermissionEntity loadablePermissionEntity(UUID roleId, UUID capabilityId,
+    UUID capabilitySetId) {
+    return loadablePermissionEntity(roleId,
+      loadablePermission().capabilityId(capabilityId).capabilitySetId(capabilitySetId));
+  }
+
   public static LoadableRoleEntity loadableRoleEntity() {
     var roleId = UUID.randomUUID();
     var loadableRole = new LoadableRoleEntity();
