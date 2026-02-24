@@ -14,8 +14,9 @@ automatically reverses the Keycloak change (compensation). If the enclosing Spri
 back for any subsequent reason, the same reversal is triggered via a registered transaction
 synchronization.
 
-Permission-creation and permission-deletion calls against Keycloak are processed concurrently per
-resource path using virtual threads, reducing the wall-clock time of bulk assignment operations.
+Permission-creation and permission-deletion calls against Keycloak are processed concurrently using
+a shared, bounded thread pool (`keycloakOperationsExecutor`), reducing the wall-clock time of bulk
+assignment operations while preventing Keycloak connection pool exhaustion.
 
 ## Why it exists
 
@@ -67,9 +68,12 @@ All REST endpoints that modify role or user assignments trigger this behavior:
   reset during commit), compensation is intentionally skipped. The event is logged at ERROR level
   for manual reconciliation.
 - **Concurrent permission operations**: `createPermissions` groups endpoints by resource path and
-  submits one virtual-thread task per distinct path. `deletePermissions` submits one task per
-  endpoint. All tasks must complete before the method returns; if any task fails, all failures are
-  collected and the first is thrown with the rest as suppressed exceptions.
+  submits one task per distinct path to the shared `keycloakOperationsExecutor` thread pool.
+  `deletePermissions` submits one task per endpoint to the same pool. All tasks must complete
+  before the method returns; if any task fails, all failures are collected and the first is thrown
+  with the rest as suppressed exceptions. The pool is bounded (default: 20 threads, configurable
+  via `KC_CONCURRENCY_THREAD_POOL_SIZE`) to prevent Keycloak HTTP connection pool exhaustion under
+  large bulk operations.
 - **Blank-path endpoints skipped**: endpoints with a blank path are silently ignored by both
   `createPermissions` and `deletePermissions`.
 - **Idempotency of compensation**: compensation actions (`assignRolesToUser`,
@@ -99,3 +103,7 @@ All REST endpoints that modify role or user assignments trigger this behavior:
   failure.
 - **Spring transaction infrastructure** — `TransactionSynchronizationManager` is used to hook
   compensation into the Spring transaction lifecycle.
+- **`keycloakOperationsExecutor` bean** — a single shared `ThreadPoolExecutor` (cached-pool
+  behaviour, bounded by `KC_CONCURRENCY_THREAD_POOL_SIZE`, default 20) created in
+  `KeycloakConfiguration` and injected into `KeycloakAuthorizationService`. The pool is
+  gracefully shut down by Spring (`destroyMethod = "shutdown"`) on application context close.

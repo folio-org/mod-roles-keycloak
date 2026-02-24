@@ -13,6 +13,7 @@ import static org.folio.roles.support.PolicyUtils.rolePolicy;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -75,7 +77,8 @@ class KeycloakAuthorizationServiceTest {
     endpoint -> String.format("%s access to %s", endpoint.getMethod(), endpoint.getPath());
 
   @InjectMocks private KeycloakAuthorizationService keycloakAuthService;
-
+  
+  @Mock private ExecutorService keycloakOperationsExecutor;
   @Mock private Response response;
   @Mock private ResourcesResource authResourcesClient;
   @Mock private PermissionsResource authPermissionsClient;
@@ -92,11 +95,15 @@ class KeycloakAuthorizationServiceTest {
   @BeforeEach
   void setUp() {
     Configurator.setLevel(KeycloakAuthorizationService.class, Level.DEBUG);
+    lenient().doAnswer(inv -> {
+      inv.getArgument(0, Runnable.class).run();
+      return null;
+    }).when(keycloakOperationsExecutor).execute(any(Runnable.class));
   }
 
   @AfterEach
   void tearDown() {
-    clearInvocations(folioExecutionContext);
+    clearInvocations(folioExecutionContext, keycloakOperationsExecutor);
     TestUtils.verifyNoMoreInteractions(this);
   }
 
@@ -204,9 +211,9 @@ class KeycloakAuthorizationServiceTest {
 
       // resource lookup called ONCE not twice
       verify(authResourcesClient).find(path, null, null, null, null, 0, MAX_VALUE);
-      // two permissions created, each on its own virtual-thread scope client
-      verify(authorizationClient, times(2)).permissions();
-      verify(authPermissionsClient, times(2)).scope();
+      // scope client fetched once per path (not per endpoint) since parallelism was removed from inner loop
+      verify(authorizationClient).permissions();
+      verify(authPermissionsClient).scope();
       verify(scopePermissionsClient, times(2)).create(any());
       verify(response, times(2)).close();
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
@@ -249,6 +256,8 @@ class KeycloakAuthorizationServiceTest {
     void negative_resourceIsNotFound() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
     
       when(authResourcesClient.find("/foo/entities", null, null, null, null, 0, MAX_VALUE)).thenReturn(emptyList());
 
@@ -269,6 +278,8 @@ class KeycloakAuthorizationServiceTest {
     void negative_resourceIsFoundByInvalidPath() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
     
       var path = "/foo/entities";
       var resourceRepresentation = resourceRepresentation();
@@ -293,6 +304,8 @@ class KeycloakAuthorizationServiceTest {
     void positive_resourceIsFoundWithInvalidScope() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
     
       var path = "/foo/entities";
       var resourceRepresentation = resourceRepresentation();
@@ -399,6 +412,8 @@ class KeycloakAuthorizationServiceTest {
     void negative_twoResourcesNotFound_bothExceptionsCollectedViaSuppressed() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
     
       var path1 = "/foo/entities";
       var path2 = "/bar/items";

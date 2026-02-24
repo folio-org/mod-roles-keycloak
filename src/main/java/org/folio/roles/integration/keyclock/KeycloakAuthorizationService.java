@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +34,7 @@ import org.keycloak.representations.idm.authorization.DecisionStrategy;
 import org.keycloak.representations.idm.authorization.ResourceRepresentation;
 import org.keycloak.representations.idm.authorization.ScopePermissionRepresentation;
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Log4j2
@@ -43,6 +44,8 @@ public class KeycloakAuthorizationService {
 
   private final JsonHelper jsonHelper;
   private final KeycloakAuthorizationClientProvider authResourceProvider;
+  @Qualifier("keycloakOperationsExecutor")
+  private final ExecutorService keycloakOperationsExecutor;
 
   /**
    * Creates keycloak permissions based on provided policy and list of endpoints.
@@ -66,47 +69,33 @@ public class KeycloakAuthorizationService {
       .filter(endpoint -> isNotBlank(endpoint.getPath()))
       .collect(Collectors.groupingBy(Endpoint::getPath));
 
-    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      var futures = endpointsByPath.entrySet().stream()
-        .map(entry -> CompletableFuture.runAsync(
-          getRunnableWithCurrentFolioContext(
-            () -> createPermissionsForPath(policy, entry.getKey(), entry.getValue(), nameGenerator)),
-          executor))
-        .toList();
-      joinAll(futures);
-    }
+    var futures = endpointsByPath.entrySet().stream()
+      .map(entry -> CompletableFuture.runAsync(
+        getRunnableWithCurrentFolioContext(
+          () -> createPermissionsForPath(policy.getId(), entry.getKey(), entry.getValue(), nameGenerator)),
+        keycloakOperationsExecutor))
+      .toList();
+    joinAll(futures);
   }
 
-  private void createPermissionsForPath(Policy policy, String path, List<Endpoint> endpointsForPath,
+  private void createPermissionsForPath(UUID policyId, String path, List<Endpoint> endpointsForPath,
                                         Function<Endpoint, String> nameGenerator) {
-    var policyId = policy.getId();
-    var resource = getAuthResourceByStaticPath(path);
-
-    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      var futures = endpointsForPath.stream().distinct()
-        .map(endpoint -> CompletableFuture.runAsync(
-          getRunnableWithCurrentFolioContext(() -> createPermissionForEndpoint(policy, resource, policyId,
-            endpoint, nameGenerator)),
-          executor))
-        .toList();
-      joinAll(futures);
-    }
-  }
-  
-  private void createPermissionForEndpoint(Policy policy, ResourceRepresentation resource, UUID policyId,
-                                           Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
-    var scope = getScopeByMethod(resource, endpoint.getMethod());
-    if (scope.isEmpty()) {
-      log.warn(
-        "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
-        endpoint.getMethod(), endpoint.getPath());
-      return;
-    }
-    var policyName = nameGenerator.apply(endpoint);
-    var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policyId);
     var scopePermissionsClient = getAuthorizationClient().permissions().scope();
-    try (var response = scopePermissionsClient.create(permission)) {
-      processKeycloakResponse(permission, response);
+    var resource = getAuthResourceByStaticPath(path);
+    for (var endpoint : endpointsForPath) {
+      var scope = getScopeByMethod(resource, endpoint.getMethod());
+      if (scope.isEmpty()) {
+        log.warn(
+          "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
+          endpoint.getMethod(), endpoint.getPath());
+        continue;
+      }
+      var policyName = nameGenerator.apply(endpoint);
+      var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policyId);
+
+      try (var response = scopePermissionsClient.create(permission)) {
+        processKeycloakResponse(permission, response);
+      }
     }
   }
 
@@ -126,18 +115,16 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      var futures = endpoints.stream()
-        .filter(endpoint -> isNotBlank(endpoint.getPath())).distinct()
-        .map(endpoint -> CompletableFuture.runAsync(
-          getRunnableWithCurrentFolioContext(() -> {
-            var scopePermissionsClient = getAuthorizationClient().permissions().scope();
-            removeKeycloakPermission(scopePermissionsClient, endpoint, nameGenerator);
-          }),
-          executor))
-        .toList();
-      joinAll(futures);
-    }
+    var futures = endpoints.stream()
+      .filter(endpoint -> isNotBlank(endpoint.getPath())).distinct()
+      .map(endpoint -> CompletableFuture.runAsync(
+        getRunnableWithCurrentFolioContext(() -> {
+          var scopePermissionsClient = getAuthorizationClient().permissions().scope();
+          removeKeycloakPermission(scopePermissionsClient, endpoint, nameGenerator);
+        }),
+        keycloakOperationsExecutor))
+      .toList();
+    joinAll(futures);
   }
 
   private ResourceRepresentation getAuthResourceByStaticPath(String staticPath) {
