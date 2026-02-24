@@ -8,9 +8,7 @@ import static org.folio.roles.domain.model.PageResult.empty;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermission;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -20,7 +18,6 @@ import org.assertj.core.api.ThrowingConsumer;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
-import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.roles.service.capability.RoleCapabilityService;
@@ -46,7 +43,6 @@ class LoadableRoleCapabilityAssignmentHelperTest {
   @Mock private CapabilityService capabilityService;
   @Mock private RoleCapabilityService roleCapabilityService;
   @Mock private RoleCapabilitySetService roleCapabilitySetService;
-  @Mock private LoadablePermissionRepository loadablePermissionRepository;
   @InjectMocks
   private LoadableRoleCapabilityAssignmentHelper helper;
 
@@ -87,26 +83,6 @@ class LoadableRoleCapabilityAssignmentHelperTest {
     var assigned = helper.assignCapabilitiesAndSetsForPermissions(List.of(perm1, perm2, perm3, perm4));
 
     assertThat(assigned).isEmpty();
-  }
-
-  @Test
-  void assignCapabilitiesAndSetsForPermissionsCommitted_positive() {
-    var perm1 = loadablePermissionEntity(ROLE1_ID);
-    var perm2 = loadablePermissionEntity(ROLE1_ID);
-    var perm3 = loadablePermissionEntity(ROLE2_ID);
-    var perm4 = loadablePermissionEntity(ROLE2_ID);
-
-    var cap1 = capability(randomUUID(), perm1.getPermissionName());
-    var capSet1 = capabilitySet(randomUUID()).permission(perm2.getPermissionName());
-    var cap2 = capability(randomUUID(), perm3.getPermissionName());
-    var capSet2 = capabilitySet(randomUUID()).permission(perm4.getPermissionName());
-
-    mockAssignmentCalls(perm1, perm2, cap1, capSet1);
-    mockAssignmentCalls(perm3, perm4, cap2, capSet2);
-
-    helper.assignCapabilitiesAndSetsForPermissionsCommitted(List.of(perm1, perm2, perm3, perm4));
-
-    verify(loadablePermissionRepository).saveAll(any());
   }
 
   @Test

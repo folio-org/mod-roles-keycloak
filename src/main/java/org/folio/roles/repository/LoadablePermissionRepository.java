@@ -24,17 +24,4 @@ public interface LoadablePermissionRepository
   Stream<LoadablePermissionEntity> findAllByCapabilityId(UUID capabilityId);
 
   Stream<LoadablePermissionEntity> findAllByCapabilitySetId(UUID capabilitySetId);
-
-  @Query(nativeQuery = true,
-    value = """
-      SELECT rlp.* FROM role_loadable_permission rlp
-      INNER JOIN capability c ON c.folio_permission = rlp.folio_permission
-      WHERE rlp.capability_id IS NULL
-      AND rlp.role_loadable_id = :roleId
-      AND c.dummy_capability = false""")
-  List<LoadablePermissionEntity> findAllPermissionsWhereCapabilityExistByRoleId(UUID roleId);
-
-  boolean existsByRoleId(UUID roleId);
-
-  boolean existsByRoleIdAndCapabilityIdIsNull(UUID roleId);
 }
