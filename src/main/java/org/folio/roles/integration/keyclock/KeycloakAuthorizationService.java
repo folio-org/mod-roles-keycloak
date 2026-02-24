@@ -7,6 +7,7 @@ import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.roles.utils.ConcurrentUtils.joinAll;
 import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.getRunnableWithCurrentFolioContext;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -16,7 +17,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -80,22 +80,33 @@ public class KeycloakAuthorizationService {
   private void createPermissionsForPath(Policy policy, String path, List<Endpoint> endpointsForPath,
                                         Function<Endpoint, String> nameGenerator) {
     var policyId = policy.getId();
-    var scopePermissionsClient = getAuthorizationClient().permissions().scope();
     var resource = getAuthResourceByStaticPath(path);
-    for (var endpoint : endpointsForPath) {
-      var scope = getScopeByMethod(resource, endpoint.getMethod());
-      if (scope.isEmpty()) {
-        log.warn(
-          "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
-          endpoint.getMethod(), endpoint.getPath());
-        continue;
-      }
-      var policyName = nameGenerator.apply(endpoint);
-      var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policyId);
 
-      try (var response = scopePermissionsClient.create(permission)) {
-        processKeycloakResponse(permission, response);
-      }
+    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+      var futures = endpointsForPath.stream().distinct()
+        .map(endpoint -> CompletableFuture.runAsync(
+          getRunnableWithCurrentFolioContext(() -> createPermissionForEndpoint(policy, resource, policyId,
+            endpoint, nameGenerator)),
+          executor))
+        .toList();
+      joinAll(futures);
+    }
+  }
+  
+  private void createPermissionForEndpoint(Policy policy, ResourceRepresentation resource, UUID policyId,
+                                           Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
+    var scope = getScopeByMethod(resource, endpoint.getMethod());
+    if (scope.isEmpty()) {
+      log.warn(
+        "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
+        endpoint.getMethod(), endpoint.getPath());
+      return;
+    }
+    var policyName = nameGenerator.apply(endpoint);
+    var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policyId);
+    var scopePermissionsClient = getAuthorizationClient().permissions().scope();
+    try (var response = scopePermissionsClient.create(permission)) {
+      processKeycloakResponse(permission, response);
     }
   }
 
@@ -115,11 +126,9 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    // Endpoints with blank paths have no matching Keycloak resource; skip them
-    // (consistent with createPermissions which also filters blank paths).
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       var futures = endpoints.stream()
-        .filter(endpoint -> isNotBlank(endpoint.getPath()))
+        .filter(endpoint -> isNotBlank(endpoint.getPath())).distinct()
         .map(endpoint -> CompletableFuture.runAsync(
           getRunnableWithCurrentFolioContext(() -> {
             var scopePermissionsClient = getAuthorizationClient().permissions().scope();
@@ -200,42 +209,5 @@ public class KeycloakAuthorizationService {
       "Error during scope-based permission creation in Keycloak. Details: status = %s, message = %s",
       statusInfo.getStatusCode(), statusInfo.getReasonPhrase()),
       "permission", permission.getName());
-  }
-
-  private static void joinAll(List<CompletableFuture<Void>> futures) {
-    // Wait for ALL futures to complete first, then inspect each one individually.
-    // This ensures we capture every failure rather than only the first.
-    try {
-      CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
-    } catch (CompletionException ignored) {
-      // Do not rethrow here; inspect each future individually to collect all
-      // failures.
-    }
-
-    // Collect ALL failures so that no errors are silently lost when multiple
-    // futures fail.
-    var exceptions = futures.stream()
-      .filter(CompletableFuture::isCompletedExceptionally)
-      .map(f -> {
-        try {
-          f.join();
-          // Unreachable: isCompletedExceptionally guarantees join() throws.
-          throw new IllegalStateException("Future was exceptionally completed but join() did not throw");
-        } catch (CompletionException ex) {
-          return ex.getCause() != null ? ex.getCause() : ex;
-        }
-      })
-      .toList();
-
-    if (!exceptions.isEmpty()) {
-      var primary = exceptions.getFirst();
-      for (int i = 1; i < exceptions.size(); i++) {
-        primary.addSuppressed(exceptions.get(i));
-      }
-      if (primary instanceof RuntimeException runtimeException) {
-        throw runtimeException;
-      }
-      throw new ServiceException("Keycloak operation failed", primary);
-    }
   }
 }

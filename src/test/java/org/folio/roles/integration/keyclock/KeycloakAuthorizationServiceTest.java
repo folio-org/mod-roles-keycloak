@@ -204,7 +204,9 @@ class KeycloakAuthorizationServiceTest {
 
       // resource lookup called ONCE not twice
       verify(authResourcesClient).find(path, null, null, null, null, 0, MAX_VALUE);
-      // two permissions created
+      // two permissions created, each on its own virtual-thread scope client
+      verify(authorizationClient, times(2)).permissions();
+      verify(authPermissionsClient, times(2)).scope();
       verify(scopePermissionsClient, times(2)).create(any());
       verify(response, times(2)).close();
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
@@ -247,9 +249,7 @@ class KeycloakAuthorizationServiceTest {
     void negative_resourceIsNotFound() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
-      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
-      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-
+    
       when(authResourcesClient.find("/foo/entities", null, null, null, null, 0, MAX_VALUE)).thenReturn(emptyList());
 
       var policy = rolePolicy();
@@ -269,9 +269,7 @@ class KeycloakAuthorizationServiceTest {
     void negative_resourceIsFoundByInvalidPath() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
-      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
-      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-
+    
       var path = "/foo/entities";
       var resourceRepresentation = resourceRepresentation();
       resourceRepresentation.setName("/foo/entities/{id}");
@@ -295,9 +293,7 @@ class KeycloakAuthorizationServiceTest {
     void positive_resourceIsFoundWithInvalidScope() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
-      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
-      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-
+    
       var path = "/foo/entities";
       var resourceRepresentation = resourceRepresentation();
       resourceRepresentation.setScopes(Set.of(scopeForPostMethod()));
@@ -403,9 +399,7 @@ class KeycloakAuthorizationServiceTest {
     void negative_twoResourcesNotFound_bothExceptionsCollectedViaSuppressed() {
       when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
-      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
-      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-
+    
       var path1 = "/foo/entities";
       var path2 = "/bar/items";
 

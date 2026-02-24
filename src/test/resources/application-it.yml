@@ -1,4 +1,7 @@
 spring:
+  threads:
+    virtual:
+      enabled: true
   datasource:
     username: folio_admin
     password: qwerty123
