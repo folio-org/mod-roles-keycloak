@@ -7,15 +7,20 @@ import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.domain.dto.CapabilityType.DATA;
+import static org.folio.roles.domain.dto.HttpMethod.*;
 import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
 import static org.folio.roles.integration.kafka.model.ModuleType.UI_MODULE;
 import static org.folio.roles.support.AuthResourceUtils.permission;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
+import static org.folio.roles.support.CapabilityUtils.BAR_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.CapabilityUtils.capabilityFromPermission;
 import static org.folio.roles.support.CapabilityUtils.capabilityHolder;
 import static org.folio.roles.support.CapabilityUtils.capabilityHolderFromPermission;
+import static org.folio.roles.support.EndpointUtils.barItemGetEndpoint;
+import static org.folio.roles.support.EndpointUtils.barItemPatchEndpoint;
+import static org.folio.roles.support.EndpointUtils.barItemPutEndpoint;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemGetEndpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemPatchEndpoint;
@@ -26,6 +31,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,7 +43,6 @@ import org.folio.common.utils.permission.model.PermissionType;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.Endpoint;
-import org.folio.roles.domain.dto.HttpMethod;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.CapabilityResultHolder;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
@@ -146,7 +151,7 @@ class CapabilityEventProcessorTest {
       arguments("module event (put and patch endpoints not merged)",
         event(MODULE,
           resource(permission("foo.item.put"), fooItemPutEndpoint()),
-          resource(permission("foo.item.patch"), endpoint("/module/foo/items/{id}", HttpMethod.PATCH))),
+          resource(permission("foo.item.patch"), endpoint("/module/foo/items/{id}", PATCH))),
         result(List.of(fooCapability(EDIT, "put", fooItemPutEndpoint())), emptyList())),
 
       arguments("module event (patch and put endpoints merged)",
@@ -218,33 +223,51 @@ class CapabilityEventProcessorTest {
       arguments("module event mapping overrides",
         event(MODULE,
           resource(permission("perm.name").description("Capability to view a test-resource item"))),
-        result(List.of(capability(null, resource, VIEW, "perm.name").moduleId(MODULE_ID)), emptyList()))
+        result(List.of(capability(null, resource, VIEW, "perm.name").moduleId(MODULE_ID)), emptyList())),
+
+      arguments("module event (mixed duplicates with skipped then merged)",
+        event(MODULE,
+          resource(permission("bar.item.put"), barItemPutEndpoint()),
+          resource(permission("bar.item.patch"), barItemPatchEndpoint()),
+          resource(permission("foo.item.get"), fooItemGetEndpoint()),
+          resource(permission("foo.item.put"), fooItemPutEndpoint()),
+          resource(permission("foo.item.patch"), fooItemPatchEndpoint())),
+        result(List.of(
+            barCapability(EDIT, "put", barItemPutEndpoint(), barItemPatchEndpoint()),
+            fooCapability(VIEW, "get", fooItemGetEndpoint()),
+            fooCapability(EDIT, "put", fooItemPutEndpoint(), fooItemPatchEndpoint())),
+          emptyList())),
+
+      arguments("module event (mixed duplicates with skipped then merged #2)",
+        event(MODULE,
+          resource(permission("bar.item.get"), barItemGetEndpoint()),
+          resource(permission("bar.item.put"), barItemPutEndpoint()),
+          resource(permission("foo.item.put"), fooItemPutEndpoint()),
+          resource(permission("foo.item.get"), fooItemGetEndpoint()),
+          resource(permission("bar.item.patch"), barItemPatchEndpoint()),
+          resource(permission("foo.item.patch"), fooItemPatchEndpoint())),
+        result(List.of(
+            barCapability(VIEW, "get", barItemGetEndpoint()),
+            barCapability(EDIT, "put", barItemPutEndpoint(), barItemPatchEndpoint()),
+            fooCapability(EDIT, "put", fooItemPutEndpoint(), fooItemPatchEndpoint()),
+            fooCapability(VIEW, "get", fooItemGetEndpoint())),
+          emptyList())),
+
+      arguments("module event (mixed duplicates with skipped then merged #3)",
+        event(MODULE,
+          resource(permission("bar.item.patch"), barItemPatchEndpoint()),
+          resource(permission("foo.item.patch"), fooItemPatchEndpoint()),
+          resource(permission("bar.item.get"), barItemGetEndpoint()),
+          resource(permission("foo.item.get"), fooItemGetEndpoint()),
+          resource(permission("foo.item.put"), fooItemPutEndpoint()),
+          resource(permission("bar.item.put"), barItemPutEndpoint())),
+        result(List.of(
+            barCapability(EDIT, "put", barItemPatchEndpoint(), barItemPutEndpoint()),
+            fooCapability(EDIT, "put", fooItemPatchEndpoint(), fooItemPutEndpoint()),
+            barCapability(VIEW, "get", barItemGetEndpoint()),
+            fooCapability(VIEW, "get", fooItemGetEndpoint())),
+          emptyList()))
     );
-  }
-
-  @Test
-  void process_mixedDuplicatesWithSkippedThenMerged_doesNotThrowAndReturnsMergedCapability() {
-    when(permissionOverrider.getPermissionMappings()).thenReturn(Map.of());
-
-    var event = event(MODULE, resource(permission("bar.item.put"), endpoint("/bar/items/{id}", HttpMethod.PUT),
-        endpoint("/bar/items/{id}", HttpMethod.PATCH)),
-      resource(permission("bar.item.patch"), endpoint("/bar/items/{id}", HttpMethod.PATCH),
-        endpoint("/bar/items/{id}", HttpMethod.PUT)), resource(permission("foo.item.put"), fooItemPutEndpoint()),
-      resource(permission("foo.item.patch"), fooItemPatchEndpoint()));
-
-    var result = capabilityEventProcessor.process(event);
-    reset(permissionOverrider);
-
-    assertThat(result.capabilities()).hasSize(2);
-
-    var mergedFooCapability =
-      result.capabilities().stream().filter(capability -> Objects.equals(capability.getPermission(), "foo.item.put"))
-        .findFirst().orElseThrow();
-
-    assertThat(mergedFooCapability.getEndpoints()).extracting(Endpoint::getMethod)
-      .containsExactlyInAnyOrder(HttpMethod.PUT, HttpMethod.PATCH);
-
-    assertThat(mergedFooCapability.getEndpoints()).extracting(Endpoint::getPath).containsOnly("/foo/items/{id}");
   }
 
   private static CapabilityEvent event(ModuleType type, FolioResource... resources) {
@@ -278,6 +301,11 @@ class CapabilityEventProcessorTest {
 
   private static Capability fooCapability(CapabilityAction action, String permissionSuffix, Endpoint... endpoints) {
     return capability(null, FOO_RESOURCE, action, "foo.item." + permissionSuffix, endpoints)
+      .moduleId(MODULE_ID).description(null);
+  }
+
+  private static Capability barCapability(CapabilityAction action, String permissionSuffix, Endpoint... endpoints) {
+    return capability(null, BAR_RESOURCE, action, "bar.item." + permissionSuffix, endpoints)
       .moduleId(MODULE_ID).description(null);
   }
 
