@@ -23,6 +23,7 @@
 * UI permissions are not assigned to the system user of mod-data-export-spring (MODROLESKC-350)
 * Implement Kafka listener suspension during tenant initialization (MODROLESKC-355)
 * Use GitHub Workflows for Maven (MODROLESKC-366)
+* Fix IndexOutOfBoundsException in capability deduplication (EUREKA-866)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)

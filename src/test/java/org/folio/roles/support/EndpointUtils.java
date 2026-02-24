@@ -45,4 +45,16 @@ public class EndpointUtils {
   public static Endpoint fooItemPostEndpoint() {
     return endpoint("/foo/items", POST);
   }
+
+  public static Endpoint barItemGetEndpoint() {
+    return endpoint("/bar/items/{id}", GET);
+  }
+
+  public static Endpoint barItemPutEndpoint() {
+    return endpoint("/bar/items/{id}", PUT);
+  }
+
+  public static Endpoint barItemPatchEndpoint() {
+    return endpoint("/bar/items/{id}", PATCH);
+  }
 }

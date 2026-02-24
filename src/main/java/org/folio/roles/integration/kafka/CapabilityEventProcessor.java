@@ -218,8 +218,7 @@ public class CapabilityEventProcessor {
   private static <T, V> List<T> cleanDuplicates(List<T> collection, Function<T, V> identifiersMapper) {
     var resultList = new ArrayList<T>();
     var visitedIdentifiers = new HashMap<V, Pair<T, Integer>>();
-    for (int i = 0; i < collection.size(); i++) {
-      var element = collection.get(i);
+    for (var element : collection) {
       var identifier = identifiersMapper.apply(element);
       var foundElementPair = visitedIdentifiers.get(identifier);
       if (foundElementPair != null) {
@@ -230,12 +229,14 @@ public class CapabilityEventProcessor {
           continue;
         }
 
-        resultList.set(foundElementPair.getRight(), mergeResult.get());
+        var mergedElement = mergeResult.get();
+        resultList.set(foundElementPair.getRight(), mergedElement);
+        visitedIdentifiers.put(identifier, Pair.of(mergedElement, foundElementPair.getRight()));
         continue;
       }
 
       resultList.add(element);
-      visitedIdentifiers.put(identifier, Pair.of(element, i));
+      visitedIdentifiers.put(identifier, Pair.of(element, resultList.size() - 1));
     }
 
     return resultList;
