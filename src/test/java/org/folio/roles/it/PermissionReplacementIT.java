@@ -25,7 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.testcontainers.shaded.org.awaitility.Durations.ONE_HUNDRED_MILLISECONDS;
 import static org.testcontainers.shaded.org.awaitility.Durations.ONE_MINUTE;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.Capabilities;
@@ -50,6 +49,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
+import tools.jackson.databind.ObjectMapper;
 
 @IntegrationTest
 @SqlMergeMode(MERGE)

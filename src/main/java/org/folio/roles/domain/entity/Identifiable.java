@@ -1,6 +1,6 @@
 package org.folio.roles.domain.entity;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface Identifiable<K> {
 
