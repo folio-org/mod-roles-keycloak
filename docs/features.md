@@ -6,7 +6,7 @@ This module provides the following features:
 |---------|-------------|--------|
 | [Kafka Listener Suspension During Tenant Initialization](features/tenant-initialization-kafka-suspension.md) | Stops Kafka listeners during `POST /_/tenant` to prevent race conditions with Liquibase database migrations | Active |
 | [User Permissions Cache](features/user-permissions-cache.md) | Caches user permission lookups with tenant-scoped eviction on role/capability changes | Active |
-| [Keycloak Assignment Compensation](features/keycloak-assignment-compensation.md) | Reverses Keycloak side-effects when a DB write fails during role/capability assignment; concurrent per-path permission operations (virtual-thread executor, bounded by `KC_CONCURRENCY_THREAD_POOL_SIZE`) reduce latency for bulk assignments | Active |
+| [Keycloak Assignment Compensation](features/keycloak-assignment-compensation.md) | Reverses Keycloak side-effects when a DB write fails during role/capability assignment; concurrent per-path permission operations reduce latency for bulk assignments | Active |
 
 ## Quick Reference
 
