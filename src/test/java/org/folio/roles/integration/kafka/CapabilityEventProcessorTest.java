@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.common.utils.permission.model.PermissionAction;
@@ -50,6 +51,7 @@ import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -218,6 +220,31 @@ class CapabilityEventProcessorTest {
           resource(permission("perm.name").description("Capability to view a test-resource item"))),
         result(List.of(capability(null, resource, VIEW, "perm.name").moduleId(MODULE_ID)), emptyList()))
     );
+  }
+
+  @Test
+  void process_mixedDuplicatesWithSkippedThenMerged_doesNotThrowAndReturnsMergedCapability() {
+    when(permissionOverrider.getPermissionMappings()).thenReturn(Map.of());
+
+    var event = event(MODULE, resource(permission("bar.item.put"), endpoint("/bar/items/{id}", HttpMethod.PUT),
+        endpoint("/bar/items/{id}", HttpMethod.PATCH)),
+      resource(permission("bar.item.patch"), endpoint("/bar/items/{id}", HttpMethod.PATCH),
+        endpoint("/bar/items/{id}", HttpMethod.PUT)), resource(permission("foo.item.put"), fooItemPutEndpoint()),
+      resource(permission("foo.item.patch"), fooItemPatchEndpoint()));
+
+    var result = capabilityEventProcessor.process(event);
+    reset(permissionOverrider);
+
+    assertThat(result.capabilities()).hasSize(2);
+
+    var mergedFooCapability =
+      result.capabilities().stream().filter(capability -> Objects.equals(capability.getPermission(), "foo.item.put"))
+        .findFirst().orElseThrow();
+
+    assertThat(mergedFooCapability.getEndpoints()).extracting(Endpoint::getMethod)
+      .containsExactlyInAnyOrder(HttpMethod.PUT, HttpMethod.PATCH);
+
+    assertThat(mergedFooCapability.getEndpoints()).extracting(Endpoint::getPath).containsOnly("/foo/items/{id}");
   }
 
   private static CapabilityEvent event(ModuleType type, FolioResource... resources) {
