@@ -9,10 +9,7 @@ import static org.folio.roles.support.LoadableRoleUtils.loadableRoleEntity;
 import static org.folio.roles.support.LoadableRoleUtils.regularRole;
 import static org.folio.roles.support.RoleUtils.role;
 import static org.folio.roles.support.TestUtils.copy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -48,7 +45,6 @@ class LoadableRoleServiceTest {
   @Mock private LoadableRoleMapper mapper;
   @Mock private KeycloakRoleService keycloakService;
   @Mock private LoadableRoleCapabilityAssignmentHelper capabilityAssignmentHelper;
-  @Mock private LoadableRoleAsyncAssignmentRetryer loadableRoleAsyncAssignmentRetryer;
 
   @AfterEach
   void tearDown() {
@@ -185,66 +181,28 @@ class LoadableRoleServiceTest {
   class UpsertDefaultLoadableRole {
 
     @Test
-    void positive_whenAllPermissionsAssigned() {
+    void positive() {
       var role = loadableRole();
-      role.getPermissions().forEach(p -> {
-        p.setCapabilityId(randomUUID());
-        p.setCapabilitySetId(randomUUID());
-      });
       var roleEntity = loadableRoleEntity(role);
       var createdRegularRole = regularRole(role);
       var regularRole = copy(createdRegularRole).id(null);
 
-      when(repository.findByIdOrName(role.getId(), role.getName()))
-        .thenReturn(Optional.empty())
-        .thenReturn(Optional.empty())
-        .thenReturn(Optional.of(roleEntity));
+      when(repository.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
       when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
+      when(repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, false)).thenReturn(Stream.empty());
       when(mapper.toRegularRole(roleEntity)).thenReturn(regularRole);
       when(keycloakService.findByName(regularRole.getName())).thenReturn(Optional.empty());
       when(keycloakService.create(regularRole)).thenReturn(createdRegularRole);
       when(repository.saveAndFlush(roleEntity)).thenReturn(roleEntity);
-      when(capabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(any()))
+      when(capabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(roleEntity.getPermissions()))
         .thenReturn(roleEntity.getPermissions());
-      when(repository.saveAll(anyList())).thenReturn(List.of(roleEntity));
+      when(repository.saveAllAndFlush(org.mockito.ArgumentMatchers.anyList())).thenReturn(List.of(roleEntity));
+      when(repository.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(roleEntity));
       when(mapper.toRole(roleEntity)).thenReturn(role);
 
       var actual = service.upsertDefaultLoadableRole(role);
 
       assertThat(actual).isEqualTo(role);
-      verify(loadableRoleAsyncAssignmentRetryer, never()).retryAssignCapabilitiesAndSetsForPermissions(
-        any(), any());
-    }
-
-    @Test
-    void positive_whenUnassignedPermissions() {
-      var role = loadableRole();
-      role.getPermissions().get(0).setCapabilityId(null);
-      var roleEntity = loadableRoleEntity(role);
-      var createdRegularRole = regularRole(role);
-      var regularRole = copy(createdRegularRole).id(null);
-
-      when(repository.findByIdOrName(role.getId(), role.getName()))
-        .thenReturn(Optional.empty())
-        .thenReturn(Optional.empty())
-        .thenReturn(Optional.of(roleEntity));
-      when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
-      when(mapper.toRegularRole(roleEntity)).thenReturn(regularRole);
-      when(keycloakService.findByName(regularRole.getName())).thenReturn(Optional.empty());
-      when(keycloakService.create(regularRole)).thenReturn(createdRegularRole);
-      when(repository.saveAndFlush(roleEntity)).thenReturn(roleEntity);
-      when(capabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(any()))
-        .thenReturn(roleEntity.getPermissions());
-      when(repository.saveAll(anyList())).thenReturn(List.of(roleEntity));
-      doNothing().when(loadableRoleAsyncAssignmentRetryer)
-        .retryAssignCapabilitiesAndSetsForPermissions(roleEntity.getId(), roleEntity.getName());
-      when(mapper.toRole(roleEntity)).thenReturn(role);
-
-      var actual = service.upsertDefaultLoadableRole(role);
-
-      assertThat(actual).isEqualTo(role);
-      verify(loadableRoleAsyncAssignmentRetryer).retryAssignCapabilitiesAndSetsForPermissions(
-        roleEntity.getId(), roleEntity.getName());
     }
 
     @Test
@@ -255,6 +213,7 @@ class LoadableRoleServiceTest {
 
       when(repository.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
       when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
+      when(repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, false)).thenReturn(Stream.empty());
       when(mapper.toRegularRole(roleEntity)).thenReturn(regularRole);
       when(keycloakService.findByName(regularRole.getName())).thenReturn(Optional.empty());
       when(keycloakService.create(regularRole)).thenThrow(new RuntimeException("Keycloak error"));

@@ -4,9 +4,9 @@
       "userId": "61893f40-4739-49fc-bf07-daeff3021f90",
       "roleId": "5f2492dd-adcd-445b-9118-bcfa9b406c95",
       "metadata": {
-        "createdDate": "2023-01-01T08:01:00.000Z",
+        "createdDate": "2023-01-01T08:01:00.000+00:00",
         "createdByUserId": "11111111-2222-1111-2222-111111111111",
-        "updatedDate": "2023-01-02T08:01:01.000Z",
+        "updatedDate": "2023-01-02T08:01:01.000+00:00",
         "updatedByUserId": "11111111-1111-2222-1111-111111111111"
       }
     }

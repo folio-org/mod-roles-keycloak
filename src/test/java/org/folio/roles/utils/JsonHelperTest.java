@@ -7,7 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import org.apache.commons.lang3.SerializationException;
 import org.folio.test.types.UnitTest;
@@ -18,9 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.ObjectMapper;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
@@ -37,7 +38,7 @@ class JsonHelperTest {
   class Parse {
 
     @Test
-    void positive_stringInput() throws JacksonException {
+    void positive_stringInput() throws JsonProcessingException {
       when(mapper.readValue(TEST_USER_JSON, User.class)).thenReturn(TEST_USER);
       var actual = helper.parse(TEST_USER_JSON, User.class);
       assertThat(actual).isEqualTo(TEST_USER);
@@ -50,7 +51,7 @@ class JsonHelperTest {
     }
 
     @Test
-    void negative_stringInputMapperException() throws JacksonException {
+    void negative_stringInputMapperException() throws JsonProcessingException {
       when(mapper.readValue(TEST_USER_JSON, User.class)).thenThrow(new TestJsonProcessingException("Failed"));
       assertThatThrownBy(() -> helper.parse(TEST_USER_JSON, User.class))
         .isInstanceOf(SerializationException.class)
@@ -58,7 +59,7 @@ class JsonHelperTest {
     }
 
     @Test
-    void positive_stringInputTypeReference() throws JacksonException {
+    void positive_stringInputTypeReference() throws JsonProcessingException {
       var typeReference = new TypeReference<User>() {};
       when(mapper.readValue(TEST_USER_JSON, typeReference)).thenReturn(TEST_USER);
       var actual = helper.parse(TEST_USER_JSON, typeReference);
@@ -73,7 +74,7 @@ class JsonHelperTest {
     }
 
     @Test
-    void negative_stringInputTypeRefMapperException() throws JacksonException {
+    void negative_stringInputTypeRefMapperException() throws JsonProcessingException {
       var typeReference = new TypeReference<User>() {};
       when(mapper.readValue(TEST_USER_JSON, typeReference)).thenThrow(new TestJsonProcessingException("Failed"));
       assertThatThrownBy(() -> helper.parse(TEST_USER_JSON, typeReference))
@@ -82,7 +83,7 @@ class JsonHelperTest {
     }
 
     @Test
-    void positive_inputStream() throws JacksonException {
+    void positive_inputStream() throws IOException {
       var inputStream = new ByteArrayInputStream(TEST_USER_JSON.getBytes(UTF_8));
       when(mapper.readValue(inputStream, User.class)).thenReturn(TEST_USER);
       var actual = helper.parse(inputStream, User.class);
@@ -96,7 +97,7 @@ class JsonHelperTest {
     }
 
     @Test
-    void positive_inputStreamMapperException() throws JacksonException {
+    void positive_inputStreamMapperException() throws IOException {
       var inputStream = new ByteArrayInputStream(TEST_USER_JSON.getBytes(UTF_8));
       when(mapper.readValue(inputStream, User.class)).thenThrow(new TestJsonProcessingException("Failed"));
       assertThatThrownBy(() -> helper.parse(inputStream, User.class))
@@ -110,14 +111,14 @@ class JsonHelperTest {
   class AsJsonStringSafe {
 
     @Test
-    void positive() throws JacksonException {
+    void positive() throws JsonProcessingException {
       when(mapper.writeValueAsString(TEST_USER)).thenReturn(TEST_USER_JSON);
       var actual = helper.asJsonStringSafe(TEST_USER);
       assertEquals(TEST_USER_JSON, actual);
     }
 
     @Test
-    void positive_mapperException() throws JacksonException {
+    void positive_mapperException() throws JsonProcessingException {
       when(mapper.writeValueAsString(TEST_USER)).thenThrow(new TestJsonProcessingException("Failed"));
       var actual = helper.asJsonStringSafe(TEST_USER);
       assertThat(actual).isEmpty();
@@ -129,7 +130,7 @@ class JsonHelperTest {
   class AsJsonString {
 
     @Test
-    void positive() throws JacksonException {
+    void positive() throws JsonProcessingException {
       when(mapper.writeValueAsString(TEST_USER)).thenReturn(TEST_USER_JSON);
 
       var actual = helper.asJsonString(TEST_USER);
@@ -145,7 +146,7 @@ class JsonHelperTest {
     }
 
     @Test
-    void asJsonString_negative_mapperException() throws JacksonException {
+    void asJsonString_negative_mapperException() throws JsonProcessingException {
       when(mapper.writeValueAsString(TEST_USER)).thenThrow(new TestJsonProcessingException("Failed"));
       assertThatThrownBy(() -> helper.asJsonString(TEST_USER))
         .isInstanceOf(SerializationException.class)
@@ -155,7 +156,7 @@ class JsonHelperTest {
 
   private record User(String name, String surname) {}
 
-  private static final class TestJsonProcessingException extends JacksonException {
+  private static final class TestJsonProcessingException extends JsonProcessingException {
 
     TestJsonProcessingException(String msg) {
       super(msg);

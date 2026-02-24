@@ -160,7 +160,6 @@ class CapabilitySetIT extends BaseIntegrationTest {
   }
 
   private static String capabilitySetNotFoundErrorMessage(UUID capabilitySetId) {
-    return "No row with the given identifier exists for entity "
-      + "[org.folio.roles.domain.entity.CapabilitySetEntity with id '" + capabilitySetId + "']";
+    return "Unable to find org.folio.roles.domain.entity.CapabilitySetEntity with id " + capabilitySetId;
   }
 }

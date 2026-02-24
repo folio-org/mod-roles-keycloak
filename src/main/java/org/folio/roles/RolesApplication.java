@@ -4,10 +4,10 @@ import org.folio.common.configuration.properties.FolioEnvironment;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
-import org.springframework.resilience.annotation.EnableResilientMethods;
+import org.springframework.retry.annotation.EnableRetry;
 
+@EnableRetry
 @SpringBootApplication
-@EnableResilientMethods
 @Import(FolioEnvironment.class)
 public class RolesApplication {
 
