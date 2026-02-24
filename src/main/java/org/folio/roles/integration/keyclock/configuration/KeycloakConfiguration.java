@@ -6,9 +6,7 @@ import static org.folio.common.utils.tls.FeignClientTlsUtils.buildSslContext;
 import static org.folio.common.utils.tls.Utils.IS_HOSTNAME_VERIFICATION_DISABLED;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
@@ -40,9 +38,10 @@ public class KeycloakConfiguration {
   
   @Bean(name = "keycloakOperationsExecutor", destroyMethod = "shutdown")
   public ExecutorService keycloakOperationsExecutor() {
-    var poolSize = configuration.getConcurrency().getThreadPoolSize();
-    log.info("Creating shared Keycloak operations thread pool [size: {}]", poolSize);
-    return new ThreadPoolExecutor(poolSize, poolSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+    var maxConcurrency = configuration.getConcurrency().getThreadPoolSize();
+    log.info("Creating shared Keycloak operations executor [virtual threads, max concurrency: {}]", maxConcurrency);
+    var threadFactory = Thread.ofVirtual().name("keycloak-op-", 0).factory();
+    return Executors.newFixedThreadPool(maxConcurrency, threadFactory);
   }
 
   private static Keycloak buildKeycloakAdminClient(String clientSecret, KeycloakConfigurationProperties properties) {

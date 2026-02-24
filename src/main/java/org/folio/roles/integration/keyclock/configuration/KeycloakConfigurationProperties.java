@@ -97,7 +97,13 @@ public class KeycloakConfigurationProperties {
   public static class Concurrency {
   
     /**
-     * Maximum number of threads in the shared pool used for parallel Keycloak calls.
+     * Maximum number of concurrent virtual threads used for parallel Keycloak calls.
+     *
+     * <p>Controls the fixed-size thread pool that is backed by virtual threads
+     * ({@link Thread#ofVirtual()}). When all slots are occupied incoming tasks are
+     * queued in the executor's work queue rather than being rejected, so this value
+     * acts as a concurrency cap that protects Keycloak from being overwhelmed by
+     * too many simultaneous HTTP connections.</p>
      */
     @Min(1)
     @Max(200)

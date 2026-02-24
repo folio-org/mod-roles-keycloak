@@ -158,7 +158,7 @@ Keycloak all configuration properties: https://www.keycloak.org/server/all-confi
 | KC_CLIENT_TLS_TRUSTSTORE_TYPE     | Truststore file type for keycloak clients.                                                                                                                                 |
 | KC_RETRY_MAX_ATTEMPTS             | Control how many times a Keycloak request should be retried upon failure before giving up                                                                                                                                                  |
 | KC_RETRY_BACKOFF_DELAY_MS         | Specify how long the application should wait before retrying a failed operation related to Keycloak integration                                                                                                                            |
-| KC_CONCURRENCY_THREAD_POOL_SIZE   | Maximum number of threads in the shared Keycloak operations thread pool. The pool grows on demand (cached behaviour) and shrinks back to zero when idle. Controls concurrency of parallel permission create/delete calls against Keycloak. Default: `20` |
+| KC_CONCURRENCY_THREAD_POOL_SIZE   | Maximum number of concurrent virtual threads for parallel Keycloak operations. Backed by a fixed-size pool of virtual threads (`Thread.ofVirtual()`); tasks queue when all slots are busy so Keycloak is never overwhelmed. Default: `20` |
 
 ## Loading of client IDs/secrets
 
