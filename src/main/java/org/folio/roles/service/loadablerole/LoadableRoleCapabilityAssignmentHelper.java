@@ -22,11 +22,14 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
+import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Log4j2
 @Component
@@ -37,10 +40,18 @@ public class LoadableRoleCapabilityAssignmentHelper {
   private final CapabilityService capabilityService;
   private final RoleCapabilityService roleCapabilityService;
   private final RoleCapabilitySetService roleCapabilitySetService;
+  private final LoadablePermissionRepository loadablePermissionRepository;
 
   public Set<LoadablePermissionEntity> assignCapabilitiesAndSetsForPermissions(
     Collection<LoadablePermissionEntity> perms) {
     return processPermissionsByRoleId(perms, this::assignCapabilitiesAndSets);
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void assignCapabilitiesAndSetsForPermissionsCommitted(
+    Collection<LoadablePermissionEntity> perms) {
+    var updated = processPermissionsByRoleId(perms, this::assignCapabilitiesAndSets);
+    loadablePermissionRepository.saveAll(updated);
   }
 
   public Set<LoadablePermissionEntity> removeCapabilitiesAndSetsForPermissions(
