@@ -12,6 +12,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.folio.roles.base.BaseIntegrationTest;
@@ -27,7 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.jdbc.Sql;
-import tools.jackson.core.type.TypeReference;
 
 @IntegrationTest
 @Sql(executionPhase = AFTER_TEST_METHOD, scripts = {

@@ -9,6 +9,7 @@ import static org.folio.roles.utils.ParseUtils.parseDateSafe;
 import static org.folio.roles.utils.ParseUtils.parseIntSafe;
 import static org.mapstruct.InjectionStrategy.CONSTRUCTOR;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.annotation.Resource;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -32,7 +33,6 @@ import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
-import tools.jackson.core.type.TypeReference;
 
 /**
  * KeycloakPolicyMapper is a mapper class that maps between Keycloak's policy model and the application's policy model.

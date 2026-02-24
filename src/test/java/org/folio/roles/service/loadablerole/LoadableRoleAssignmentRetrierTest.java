@@ -26,7 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
-class LoadableRoleAssignmentRetryerTest {
+class LoadableRoleAssignmentRetrierTest {
 
   private static final String TEST_ROLE_NAME = "test-role";
   private static final String ERROR_MESSAGE_UNASSIGNED =
@@ -35,7 +35,7 @@ class LoadableRoleAssignmentRetryerTest {
   private static final String ERROR_MESSAGE_NOT_FOUND =
     "Loadable permissions not found in DB for loadable role: roleName = " + TEST_ROLE_NAME;
 
-  @InjectMocks private LoadableRoleAssignmentRetryer retrier;
+  @InjectMocks private LoadableRoleAssignmentRetrier retrier;
   @Mock private LoadablePermissionRepository loadablePermissionRepository;
   @Mock private LoadableRoleCapabilityAssignmentHelper loadableRoleCapabilityAssignmentHelper;
   @Mock private LoadableRoleRetryProperties retryProperties;

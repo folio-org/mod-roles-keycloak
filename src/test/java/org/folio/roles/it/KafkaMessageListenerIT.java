@@ -46,7 +46,6 @@ import static org.testcontainers.shaded.org.awaitility.Durations.ONE_HUNDRED_MIL
 import java.sql.SQLDataException;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -136,20 +135,11 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       fooItemCapability(EDIT, "foo.item.put", APPLICATION_ID_V2, fooItemPutEndpoint(), fooItemPatchEndpoint()),
       fooItemCapability(VIEW, "foo.item.get", APPLICATION_ID_V2, fooItemGetEndpoint())));
 
-    // Capability IDs from all-capabilities.sql
-    var viewCapId = UUID.fromString("366240cd-fb38-42c1-9e72-1694532ecf06");
-    var editCapId = UUID.fromString("dbc35c91-c086-43ec-8a42-1bf8779817fc");
-    var createCapId = UUID.fromString("35137e56-2689-4245-9588-ca2ef43d7aff");
-    var deleteCapId = UUID.fromString("ebdef33e-2958-4401-bf20-2bf2d3f61bd2");
-    var manageCapId = UUID.fromString("8b117697-ecf3-47d8-84c9-d5d1734e0237");
-
     var expectedCapabilitySets = asJsonString(capabilitySets(
-      fooItemCapabilitySetWithCapabilities(CREATE, APPLICATION_ID_V2,
-        List.of(viewCapId, createCapId, editCapId)),
-      fooItemCapabilitySetWithCapabilities(EDIT, APPLICATION_ID_V2, List.of(viewCapId, editCapId)),
-      fooItemCapabilitySetWithCapabilities(MANAGE, APPLICATION_ID_V2,
-        List.of(viewCapId, editCapId, createCapId, deleteCapId, manageCapId)),
-      fooItemCapabilitySetWithCapabilities(VIEW, APPLICATION_ID_V2, List.of(viewCapId))));
+      fooItemCapabilitySet(CREATE, APPLICATION_ID_V2),
+      fooItemCapabilitySet(EDIT, APPLICATION_ID_V2),
+      fooItemCapabilitySet(MANAGE, APPLICATION_ID_V2),
+      fooItemCapabilitySet(VIEW, APPLICATION_ID_V2)));
 
     await().untilAsserted(() -> doGet("/capabilities").andExpect(content().json(expectedCapabilitiesJson)));
     await().untilAsserted(() -> doGet("/capability-sets").andExpect(content().json(expectedCapabilitySets)));
@@ -293,30 +283,11 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.capabilities[3].metadata.createdDate", notNullValue()))
       .andExpect(jsonPath("$.capabilities[4].metadata.createdDate", notNullValue())));
 
-    // Fetch created capabilities to get their IDs
-    var capabilitiesResult = parseResponse(doGet("/capabilities").andReturn(),
-      org.folio.roles.domain.dto.Capabilities.class);
-    var capabilityList = capabilitiesResult.getCapabilities();
-
-    // Map capability names to IDs
-    var viewCapId = capabilityList.stream()
-      .filter(c -> "foo_item.view".equals(c.getName())).findFirst().get().getId();
-    var editCapId = capabilityList.stream()
-      .filter(c -> "foo_item.edit".equals(c.getName())).findFirst().get().getId();
-    var createCapId = capabilityList.stream()
-      .filter(c -> "foo_item.create".equals(c.getName())).findFirst().get().getId();
-    var deleteCapId = capabilityList.stream()
-      .filter(c -> "foo_item.delete".equals(c.getName())).findFirst().get().getId();
-    var manageCapId = capabilityList.stream()
-      .filter(c -> "foo_item.manage".equals(c.getName())).findFirst().get().getId();
-
     var expectedCapabilitySets = asJsonString(capabilitySets(
-      fooItemCapabilitySetWithCapabilities(CREATE, APPLICATION_ID,
-        List.of(viewCapId, editCapId, createCapId)),
-      fooItemCapabilitySetWithCapabilities(EDIT, APPLICATION_ID, List.of(viewCapId, editCapId)),
-      fooItemCapabilitySetWithCapabilities(MANAGE, APPLICATION_ID,
-        List.of(viewCapId, editCapId, createCapId, deleteCapId, manageCapId)),
-      fooItemCapabilitySetWithCapabilities(VIEW, APPLICATION_ID, List.of(viewCapId))));
+      fooItemCapabilitySet(CREATE),
+      fooItemCapabilitySet(EDIT),
+      fooItemCapabilitySet(MANAGE),
+      fooItemCapabilitySet(VIEW)));
 
     await().untilAsserted(() -> doGet("/capability-sets")
       .andExpect(content().json(expectedCapabilitySets))
@@ -452,8 +423,11 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .description(capabilityName + " - description");
   }
 
-  private static CapabilitySet fooItemCapabilitySetWithCapabilities(CapabilityAction action,
-    String applicationId, List<UUID> capabilityIds) {
+  private static CapabilitySet fooItemCapabilitySet(CapabilityAction action) {
+    return fooItemCapabilitySet(action, APPLICATION_ID);
+  }
+
+  private static CapabilitySet fooItemCapabilitySet(CapabilityAction action, String applicationId) {
     var capabilityName = getCapabilityName(FOO_RESOURCE, action);
     return new CapabilitySet()
       .name(capabilityName)
@@ -461,7 +435,6 @@ class KafkaMessageListenerIT extends BaseIntegrationTest {
       .applicationId(applicationId)
       .resource(FOO_RESOURCE)
       .type(DATA)
-      .capabilities(capabilityIds)
       .description(capabilityName + " - description");
   }
 }

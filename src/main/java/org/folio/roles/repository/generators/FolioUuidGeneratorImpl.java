@@ -3,7 +3,7 @@ package org.folio.roles.repository.generators;
 import java.lang.reflect.Member;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.generator.EventType;
-import org.hibernate.generator.GeneratorCreationContext;
+import org.hibernate.id.factory.spi.CustomIdGeneratorCreationContext;
 import org.hibernate.id.uuid.UuidGenerator;
 
 public class FolioUuidGeneratorImpl extends UuidGenerator {
@@ -13,11 +13,11 @@ public class FolioUuidGeneratorImpl extends UuidGenerator {
    *
    * @param config - {@link FolioUuidGenerator} annotation configuration
    * @param idMember - id member as {@link Member}
-   * @param creationContext - creation context as {@link GeneratorCreationContext}
+   * @param creationContext - creation context as {@link CustomIdGeneratorCreationContext}
    */
   @SuppressWarnings("unused")
   public FolioUuidGeneratorImpl(FolioUuidGenerator config,
-    Member idMember, GeneratorCreationContext creationContext) {
+    Member idMember, CustomIdGeneratorCreationContext creationContext) {
     super(config.uuidGenerator(), idMember, creationContext);
   }
 
