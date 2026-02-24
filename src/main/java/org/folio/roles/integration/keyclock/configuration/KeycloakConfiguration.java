@@ -42,7 +42,7 @@ public class KeycloakConfiguration {
   public ExecutorService keycloakOperationsExecutor() {
     var poolSize = configuration.getConcurrency().getThreadPoolSize();
     log.info("Creating shared Keycloak operations thread pool [size: {}]", poolSize);
-    return new ThreadPoolExecutor(poolSize, poolSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+    return new ThreadPoolExecutor(0, poolSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
   }
 
   private static Keycloak buildKeycloakAdminClient(String clientSecret, KeycloakConfigurationProperties properties) {
