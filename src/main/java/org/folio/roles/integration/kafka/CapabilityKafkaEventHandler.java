@@ -7,6 +7,7 @@ import static org.folio.roles.integration.kafka.model.ResourceEventType.UPDATE;
 import static org.folio.roles.utils.CapabilityUtils.getNameFromAppOrModuleId;
 import static org.folio.roles.utils.CollectionUtils.toSet;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -26,7 +27,6 @@ import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.permission.FolioPermissionService;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.ObjectMapper;
 
 @Log4j2
 @Component

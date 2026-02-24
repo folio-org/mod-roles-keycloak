@@ -6,14 +6,14 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZE
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.hibernate.exception.SQLGrammarException;
-import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
@@ -22,7 +22,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
-import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.FixedBackOff;
 
@@ -45,8 +45,8 @@ public class KafkaConfiguration {
 
   @Bean
   public ConsumerFactory<String, ResourceEvent> jsonNodeConsumerFactory() {
-    var deserializer = new JacksonJsonDeserializer<>(ResourceEvent.class);
-    Map<String, Object> config = new HashMap<>(kafkaProperties.buildConsumerProperties());
+    var deserializer = new JsonDeserializer<>(ResourceEvent.class);
+    Map<String, Object> config = new HashMap<>(kafkaProperties.buildConsumerProperties(null));
     config.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
     config.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -83,7 +83,7 @@ public class KafkaConfiguration {
       .map(Throwable::getCause)
       .filter(SQLGrammarException.class::isInstance)
       .map(Throwable::getCause)
-      .filter(throwable -> Objects.equals(throwable.getClass().getSimpleName(), "PSQLException"))
+      .filter(throwable -> StringUtils.equals(throwable.getClass().getSimpleName(), "PSQLException"))
       .map(Throwable::getMessage)
       .filter(msg -> msg.startsWith("ERROR:") && msg.contains("does not exist"))
       .map(msg -> msg.replaceAll("\\s+", " "));

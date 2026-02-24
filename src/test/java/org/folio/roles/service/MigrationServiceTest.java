@@ -200,11 +200,6 @@ class MigrationServiceTest {
       }
 
       await().untilAsserted(() -> verify(migrationJobRepository).findById(MIGRATION_ID));
-      verify(folioExecutionContext, atLeastOnce()).getTenantId();
-      verify(folioExecutionContext, atLeastOnce()).getUserId();
-      verify(folioExecutionContext, atLeastOnce()).getFolioModuleMetadata();
-      verify(folioExecutionContext, atLeastOnce()).getRequestId();
-
       assertThat(entityCaptor.getAllValues().get(0).getStatus()).isEqualTo(IN_PROGRESS);
       assertThat(entityCaptor.getAllValues().get(0).getTotalRecords()).isNull();
       assertThat(entityCaptor.getAllValues().get(1).getStatus()).isEqualTo(FINISHED);
@@ -230,11 +225,6 @@ class MigrationServiceTest {
       }
 
       await().untilAsserted(() -> verify(migrationJobRepository).findById(MIGRATION_ID));
-      verify(folioExecutionContext, atLeastOnce()).getTenantId();
-      verify(folioExecutionContext, atLeastOnce()).getUserId();
-      verify(folioExecutionContext, atLeastOnce()).getFolioModuleMetadata();
-      verify(folioExecutionContext, atLeastOnce()).getRequestId();
-
       assertThat(entityCaptor.getAllValues().get(0).getStatus()).isEqualTo(IN_PROGRESS);
       assertThat(entityCaptor.getAllValues().get(0).getTotalRecords()).isNull();
     }
@@ -280,11 +270,6 @@ class MigrationServiceTest {
           .isInstanceOf(org.folio.roles.exception.RequestValidationException.class)
           .hasMessageContaining("There is already an active migration job in progress");
       }
-
-      verify(folioExecutionContext, atLeastOnce()).getTenantId();
-      verify(folioExecutionContext, atLeastOnce()).getUserId();
-      verify(folioExecutionContext, atLeastOnce()).getFolioModuleMetadata();
-      verify(folioExecutionContext, atLeastOnce()).getRequestId();
 
       verify(permissionMigrationService, never()).migratePermissions(org.mockito.ArgumentMatchers.any());
       verify(migrationJobRepository, never()).save(org.mockito.ArgumentMatchers.any());

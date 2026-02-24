@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**mod-roles-keycloak** is a Spring Boot 4.0.2 microservice (Java 21) that implements role-based authorization for the FOLIO open library platform. It bridges legacy permission-based systems with a modern capability-driven authorization model (Eureka architecture) while integrating with Keycloak for authentication and authorization.
+**mod-roles-keycloak** is a Spring Boot 3.5.7 microservice (Java 21) that implements role-based authorization for the FOLIO open library platform. It bridges legacy permission-based systems with a modern capability-driven authorization model (Eureka architecture) while integrating with Keycloak for authentication and authorization.
 
 ## Build & Development Commands
 

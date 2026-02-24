@@ -47,7 +47,7 @@ public class LoadableRoleService {
   private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
   private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
-  private final LoadableRoleAsyncAssignmentRetryer loadableRoleAsyncAssignmentRetryer;
+  private final LoadableRoleAssignmentRetrier loadableRoleAssignmentRetrier;
 
   @Transactional(readOnly = true)
   public LoadableRoles find(String query, Integer limit, Integer offset) {
@@ -108,7 +108,7 @@ public class LoadableRoleService {
     var isPermissionNotAssignedExist = toStream(saved.getPermissions())
       .anyMatch(per -> per.getCapabilityId() == null);
     if (isPermissionNotAssignedExist) {
-      loadableRoleAsyncAssignmentRetryer.retryAssignCapabilitiesAndSetsForPermissions(saved.getId(), saved.getName());
+      loadableRoleAssignmentRetrier.retryAssignCapabilitiesAndSetsForPermissions(saved.getId(), saved.getName());
     }
 
     return mapper.toRole(saved);
