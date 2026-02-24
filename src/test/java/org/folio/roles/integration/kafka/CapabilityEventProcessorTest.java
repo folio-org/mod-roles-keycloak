@@ -7,7 +7,6 @@ import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.domain.dto.CapabilityType.DATA;
-import static org.folio.roles.domain.dto.HttpMethod.*;
 import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
 import static org.folio.roles.integration.kafka.model.ModuleType.UI_MODULE;
 import static org.folio.roles.support.AuthResourceUtils.permission;
@@ -31,10 +30,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.common.utils.permission.model.PermissionAction;
@@ -43,6 +40,7 @@ import org.folio.common.utils.permission.model.PermissionType;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilityAction;
 import org.folio.roles.domain.dto.Endpoint;
+import org.folio.roles.domain.dto.HttpMethod;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.CapabilityResultHolder;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
@@ -56,7 +54,6 @@ import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -151,7 +148,7 @@ class CapabilityEventProcessorTest {
       arguments("module event (put and patch endpoints not merged)",
         event(MODULE,
           resource(permission("foo.item.put"), fooItemPutEndpoint()),
-          resource(permission("foo.item.patch"), endpoint("/module/foo/items/{id}", PATCH))),
+          resource(permission("foo.item.patch"), endpoint("/module/foo/items/{id}", HttpMethod.PATCH))),
         result(List.of(fooCapability(EDIT, "put", fooItemPutEndpoint())), emptyList())),
 
       arguments("module event (patch and put endpoints merged)",
