@@ -297,7 +297,7 @@ public class CapabilitySetDescriptorService {
     var result = capabilityService.save(capability);
     log.debug("Updated dummy capability with name: {}, permission: {}", result.getName(), result.getPermission());
 
-    var event = CapabilityEvent.updated(result, capability);
+    var event = CapabilityEvent.updated(result, capability).withContext(folioExecutionContext);
     applicationEventPublisher.publishEvent(event);
     return result;
   }
@@ -320,7 +320,7 @@ public class CapabilitySetDescriptorService {
     var capability = capabilityService.save(capabilityFromEvent);
     log.info("Created dummy capability with name: {}", capabilityFromEvent.getName());
 
-    var event = CapabilityEvent.created(capability);
+    var event = CapabilityEvent.created(capability).withContext(folioExecutionContext);
     applicationEventPublisher.publishEvent(event);
     return capability;
   }
