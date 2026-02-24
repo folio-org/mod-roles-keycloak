@@ -6,7 +6,7 @@ import static org.folio.common.utils.tls.FeignClientTlsUtils.buildSslContext;
 import static org.folio.common.utils.tls.Utils.IS_HOSTNAME_VERIFICATION_DISABLED;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +41,8 @@ public class KeycloakConfiguration {
   @Bean(name = "keycloakOperationsExecutor", destroyMethod = "shutdown")
   public ExecutorService keycloakOperationsExecutor() {
     var poolSize = configuration.getConcurrency().getThreadPoolSize();
-    log.info("Creating shared Keycloak operations thread pool [maxSize: {}]", poolSize);
-    return new ThreadPoolExecutor(0, poolSize, 60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+    log.info("Creating shared Keycloak operations thread pool [size: {}]", poolSize);
+    return new ThreadPoolExecutor(poolSize, poolSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
   }
 
   private static Keycloak buildKeycloakAdminClient(String clientSecret, KeycloakConfigurationProperties properties) {
