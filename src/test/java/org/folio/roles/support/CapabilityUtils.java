@@ -25,6 +25,7 @@ import org.folio.roles.domain.entity.type.EntityCapabilityType;
 public class CapabilityUtils {
 
   public static final String FOO_RESOURCE = "Foo Item";
+  public static final String BAR_RESOURCE = "Bar Item";
   public static final String UI_FOO_RESOURCE = "UI Foo Item";
   public static final String RESOURCE_NAME = "Test Resource";
   public static final String APPLICATION_ID = "test-application-0.0.1";

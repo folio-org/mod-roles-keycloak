@@ -11,11 +11,15 @@ import static org.folio.roles.integration.kafka.model.ModuleType.MODULE;
 import static org.folio.roles.integration.kafka.model.ModuleType.UI_MODULE;
 import static org.folio.roles.support.AuthResourceUtils.permission;
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
+import static org.folio.roles.support.CapabilityUtils.BAR_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.FOO_RESOURCE;
 import static org.folio.roles.support.CapabilityUtils.capability;
 import static org.folio.roles.support.CapabilityUtils.capabilityFromPermission;
 import static org.folio.roles.support.CapabilityUtils.capabilityHolder;
 import static org.folio.roles.support.CapabilityUtils.capabilityHolderFromPermission;
+import static org.folio.roles.support.EndpointUtils.barItemGetEndpoint;
+import static org.folio.roles.support.EndpointUtils.barItemPatchEndpoint;
+import static org.folio.roles.support.EndpointUtils.barItemPutEndpoint;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemGetEndpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemPatchEndpoint;
@@ -216,7 +220,50 @@ class CapabilityEventProcessorTest {
       arguments("module event mapping overrides",
         event(MODULE,
           resource(permission("perm.name").description("Capability to view a test-resource item"))),
-        result(List.of(capability(null, resource, VIEW, "perm.name").moduleId(MODULE_ID)), emptyList()))
+        result(List.of(capability(null, resource, VIEW, "perm.name").moduleId(MODULE_ID)), emptyList())),
+
+      arguments("module event (mixed duplicates with skipped then merged)",
+        event(MODULE,
+          resource(permission("bar.item.put"), barItemPutEndpoint()),
+          resource(permission("bar.item.patch"), barItemPatchEndpoint()),
+          resource(permission("foo.item.get"), fooItemGetEndpoint()),
+          resource(permission("foo.item.put"), fooItemPutEndpoint()),
+          resource(permission("foo.item.patch"), fooItemPatchEndpoint())),
+        result(List.of(
+            barCapability(EDIT, "put", barItemPutEndpoint(), barItemPatchEndpoint()),
+            fooCapability(VIEW, "get", fooItemGetEndpoint()),
+            fooCapability(EDIT, "put", fooItemPutEndpoint(), fooItemPatchEndpoint())),
+          emptyList())),
+
+      arguments("module event (mixed duplicates with skipped then merged #2)",
+        event(MODULE,
+          resource(permission("bar.item.get"), barItemGetEndpoint()),
+          resource(permission("bar.item.put"), barItemPutEndpoint()),
+          resource(permission("foo.item.put"), fooItemPutEndpoint()),
+          resource(permission("foo.item.get"), fooItemGetEndpoint()),
+          resource(permission("bar.item.patch"), barItemPatchEndpoint()),
+          resource(permission("foo.item.patch"), fooItemPatchEndpoint())),
+        result(List.of(
+            barCapability(VIEW, "get", barItemGetEndpoint()),
+            barCapability(EDIT, "put", barItemPutEndpoint(), barItemPatchEndpoint()),
+            fooCapability(EDIT, "put", fooItemPutEndpoint(), fooItemPatchEndpoint()),
+            fooCapability(VIEW, "get", fooItemGetEndpoint())),
+          emptyList())),
+
+      arguments("module event (mixed duplicates with skipped then merged #3)",
+        event(MODULE,
+          resource(permission("bar.item.patch"), barItemPatchEndpoint()),
+          resource(permission("foo.item.patch"), fooItemPatchEndpoint()),
+          resource(permission("bar.item.get"), barItemGetEndpoint()),
+          resource(permission("foo.item.get"), fooItemGetEndpoint()),
+          resource(permission("foo.item.put"), fooItemPutEndpoint()),
+          resource(permission("bar.item.put"), barItemPutEndpoint())),
+        result(List.of(
+            barCapability(EDIT, "put", barItemPatchEndpoint(), barItemPutEndpoint()),
+            fooCapability(EDIT, "put", fooItemPatchEndpoint(), fooItemPutEndpoint()),
+            barCapability(VIEW, "get", barItemGetEndpoint()),
+            fooCapability(VIEW, "get", fooItemGetEndpoint())),
+          emptyList()))
     );
   }
 
@@ -251,6 +298,11 @@ class CapabilityEventProcessorTest {
 
   private static Capability fooCapability(CapabilityAction action, String permissionSuffix, Endpoint... endpoints) {
     return capability(null, FOO_RESOURCE, action, "foo.item." + permissionSuffix, endpoints)
+      .moduleId(MODULE_ID).description(null);
+  }
+
+  private static Capability barCapability(CapabilityAction action, String permissionSuffix, Endpoint... endpoints) {
+    return capability(null, BAR_RESOURCE, action, "bar.item." + permissionSuffix, endpoints)
       .moduleId(MODULE_ID).description(null);
   }
 
