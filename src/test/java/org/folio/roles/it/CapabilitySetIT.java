@@ -120,6 +120,22 @@ class CapabilitySetIT extends BaseIntegrationTest {
     "classpath:/sql/capabilities/populate-capabilities.sql",
     "classpath:/sql/capability-sets/populate-capability-sets.sql",
   })
+  void findCapabilitySets_positive_cqlQueryUsingType() throws Exception {
+    mockMvc.perform(get("/capability-sets")
+        .queryParam("query", "resource==\"Foo Item\" and action==\"MANAGE\" and type==\"DATA\"")
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER))
+      .andExpect(status().isOk())
+      .andExpect(content().json(asJsonString(capabilitySets(
+        capabilitySet(FOO_MANAGE_CAPABILITY_SET, FOO_RESOURCE, MANAGE, FOO_MANAGE_CAPABILITIES)
+      ))));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capability-sets/populate-capability-sets.sql",
+  })
   void findCapabilitySets_positive_byPermissionName() throws Exception {
     mockMvc.perform(get("/capability-sets")
         .queryParam("query", "permission==\"foo.item.create\"")
