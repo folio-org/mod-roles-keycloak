@@ -2,14 +2,17 @@ package org.folio.roles.service.reference;
 
 import static java.util.List.of;
 import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.folio.roles.domain.dto.Policies;
 import org.folio.roles.domain.dto.Policy;
+import org.folio.roles.service.policy.PolicyEntityService;
 import org.folio.roles.service.policy.PolicyService;
 import org.folio.roles.utils.ResourceHelper;
 import org.folio.test.types.UnitTest;
@@ -25,6 +28,8 @@ class PoliciesDataLoaderTest {
 
   @Mock
   private PolicyService policyService;
+  @Mock
+  private PolicyEntityService policyEntityService;
   @Mock
   private ResourceHelper resourceHelper;
   @InjectMocks
@@ -47,19 +52,20 @@ class PoliciesDataLoaderTest {
 
   @Test
   void loadReferenceData_positive_ifUpdate() {
-    var policy = new Policy().name("policy1").id(randomUUID());
+    var policy = new Policy().name("policy1");
+    var existPolicy = new Policy().name(policy.getName()).id(randomUUID());
     var policies = new Policies().policies(of(policy));
 
     when(resourceHelper.readObjectsFromDirectory("reference-data/policies", Policies.class))
       .thenReturn(Stream.of(policies));
     when(policyService.update(policy)).thenReturn(policy);
-    when(policyService.existsById(policy.getId())).thenReturn(true);
+    when(policyEntityService.findByName(policy.getName())).thenReturn(Optional.of(existPolicy));
 
     policiesDataLoader.loadReferenceData();
 
     verify(resourceHelper).readObjectsFromDirectory("reference-data/policies", Policies.class);
     verify(policyService).update(policy);
-    verify(policyService).existsById(policy.getId());
+    assertThat(policy.getId()).isEqualTo(existPolicy.getId());
   }
 
   @Test
@@ -70,13 +76,13 @@ class PoliciesDataLoaderTest {
     when(resourceHelper.readObjectsFromDirectory("reference-data/policies", Policies.class))
       .thenReturn(Stream.of(policies));
     when(policyService.create(policy)).thenReturn(policy);
-    when(policyService.existsById(policy.getId())).thenReturn(false);
+    when(policyEntityService.findByName(policy.getName())).thenReturn(Optional.empty());
 
     policiesDataLoader.loadReferenceData();
 
     verify(resourceHelper).readObjectsFromDirectory("reference-data/policies", Policies.class);
     verify(policyService).create(policy);
-    verify(policyService).existsById(policy.getId());
+    verify(policyEntityService).findByName(policy.getName());
   }
 
   @Test
