@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.UUID;
 import org.folio.roles.base.BaseIntegrationTest;
+import org.folio.spring.cql.Cql2JpaCriteria;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -120,7 +121,7 @@ class CapabilitySetIT extends BaseIntegrationTest {
     "classpath:/sql/capabilities/populate-capabilities.sql",
     "classpath:/sql/capability-sets/populate-capability-sets.sql",
   })
-  void findCapabilitySets_positive_cqlQueryUsingType() throws Exception {
+  void findCapabilitySets_positive_cqlQueryByEnumField() throws Exception {
     mockMvc.perform(get("/capability-sets")
         .queryParam("query", "resource==\"Foo Item\" and action==\"MANAGE\" and type==\"DATA\"")
         .header(TENANT, TENANT_ID)
