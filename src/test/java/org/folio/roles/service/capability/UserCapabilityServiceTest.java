@@ -325,18 +325,20 @@ class UserCapabilityServiceTest {
     @Test
     void positive() {
       var uce1 = userCapabilityEntity(capabilityId1);
-      var uce2 = userCapabilityEntity(capabilityId2);
       var uce3 = userCapabilityEntity(capabilityId3);
+      var uce2 = userCapabilityEntity(capabilityId2);
       var existingEntities = List.of(uce1, uce3);
 
       when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
       when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
       when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
       when(userCapabilityEntityMapper.convert(uce2)).thenReturn(userCapability(USER_ID, capabilityId2));
-      when(userCapabilityEntityMapper.convert(uce3)).thenReturn(userCapability(USER_ID, capabilityId3));
-      when(userCapabilityRepository.saveAll(List.of(uce2, uce3))).thenReturn(List.of(uce2, uce3));
+      when(userCapabilityRepository.saveAll(List.of(uce2))).thenReturn(List.of(uce2));
 
-      var newIds = List.of(capabilityId2, capabilityId3);
+      // existing = [cap1, cap3], requested = [cap2, cap3]
+      // newIds        = requested − existing = [cap2]
+      // deprecatedIds = existing − requested = [cap1]
+      var newIds = List.of(capabilityId2);
       var deprecatedIds = List.of(capabilityId1);
       var endpointsToAssign = List.of(endpoint("/c2", GET));
       var endpointsToDelete = List.of(endpoint("/c1", GET));
@@ -350,8 +352,83 @@ class UserCapabilityServiceTest {
       verify(userPermissionService).createPermissions(USER_ID, endpointsToAssign);
       verify(userPermissionService).deletePermissions(USER_ID, endpointsToDelete);
       verify(userCapabilityRepository).deleteUserCapabilities(USER_ID, deprecatedIds);
-      verify(capabilityEndpointService).getByCapabilityIds(newIds, List.of(capabilityId1));
-      verify(capabilityEndpointService).getByCapabilityIds(deprecatedIds, List.of(capabilityId2, capabilityId3));
+      // existingIds passed to assign = [cap1, cap3] (all existing before diff)
+      verify(capabilityEndpointService).getByCapabilityIds(newIds, List.of(capabilityId1, capabilityId3));
+      // remainingIds passed to remove = [cap3] ∪ createdIds([cap2]) = [cap3, cap2]
+      verify(capabilityEndpointService).getByCapabilityIds(deprecatedIds, List.of(capabilityId3, capabilityId2));
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
+    }
+
+    @Test
+    void positive_allNew() {
+      var uce1 = userCapabilityEntity(capabilityId1);
+      var uce2 = userCapabilityEntity(capabilityId2);
+
+      when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
+      when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(emptyList());
+      when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+      when(userCapabilityEntityMapper.convert(uce1)).thenReturn(userCapability(USER_ID, capabilityId1));
+      when(userCapabilityEntityMapper.convert(uce2)).thenReturn(userCapability(USER_ID, capabilityId2));
+      when(userCapabilityRepository.saveAll(List.of(uce1, uce2))).thenReturn(List.of(uce1, uce2));
+
+      // existing = [], requested = [cap1, cap2]
+      // newIds = [cap1, cap2], deprecatedIds = []
+      var newIds = List.of(capabilityId1, capabilityId2);
+      var endpointsToAssign = List.of(endpoint("/c1", GET), endpoint("/c2", GET));
+      when(capabilityEndpointService.getByCapabilityIds(newIds, emptyList())).thenReturn(endpointsToAssign);
+
+      userCapabilityService.update(USER_ID, List.of(capabilityId1, capabilityId2));
+
+      verify(capabilityService).checkIds(newIds);
+      verify(userPermissionService).createPermissions(USER_ID, endpointsToAssign);
+      verify(userCapabilityRepository, never()).deleteUserCapabilities(any(), anyList());
+      verify(userPermissionService, never()).deletePermissions(any(), anyList());
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
+    }
+
+    @Test
+    void positive_allDeprecated() {
+      var uce1 = userCapabilityEntity(capabilityId1);
+      var uce2 = userCapabilityEntity(capabilityId2);
+      var existingEntities = List.of(uce1, uce2);
+
+      when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
+      when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
+      when(capabilitySetService.findByUserId(USER_ID, MAX_VALUE, 0)).thenReturn(PageResult.empty());
+
+      // existing = [cap1, cap2], requested = []
+      // newIds = [], deprecatedIds = [cap1, cap2]
+      // remainingEntities after remove = []
+      var deprecatedIds = List.of(capabilityId1, capabilityId2);
+      var endpointsToDelete = List.of(endpoint("/c1", GET), endpoint("/c2", GET));
+      when(capabilityEndpointService.getByCapabilityIds(deprecatedIds, emptyList())).thenReturn(endpointsToDelete);
+
+      userCapabilityService.update(USER_ID, emptyList());
+
+      verify(userPermissionService).deletePermissions(USER_ID, endpointsToDelete);
+      verify(userCapabilityRepository).deleteUserCapabilities(USER_ID, deprecatedIds);
+      verify(userCapabilityRepository, never()).saveAll(anyList());
+      verify(userPermissionService, never()).createPermissions(any(), anyList());
+      verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
+    }
+
+    @Test
+    void positive_noOp() {
+      var uce1 = userCapabilityEntity(capabilityId1);
+      var uce2 = userCapabilityEntity(capabilityId2);
+      var existingEntities = List.of(uce1, uce2);
+
+      when(keycloakUserService.getKeycloakUserByUserId(USER_ID)).thenReturn(keycloakUser());
+      when(userCapabilityRepository.findAllByUserId(USER_ID)).thenReturn(existingEntities);
+
+      // existing = [cap1, cap2], requested = [cap1, cap2]
+      // newIds = [], deprecatedIds = [] → neither consumer fires
+      userCapabilityService.update(USER_ID, List.of(capabilityId1, capabilityId2));
+
+      verify(userCapabilityRepository, never()).saveAll(anyList());
+      verify(userCapabilityRepository, never()).deleteUserCapabilities(any(), anyList());
+      verify(userPermissionService, never()).createPermissions(any(), anyList());
+      verify(userPermissionService, never()).deletePermissions(any(), anyList());
       verify(eventPublisher).publishEvent(userPermissionsChanged(USER_ID));
     }
 

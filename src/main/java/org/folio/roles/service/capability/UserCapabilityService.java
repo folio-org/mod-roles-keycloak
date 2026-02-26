@@ -25,6 +25,7 @@ import org.folio.roles.repository.UserCapabilityRepository;
 import org.folio.roles.service.permission.UserPermissionService;
 import org.folio.roles.utils.CapabilityUtils;
 import org.folio.roles.utils.CollectionUtils;
+import org.folio.roles.utils.KeycloakTransactionHelper;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -53,7 +54,6 @@ public class UserCapabilityService {
    * @param capabilityIds - capability identifiers as {@link List} of {@link UUID} objects
    * @return {@link UserCapabilities} object with created user-capability relations
    */
-  @Transactional
   public PageResult<UserCapability> create(UUID userId, List<UUID> capabilityIds) {
     if (isEmpty(capabilityIds)) {
       throw new IllegalArgumentException("Capability id list is empty");
@@ -94,12 +94,10 @@ public class UserCapabilityService {
    * @param userId - user identifier as {@link UUID} object
    * @param capabilityIds - list of capabilities that must be assigned to a user
    */
-  @Transactional
   public void update(UUID userId, List<UUID> capabilityIds) {
     keycloakUserService.getKeycloakUserByUserId(userId);
     var assignedUserCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
     var assignedCapabilityIds = getCapabilityIds(assignedUserCapabilityEntities);
-    assignedCapabilityIds.removeAll(capabilityIds);
     UpdateOperationHelper.create(assignedCapabilityIds, capabilityIds, "user-capability")
       .consumeAndCacheNewEntities(newIds -> getCapabilityIds(assignCapabilities(userId, newIds, assignedCapabilityIds)))
       .consumeDeprecatedEntities((deprecatedIds, createdIds) -> removeCapabilities(userId, deprecatedIds, createdIds));
@@ -112,7 +110,6 @@ public class UserCapabilityService {
    * @param userId - user identifier as {@link UUID}
    * @param capabilityId - capability identifier as {@link UUID}
    */
-  @Transactional
   public void delete(UUID userId, UUID capabilityId) {
     var assignedUserCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
     var assignedCapabilityIds = getCapabilityIds(assignedUserCapabilityEntities);
@@ -132,7 +129,6 @@ public class UserCapabilityService {
    * @param userId - user identifier as {@link UUID}
    * @throws EntityNotFoundException if user is not found by id or there is no assigned values
    */
-  @Transactional
   public void deleteAll(UUID userId) {
     keycloakUserService.getKeycloakUserByUserId(userId);
     var userCapabilityEntities = userCapabilityRepository.findAllByUserId(userId);
@@ -151,9 +147,11 @@ public class UserCapabilityService {
     var entities = mapItems(newIds, id -> new UserCapabilityEntity(userId, id));
     var assignedCapabilityIds = CollectionUtils.union(assignedIds, getCapabilitySetCapabilityIds(userId));
     var endpoints = capabilityEndpointService.getByCapabilityIds(newIds, assignedCapabilityIds);
-    userPermissionService.createPermissions(userId, endpoints);
 
-    var resultEntities = userCapabilityRepository.saveAll(entities);
+    var resultEntities = KeycloakTransactionHelper.executeWithCompensation(
+        () -> userPermissionService.createPermissions(userId, endpoints),
+        () -> userCapabilityRepository.saveAll(entities),
+        () -> userPermissionService.deletePermissions(userId, endpoints));
     var createdUserCapabilities = mapItems(resultEntities, userCapabilityEntityMapper::convert);
     log.info("Capabilities are assigned to user: userId = {}, ids = {}", userId, newIds);
 
@@ -164,9 +162,13 @@ public class UserCapabilityService {
     log.debug("Revoking capabilities from user: userId = {}, ids = {}", userId, deprecatedIds);
     var assignedCapabilityIds = CollectionUtils.union(assignedIds, getCapabilitySetCapabilityIds(userId));
     var endpoints = capabilityEndpointService.getByCapabilityIds(deprecatedIds, assignedCapabilityIds);
-    userPermissionService.deletePermissions(userId, endpoints);
-    userCapabilityRepository.deleteUserCapabilities(userId, deprecatedIds);
-    log.info("Capabilities are revoked to user: userId = {}, ids = {}", userId, deprecatedIds);
+
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> userPermissionService.deletePermissions(userId, endpoints),
+        () -> userCapabilityRepository.deleteUserCapabilities(userId, deprecatedIds),
+        () -> userPermissionService.createPermissions(userId, endpoints));
+
+    log.info("Capabilities are revoked from user: userId = {}, ids = {}", userId, deprecatedIds);
   }
 
   private static List<UUID> getCapabilityIds(List<UserCapabilityEntity> userCapabilityEntities) {

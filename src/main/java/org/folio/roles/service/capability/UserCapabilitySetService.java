@@ -25,6 +25,7 @@ import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.roles.mapper.entity.UserCapabilitySetEntityMapper;
 import org.folio.roles.repository.UserCapabilitySetRepository;
 import org.folio.roles.service.permission.UserPermissionService;
+import org.folio.roles.utils.KeycloakTransactionHelper;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -152,9 +153,12 @@ public class UserCapabilitySetService {
 
     var entities = mapItems(newSetIds, capabilitySetId -> new UserCapabilitySetEntity(userId, capabilitySetId));
     var changedEndpoints = getChangedEndpoints(userId, newSetIds, assignedSetIds);
-    userPermissionService.createPermissions(userId, changedEndpoints);
 
-    var resultEntities = userCapabilitySetRepository.saveAll(entities);
+    var resultEntities = KeycloakTransactionHelper.executeWithCompensation(
+        () -> userPermissionService.createPermissions(userId, changedEndpoints),
+        () -> userCapabilitySetRepository.saveAll(entities),
+        () -> userPermissionService.deletePermissions(userId, changedEndpoints));
+
     var createdUserCapabilities = mapItems(resultEntities, userCapabilitySetEntityMapper::convert);
     log.info("Capabilities assigned to user: userId = {}, ids = {}", userId, newSetIds);
 
@@ -164,9 +168,13 @@ public class UserCapabilitySetService {
   private void removeCapabilities(UUID userId, List<UUID> deprecatedSetIds, Collection<UUID> assignedSetIds) {
     log.debug("Revoking capabilities from user: userId = {}, ids = {}", userId, deprecatedSetIds);
     var changedEndpoints = getChangedEndpoints(userId, deprecatedSetIds, assignedSetIds);
-    userPermissionService.deletePermissions(userId, changedEndpoints);
-    userCapabilitySetRepository.deleteUserCapabilitySets(userId, deprecatedSetIds);
-    log.info("Capability sets are revoked to user: userId = {}, ids = {}", userId, deprecatedSetIds);
+
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> userPermissionService.deletePermissions(userId, changedEndpoints),
+        () -> userCapabilitySetRepository.deleteUserCapabilitySets(userId, deprecatedSetIds),
+        () -> userPermissionService.createPermissions(userId, changedEndpoints));
+
+    log.info("Capability sets are revoked from user: userId = {}, ids = {}", userId, deprecatedSetIds);
   }
 
   private List<Endpoint> getChangedEndpoints(UUID userId, List<UUID> deprecatedIds, Collection<UUID> assignedIds) {

@@ -24,6 +24,8 @@ application:
       content:
         it-test_master_folio-backend-admin-client: ${KC_ADMIN_CLIENT_SECRET}
   keycloak:
+    concurrency:
+      thread-pool-size: ${KC_CONCURRENCY_THREAD_POOL_SIZE:20}
     tls:
       enabled: true
       trust-store-path: classpath:certificates/test.truststore.jks

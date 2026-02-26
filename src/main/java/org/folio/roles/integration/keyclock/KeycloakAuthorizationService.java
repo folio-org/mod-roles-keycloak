@@ -6,6 +6,9 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.folio.roles.utils.ConcurrentUtils.joinAll;
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.getRunnableWithCurrentFolioContext;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -13,7 +16,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +34,7 @@ import org.keycloak.representations.idm.authorization.DecisionStrategy;
 import org.keycloak.representations.idm.authorization.ResourceRepresentation;
 import org.keycloak.representations.idm.authorization.ScopePermissionRepresentation;
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Log4j2
@@ -37,6 +44,8 @@ public class KeycloakAuthorizationService {
 
   private final JsonHelper jsonHelper;
   private final KeycloakAuthorizationClientProvider authResourceProvider;
+  @Qualifier("keycloakOperationsExecutor")
+  private final ExecutorService keycloakOperationsExecutor;
 
   /**
    * Creates keycloak permissions based on provided policy and list of endpoints.
@@ -52,9 +61,28 @@ public class KeycloakAuthorizationService {
       return;
     }
 
+    if (policy.getId() == null) {
+      throw new IllegalArgumentException("Policy must have a non-null id before permissions can be created");
+    }
+
+    var endpointsByPath = endpoints.stream()
+      .filter(endpoint -> isNotBlank(endpoint.getPath()))
+      .collect(Collectors.groupingBy(Endpoint::getPath));
+
+    var futures = endpointsByPath.entrySet().stream()
+      .map(entry -> CompletableFuture.runAsync(
+        getRunnableWithCurrentFolioContext(
+          () -> createPermissionsForPath(policy.getId(), entry.getKey(), entry.getValue(), nameGenerator)),
+        keycloakOperationsExecutor))
+      .toList();
+    joinAll(futures);
+  }
+
+  private void createPermissionsForPath(UUID policyId, String path, List<Endpoint> endpointsForPath,
+                                        Function<Endpoint, String> nameGenerator) {
     var scopePermissionsClient = getAuthorizationClient().permissions().scope();
-    for (var endpoint : endpoints) {
-      var resource = getAuthResourceByStaticPath(endpoint.getPath());
+    var resource = getAuthResourceByStaticPath(path);
+    for (var endpoint : endpointsForPath) {
       var scope = getScopeByMethod(resource, endpoint.getMethod());
       if (scope.isEmpty()) {
         log.warn(
@@ -63,7 +91,7 @@ public class KeycloakAuthorizationService {
         continue;
       }
       var policyName = nameGenerator.apply(endpoint);
-      var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policy.getId());
+      var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policyId);
 
       try (var response = scopePermissionsClient.create(permission)) {
         processKeycloakResponse(permission, response);
@@ -87,10 +115,16 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    var scopePermissionsClient = getAuthorizationClient().permissions().scope();
-    for (var endpoint : endpoints) {
-      removeKeycloakPermission(scopePermissionsClient, endpoint, nameGenerator);
-    }
+    var futures = endpoints.stream()
+      .filter(endpoint -> isNotBlank(endpoint.getPath())).distinct()
+      .map(endpoint -> CompletableFuture.runAsync(
+        getRunnableWithCurrentFolioContext(() -> {
+          var scopePermissionsClient = getAuthorizationClient().permissions().scope();
+          removeKeycloakPermission(scopePermissionsClient, endpoint, nameGenerator);
+        }),
+        keycloakOperationsExecutor))
+      .toList();
+    joinAll(futures);
   }
 
   private ResourceRepresentation getAuthResourceByStaticPath(String staticPath) {
