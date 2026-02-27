@@ -33,6 +33,7 @@ import org.folio.roles.repository.RoleCapabilitySetRepository;
 import org.folio.roles.service.permission.RolePermissionService;
 import org.folio.roles.service.role.RoleService;
 import org.folio.roles.utils.CollectionUtils;
+import org.folio.roles.utils.KeycloakTransactionHelper;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -255,9 +256,12 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
 
     var entities = mapItems(newSetIds, capabilitySetId -> new RoleCapabilitySetEntity(roleId, capabilitySetId));
     var changedEndpoints = getChangedEndpoints(roleId, newSetIds, assignedSetIds);
-    rolePermissionService.createPermissions(roleId, changedEndpoints);
 
-    var resultEntities = roleCapabilitySetRepository.saveAll(entities);
+    var resultEntities = KeycloakTransactionHelper.executeWithCompensation(
+        () -> rolePermissionService.createPermissions(roleId, changedEndpoints),
+        () -> roleCapabilitySetRepository.saveAll(entities),
+        () -> rolePermissionService.deletePermissions(roleId, changedEndpoints));
+
     var createdRoleCapabilitySets = mapItems(resultEntities, roleCapabilitySetEntityMapper::convert);
     log.info("Capabilities assigned to role: roleId = {}, ids = {}", roleId, newSetIds);
 
@@ -267,9 +271,13 @@ public class RoleCapabilitySetServiceImpl implements RoleCapabilitySetService {
   private void removeCapabilities(UUID roleId, List<UUID> deprecatedSetIds, Collection<UUID> assignedSetIds) {
     log.debug("Revoking capabilities from role: roleId = {}, ids = {}", roleId, deprecatedSetIds);
     var changedEndpoints = getChangedEndpoints(roleId, deprecatedSetIds, assignedSetIds);
-    rolePermissionService.deletePermissions(roleId, changedEndpoints);
-    roleCapabilitySetRepository.deleteRoleCapabilitySets(roleId, deprecatedSetIds);
-    log.info("Capability sets are revoked to role: roleId = {}, ids = {}", roleId, deprecatedSetIds);
+
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> rolePermissionService.deletePermissions(roleId, changedEndpoints),
+        () -> roleCapabilitySetRepository.deleteRoleCapabilitySets(roleId, deprecatedSetIds),
+        () -> rolePermissionService.createPermissions(roleId, changedEndpoints));
+
+    log.info("Capability sets are revoked from role: roleId = {}, ids = {}", roleId, deprecatedSetIds);
   }
 
   private List<Endpoint> getChangedEndpoints(UUID roleId, List<UUID> deprecatedIds, Collection<UUID> assignedIds) {

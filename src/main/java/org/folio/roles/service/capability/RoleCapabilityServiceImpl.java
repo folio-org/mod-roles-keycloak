@@ -4,8 +4,8 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.apache.commons.collections4.CollectionUtils.subtract;
 import static org.apache.commons.collections4.ListUtils.intersection;
-import static org.apache.commons.collections4.ListUtils.subtract;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.entity.RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT;
 import static org.folio.roles.domain.model.event.TenantPermissionsChangedEvent.tenantPermissionsChanged;
@@ -32,6 +32,7 @@ import org.folio.roles.service.permission.RolePermissionService;
 import org.folio.roles.service.role.RoleService;
 import org.folio.roles.utils.CapabilityUtils;
 import org.folio.roles.utils.CollectionUtils;
+import org.folio.roles.utils.KeycloakTransactionHelper;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -259,9 +260,12 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     var entities = mapItems(newIds, id -> new RoleCapabilityEntity(roleId, id));
     var assignedCapabilityIds = CollectionUtils.union(assignedIds, getAssignedCapabilityIds(roleId));
     var endpoints = capabilityEndpointService.getByCapabilityIds(newIds, assignedCapabilityIds);
-    rolePermissionService.createPermissions(roleId, endpoints);
 
-    var resultEntities = roleCapabilityRepository.saveAll(entities);
+    var resultEntities = KeycloakTransactionHelper.executeWithCompensation(
+        () -> rolePermissionService.createPermissions(roleId, endpoints),
+        () -> roleCapabilityRepository.saveAll(entities),
+        () -> rolePermissionService.deletePermissions(roleId, endpoints));
+
     var createdRoleCapabilities = mapItems(resultEntities, roleCapabilityEntityMapper::convert);
     log.info("Capabilities are assigned to role: roleId = {}, capabilityIds = {}", roleId, newIds);
 
@@ -272,9 +276,13 @@ public class RoleCapabilityServiceImpl implements RoleCapabilityService {
     log.debug("Revoking capabilities from role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
     var assignedCapabilityIds = CollectionUtils.union(assignedIds, getAssignedCapabilityIds(roleId));
     var endpoints = capabilityEndpointService.getByCapabilityIds(deprecatedIds, assignedCapabilityIds);
-    rolePermissionService.deletePermissions(roleId, endpoints);
-    roleCapabilityRepository.deleteRoleCapabilities(roleId, deprecatedIds);
-    log.info("Capabilities are revoked to role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
+
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> rolePermissionService.deletePermissions(roleId, endpoints),
+        () -> roleCapabilityRepository.deleteRoleCapabilities(roleId, deprecatedIds),
+        () -> rolePermissionService.createPermissions(roleId, endpoints));
+
+    log.info("Capabilities are revoked from role: roleId = {}, capabilityIds = {}", roleId, deprecatedIds);
   }
 
   private static List<UUID> getCapabilityIds(List<RoleCapabilityEntity> roleCapabilityEntities) {

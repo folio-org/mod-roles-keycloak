@@ -5,4 +5,10 @@
 <suppressions>
   <suppress checks="MethodLength"
             files="src[/\\]test[/\\]java[/\\]"/>
+  <!-- Tests frequently declare variables at the top of a method for readability
+       (e.g. mocks, test fixtures, expected values), even if some are only used
+       much later.  Allowing this distance in test code avoids noisy warnings
+       without compromising production-code quality. -->
+  <suppress checks="VariableDeclarationUsageDistance"
+            files="src[/\\]test[/\\]java[/\\]"/>
 </suppressions>

@@ -73,6 +73,8 @@ application:
       trust-store-type: ${KC_CLIENT_TLS_TRUSTSTORE_TYPE:}
     migration:
       users-batch-size: ${KC_MIGRATION_USERS_BATCH_SIZE:100}
+    concurrency:
+      thread-pool-size: ${KC_CONCURRENCY_THREAD_POOL_SIZE:20}
     retry:
       max-attempts: ${KC_RETRY_MAX_ATTEMPTS:3}
       backoff:

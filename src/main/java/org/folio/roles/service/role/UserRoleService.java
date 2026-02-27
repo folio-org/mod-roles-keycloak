@@ -12,6 +12,7 @@ import org.folio.roles.domain.dto.UserRoles;
 import org.folio.roles.domain.dto.UserRolesRequest;
 import org.folio.roles.domain.model.event.UserPermissionsChangedEvent;
 import org.folio.roles.integration.keyclock.KeycloakRolesUserService;
+import org.folio.roles.utils.KeycloakTransactionHelper;
 import org.folio.roles.utils.UpdateOperationHelper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -37,14 +38,23 @@ public class UserRoleService {
     var userId = userRolesRequest.getUserId();
     var roleIds = userRolesRequest.getRoleIds();
     var foundRoles = roleService.findByIds(roleIds);
-    var createdUserRoles = userRoleEntityService.create(userId, roleIds);
-    keycloakRolesUserService.assignRolesToUser(userId, foundRoles);
+
+    var createdUserRoles = KeycloakTransactionHelper.executeWithCompensation(
+        () -> keycloakRolesUserService.assignRolesToUser(userId, foundRoles),
+        () -> userRoleEntityService.create(userId, roleIds),
+        () -> keycloakRolesUserService.unlinkRolesFromUser(userId, foundRoles));
+
     eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userId));
     return buildUserRoles(createdUserRoles);
   }
 
   /**
    * Creates a relation between user and role by their identifiers.
+   *
+   * <p>
+   * Idempotent: if the relation already exists in the DB, the method returns
+   * without touching Keycloak. The compensation action is therefore only ever
+   * registered for <em>new</em> assignments, making it safe.
    *
    * @param userRole - user-role relation
    */
@@ -53,11 +63,15 @@ public class UserRoleService {
     var roleById = roleService.getById(userRole.getRoleId());
     var foundUserRole = userRoleEntityService.find(userRole);
     if (foundUserRole.isPresent()) {
+      // Relation already exists; nothing to do and no Keycloak call is made.
       return;
     }
 
-    keycloakRolesUserService.assignRolesToUser(userRole.getUserId(), singletonList(roleById));
-    userRoleEntityService.createSafe(userRole);
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> keycloakRolesUserService.assignRolesToUser(userRole.getUserId(), singletonList(roleById)),
+        () -> userRoleEntityService.createSafe(userRole),
+        () -> keycloakRolesUserService.unlinkRolesFromUser(userRole.getUserId(), singletonList(roleById)));
+
     eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userRole.getUserId()));
   }
 
@@ -102,14 +116,30 @@ public class UserRoleService {
   /**
    * Deletes a `RolesUser` with the specified id.
    *
+   * <p>
+   * The compensation action re-assigns roles in Keycloak if the DB delete fails.
+   * If this method is called inside a larger transaction that later rolls back
+   * due to an
+   * <em>unrelated</em> failure, the Spring synchronization registered by
+   * {@link KeycloakTransactionHelper} will also run the compensation — restoring
+   * the
+   * Keycloak assignment even though the DB delete was rolled back automatically.
+   * This is safe
+   * because {@code assignRolesToUser} is idempotent with respect to existing
+   * assignments.
+   *
    * @param userId - user identifier as {@link UUID} value.
    */
   @Transactional
   public void deleteById(UUID userId) {
     var roleIds = mapItems(userRoleEntityService.findByUserId(userId), UserRole::getRoleId);
-    userRoleEntityService.deleteByUserId(userId);
     var roles = roleService.findByIds(roleIds);
-    keycloakRolesUserService.unlinkRolesFromUser(userId, roles);
+
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> keycloakRolesUserService.unlinkRolesFromUser(userId, roles),
+        () -> userRoleEntityService.deleteByUserId(userId),
+        () -> keycloakRolesUserService.assignRolesToUser(userId, roles));
+
     eventPublisher.publishEvent(UserPermissionsChangedEvent.userPermissionsChanged(userId));
   }
 
@@ -120,13 +150,17 @@ public class UserRoleService {
 
   private void createNewRoles(List<UUID> newValues, UUID userId) {
     var roles = roleService.findByIds(newValues);
-    userRoleEntityService.create(userId, newValues);
-    keycloakRolesUserService.assignRolesToUser(userId, roles);
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> keycloakRolesUserService.assignRolesToUser(userId, roles),
+        () -> userRoleEntityService.create(userId, newValues),
+        () -> keycloakRolesUserService.unlinkRolesFromUser(userId, roles));
   }
 
   private void deleteDeprecatedRoles(List<UUID> deprecatedValues, UUID userId) {
     var roles = roleService.findByIds(deprecatedValues);
-    userRoleEntityService.delete(userId, deprecatedValues);
-    keycloakRolesUserService.unlinkRolesFromUser(userId, roles);
+    KeycloakTransactionHelper.executeWithCompensation(
+        () -> keycloakRolesUserService.unlinkRolesFromUser(userId, roles),
+        () -> userRoleEntityService.delete(userId, deprecatedValues),
+        () -> keycloakRolesUserService.assignRolesToUser(userId, roles));
   }
 }
