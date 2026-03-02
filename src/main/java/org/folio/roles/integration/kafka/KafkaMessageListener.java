@@ -35,14 +35,15 @@ public class KafkaMessageListener {
   public void handleCapabilityEvent(ResourceEvent resourceEvent) {
     try (
       var ignored = new FolioExecutionContextSetter(executionContextBuilder.buildContext(resourceEvent.getTenant()))) {
-      systemUserScopedExecutionService.executeSystemUserScoped(() -> {
-        var capabilityReplacements = capabilityKafkaEventHandler.handleEvent(resourceEvent);
-        capabilityReplacements.ifPresent(capabilityReplacementsService::processReplacements);
-
+      try {
+        systemUserScopedExecutionService.executeSystemUserScoped(() -> {
+          var capabilityReplacements = capabilityKafkaEventHandler.handleEvent(resourceEvent);
+          capabilityReplacements.ifPresent(capabilityReplacementsService::processReplacements);
+          return null;
+        });
+      } finally {
         userPermissionsCacheEvictor.evictUserPermissionsForCurrentTenant();
-        return null;
-      });
+      }
     }
   }
 }
-

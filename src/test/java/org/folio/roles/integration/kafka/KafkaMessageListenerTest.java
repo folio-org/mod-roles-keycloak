@@ -2,15 +2,20 @@ package org.folio.roles.integration.kafka;
 
 import static org.folio.roles.support.CapabilityUtils.APPLICATION_ID;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
+import org.folio.roles.domain.model.CapabilityReplacements;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.roles.service.capability.UserPermissionsCacheEvictor;
@@ -61,6 +66,73 @@ class KafkaMessageListenerTest {
     kafkaMessageListener.handleCapabilityEvent(resourceEvent);
 
     verify(capabilityKafkaEventHandler).handleEvent(resourceEvent);
+    verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
+  }
+
+  @Test
+  void handleCapabilityEvent_positive_evictsCacheWhenReplacementProcessingFails() {
+    when(executionContextBuilder.buildContext(any())).thenReturn(mock(FolioExecutionContext.class));
+    when(systemUserScopedExecutionService.executeSystemUserScoped(any())).thenAnswer(inv -> {
+      Callable<?> callable = inv.getArgument(0);
+      callable.call();
+      return null;
+    });
+
+    var resourceEvent = ResourceEvent.builder()
+      .tenant(TENANT_ID)
+      .newValue(capabilityEventBodyAsMap())
+      .build();
+
+    when(capabilityKafkaEventHandler.handleEvent(resourceEvent))
+      .thenReturn(Optional.of(mock(CapabilityReplacements.class)));
+    doThrow(new RuntimeException("boom"))
+      .when(capabilityReplacementsService).processReplacements(any());
+
+    assertThrows(RuntimeException.class, () -> kafkaMessageListener.handleCapabilityEvent(resourceEvent));
+
+    verify(capabilityKafkaEventHandler).handleEvent(resourceEvent);
+    verify(capabilityReplacementsService).processReplacements(any());
+    verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
+  }
+
+  @Test
+  void handleCapabilityEvent_evictsCacheWhileError() {
+    when(executionContextBuilder.buildContext(any())).thenReturn(mock(FolioExecutionContext.class));
+    when(systemUserScopedExecutionService.executeSystemUserScoped(any())).thenAnswer(inv -> {
+      Callable<?> callable = inv.getArgument(0);
+      callable.call();
+      return null;
+    });
+
+    var resourceEvent = ResourceEvent.builder()
+      .tenant(TENANT_ID)
+      .newValue(capabilityEventBodyAsMap())
+      .build();
+
+    when(capabilityKafkaEventHandler.handleEvent(resourceEvent))
+      .thenThrow(new RuntimeException("error"));
+
+    assertThrows(RuntimeException.class, () -> kafkaMessageListener.handleCapabilityEvent(resourceEvent));
+
+    verify(capabilityKafkaEventHandler).handleEvent(resourceEvent);
+    verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
+  }
+
+  @Test
+  void handleCapabilityEvent_evictsCacheEvenWhenSystemUserScopedExecutionFailsBeforeCallableRuns() {
+    when(executionContextBuilder.buildContext(any())).thenReturn(mock(FolioExecutionContext.class));
+
+    var resourceEvent = ResourceEvent.builder()
+      .tenant(TENANT_ID)
+      .newValue(capabilityEventBodyAsMap())
+      .build();
+
+    when(systemUserScopedExecutionService.executeSystemUserScoped(any()))
+      .thenThrow(new RuntimeException("boom"));
+
+    assertThrows(RuntimeException.class, () -> kafkaMessageListener.handleCapabilityEvent(resourceEvent));
+
+    verifyNoInteractions(capabilityKafkaEventHandler, capabilityReplacementsService);
     verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
   }
 
