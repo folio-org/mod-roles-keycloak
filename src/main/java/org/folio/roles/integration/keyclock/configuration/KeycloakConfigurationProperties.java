@@ -57,12 +57,6 @@ public class KeycloakConfigurationProperties {
    **/
   @Valid
   private Retry retry;
-  
-  /**
-   * Concurrency configuration for parallel Keycloak operations.
-   */
-  @Valid
-  private Concurrency concurrency;
 
   @Data
   public static class Login {
@@ -93,17 +87,6 @@ public class KeycloakConfigurationProperties {
     private Backoff backoff;
   }
 
-  @Data
-  public static class Concurrency {
-  
-    /**
-     * Maximum number of threads in the shared pool used for parallel Keycloak calls.
-     */
-    @Min(1)
-    @Max(200)
-    private int threadPoolSize = 20;
-  }
-  
   @Data
   public static class Backoff {
 
