@@ -12,6 +12,7 @@ import static org.folio.roles.support.PolicyUtils.rolePolicy;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -65,6 +66,10 @@ class KeycloakAuthorizationServiceTest {
   private static final String SCOPE_ID = UUID.randomUUID().toString();
   private static final String RESOURCE_ID = UUID.randomUUID().toString();
   private static final String SCOPE_PERMISSION_ID = UUID.randomUUID().toString();
+  
+  private static final String RESOURCE_ID_2 = UUID.randomUUID().toString();
+  private static final String SCOPE_ID_2 = UUID.randomUUID().toString();
+  private static final String SCOPE_PERMISSION_ID_2 = UUID.randomUUID().toString();
 
   private static final Function<Endpoint, String> PERMISSION_NAME_GENERATOR =
     endpoint -> String.format("%s access to %s", endpoint.getMethod(), endpoint.getPath());
@@ -93,7 +98,7 @@ class KeycloakAuthorizationServiceTest {
     props.setPermissions(permissions);
 
     var context = new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
-    permissionsExecutor = new KeycloakPermissionsExecutor(props, context);
+    permissionsExecutor = new KeycloakPermissionsExecutor(props, context, null);
     keycloakAuthService = new KeycloakAuthorizationService(jsonHelper, authResourceProvider, permissionsExecutor);
   }
 
@@ -110,11 +115,17 @@ class KeycloakAuthorizationServiceTest {
     return resourceRepresentation;
   }
 
+  /**
+   * Creates a resource representation with unique IDs per path.
+   * Uses the primary IDs for "/foo/entities" and secondary IDs for all other paths
+   * to avoid test false-positives caused by shared resource IDs.
+   */
   private static ResourceRepresentation resourceRepresentation(String path, String method) {
     var resourceRepresentation = new ResourceRepresentation();
-    resourceRepresentation.setId(RESOURCE_ID);
+    boolean isPrimary = "/foo/entities".equals(path);
+    resourceRepresentation.setId(isPrimary ? RESOURCE_ID : RESOURCE_ID_2);
     var scopeRepresentation = new ScopeRepresentation();
-    scopeRepresentation.setId(SCOPE_ID);
+    scopeRepresentation.setId(isPrimary ? SCOPE_ID : SCOPE_ID_2);
     scopeRepresentation.setName(method);
     resourceRepresentation.setScopes(Set.of(scopeRepresentation));
     resourceRepresentation.setName(path);
@@ -184,25 +195,30 @@ class KeycloakAuthorizationServiceTest {
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-
+    
+      // Each path returns a resource with a distinct ID to reflect real Keycloak behaviour
       when(authResourcesClient.find(eq("/foo/entities"), any(), any(), any(), any(), eq(0), eq(MAX_VALUE)))
         .thenReturn(List.of(resourceRepresentation("/foo/entities", "GET")));
       when(authResourcesClient.find(eq("/bar/items"), any(), any(), any(), any(), eq(0), eq(MAX_VALUE)))
         .thenReturn(List.of(resourceRepresentation("/bar/items", "GET")));
-
+    
       when(scopePermissionsClient.create(scopePermissionCaptor.capture()))
         .thenReturn(response, response);
       when(response.getStatusInfo()).thenReturn(Status.CREATED);
-
+    
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET), endpoint("/bar/items", GET));
-
+    
       keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
-
+    
       verify(jsonHelper, times(2)).asJsonStringSafe(any(ResourceRepresentation.class));
       assertThat(scopePermissionCaptor.getAllValues())
         .extracting(ScopePermissionRepresentation::getName)
         .containsExactlyInAnyOrder("GET access to /foo/entities", "GET access to /bar/items");
+      // Verify each permission carries the correct (distinct) resource ID
+      assertThat(scopePermissionCaptor.getAllValues())
+        .anySatisfy(p -> assertThat(p.getResources()).containsExactly(RESOURCE_ID))
+        .anySatisfy(p -> assertThat(p.getResources()).containsExactly(RESOURCE_ID_2));
       verify(response, times(2)).close();
     }
 
@@ -380,6 +396,34 @@ class KeycloakAuthorizationServiceTest {
       verifyNoInteractions(authResourceProvider);
       verify(jsonHelper).asJsonString(rolePolicy);
       verify(jsonHelper).asJsonString(endpoints);
+    }
+
+    @Test
+    void deletePermissions_multipleEndpoints() {
+      var fooPermission = new ScopePermissionRepresentation();
+      fooPermission.setId(SCOPE_PERMISSION_ID);
+      fooPermission.setName("GET access to /foo/entities");
+
+      var barPermission = new ScopePermissionRepresentation();
+      barPermission.setId(SCOPE_PERMISSION_ID_2);
+      barPermission.setName("GET access to /bar/items");
+
+      when(authResourceProvider.createAuthorizationClient()).thenReturn(authorizationClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
+      when(scopePermissionsClient.findByName("GET access to /foo/entities")).thenReturn(fooPermission);
+      when(scopePermissionsClient.findByName("GET access to /bar/items")).thenReturn(barPermission);
+      when(scopePermissionsClient.findById(SCOPE_PERMISSION_ID)).thenReturn(scopePermissionClient);
+      var barPermissionClient = mock(ScopePermissionResource.class);
+      when(scopePermissionsClient.findById(SCOPE_PERMISSION_ID_2)).thenReturn(barPermissionClient);
+
+      var policy = rolePolicy();
+      var endpoints = List.of(endpoint("/foo/entities", GET), endpoint("/bar/items", GET));
+
+      keycloakAuthService.deletePermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+
+      verify(scopePermissionClient).remove();
+      verify(barPermissionClient).remove();
     }
   }
 }

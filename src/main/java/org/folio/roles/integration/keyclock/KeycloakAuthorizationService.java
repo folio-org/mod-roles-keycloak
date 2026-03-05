@@ -111,10 +111,6 @@ public class KeycloakAuthorizationService {
       .findFirst();
   }
 
-  private AuthorizationResource getAuthorizationClient() {
-    return authResourceProvider.getAuthorizationClient();
-  }
-
   private String toJson(Object value) {
     return jsonHelper.asJsonString(value);
   }

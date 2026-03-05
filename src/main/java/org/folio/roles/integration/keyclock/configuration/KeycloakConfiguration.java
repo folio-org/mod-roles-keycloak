@@ -5,6 +5,10 @@ import static org.apache.commons.lang3.StringUtils.stripToNull;
 import static org.folio.common.utils.tls.FeignClientTlsUtils.buildSslContext;
 import static org.folio.common.utils.tls.Utils.IS_HOSTNAME_VERIFICATION_DISABLED;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
@@ -15,6 +19,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.keycloak.admin.client.JacksonProvider;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,6 +33,24 @@ public class KeycloakConfiguration {
   private final KeycloakConfigurationProperties configuration;
   private final RealmConfigurationProvider realmConfigurationProvider;
 
+  /**
+   * Shared fixed thread pool used by {@link org.folio.roles.integration.keyclock.KeycloakPermissionsExecutor}
+   * to process Keycloak permission create/delete calls in parallel.
+   *
+   * <p>A {@code null} bean is returned when {@code parallelism <= 1} so that the executor falls back
+   * to a simple sequential loop without allocating any threads.</p>
+   */
+  @Bean
+  @Qualifier("keycloakPermissionsExecutorService")
+  public ExecutorService keycloakPermissionsExecutorService() {
+    int parallelism = configuration.getPermissions().getParallelism();
+    if (parallelism <= 1) {
+      return null;
+    }
+    log.info("Creating Keycloak permissions executor service with parallelism={}", parallelism);
+    return new ThreadPoolExecutor(0, parallelism, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+  }
+  
   @Bean
   public Keycloak keycloakAdminClient() {
     var realmConfiguration = realmConfigurationProvider.getRealmConfiguration();

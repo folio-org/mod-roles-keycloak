@@ -26,6 +26,12 @@ public class KeycloakAuthorizationClientProvider {
     return createAuthorizationClient();
   }
 
+  /**
+   * Creates a new (non-cached) {@link AuthorizationResource} client.
+   *
+   * <p>Use this for concurrent/parallel operations where sharing a single cached client instance
+   * across threads is unsafe. Each caller receives an independent proxy instance.</p>
+   */
   public AuthorizationResource createAuthorizationClient() {
     var tenantId = context.getTenantId();
     var client = keycloakClientService.getLoginClient();
