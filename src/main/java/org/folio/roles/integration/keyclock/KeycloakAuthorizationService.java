@@ -27,10 +27,17 @@ import org.keycloak.representations.idm.authorization.DecisionStrategy;
 import org.keycloak.representations.idm.authorization.ResourceRepresentation;
 import org.keycloak.representations.idm.authorization.ScopePermissionRepresentation;
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Log4j2
 @Service
+@Retryable(
+  maxAttemptsExpression = "#{@keycloakConfigurationProperties.retry.maxAttempts}",
+  exceptionExpression = "@keycloakExceptionResolver.shouldRetry(#root)",
+  backoff = @Backoff(delayExpression = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}")
+)
 @RequiredArgsConstructor
 public class KeycloakAuthorizationService {
 

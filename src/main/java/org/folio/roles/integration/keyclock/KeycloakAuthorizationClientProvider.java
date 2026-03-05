@@ -3,11 +3,13 @@ package org.folio.roles.integration.keyclock;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
 import org.folio.spring.FolioExecutionContext;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.AuthorizationResource;
 import org.keycloak.representations.idm.ClientRepresentation;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -38,8 +40,23 @@ public class KeycloakAuthorizationClientProvider {
     return keycloak.proxy(AuthorizationResource.class, authorizationResourceUri(client, tenantId));
   }
 
+  /**
+   * Evicts the cached {@link AuthorizationResource} for a given tenant.
+   *
+   * <p>Should be called on tenant deletion to prevent stale proxy instances
+   * from remaining in the cache after the realm is removed from Keycloak.</p>
+   *
+   * @param tenantId - the tenant identifier whose cached client should be evicted
+   */
+  @CacheEvict(value = "authorization-client-cache", key = "#tenantId")
+  public void evictAuthorizationClient(String tenantId) {
+    log.info("Evicted authorization client cache for tenant: {}", tenantId);
+  }
+
   private URI authorizationResourceUri(ClientRepresentation client, String realmName) {
+    // Strip trailing slash to prevent double-slash in URI if baseUrl is misconfigured
+    var baseUrl = StringUtils.stripEnd(keycloakConfigurationProperties.getBaseUrl(), "/");
     return URI.create(String.format("%s/admin/realms/%s/clients/%s/authz/resource-server",
-      keycloakConfigurationProperties.getBaseUrl(), realmName, client.getId()));
+      baseUrl, realmName, client.getId()));
   }
 }
