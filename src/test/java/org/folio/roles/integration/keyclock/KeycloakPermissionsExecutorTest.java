@@ -3,13 +3,15 @@ package org.folio.roles.integration.keyclock;
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.HttpMethod;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
@@ -61,37 +63,49 @@ class KeycloakPermissionsExecutorTest {
     );
 
     var slowStarted = new CountDownLatch(1);
-    var releaseSlow = new CountDownLatch(1);
-    var slowInterrupted = new AtomicBoolean(false);
+    var allowSlowExit = new CountDownLatch(1);
+    var slowInterrupted = new CountDownLatch(1);
+    ExecutorService runner = Executors.newSingleThreadExecutor();
 
     try {
-      assertTimeoutPreemptively(Duration.ofMillis(500), () ->
-        assertThatThrownBy(() -> executor.execute(endpoints, endpoint -> {
-          if (endpoint.getPath().equals("/slow")) {
-            slowStarted.countDown();
-            try {
-              releaseSlow.await();
-            } catch (InterruptedException interruptedException) {
-              slowInterrupted.set(true);
-              Thread.currentThread().interrupt();
-            }
-            return;
+      Future<?> future = runner.submit(() -> executor.execute(endpoints, endpoint -> {
+        if (endpoint.getPath().equals("/slow")) {
+          slowStarted.countDown();
+          try {
+            allowSlowExit.await();
+          } catch (InterruptedException interruptedException) {
+            slowInterrupted.countDown();
+            Thread.currentThread().interrupt();
           }
+          return;
+        }
 
-          if (endpoint.getPath().equals("/fail")) {
-            try {
-              slowStarted.await();
-            } catch (InterruptedException interruptedException) {
-              Thread.currentThread().interrupt();
+        if (endpoint.getPath().equals("/fail")) {
+          try {
+            if (!slowStarted.await(200, TimeUnit.MILLISECONDS)) {
+              throw new IllegalStateException("slow did not start");
             }
-            throw new IllegalStateException("boom");
+          } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
           }
-        })).isInstanceOf(IllegalStateException.class)
-      );
+          throw new IllegalStateException("boom");
+        }
+      }));
+
+      assertThatThrownBy(() -> future.get(500, TimeUnit.MILLISECONDS))
+        .isInstanceOf(ExecutionException.class)
+        .hasCauseInstanceOf(IllegalStateException.class);
+
+      boolean interrupted = false;
+      try {
+        interrupted = slowInterrupted.await(200, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException interruptedException) {
+        Thread.currentThread().interrupt();
+      }
+      assertThat(interrupted).isTrue();
     } finally {
-      releaseSlow.countDown();
+      allowSlowExit.countDown();
+      runner.shutdownNow();
     }
-
-    assertThat(slowInterrupted.get()).isTrue();
   }
 }
