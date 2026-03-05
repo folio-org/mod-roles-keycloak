@@ -34,13 +34,24 @@ public class KeycloakPermissionsExecutor {
     }
 
     var permissionsConfig = keycloakConfigurationProperties.getPermissions();
+    if (permissionsConfig == null) {
+      throw new IllegalStateException("Keycloak permissions config is not set");
+    }
+
     var parallelism = permissionsConfig.getParallelism();
+    if (parallelism <= 0) {
+      throw new IllegalStateException("Keycloak permissions parallelism must be greater than 0");
+    }
+
     if (parallelism <= 1 || endpoints.size() <= 1) {
       endpoints.forEach(action);
       return;
     }
 
     var batchSize = permissionsConfig.getBatchSize();
+    if (batchSize <= 0) {
+      throw new IllegalStateException("Keycloak permissions batch size must be greater than 0");
+    }
     for (var batch : partition(endpoints, batchSize)) {
       executeBatch(batch, action, parallelism);
     }
