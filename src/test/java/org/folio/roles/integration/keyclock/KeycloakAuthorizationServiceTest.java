@@ -2,6 +2,7 @@ package org.folio.roles.integration.keyclock;
 
 import static java.lang.Integer.MAX_VALUE;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.domain.dto.HttpMethod.GET;
@@ -9,6 +10,9 @@ import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.PolicyUtils.POLICY_ID;
 import static org.folio.roles.support.PolicyUtils.rolePolicy;
 import static org.folio.test.TestUtils.OBJECT_MAPPER;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -25,8 +29,11 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.exception.ServiceException;
+import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
 import org.folio.roles.support.TestUtils;
+import org.folio.roles.support.TestUtils.TestModRolesKeycloakModuleMetadata;
 import org.folio.roles.utils.JsonHelper;
+import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +54,6 @@ import org.keycloak.representations.idm.authorization.ScopePermissionRepresentat
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -63,7 +69,8 @@ class KeycloakAuthorizationServiceTest {
   private static final Function<Endpoint, String> PERMISSION_NAME_GENERATOR =
     endpoint -> String.format("%s access to %s", endpoint.getMethod(), endpoint.getPath());
 
-  @InjectMocks private KeycloakAuthorizationService keycloakAuthService;
+  private KeycloakAuthorizationService keycloakAuthService;
+  private KeycloakPermissionsExecutor permissionsExecutor;
 
   @Mock private Response response;
   @Mock private ResourcesResource authResourcesClient;
@@ -79,6 +86,15 @@ class KeycloakAuthorizationServiceTest {
   @BeforeEach
   void setUp() {
     Configurator.setLevel(KeycloakAuthorizationService.class, Level.DEBUG);
+    var props = new KeycloakConfigurationProperties();
+    var permissions = new KeycloakConfigurationProperties.Permissions();
+    permissions.setParallelism(1);
+    permissions.setBatchSize(50);
+    props.setPermissions(permissions);
+
+    var context = new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
+    permissionsExecutor = new KeycloakPermissionsExecutor(props, context);
+    keycloakAuthService = new KeycloakAuthorizationService(jsonHelper, authResourceProvider, permissionsExecutor);
   }
 
   @AfterEach
@@ -91,6 +107,17 @@ class KeycloakAuthorizationServiceTest {
     resourceRepresentation.setId(RESOURCE_ID);
     resourceRepresentation.setScopes(Set.of(scopeForGetMethod()));
     resourceRepresentation.setName("/foo/entities");
+    return resourceRepresentation;
+  }
+
+  private static ResourceRepresentation resourceRepresentation(String path, String method) {
+    var resourceRepresentation = new ResourceRepresentation();
+    resourceRepresentation.setId(RESOURCE_ID);
+    var scopeRepresentation = new ScopeRepresentation();
+    scopeRepresentation.setId(SCOPE_ID);
+    scopeRepresentation.setName(method);
+    resourceRepresentation.setScopes(Set.of(scopeRepresentation));
+    resourceRepresentation.setName(path);
     return resourceRepresentation;
   }
 
@@ -149,6 +176,34 @@ class KeycloakAuthorizationServiceTest {
         .usingRecursiveComparison()
         .ignoringFields("id")
         .isEqualTo(scopePermission());
+    }
+
+    @Test
+    void createPermissions_multipleEndpoints() {
+      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authorizationClient.resources()).thenReturn(authResourcesClient);
+      when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
+      when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
+
+      when(authResourcesClient.find(eq("/foo/entities"), any(), any(), any(), any(), eq(0), eq(MAX_VALUE)))
+        .thenReturn(List.of(resourceRepresentation("/foo/entities", "GET")));
+      when(authResourcesClient.find(eq("/bar/items"), any(), any(), any(), any(), eq(0), eq(MAX_VALUE)))
+        .thenReturn(List.of(resourceRepresentation("/bar/items", "GET")));
+
+      when(scopePermissionsClient.create(scopePermissionCaptor.capture()))
+        .thenReturn(response, response);
+      when(response.getStatusInfo()).thenReturn(Status.CREATED);
+
+      var policy = rolePolicy();
+      var endpoints = List.of(endpoint("/foo/entities", GET), endpoint("/bar/items", GET));
+
+      keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
+
+      verify(jsonHelper, times(2)).asJsonStringSafe(any(ResourceRepresentation.class));
+      assertThat(scopePermissionCaptor.getAllValues())
+        .extracting(ScopePermissionRepresentation::getName)
+        .containsExactlyInAnyOrder("GET access to /foo/entities", "GET access to /bar/items");
+      verify(response, times(2)).close();
     }
 
     @Test
