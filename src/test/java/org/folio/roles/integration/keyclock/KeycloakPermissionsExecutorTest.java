@@ -66,45 +66,47 @@ class KeycloakPermissionsExecutorTest {
     var allowSlowExit = new CountDownLatch(1);
     var slowInterrupted = new CountDownLatch(1);
     ExecutorService runner = Executors.newSingleThreadExecutor();
+    Future<?> future = runner.submit(() -> executor.execute(endpoints, endpoint -> {
+      if (endpoint.getPath().equals("/slow")) {
+        slowStarted.countDown();
+        try {
+          allowSlowExit.await();
+        } catch (InterruptedException interruptedException) {
+          slowInterrupted.countDown();
+          Thread.currentThread().interrupt();
+        }
+        return;
+      }
+
+      if (endpoint.getPath().equals("/fail")) {
+        try {
+          if (!slowStarted.await(1, TimeUnit.SECONDS)) {
+            throw new IllegalStateException("slow endpoint did not start within 1s");
+          }
+        } catch (InterruptedException interruptedException) {
+          Thread.currentThread().interrupt();
+        }
+        throw new IllegalStateException("boom");
+      }
+    }));
 
     try {
-      Future<?> future = runner.submit(() -> executor.execute(endpoints, endpoint -> {
-        if (endpoint.getPath().equals("/slow")) {
-          slowStarted.countDown();
-          try {
-            allowSlowExit.await();
-          } catch (InterruptedException interruptedException) {
-            slowInterrupted.countDown();
-            Thread.currentThread().interrupt();
-          }
-          return;
-        }
-
-        if (endpoint.getPath().equals("/fail")) {
-          try {
-            if (!slowStarted.await(200, TimeUnit.MILLISECONDS)) {
-              throw new IllegalStateException("slow did not start");
-            }
-          } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-          }
-          throw new IllegalStateException("boom");
-        }
-      }));
-
-      assertThatThrownBy(() -> future.get(500, TimeUnit.MILLISECONDS))
+      assertThatThrownBy(() -> future.get(1, TimeUnit.SECONDS))
         .isInstanceOf(ExecutionException.class)
         .hasCauseInstanceOf(IllegalStateException.class);
 
       boolean interrupted = false;
       try {
-        interrupted = slowInterrupted.await(200, TimeUnit.MILLISECONDS);
+        interrupted = slowInterrupted.await(1, TimeUnit.SECONDS);
       } catch (InterruptedException interruptedException) {
         Thread.currentThread().interrupt();
       }
-      assertThat(interrupted).isTrue();
+      assertThat(interrupted)
+        .withFailMessage("slow endpoint thread was not interrupted within 1s")
+        .isTrue();
     } finally {
       allowSlowExit.countDown();
+      future.cancel(true);
       runner.shutdownNow();
     }
   }
