@@ -33,28 +33,34 @@ public class KeycloakPermissionsExecutor {
       return;
     }
 
-    var permissionsConfig = keycloakConfigurationProperties.getPermissions();
-    if (permissionsConfig == null) {
-      throw new IllegalStateException("Keycloak permissions config is not set");
-    }
-
+    var permissionsConfig = requirePermissionsConfig();
     var parallelism = permissionsConfig.getParallelism();
-    if (parallelism <= 0) {
-      throw new IllegalStateException("Keycloak permissions parallelism must be greater than 0");
-    }
-
     if (parallelism <= 1 || endpoints.size() <= 1) {
       endpoints.forEach(action);
       return;
     }
 
     var batchSize = permissionsConfig.getBatchSize();
-    if (batchSize <= 0) {
-      throw new IllegalStateException("Keycloak permissions batch size must be greater than 0");
-    }
     for (var batch : partition(endpoints, batchSize)) {
       executeBatch(batch, action, parallelism);
     }
+  }
+
+  private KeycloakConfigurationProperties.Permissions requirePermissionsConfig() {
+    var permissionsConfig = keycloakConfigurationProperties.getPermissions();
+    if (permissionsConfig == null) {
+      throw new IllegalStateException("Keycloak permissions config is not set");
+    }
+
+    if (permissionsConfig.getParallelism() <= 0) {
+      throw new IllegalStateException("Keycloak permissions parallelism must be greater than 0");
+    }
+
+    if (permissionsConfig.getBatchSize() <= 0) {
+      throw new IllegalStateException("Keycloak permissions batch size must be greater than 0");
+    }
+
+    return permissionsConfig;
   }
 
   private void executeBatch(List<Endpoint> batch, Consumer<Endpoint> action, int parallelism) {
@@ -89,6 +95,7 @@ public class KeycloakPermissionsExecutor {
     };
   }
 
+  // Executor size is fixed on first use; changes require restart.
   private ExecutorService getOrCreateExecutor(int parallelism) {
     if (executor == null) {
       synchronized (this) {
