@@ -66,7 +66,7 @@ class KeycloakAuthorizationServiceTest {
   private static final String SCOPE_ID = UUID.randomUUID().toString();
   private static final String RESOURCE_ID = UUID.randomUUID().toString();
   private static final String SCOPE_PERMISSION_ID = UUID.randomUUID().toString();
-  
+
   private static final String RESOURCE_ID_2 = UUID.randomUUID().toString();
   private static final String SCOPE_ID_2 = UUID.randomUUID().toString();
   private static final String SCOPE_PERMISSION_ID_2 = UUID.randomUUID().toString();
@@ -77,16 +77,25 @@ class KeycloakAuthorizationServiceTest {
   private KeycloakAuthorizationService keycloakAuthService;
   private KeycloakPermissionsExecutor permissionsExecutor;
 
-  @Mock private Response response;
-  @Mock private ResourcesResource authResourcesClient;
-  @Mock private PermissionsResource authPermissionsClient;
-  @Mock private AuthorizationResource authorizationClient;
-  @Mock private ScopePermissionResource scopePermissionClient;
-  @Mock private ScopePermissionsResource scopePermissionsClient;
-  @Mock private KeycloakAuthorizationClientProvider authResourceProvider;
+  @Mock
+  private Response response;
+  @Mock
+  private ResourcesResource authResourcesClient;
+  @Mock
+  private PermissionsResource authPermissionsClient;
+  @Mock
+  private AuthorizationResource authorizationClient;
+  @Mock
+  private ScopePermissionResource scopePermissionClient;
+  @Mock
+  private ScopePermissionsResource scopePermissionsClient;
+  @Mock
+  private KeycloakAuthorizationClientProvider authResourceProvider;
 
-  @Spy private final JsonHelper jsonHelper = new JsonHelper(OBJECT_MAPPER);
-  @Captor private ArgumentCaptor<ScopePermissionRepresentation> scopePermissionCaptor;
+  @Spy
+  private final JsonHelper jsonHelper = new JsonHelper(OBJECT_MAPPER);
+  @Captor
+  private ArgumentCaptor<ScopePermissionRepresentation> scopePermissionCaptor;
 
   @BeforeEach
   void setUp() {
@@ -116,16 +125,14 @@ class KeycloakAuthorizationServiceTest {
   }
 
   /**
-   * Creates a resource representation with unique IDs per path.
-   * Uses the primary IDs for "/foo/entities" and secondary IDs for all other paths
-   * to avoid test false-positives caused by shared resource IDs.
+   * Creates a resource representation with the given path, method, resource ID, and scope ID.
    */
-  private static ResourceRepresentation resourceRepresentation(String path, String method) {
+  private static ResourceRepresentation resourceRepresentation(
+    String path, String method, String resourceId, String scopeId) {
     var resourceRepresentation = new ResourceRepresentation();
-    boolean isPrimary = "/foo/entities".equals(path);
-    resourceRepresentation.setId(isPrimary ? RESOURCE_ID : RESOURCE_ID_2);
+    resourceRepresentation.setId(resourceId);
     var scopeRepresentation = new ScopeRepresentation();
-    scopeRepresentation.setId(isPrimary ? SCOPE_ID : SCOPE_ID_2);
+    scopeRepresentation.setId(scopeId);
     scopeRepresentation.setName(method);
     resourceRepresentation.setScopes(Set.of(scopeRepresentation));
     resourceRepresentation.setName(path);
@@ -195,22 +202,22 @@ class KeycloakAuthorizationServiceTest {
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
-    
+
       // Each path returns a resource with a distinct ID to reflect real Keycloak behaviour
       when(authResourcesClient.find(eq("/foo/entities"), any(), any(), any(), any(), eq(0), eq(MAX_VALUE)))
-        .thenReturn(List.of(resourceRepresentation("/foo/entities", "GET")));
+        .thenReturn(List.of(resourceRepresentation("/foo/entities", "GET", RESOURCE_ID, SCOPE_ID)));
       when(authResourcesClient.find(eq("/bar/items"), any(), any(), any(), any(), eq(0), eq(MAX_VALUE)))
-        .thenReturn(List.of(resourceRepresentation("/bar/items", "GET")));
-    
+        .thenReturn(List.of(resourceRepresentation("/bar/items", "GET", RESOURCE_ID_2, SCOPE_ID_2)));
+
       when(scopePermissionsClient.create(scopePermissionCaptor.capture()))
         .thenReturn(response, response);
       when(response.getStatusInfo()).thenReturn(Status.CREATED);
-    
+
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET), endpoint("/bar/items", GET));
-    
+
       keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR);
-    
+
       verify(jsonHelper, times(2)).asJsonStringSafe(any(ResourceRepresentation.class));
       assertThat(scopePermissionCaptor.getAllValues())
         .extracting(ScopePermissionRepresentation::getName)

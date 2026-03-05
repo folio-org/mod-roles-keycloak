@@ -2,7 +2,6 @@ package org.folio.roles.integration.keyclock;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -14,8 +13,8 @@ import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Log4j2
@@ -34,7 +33,7 @@ public class KeycloakPermissionsExecutor {
   public KeycloakPermissionsExecutor(
     KeycloakConfigurationProperties keycloakConfigurationProperties,
     FolioExecutionContext folioExecutionContext,
-    @Qualifier("keycloakPermissionsExecutorService") @Nullable ExecutorService executorService) {
+    @Qualifier("keycloakPermissionsExecutorService") @Autowired(required = false) ExecutorService executorService) {
     this.keycloakConfigurationProperties = keycloakConfigurationProperties;
     this.folioExecutionContext = folioExecutionContext;
     this.executorService = executorService;
@@ -45,14 +44,15 @@ public class KeycloakPermissionsExecutor {
       return;
     }
 
+    // Sequential execution: either no thread pool (parallelism <= 1) or only a single endpoint.
+    // When there is a single endpoint, we skip thread dispatch to avoid unnecessary context-wrapping overhead.
     if (executorService == null || endpoints.size() == 1) {
       endpoints.forEach(action);
       return;
     }
-    var executor = Objects.requireNonNull(executorService);  // always non-null when parallelism > 1
     var batchSize = keycloakConfigurationProperties.getPermissions().getBatchSize();
     for (var batch : partition(endpoints, batchSize)) {
-      executeBatch(batch, action, executor);
+      executeBatch(batch, action, executorService);
     }
   }
 

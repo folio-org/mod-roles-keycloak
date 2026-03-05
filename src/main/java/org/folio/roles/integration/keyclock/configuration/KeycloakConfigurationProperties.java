@@ -108,9 +108,11 @@ public class KeycloakConfigurationProperties {
   public static class Permissions {
 
     @Min(1)
+    @Max(64)
     private int parallelism = 4;
 
     @Min(1)
+    @Max(1000)
     private int batchSize = 50;
   }
 }

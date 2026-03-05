@@ -12,6 +12,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.HttpMethod;
@@ -168,8 +170,15 @@ class KeycloakPermissionsExecutorTest {
     permissions.setBatchSize(batchSize);
     props.setPermissions(permissions);
     var context = new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
-    // Mirror the bean logic: only allocate a pool when parallelism > 1
-    sharedExecutorService = parallelism > 1 ? Executors.newFixedThreadPool(parallelism) : null;
+    // Mirror the bean logic: allocate a fixed pool with core-thread timeout when parallelism > 1
+    sharedExecutorService = parallelism > 1 ? buildExecutorService(parallelism) : null;
     return new KeycloakPermissionsExecutor(props, context, sharedExecutorService);
+  }
+
+  private static ExecutorService buildExecutorService(int parallelism) {
+    var executor = new ThreadPoolExecutor(parallelism, parallelism, 60L, TimeUnit.SECONDS,
+      new LinkedBlockingQueue<>());
+    executor.allowCoreThreadTimeOut(true);
+    return executor;
   }
 }
