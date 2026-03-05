@@ -93,7 +93,8 @@ class KeycloakPermissionsExecutorTest {
     try {
       assertThatThrownBy(() -> future.get(1, TimeUnit.SECONDS))
         .isInstanceOf(ExecutionException.class)
-        .hasCauseInstanceOf(IllegalStateException.class);
+        .hasCauseInstanceOf(IllegalStateException.class)
+        .hasRootCauseMessage("boom");
 
       boolean interrupted = false;
       try {
@@ -105,8 +106,8 @@ class KeycloakPermissionsExecutorTest {
         .withFailMessage("slow endpoint thread was not interrupted within 1s")
         .isTrue();
     } finally {
-      allowSlowExit.countDown();
       future.cancel(true);
+      allowSlowExit.countDown();
       runner.shutdownNow();
     }
   }
