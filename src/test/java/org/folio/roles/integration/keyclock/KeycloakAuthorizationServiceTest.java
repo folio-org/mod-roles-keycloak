@@ -153,7 +153,7 @@ class KeycloakAuthorizationServiceTest {
     @ParameterizedTest(name = "[{index}] responseStatus = {0}")
     @EnumSource(value = Status.class, names = {"CREATED", "CONFLICT"}, mode = Mode.INCLUDE)
     void positive_parameterized(Status responseStatus) {
-      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authResourceProvider.createAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
@@ -180,7 +180,7 @@ class KeycloakAuthorizationServiceTest {
 
     @Test
     void createPermissions_multipleEndpoints() {
-      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authResourceProvider.createAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
@@ -208,7 +208,7 @@ class KeycloakAuthorizationServiceTest {
 
     @Test
     void negative_permissionIsNotCreated() {
-      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authResourceProvider.createAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
@@ -238,7 +238,7 @@ class KeycloakAuthorizationServiceTest {
 
     @Test
     void negative_resourceIsNotFound() {
-      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authResourceProvider.createAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
@@ -257,7 +257,7 @@ class KeycloakAuthorizationServiceTest {
 
     @Test
     void negative_resourceIsFoundByInvalidPath() {
-      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authResourceProvider.createAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
@@ -280,7 +280,7 @@ class KeycloakAuthorizationServiceTest {
 
     @Test
     void positive_resourceIsFoundWithInvalidScope() {
-      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authResourceProvider.createAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
@@ -330,7 +330,7 @@ class KeycloakAuthorizationServiceTest {
 
     @Test
     void positive() {
-      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authResourceProvider.createAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
       when(scopePermissionsClient.findByName("GET access to /foo/entities")).thenReturn(scopePermission());
@@ -346,7 +346,7 @@ class KeycloakAuthorizationServiceTest {
 
     @Test
     void positive_permissionNotFound() {
-      when(authResourceProvider.getAuthorizationClient()).thenReturn(authorizationClient);
+      when(authResourceProvider.createAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
       when(authPermissionsClient.scope()).thenReturn(scopePermissionsClient);
       when(scopePermissionsClient.findByName("GET access to /foo/entities")).thenReturn(null);

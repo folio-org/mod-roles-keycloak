@@ -23,6 +23,10 @@ public class KeycloakAuthorizationClientProvider {
 
   @Cacheable(value = "authorization-client-cache", key = "@folioExecutionContext.tenantId")
   public AuthorizationResource getAuthorizationClient() {
+    return createAuthorizationClient();
+  }
+
+  public AuthorizationResource createAuthorizationClient() {
     var tenantId = context.getTenantId();
     var client = keycloakClientService.getLoginClient();
     return keycloak.proxy(AuthorizationResource.class, authorizationResourceUri(client, tenantId));
