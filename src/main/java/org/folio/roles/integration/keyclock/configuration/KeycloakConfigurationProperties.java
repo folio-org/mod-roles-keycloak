@@ -51,6 +51,12 @@ public class KeycloakConfigurationProperties {
    */
   private MigrationProperties migration;
 
+  /**
+   * Keycloak configuration for permissions.
+   */
+  @Valid
+  private Permissions permissions = new Permissions();
+
 
   /**
    * Containing retry configuration for Keycloak communication.
@@ -96,5 +102,15 @@ public class KeycloakConfigurationProperties {
     @Min(1000)
     @Max(60000)
     private long delayMs;
+  }
+
+  @Data
+  public static class Permissions {
+
+    @Min(1)
+    private int parallelism = 4;
+
+    @Min(1)
+    private int batchSize = 50;
   }
 }
