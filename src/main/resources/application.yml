@@ -63,6 +63,8 @@ management:
     exposure:
       include: info,health,liquibase,threaddump,heapdump,httptrace,loggers
   health:
+    defaults:
+      enabled: false
     readinessstate:
       enabled: true
 
