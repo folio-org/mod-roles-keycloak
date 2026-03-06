@@ -62,6 +62,9 @@ management:
     base-path: /admin
     exposure:
       include: info,health,liquibase,threaddump,heapdump,httptrace,loggers
+  health:
+    readinessstate:
+      enabled: true
 
 application:
   environment: ${ENV:folio}
