@@ -66,6 +66,10 @@ management:
     health:
       probes:
         enabled: true
+      group:
+        readiness:
+          include: readinessState, db, ping
+          show-components: always
   health:
     livenessState:
       enabled: true
