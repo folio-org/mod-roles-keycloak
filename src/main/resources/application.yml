@@ -58,15 +58,18 @@ folio:
     password: ${SYSTEM_USER_PASSWORD:dummy} # This isn't actually used, but we get dependency injection errors from folio-spring-system-user if we don't have it
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: info,health,env,httptrace
-      base-path: /admin
+  endpoints.web:
+    base-path: /admin
+    exposure:
+      include: info,health,liquibase,threaddump,heapdump,httptrace,loggers
+  endpoint:
+    health:
+      probes:
+        enabled: true
   health:
-    defaults:
-      enabled: false
-    readinessstate:
+    livenessState:
+      enabled: true
+    readinessState:
       enabled: true
 
 application:
