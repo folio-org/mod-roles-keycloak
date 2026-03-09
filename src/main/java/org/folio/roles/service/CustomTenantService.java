@@ -36,7 +36,6 @@ public class CustomTenantService extends TenantService {
     LoadableRoleService loadableRoleService, Keycloak keycloak, CapabilitiesMergeService capabilitiesMergeService,
     KeycloakClientService keycloakClientService,
     KeycloakAuthorizationClientProvider authorizationClientProvider) {
-  
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.referenceDataLoaders = referenceDataLoaders;
     this.loadableRoleService = loadableRoleService;

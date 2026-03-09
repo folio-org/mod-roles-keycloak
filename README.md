@@ -156,6 +156,9 @@ Keycloak all configuration properties: https://www.keycloak.org/server/all-confi
 | KC_CLIENT_TLS_TRUSTSTORE_TYPE     | Truststore file type for keycloak clients.                                                                                                                                 |
 | KC_RETRY_MAX_ATTEMPTS             | Control how many times a Keycloak request should be retried upon failure before giving up                                                                                  |
 | KC_RETRY_BACKOFF_DELAY_MS         | Specify how long the application should wait before retrying a failed operation related to Keycloak integration                                                            |
+| KC_PERMISSIONS_PARALLELISM        | Number of parallel threads used for Keycloak permission create/delete operations. Set to 1 to disable parallelism. Default: `4`                                            |
+| KC_PERMISSIONS_BATCH_SIZE         | Maximum number of permission operations submitted to the thread pool at a time before waiting for the batch to complete. Default: `50`                                     |
+| KC_LOGIN_CLIENT_CACHE_TTL         | Time to live for the cached Keycloak login client representation per tenant. Default: `60s`                                                                                |
 
 ## Loading of client IDs/secrets
 

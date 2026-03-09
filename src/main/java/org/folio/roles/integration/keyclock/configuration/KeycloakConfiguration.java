@@ -19,7 +19,6 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.keycloak.admin.client.JacksonProvider;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,7 +41,6 @@ public class KeycloakConfiguration {
    * to a simple sequential loop without allocating any threads.</p>
    */
   @Bean(destroyMethod = "shutdown")
-  @Qualifier("keycloakPermissionsExecutorService")
   @ConditionalOnExpression("${application.keycloak.permissions.parallelism:4} > 1")
   public ExecutorService keycloakPermissionsExecutorService() {
     int parallelism = configuration.getPermissions().getParallelism();

@@ -57,7 +57,6 @@ class CustomTenantServiceTest {
 
   @BeforeEach
   void setUp() {
-
     var referenceDataLoader = List.of(rolesDataLoader, policiesDataLoader);
     customTenantService = new TestCustomTenantService(jdbcTemplate, context, folioSpringLiquibase,
       referenceDataLoader, loadableRoleService, keycloak, capabilitiesMergeService,
@@ -93,9 +92,9 @@ class CustomTenantServiceTest {
     attributes.setPurge(true);
     doNothing().when(loadableRoleService).cleanupDefaultRolesFromKeycloak();
     when(context.getTenantId()).thenReturn(tenantId);
-  
+
     customTenantService.deleteTenant(attributes);
-  
+
     verify(loadableRoleService).cleanupDefaultRolesFromKeycloak();
     verify(keycloakClientService).evictLoginClient(tenantId);
     verify(authorizationClientProvider).evictAuthorizationClient(tenantId);
@@ -118,9 +117,9 @@ class CustomTenantServiceTest {
     attributes.setPurge(true);
     when(context.getTenantId()).thenReturn(tenantId);
     doThrow(new RuntimeException()).when(loadableRoleService).cleanupDefaultRolesFromKeycloak();
-  
+
     customTenantService.deleteTenant(attributes);
-  
+
     verify(loadableRoleService).cleanupDefaultRolesFromKeycloak();
     verify(keycloakClientService).evictLoginClient(tenantId);
     verify(authorizationClientProvider).evictAuthorizationClient(tenantId);
@@ -141,13 +140,13 @@ class CustomTenantServiceTest {
   }
 
   public static class TestCustomTenantService extends CustomTenantService {
-  
+
     TestCustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
       FolioSpringLiquibase folioSpringLiquibase, List<ReferenceDataLoader> referenceDataLoaders,
       LoadableRoleService loadableRoleService, Keycloak keycloak, CapabilitiesMergeService capabilitiesMergeService,
       KeycloakClientService keycloakClientService,
       KeycloakAuthorizationClientProvider authorizationClientProvider) {
-  
+
       super(jdbcTemplate, context, folioSpringLiquibase, referenceDataLoaders, loadableRoleService,
         keycloak, capabilitiesMergeService, keycloakClientService, authorizationClientProvider);
     }

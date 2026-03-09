@@ -96,6 +96,9 @@ public class KeycloakPermissionsExecutor {
   }
 
   private static RuntimeException rethrow(Throwable error) {
+    if (error instanceof Error e) {
+      throw e;
+    }
     if (error instanceof RuntimeException runtimeException) {
       return runtimeException;
     }
