@@ -33,6 +33,9 @@ application:
       max-attempts: 3
       backoff:
         delay-ms: 10000
+    permissions:
+      parallelism: ${KC_PERMISSIONS_PARALLELISM:4}
+      batch-size: ${KC_PERMISSIONS_BATCH_SIZE:50}
   moduserskc:
     url: moduserskc
   folio-permissions:

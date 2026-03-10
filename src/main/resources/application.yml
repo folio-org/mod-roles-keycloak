@@ -41,6 +41,7 @@ coffee-boots:
       keycloak-configuration: maximumSize=100,expireAfterWrite=${KC_CONFIG_TTL:3600s}
       keycloak-users: maximumSize=250,expireAfterWrite=${KC_USER_ID_CACHE_TTL:180s}
       keycloak-user-id: maximumSize=250,expireAfterWrite=${KC_USER_ID_CACHE_TTL:180s}
+      keycloak-login-client: maximumSize=100,expireAfterWrite=${KC_LOGIN_CLIENT_CACHE_TTL:60s}
       authorization-client-cache: maximumSize=100,expireAfterWrite=${KC_AUTHORIZATION_CLIENTS_CACHE_TTL:3600s}
       user-permissions: maximumSize=${USER_PERMISSIONS_CACHE_MAX_SIZE:1000},expireAfterWrite=${USER_PERMISSIONS_CACHE_TTL:30s}
 
@@ -78,6 +79,9 @@ application:
       trust-store-type: ${KC_CLIENT_TLS_TRUSTSTORE_TYPE:}
     migration:
       users-batch-size: ${KC_MIGRATION_USERS_BATCH_SIZE:100}
+    permissions:
+      parallelism: ${KC_PERMISSIONS_PARALLELISM:4}
+      batch-size: ${KC_PERMISSIONS_BATCH_SIZE:50}
     retry:
       max-attempts: ${KC_RETRY_MAX_ATTEMPTS:3}
       backoff:

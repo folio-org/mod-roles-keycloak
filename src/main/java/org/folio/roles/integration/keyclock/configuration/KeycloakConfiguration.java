@@ -5,6 +5,10 @@ import static org.apache.commons.lang3.StringUtils.stripToNull;
 import static org.folio.common.utils.tls.FeignClientTlsUtils.buildSslContext;
 import static org.folio.common.utils.tls.Utils.IS_HOSTNAME_VERIFICATION_DISABLED;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.http.conn.ssl.DefaultHostnameVerifier;
@@ -15,6 +19,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.keycloak.admin.client.JacksonProvider;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -27,6 +32,24 @@ public class KeycloakConfiguration {
 
   private final KeycloakConfigurationProperties configuration;
   private final RealmConfigurationProvider realmConfigurationProvider;
+
+  /**
+   * Shared fixed thread pool used by {@link org.folio.roles.integration.keyclock.KeycloakPermissionsExecutor}
+   * to process Keycloak permission create/delete calls in parallel.
+   *
+   * <p>The bean is not registered when {@code parallelism <= 1}, so the executor falls back
+   * to a simple sequential loop without allocating any threads.</p>
+   */
+  @Bean(destroyMethod = "shutdown")
+  @ConditionalOnExpression("${application.keycloak.permissions.parallelism:4} > 1")
+  public ExecutorService keycloakPermissionsExecutorService() {
+    int parallelism = configuration.getPermissions().getParallelism();
+    log.info("Creating Keycloak permissions executor service with parallelism={}", parallelism);
+    var executor = new ThreadPoolExecutor(parallelism, parallelism, 60L, TimeUnit.SECONDS,
+      new LinkedBlockingQueue<>());
+    executor.allowCoreThreadTimeOut(true);
+    return executor;
+  }
 
   @Bean
   public Keycloak keycloakAdminClient() {

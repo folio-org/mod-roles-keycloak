@@ -23,20 +23,27 @@ import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.utils.JsonHelper;
 import org.keycloak.admin.client.resource.AuthorizationResource;
-import org.keycloak.admin.client.resource.ScopePermissionsResource;
 import org.keycloak.representations.idm.authorization.DecisionStrategy;
 import org.keycloak.representations.idm.authorization.ResourceRepresentation;
 import org.keycloak.representations.idm.authorization.ScopePermissionRepresentation;
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Log4j2
 @Service
+@Retryable(
+  maxAttemptsExpression = "#{@keycloakConfigurationProperties.retry.maxAttempts}",
+  exceptionExpression = "@keycloakExceptionResolver.shouldRetry(#root)",
+  backoff = @Backoff(delayExpression = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}")
+)
 @RequiredArgsConstructor
 public class KeycloakAuthorizationService {
 
   private final JsonHelper jsonHelper;
   private final KeycloakAuthorizationClientProvider authResourceProvider;
+  private final KeycloakPermissionsExecutor permissionsExecutor;
 
   /**
    * Creates keycloak permissions based on provided policy and list of endpoints.
@@ -52,22 +59,24 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    var scopePermissionsClient = getAuthorizationClient().permissions().scope();
-    for (var endpoint : endpoints) {
-      var resource = getAuthResourceByStaticPath(endpoint.getPath());
-      var scope = getScopeByMethod(resource, endpoint.getMethod());
-      if (scope.isEmpty()) {
-        log.warn(
-          "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
-          endpoint.getMethod(), endpoint.getPath());
-        continue;
-      }
-      var policyName = nameGenerator.apply(endpoint);
-      var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policy.getId());
+    permissionsExecutor.execute(endpoints, endpoint -> createPermission(policy, endpoint, nameGenerator));
+  }
 
-      try (var response = scopePermissionsClient.create(permission)) {
-        processKeycloakResponse(permission, response);
-      }
+  private void createPermission(Policy policy, Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
+    var authClient = authResourceProvider.createAuthorizationClient();
+    var scopePermissionsClient = authClient.permissions().scope();
+    var resource = getAuthResourceByStaticPath(authClient, endpoint.getPath());
+    var scope = getScopeByMethod(resource, endpoint.getMethod());
+    if (scope.isEmpty()) {
+      log.warn(
+        "Scope is not found, keycloak permission creation will be skipped: method(scope)={}, path(resource)={}",
+        endpoint.getMethod(), endpoint.getPath());
+      return;
+    }
+    var policyName = nameGenerator.apply(endpoint);
+    var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policy.getId());
+    try (var response = scopePermissionsClient.create(permission)) {
+      processKeycloakResponse(permission, response);
     }
   }
 
@@ -87,15 +96,12 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    var scopePermissionsClient = getAuthorizationClient().permissions().scope();
-    for (var endpoint : endpoints) {
-      removeKeycloakPermission(scopePermissionsClient, endpoint, nameGenerator);
-    }
+    permissionsExecutor.execute(endpoints, endpoint -> removeKeycloakPermission(endpoint, nameGenerator));
   }
 
-  private ResourceRepresentation getAuthResourceByStaticPath(String staticPath) {
+  private ResourceRepresentation getAuthResourceByStaticPath(AuthorizationResource authClient, String staticPath) {
     log.debug("Searching for Keycloak resource by permission: {}", staticPath);
-    var resources = getAuthorizationClient().resources().find(staticPath, null, null, null, null, 0, MAX_VALUE);
+    var resources = authClient.resources().find(staticPath, null, null, null, null, 0, MAX_VALUE);
 
     var resourceRepresentation = resources.stream()
       .filter(resource -> StringUtils.equals(staticPath, resource.getName()))
@@ -110,10 +116,6 @@ public class KeycloakAuthorizationService {
     return resource.getScopes().stream()
       .filter(scope -> equalsIgnoreCase(scope.getName(), method.toString()))
       .findFirst();
-  }
-
-  private AuthorizationResource getAuthorizationClient() {
-    return authResourceProvider.getAuthorizationClient();
   }
 
   private String toJson(Object value) {
@@ -133,16 +135,17 @@ public class KeycloakAuthorizationService {
     return permission;
   }
 
-  private static void removeKeycloakPermission(ScopePermissionsResource client,
-    Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
+  private void removeKeycloakPermission(Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
+    var authClient = authResourceProvider.createAuthorizationClient();
+    var scopePermissionsClient = authClient.permissions().scope();
     var permissionName = nameGenerator.apply(endpoint);
-    var foundPermission = client.findByName(permissionName);
+    var foundPermission = scopePermissionsClient.findByName(permissionName);
     if (foundPermission == null) {
       log.info("Keycloak permission is not found [name: {}]", permissionName);
       return;
     }
 
-    client.findById(foundPermission.getId()).remove();
+    scopePermissionsClient.findById(foundPermission.getId()).remove();
     log.debug("Permission removed from Keycloak [name: {}]", permissionName);
   }
 
