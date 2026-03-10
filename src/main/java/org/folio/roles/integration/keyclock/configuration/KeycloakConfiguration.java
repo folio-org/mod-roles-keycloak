@@ -19,6 +19,7 @@ import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.keycloak.admin.client.JacksonProvider;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -32,17 +33,28 @@ public class KeycloakConfiguration {
   private final KeycloakConfigurationProperties configuration;
   private final RealmConfigurationProvider realmConfigurationProvider;
 
+  /**
+   * Shared fixed thread pool used by {@link org.folio.roles.integration.keyclock.KeycloakPermissionsExecutor}
+   * to process Keycloak permission create/delete calls in parallel.
+   *
+   * <p>The bean is not registered when {@code parallelism <= 1}, so the executor falls back
+   * to a simple sequential loop without allocating any threads.</p>
+   */
+  @Bean(destroyMethod = "shutdown")
+  @ConditionalOnExpression("${application.keycloak.permissions.parallelism:4} > 1")
+  public ExecutorService keycloakPermissionsExecutorService() {
+    int parallelism = configuration.getPermissions().getParallelism();
+    log.info("Creating Keycloak permissions executor service with parallelism={}", parallelism);
+    var executor = new ThreadPoolExecutor(parallelism, parallelism, 60L, TimeUnit.SECONDS,
+      new LinkedBlockingQueue<>());
+    executor.allowCoreThreadTimeOut(true);
+    return executor;
+  }
+
   @Bean
   public Keycloak keycloakAdminClient() {
     var realmConfiguration = realmConfigurationProvider.getRealmConfiguration();
     return buildKeycloakAdminClient(realmConfiguration.getClientSecret(), configuration);
-  }
-  
-  @Bean(name = "keycloakOperationsExecutor", destroyMethod = "shutdown")
-  public ExecutorService keycloakOperationsExecutor() {
-    var poolSize = configuration.getConcurrency().getThreadPoolSize();
-    log.info("Creating shared Keycloak operations thread pool [size: {}]", poolSize);
-    return new ThreadPoolExecutor(0, poolSize, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
   }
 
   private static Keycloak buildKeycloakAdminClient(String clientSecret, KeycloakConfigurationProperties properties) {

@@ -51,18 +51,18 @@ public class KeycloakConfigurationProperties {
    */
   private MigrationProperties migration;
 
+  /**
+   * Keycloak configuration for permissions.
+   */
+  @Valid
+  private Permissions permissions = new Permissions();
+
 
   /**
    * Containing retry configuration for Keycloak communication.
    **/
   @Valid
   private Retry retry;
-  
-  /**
-   * Concurrency configuration for parallel Keycloak operations.
-   */
-  @Valid
-  private Concurrency concurrency;
 
   @Data
   public static class Login {
@@ -94,17 +94,6 @@ public class KeycloakConfigurationProperties {
   }
 
   @Data
-  public static class Concurrency {
-  
-    /**
-     * Maximum number of threads in the shared pool used for parallel Keycloak calls.
-     */
-    @Min(1)
-    @Max(200)
-    private int threadPoolSize = 20;
-  }
-  
-  @Data
   public static class Backoff {
 
     /**
@@ -113,5 +102,17 @@ public class KeycloakConfigurationProperties {
     @Min(1000)
     @Max(60000)
     private long delayMs;
+  }
+
+  @Data
+  public static class Permissions {
+
+    @Min(1)
+    @Max(64)
+    private int parallelism = 4;
+
+    @Min(1)
+    @Max(1000)
+    private int batchSize = 50;
   }
 }

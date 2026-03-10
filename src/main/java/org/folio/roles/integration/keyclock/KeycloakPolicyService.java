@@ -3,7 +3,6 @@ package org.folio.roles.integration.keyclock;
 import static jakarta.ws.rs.core.Response.Status.Family.SUCCESSFUL;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -25,6 +24,7 @@ import org.folio.roles.mapper.KeycloakPolicyMapper;
 import org.folio.roles.mapper.KeycloakPolicyMapper.PolicyMapperContext;
 import org.keycloak.admin.client.resource.AuthorizationResource;
 import org.keycloak.representations.idm.authorization.PolicyRepresentation;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -32,6 +32,11 @@ import org.springframework.stereotype.Service;
  */
 @Log4j2
 @Service
+@Retryable(
+  predicate = KeycloakMethodRetryPredicate.class,
+  maxRetriesString = "#{@keycloakConfigurationProperties.retry.maxAttempts}",
+  delayString = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}"
+)
 @AllArgsConstructor
 public class KeycloakPolicyService {
 
@@ -145,7 +150,7 @@ public class KeycloakPolicyService {
   }
 
   private List<String> extractPoliciesNames(List<Policy> source) {
-    return source.stream().map(Policy::getName).collect(toList());
+    return source.stream().map(Policy::getName).toList();
   }
 
   private PolicyMapperContext getPolicyMapperContext(Policy policy) {

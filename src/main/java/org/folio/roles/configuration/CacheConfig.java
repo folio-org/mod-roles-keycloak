@@ -37,6 +37,12 @@ public class CacheConfig {
   @Value("${cache.keycloak-user-id.max-size}")
   private int keycloakUserIdMaxSize;
 
+  @Value("${cache.keycloak-login-client.ttl}")
+  private Duration keycloakLoginClientTtl;
+
+  @Value("${cache.keycloak-login-client.max-size}")
+  private int keycloakLoginClientMaxSize;
+
   @Value("${cache.authorization-client.ttl}")
   private Duration authorizationClientTtl;
 
@@ -58,6 +64,7 @@ public class CacheConfig {
       buildCache("keycloak-configuration", keycloakConfigMaxSize, keycloakConfigTtl),
       buildCache("keycloak-users", keycloakUsersMaxSize, keycloakUsersTtl),
       buildCache("keycloak-user-id", keycloakUserIdMaxSize, keycloakUserIdTtl),
+      buildCache("keycloak-login-client", keycloakLoginClientMaxSize, keycloakLoginClientTtl),
       buildCache("authorization-client-cache", authorizationClientMaxSize, authorizationClientTtl),
       buildCache("user-permissions", userPermissionsMaxSize, userPermissionsTtl)
     );

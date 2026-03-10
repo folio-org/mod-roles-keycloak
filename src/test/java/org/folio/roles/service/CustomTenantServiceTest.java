@@ -1,6 +1,5 @@
 package org.folio.roles.service;
 
-import static com.google.common.collect.ImmutableList.of;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -10,6 +9,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import org.folio.roles.integration.keyclock.KeycloakAuthorizationClientProvider;
+import org.folio.roles.integration.keyclock.KeycloakClientService;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.service.migration.CapabilitiesMergeService;
 import org.folio.roles.service.reference.PoliciesDataLoader;
@@ -48,13 +49,18 @@ class CustomTenantServiceTest {
   private Keycloak keycloak;
   @Mock
   private CapabilitiesMergeService capabilitiesMergeService;
+  @Mock
+  private KeycloakClientService keycloakClientService;
+  @Mock
+  private KeycloakAuthorizationClientProvider authorizationClientProvider;
   private CustomTenantService customTenantService;
 
   @BeforeEach
   void setUp() {
-    var referenceDataLoader = of(rolesDataLoader, policiesDataLoader);
+    var referenceDataLoader = List.of(rolesDataLoader, policiesDataLoader);
     customTenantService = new TestCustomTenantService(jdbcTemplate, context, folioSpringLiquibase,
-      referenceDataLoader, loadableRoleService, keycloak, capabilitiesMergeService);
+      referenceDataLoader, loadableRoleService, keycloak, capabilitiesMergeService,
+      keycloakClientService, authorizationClientProvider);
   }
 
   @Test
@@ -81,13 +87,17 @@ class CustomTenantServiceTest {
 
   @Test
   void deleteTenant_positive() {
+    var tenantId = "test-tenant";
     var attributes = new TenantAttributes();
     attributes.setPurge(true);
     doNothing().when(loadableRoleService).cleanupDefaultRolesFromKeycloak();
+    when(context.getTenantId()).thenReturn(tenantId);
 
     customTenantService.deleteTenant(attributes);
 
     verify(loadableRoleService).cleanupDefaultRolesFromKeycloak();
+    verify(keycloakClientService).evictLoginClient(tenantId);
+    verify(authorizationClientProvider).evictAuthorizationClient(tenantId);
   }
 
   @Test
@@ -102,14 +112,17 @@ class CustomTenantServiceTest {
 
   @Test
   void deleteTenant_positive_whenError() {
+    var tenantId = "test-tenant";
     var attributes = new TenantAttributes();
     attributes.setPurge(true);
-
+    when(context.getTenantId()).thenReturn(tenantId);
     doThrow(new RuntimeException()).when(loadableRoleService).cleanupDefaultRolesFromKeycloak();
 
     customTenantService.deleteTenant(attributes);
 
     verify(loadableRoleService).cleanupDefaultRolesFromKeycloak();
+    verify(keycloakClientService).evictLoginClient(tenantId);
+    verify(authorizationClientProvider).evictAuthorizationClient(tenantId);
   }
 
   @Test
@@ -130,10 +143,12 @@ class CustomTenantServiceTest {
 
     TestCustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
       FolioSpringLiquibase folioSpringLiquibase, List<ReferenceDataLoader> referenceDataLoaders,
-      LoadableRoleService loadableRoleService, Keycloak keycloak, CapabilitiesMergeService capabilitiesMergeService) {
+      LoadableRoleService loadableRoleService, Keycloak keycloak, CapabilitiesMergeService capabilitiesMergeService,
+      KeycloakClientService keycloakClientService,
+      KeycloakAuthorizationClientProvider authorizationClientProvider) {
 
       super(jdbcTemplate, context, folioSpringLiquibase, referenceDataLoaders, loadableRoleService,
-        keycloak, capabilitiesMergeService);
+        keycloak, capabilitiesMergeService, keycloakClientService, authorizationClientProvider);
     }
 
     @Override
