@@ -8,7 +8,7 @@ import java.util.UUID;
 import lombok.Data;
 import org.folio.test.types.UnitTest;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
-import org.hibernate.id.factory.spi.CustomIdGeneratorCreationContext;
+import org.hibernate.generator.GeneratorCreationContext;
 import org.hibernate.persister.entity.EntityPersister;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ class FolioUuidGeneratorImplTest {
 
   private FolioUuidGeneratorImpl folioUuidGenerator;
   @Mock private EntityPersister entityPersister;
-  @Mock private CustomIdGeneratorCreationContext creationContext;
+  @Mock private GeneratorCreationContext creationContext;
   @Mock private SharedSessionContractImplementor sharedSessionContractImplementor;
 
   @BeforeEach

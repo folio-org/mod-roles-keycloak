@@ -1,15 +1,14 @@
 package org.folio.roles.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 import java.io.InputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.SerializationException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 @Log4j2
 @Component
@@ -35,7 +34,7 @@ public class JsonHelper {
 
     try {
       return mapper.writeValueAsString(value);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new SerializationException(String.format(
         SERIALIZATION_ERROR_MSG_TEMPLATE, e.getMessage()));
     }
@@ -50,7 +49,7 @@ public class JsonHelper {
   public String asJsonStringSafe(Object value) {
     try {
       return mapper.writeValueAsString(value);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       log.debug(TO_STRING_ERROR_MSG, e);
       return StringUtils.EMPTY;
     }
@@ -71,7 +70,7 @@ public class JsonHelper {
 
     try {
       return mapper.readValue(value, type);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw deserializationException(value, e);
     }
   }
@@ -92,7 +91,7 @@ public class JsonHelper {
 
     try {
       return mapper.readValue(value, type);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw deserializationException(value, e);
     }
   }
@@ -111,7 +110,7 @@ public class JsonHelper {
     }
     try {
       return mapper.readValue(inputStream, valueType);
-    } catch (IOException e) {
+    } catch (JacksonException e) {
       throw deserializationException(inputStream.toString(), e);
     }
   }

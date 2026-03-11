@@ -5,7 +5,6 @@ import static jakarta.ws.rs.core.Response.Status.Family.SUCCESSFUL;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -16,7 +15,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.HttpMethod;
 import org.folio.roles.domain.dto.Policy;
@@ -27,16 +26,15 @@ import org.keycloak.representations.idm.authorization.DecisionStrategy;
 import org.keycloak.representations.idm.authorization.ResourceRepresentation;
 import org.keycloak.representations.idm.authorization.ScopePermissionRepresentation;
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Log4j2
 @Service
 @Retryable(
-  maxAttemptsExpression = "#{@keycloakConfigurationProperties.retry.maxAttempts}",
-  exceptionExpression = "@keycloakExceptionResolver.shouldRetry(#root)",
-  backoff = @Backoff(delayExpression = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}")
+  predicate = KeycloakMethodRetryPredicate.class,
+  maxRetriesString = "#{@keycloakConfigurationProperties.retry.maxAttempts}",
+  delayString = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}"
 )
 @RequiredArgsConstructor
 public class KeycloakAuthorizationService {
@@ -104,7 +102,7 @@ public class KeycloakAuthorizationService {
     var resources = authClient.resources().find(staticPath, null, null, null, null, 0, MAX_VALUE);
 
     var resourceRepresentation = resources.stream()
-      .filter(resource -> StringUtils.equals(staticPath, resource.getName()))
+      .filter(resource -> Strings.CS.equals(staticPath, resource.getName()))
       .findFirst()
       .orElseThrow(() -> new EntityNotFoundException("Keycloak resource is not found by static path: " + staticPath));
 
@@ -114,7 +112,7 @@ public class KeycloakAuthorizationService {
 
   private static Optional<ScopeRepresentation> getScopeByMethod(ResourceRepresentation resource, HttpMethod method) {
     return resource.getScopes().stream()
-      .filter(scope -> equalsIgnoreCase(scope.getName(), method.toString()))
+      .filter(scope -> Strings.CI.equals(scope.getName(), method.toString()))
       .findFirst();
   }
 

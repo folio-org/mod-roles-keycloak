@@ -64,6 +64,29 @@ class ReferenceDataIT extends BaseIntegrationTest {
   }
 
   @Test
+  @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
+  void loadReferenceSeveralTimes_true_positive() throws Exception {
+    enableTenant(TENANT_ID, TENANT_ATTR);
+
+    mockMvc.perform(get("/roles")
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .queryParam("limit", valueOf(MAX_VALUE)))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.totalRecords").value(28));
+
+    mockMvc.perform(get("/policies")
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .queryParam("limit", valueOf(MAX_VALUE)))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.totalRecords").value(1))
+      .andExpect(jsonPath("$.policies[0].name").value(equalTo("Business Hours")));
+
+    enableTenant(TENANT_ID, TENANT_ATTR);
+  }
+
+  @Test
   void loadReference_false_positive() throws Exception {
     enableTenant(TENANT_ID);
 

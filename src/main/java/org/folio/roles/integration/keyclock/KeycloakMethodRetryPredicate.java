@@ -1,12 +1,14 @@
 package org.folio.roles.integration.keyclock;
 
+import java.lang.reflect.Method;
 import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
-import org.springframework.stereotype.Component;
+import org.jspecify.annotations.NonNull;
+import org.springframework.resilience.retry.MethodRetryPredicate;
 
-@Component
-public class KeycloakExceptionResolver {
+public class KeycloakMethodRetryPredicate implements MethodRetryPredicate {
 
-  public boolean shouldRetry(Throwable exception) {
+  @Override
+  public boolean shouldRetry(@NonNull Method method, @NonNull Throwable exception) {
     if (exception instanceof KeycloakApiException keycloakApiException) {
       var status = keycloakApiException.getStatus();
       return status != null && status.value() >= 500;

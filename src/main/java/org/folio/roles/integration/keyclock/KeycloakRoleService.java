@@ -13,17 +13,16 @@ import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.roles.mapper.KeycloakRoleMapper;
 import org.folio.spring.FolioExecutionContext;
 import org.keycloak.admin.client.Keycloak;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 @Log4j2
 @Service
 @Retryable(
-  maxAttemptsExpression =  "#{@keycloakConfigurationProperties.retry.maxAttempts}",
-  exceptionExpression = "@keycloakExceptionResolver.shouldRetry(#root)",
-  backoff = @Backoff(delayExpression = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}")
+  predicate = KeycloakMethodRetryPredicate.class,
+  maxRetriesString = "#{@keycloakConfigurationProperties.retry.maxAttempts}",
+  delayString = "#{@keycloakConfigurationProperties.retry.backoff.delayMs}"
 )
 @RequiredArgsConstructor
 public class KeycloakRoleService {

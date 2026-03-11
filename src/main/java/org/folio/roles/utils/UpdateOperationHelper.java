@@ -14,7 +14,7 @@ import java.util.function.Function;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.folio.common.utils.CollectionUtils;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 @Getter
 @Log4j2
@@ -113,7 +113,7 @@ public final class UpdateOperationHelper<T> {
     this.deprecatedEntities.clear();
   }
 
-  @NotNull
+  @NonNull
   private static <T> Set<T> createLinkedHashSet(Collection<T> values) {
     return isEmpty(values) ? new LinkedHashSet<>() : new LinkedHashSet<>(values);
   }
