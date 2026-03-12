@@ -11,6 +11,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.folio.roles.exception.LiquibaseMigrationInProgressException;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.hibernate.exception.SQLGrammarException;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
@@ -63,6 +64,11 @@ public class KafkaConfiguration {
   }
 
   private BackOff getBackOff(Exception exception) {
+    if (exception instanceof LiquibaseMigrationInProgressException) {
+      log.warn("Liquibase migration in progress, retrying Kafka event", exception);
+      return new FixedBackOff(retryConfiguration.getRetryDelay().toMillis(), retryConfiguration.getRetryAttempts());
+    }
+
     var migrationErrorMessage = detectMigrationError(exception);
     if (migrationErrorMessage.isPresent()) {
       log.warn("Database migration in progress, retrying Kafka event [error: {}]", migrationErrorMessage.get());

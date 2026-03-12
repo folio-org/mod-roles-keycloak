@@ -2,10 +2,12 @@ package org.folio.roles.integration.kafka;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.exception.LiquibaseMigrationInProgressException;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.roles.service.capability.UserPermissionsCacheEvictor;
 import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.spring.liquibase.LiquibaseMigrationLockService;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -21,6 +23,7 @@ public class KafkaMessageListener {
   private final CapabilityReplacementsService capabilityReplacementsService;
   private final SystemUserScopedExecutionService systemUserScopedExecutionService;
   private final UserPermissionsCacheEvictor userPermissionsCacheEvictor;
+  private final LiquibaseMigrationLockService liquibaseMigrationLockService;
 
   /**
    * Handles capability event.
@@ -36,6 +39,10 @@ public class KafkaMessageListener {
     try (
       var ignored = new FolioExecutionContextSetter(executionContextBuilder.buildContext(resourceEvent.getTenant()))) {
       try {
+        if (liquibaseMigrationLockService.isMigrationRunning()) {
+          throw new LiquibaseMigrationInProgressException(
+            "Liquibase migration is still running for tenant: " + resourceEvent.getTenant());
+        }
         systemUserScopedExecutionService.executeSystemUserScoped(() -> {
           var capabilityReplacements = capabilityKafkaEventHandler.handleEvent(resourceEvent);
           capabilityReplacements.ifPresent(capabilityReplacementsService::processReplacements);
