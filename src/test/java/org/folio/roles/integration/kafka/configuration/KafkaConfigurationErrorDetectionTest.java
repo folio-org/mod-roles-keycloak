@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.util.Optional;
-import org.folio.roles.exception.LiquibaseMigrationInProgressException;
+import org.folio.spring.exception.LiquibaseMigrationException;
 import org.folio.test.types.UnitTest;
 import org.hibernate.exception.SQLGrammarException;
 import org.junit.jupiter.api.Test;
@@ -84,13 +84,13 @@ class KafkaConfigurationErrorDetectionTest {
   }
 
   @Test
-  void getBackOff_positive_liquibaseMigrationInProgressExceptionIsRetryable() throws Exception {
+  void getBackOff_positive_liquibaseMigrationExceptionIsRetryable() throws Exception {
     // given
     var retryDelay = Duration.ofMillis(500);
     var retryAttempts = 10L;
     var retryConfig = createRetryConfiguration(retryDelay, retryAttempts);
     var kafkaConfig = new KafkaConfiguration(new KafkaProperties(), retryConfig);
-    var exception = new LiquibaseMigrationInProgressException("Migration in progress for tenant: test");
+    var exception = new LiquibaseMigrationException("Migration in progress for tenant: test");
 
     // when
     var backOff = invokeGetBackOff(kafkaConfig, exception);

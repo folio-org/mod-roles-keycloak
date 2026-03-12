@@ -16,13 +16,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import org.folio.roles.domain.model.CapabilityReplacements;
-import org.folio.roles.exception.LiquibaseMigrationInProgressException;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.roles.service.capability.UserPermissionsCacheEvictor;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.spring.exception.LiquibaseMigrationException;
 import org.folio.spring.liquibase.LiquibaseMigrationLockService;
 import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.folio.test.types.UnitTest;
@@ -143,7 +143,7 @@ class KafkaMessageListenerTest {
     var resourceEvent = resourceEvent();
 
     assertThatThrownBy(() -> kafkaMessageListener.handleCapabilityEvent(resourceEvent))
-      .isInstanceOf(LiquibaseMigrationInProgressException.class)
+      .isInstanceOf(LiquibaseMigrationException.class)
       .hasMessageContaining("Liquibase migration is still running for tenant: " + TENANT_ID);
 
     verify(liquibaseMigrationLockService).isMigrationRunning();
@@ -157,7 +157,7 @@ class KafkaMessageListenerTest {
     var resourceEvent = resourceEvent();
 
     assertThatThrownBy(() -> kafkaMessageListener.handleCapabilityEvent(resourceEvent))
-      .isInstanceOf(LiquibaseMigrationInProgressException.class);
+      .isInstanceOf(LiquibaseMigrationException.class);
 
     verify(liquibaseMigrationLockService).isMigrationRunning();
     verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
