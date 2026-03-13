@@ -22,6 +22,8 @@ import org.folio.roles.service.capability.UserPermissionsCacheEvictor;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.spring.exception.LiquibaseMigrationException;
+import org.folio.spring.liquibase.LiquibaseMigrationLockService;
 import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
@@ -45,16 +47,19 @@ class KafkaMessageListenerTest {
   @Mock private SystemUserScopedExecutionService systemUserScopedExecutionService;
   @Mock private ExecutionContextBuilder executionContextBuilder;
   @Mock private UserPermissionsCacheEvictor userPermissionsCacheEvictor;
+  @Mock private LiquibaseMigrationLockService liquibaseMigrationLockService;
 
   @AfterEach
   void tearDown() {
-    verifyNoMoreInteractions(folioModuleMetadata, capabilityKafkaEventHandler, userPermissionsCacheEvictor);
+    verifyNoMoreInteractions(folioModuleMetadata, capabilityKafkaEventHandler, userPermissionsCacheEvictor,
+      liquibaseMigrationLockService);
   }
 
   @BeforeEach
   void setUp() {
     when(executionContextBuilder.buildContext(TENANT_ID))
       .thenReturn(mock(FolioExecutionContext.class));
+    when(liquibaseMigrationLockService.isMigrationRunning()).thenReturn(false);
   }
 
   @Test
@@ -115,6 +120,46 @@ class KafkaMessageListenerTest {
       .hasMessage("boom");
 
     verifyNoInteractions(capabilityKafkaEventHandler, capabilityReplacementsService);
+    verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
+  }
+
+  @Test
+  void handleCapabilityEvent_positive_whenMigrationIsNotRunning_processesEvent() {
+    givenSystemUserScopedExecutionRunsCallable();
+    when(liquibaseMigrationLockService.isMigrationRunning()).thenReturn(false);
+    var resourceEvent = resourceEvent();
+
+    kafkaMessageListener.handleCapabilityEvent(resourceEvent);
+
+    verify(liquibaseMigrationLockService).isMigrationRunning();
+    verify(capabilityKafkaEventHandler).handleEvent(resourceEvent);
+    verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
+    verifyNoInteractions(capabilityReplacementsService);
+  }
+
+  @Test
+  void handleCapabilityEvent_negative_whenMigrationIsRunning_throwsRetryableException() {
+    when(liquibaseMigrationLockService.isMigrationRunning()).thenReturn(true);
+    var resourceEvent = resourceEvent();
+
+    assertThatThrownBy(() -> kafkaMessageListener.handleCapabilityEvent(resourceEvent))
+      .isInstanceOf(LiquibaseMigrationException.class)
+      .hasMessageContaining("Liquibase migration is still running for tenant: " + TENANT_ID);
+
+    verify(liquibaseMigrationLockService).isMigrationRunning();
+    verifyNoInteractions(capabilityKafkaEventHandler, capabilityReplacementsService);
+    verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
+  }
+
+  @Test
+  void handleCapabilityEvent_negative_whenMigrationIsRunning_evictsUserPermissionsCache() {
+    when(liquibaseMigrationLockService.isMigrationRunning()).thenReturn(true);
+    var resourceEvent = resourceEvent();
+
+    assertThatThrownBy(() -> kafkaMessageListener.handleCapabilityEvent(resourceEvent))
+      .isInstanceOf(LiquibaseMigrationException.class);
+
+    verify(liquibaseMigrationLockService).isMigrationRunning();
     verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
   }
 

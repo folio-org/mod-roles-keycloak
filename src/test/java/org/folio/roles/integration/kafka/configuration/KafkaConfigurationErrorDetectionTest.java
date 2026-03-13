@@ -2,7 +2,9 @@ package org.folio.roles.integration.kafka.configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
 import java.util.Optional;
+import org.folio.spring.exception.LiquibaseMigrationException;
 import org.folio.test.types.UnitTest;
 import org.hibernate.exception.SQLGrammarException;
 import org.junit.jupiter.api.Test;
@@ -10,7 +12,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
+import org.springframework.util.backoff.BackOff;
+import org.springframework.util.backoff.FixedBackOff;
 
 @UnitTest
 class KafkaConfigurationErrorDetectionTest {
@@ -78,6 +83,25 @@ class KafkaConfigurationErrorDetectionTest {
     assertThat(result).isEmpty();
   }
 
+  @Test
+  void getBackOff_positive_liquibaseMigrationExceptionIsRetryable() throws Exception {
+    // given
+    var retryDelay = Duration.ofMillis(500);
+    var retryAttempts = 10L;
+    var retryConfig = createRetryConfiguration(retryDelay, retryAttempts);
+    var kafkaConfig = new KafkaConfiguration(new KafkaProperties(), retryConfig);
+    var exception = new LiquibaseMigrationException("Migration in progress for tenant: test");
+
+    // when
+    var backOff = invokeGetBackOff(kafkaConfig, exception);
+
+    // then
+    assertThat(backOff).isInstanceOf(FixedBackOff.class);
+    var fixedBackOff = (FixedBackOff) backOff;
+    assertThat(fixedBackOff.getInterval()).isEqualTo(retryDelay.toMillis());
+    assertThat(fixedBackOff.getMaxAttempts()).isEqualTo(retryAttempts);
+  }
+
   private InvalidDataAccessResourceUsageException createException(String errorMessage) {
     var psqlException = new PSQLException(errorMessage, PSQLState.UNDEFINED_TABLE);
     var sqlGrammarException = new SQLGrammarException("SQL grammar error", psqlException);
@@ -90,5 +114,18 @@ class KafkaConfigurationErrorDetectionTest {
     @SuppressWarnings("unchecked")
     var result = (Optional<String>) method.invoke(null, exception);
     return result;
+  }
+
+  private CapabilityEventRetryConfiguration createRetryConfiguration(Duration retryDelay, long retryAttempts) {
+    var config = new CapabilityEventRetryConfiguration();
+    config.setRetryDelay(retryDelay);
+    config.setRetryAttempts(retryAttempts);
+    return config;
+  }
+
+  private BackOff invokeGetBackOff(KafkaConfiguration kafkaConfig, Exception exception) throws Exception {
+    var method = KafkaConfiguration.class.getDeclaredMethod("getBackOff", Exception.class);
+    method.setAccessible(true);
+    return (BackOff) method.invoke(kafkaConfig, exception);
   }
 }

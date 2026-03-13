@@ -26,6 +26,7 @@
 * Fix IndexOutOfBoundsException in capability deduplication (EUREKA-866)
 * Upgrade module to SpringBoot4.0 and Spring7.0 (MODROLESKC-335)
 * Fix NPE during dummyCapability processing (EUREKA-866)
+* Replace global Kafka listener suspension with Liquibase migration lock detection in capability event processing (MODROLESKC-386)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)

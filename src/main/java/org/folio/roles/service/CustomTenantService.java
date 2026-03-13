@@ -4,6 +4,7 @@ import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
+import org.folio.roles.integration.kafka.KafkaAdminService;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationClientProvider;
 import org.folio.roles.integration.keyclock.KeycloakClientService;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 @Primary
 public class CustomTenantService extends TenantService {
 
+  private final KafkaAdminService kafkaAdminService;
   private final List<ReferenceDataLoader> referenceDataLoaders;
   private final LoadableRoleService loadableRoleService;
   private final Keycloak keycloak;
@@ -32,11 +34,13 @@ public class CustomTenantService extends TenantService {
   private final FolioExecutionContext folioExecutionContext;
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
-    FolioSpringLiquibase folioSpringLiquibase, List<ReferenceDataLoader> referenceDataLoaders,
+    FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
+    List<ReferenceDataLoader> referenceDataLoaders,
     LoadableRoleService loadableRoleService, Keycloak keycloak, CapabilitiesMergeService capabilitiesMergeService,
     KeycloakClientService keycloakClientService,
     KeycloakAuthorizationClientProvider authorizationClientProvider) {
     super(jdbcTemplate, context, folioSpringLiquibase);
+    this.kafkaAdminService = kafkaAdminService;
     this.referenceDataLoaders = referenceDataLoaders;
     this.loadableRoleService = loadableRoleService;
     this.keycloak = keycloak;
@@ -48,13 +52,23 @@ public class CustomTenantService extends TenantService {
 
   @Override
   public void loadReferenceData() {
-    log.info("Loading reference data");
-    toStream(referenceDataLoaders).forEach(ReferenceDataLoader::loadReferenceData);
+    kafkaAdminService.stopKafkaListeners();
+    try {
+      log.info("Loading reference data");
+      toStream(referenceDataLoaders).forEach(ReferenceDataLoader::loadReferenceData);
+    } catch (Exception e) {
+      log.warn("Unable to load reference data", e);
+      throw new IllegalStateException("Unable to load reference data", e);
+    } finally {
+      kafkaAdminService.startKafkaListeners();
+    }
     log.info("Finished loading reference data");
   }
 
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
+    log.debug("Restarting event listeners after tenant update");
+    kafkaAdminService.restartEventListeners();
     log.debug("Issuing fresh Keycloak token after tenant update");
     keycloak.tokenManager().grantToken();
     log.debug("Merging duplicate capabilities after tenant update");

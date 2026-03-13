@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.spring.exception.LiquibaseMigrationException;
 import org.hibernate.exception.SQLGrammarException;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -63,19 +64,28 @@ public class KafkaConfiguration {
   }
 
   private BackOff getBackOff(Exception exception) {
+    if (exception instanceof LiquibaseMigrationException) {
+      log.warn("Liquibase migration in progress, retrying Kafka event", exception);
+      return getFixedBackOff();
+    }
+
     var migrationErrorMessage = detectMigrationError(exception);
     if (migrationErrorMessage.isPresent()) {
       log.warn("Database migration in progress, retrying Kafka event [error: {}]", migrationErrorMessage.get());
-      return new FixedBackOff(retryConfiguration.getRetryDelay().toMillis(), retryConfiguration.getRetryAttempts());
+      return getFixedBackOff();
     }
 
     log.warn("Non-retryable error, skipping message", exception);
     return new FixedBackOff(0L, 0L);
   }
 
+  private FixedBackOff getFixedBackOff() {
+    return new FixedBackOff(retryConfiguration.getRetryDelay().toMillis(), retryConfiguration.getRetryAttempts());
+  }
+
   /**
-   * Detects PostgreSQL errors indicating database migration is in progress.
-   * Covers schema objects not yet created (tables, columns, types, constraints, indexes).
+   * Detects PostgreSQL errors indicating database migration is in progress. Covers schema objects not yet created
+   * (tables, columns, types, constraints, indexes).
    */
   private static Optional<String> detectMigrationError(Exception exception) {
     return Optional.of(exception)
