@@ -25,7 +25,9 @@
 
 ### `MteConfigurationProperties.java`
 
-**Package:** `org.folio.roles.integration.mte`
+**Package:** `org.folio.roles.integration.mte.configuration`
+
+Mirrors `KeycloakConfigurationProperties` in `integration/keyclock/configuration/`.
 
 ```java
 @Getter
@@ -48,7 +50,9 @@ public class MteConfigurationProperties {
 
 ### `MteConfiguration.java`
 
-**Package:** `org.folio.roles.integration.mte`
+**Package:** `org.folio.roles.integration.mte.configuration`
+
+Mirrors `KeycloakConfiguration` in `integration/keyclock/configuration/`.
 
 ```java
 @Configuration
