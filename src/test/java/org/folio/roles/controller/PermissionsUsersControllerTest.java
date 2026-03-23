@@ -32,7 +32,7 @@ class PermissionsUsersControllerTest {
   @Test
   void getPermissionsUser_positive() throws Exception {
     var foundPermissions = List.of(PERMISSION_NAME);
-    when(capabilityService.getUserPermissions(USER_ID, false, null)).thenReturn(foundPermissions);
+    when(capabilityService.getUserPermissions(USER_ID, false, null, false)).thenReturn(foundPermissions);
 
     mockMvc.perform(get("/permissions/users/{id}", USER_ID)
         .contentType(APPLICATION_JSON)
@@ -46,7 +46,7 @@ class PermissionsUsersControllerTest {
   @Test
   void getPermissionsUser_positive_onlyVisibleIsTrue() throws Exception {
     var foundPermissions = List.of(PERMISSION_NAME);
-    when(capabilityService.getUserPermissions(USER_ID, true, null)).thenReturn(foundPermissions);
+    when(capabilityService.getUserPermissions(USER_ID, true, null, false)).thenReturn(foundPermissions);
 
     mockMvc.perform(get("/permissions/users/{id}", USER_ID)
       .param("onlyVisible", "true")
@@ -56,5 +56,28 @@ class PermissionsUsersControllerTest {
       .andExpect(content().json(asJsonString(
         new PermissionsUser().userId(USER_ID).permissions(foundPermissions))
       ));
+  }
+
+  @Test
+  void getPermissionsUser_positive_defaultEntitledOnlyIsFalse() throws Exception {
+    var foundPermissions = List.of(PERMISSION_NAME);
+    when(capabilityService.getUserPermissions(USER_ID, false, null, false)).thenReturn(foundPermissions);
+
+    mockMvc.perform(get("/permissions/users/{id}", USER_ID)
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(content().contentType(APPLICATION_JSON));
+  }
+
+  @Test
+  void getPermissionsUser_positive_entitledOnlyTrue() throws Exception {
+    var foundPermissions = List.of(PERMISSION_NAME);
+    when(capabilityService.getUserPermissions(USER_ID, false, null, true)).thenReturn(foundPermissions);
+
+    mockMvc.perform(get("/permissions/users/{id}", USER_ID)
+        .param("entitledOnly", "true")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(content().contentType(APPLICATION_JSON));
   }
 }

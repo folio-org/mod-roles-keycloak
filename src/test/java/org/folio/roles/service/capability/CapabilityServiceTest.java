@@ -570,7 +570,7 @@ class CapabilityServiceTest {
     @Test
     void positive() {
       when(userPermissionCacheService.getAllUserPermissions(USER_ID)).thenReturn(List.of(PERMISSION_NAME));
-      var result = capabilityService.getUserPermissions(USER_ID, false, emptyList());
+      var result = capabilityService.getUserPermissions(USER_ID, false, emptyList(), false);
 
       assertThat(result).containsExactly(PERMISSION_NAME);
     }
@@ -580,7 +580,7 @@ class CapabilityServiceTest {
       var uiPermission = "ui-users.view";
       when(userPermissionCacheService.getAllUserPermissions(USER_ID))
         .thenReturn(List.of(PERMISSION_NAME, uiPermission));
-      var result = capabilityService.getUserPermissions(USER_ID, true, emptyList());
+      var result = capabilityService.getUserPermissions(USER_ID, true, emptyList(), false);
 
       assertThat(result).containsExactly(uiPermission);
     }
@@ -591,7 +591,7 @@ class CapabilityServiceTest {
       // Mock the cache to return the user's permissions
       when(userPermissionCacheService.getAllUserPermissions(USER_ID)).thenReturn(userPerms);
 
-      var result = capabilityService.getUserPermissions(USER_ID, false, desiredPerms);
+      var result = capabilityService.getUserPermissions(USER_ID, false, desiredPerms, false);
 
       assertThat(result).containsExactlyInAnyOrderElementsOf(resolvedPerms);
     }

@@ -325,10 +325,12 @@ public class CapabilityService {
    * @param userId - user identifier as {@link UUID} value
    * @param onlyVisible - defines if UI or all permissions must be returned
    * @param desiredPermissions - list of desired permissions to find (supports wildcards)
+   * @param entitledOnly - when true, filter to only permissions from entitled applications
    * @return a {@link List} with folio permission names
    */
   @Transactional(readOnly = true)
-  public List<String> getUserPermissions(UUID userId, boolean onlyVisible, List<String> desiredPermissions) {
+  public List<String> getUserPermissions(UUID userId, boolean onlyVisible, List<String> desiredPermissions,
+    boolean entitledOnly) {
     var allPermissions = userPermissionCacheService.getAllUserPermissions(userId);
 
     if (onlyVisible) {
