@@ -115,6 +115,13 @@ application:
   folio-permissions:
     mapping:
       source-path: ${FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH:https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json}
+  mte:
+    url: ${MTE_URL:http://mgr-tenant-entitlements:8081}
+    tls:
+      enabled: ${MTE_CLIENT_TLS_ENABLED:false}
+      trust-store-path: ${MTE_CLIENT_TLS_TRUSTSTORE_PATH:}
+      trust-store-password: ${MTE_CLIENT_TLS_TRUSTSTORE_PASSWORD:}
+      trust-store-type: ${MTE_CLIENT_TLS_TRUSTSTORE_TYPE:}
 cache:
   permission-mappings:
     ttl: ${CACHE_PERMISSION_MAPPINGS_TTL:60s}
