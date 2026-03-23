@@ -137,3 +137,6 @@ cache:
   user-permissions:
     ttl: ${USER_PERMISSIONS_CACHE_TTL:30s}
     max-size: ${USER_PERMISSIONS_CACHE_MAX_SIZE:1000}
+  tenant-entitled-applications:
+    ttl: ${TENANT_ENTITLED_APPLICATIONS_CACHE_TTL:60s}
+    max-size: ${TENANT_ENTITLED_APPLICATIONS_CACHE_MAX_SIZE:1000}
