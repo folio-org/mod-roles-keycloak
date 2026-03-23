@@ -122,6 +122,7 @@ application:
       trust-store-path: ${MTE_CLIENT_TLS_TRUSTSTORE_PATH:}
       trust-store-password: ${MTE_CLIENT_TLS_TRUSTSTORE_PASSWORD:}
       trust-store-type: ${MTE_CLIENT_TLS_TRUSTSTORE_TYPE:}
+
 cache:
   permission-mappings:
     ttl: ${CACHE_PERMISSION_MAPPINGS_TTL:60s}
