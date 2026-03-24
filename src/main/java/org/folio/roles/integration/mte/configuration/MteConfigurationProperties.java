@@ -1,5 +1,6 @@
 package org.folio.roles.integration.mte.configuration;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 import org.folio.common.configuration.properties.TlsProperties;
@@ -20,6 +21,7 @@ public class MteConfigurationProperties {
   /**
    * MTE service base URL.
    */
+  @NotBlank
   private String url;
 
   /**
