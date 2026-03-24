@@ -12,5 +12,4 @@ public class ClientConfig {
   public PermissionsClient permissionsClient(HttpServiceProxyFactory factory) {
     return factory.createClient(PermissionsClient.class);
   }
-
 }
