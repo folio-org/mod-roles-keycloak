@@ -606,6 +606,21 @@ class CapabilityServiceTest {
     }
 
     @Test
+    void positive_onlyVisibleAndEntitledOnly() {
+      var uiPermissionEntitled = "ui-foo.item.delete";
+      var uiPermissionNotEntitled = "ui-bar.item.get";
+      var mappings = new UserPermissionMappings(
+        List.of(uiPermissionEntitled, uiPermissionNotEntitled, PERMISSION_NAME),
+        Map.of(uiPermissionEntitled, "app-a-1.0.0", uiPermissionNotEntitled, "app-b-1.0.0",
+          PERMISSION_NAME, "app-a-1.0.0"));
+      when(userPermissionCacheService.getUserPermissionMappings(USER_ID)).thenReturn(mappings);
+      when(mteEntitlementService.getEntitledApplicationIdsForCurrentTenant()).thenReturn(Set.of("app-a-1.0.0"));
+
+      var result = capabilityService.getUserPermissions(USER_ID, true, emptyList(), true);
+      assertThat(result).containsExactly(uiPermissionEntitled);
+    }
+
+    @Test
     void positive_entitledOnlyAppliedAfterDesiredPermissions() {
       var mappings = new UserPermissionMappings(
         List.of("ui-foo.item.delete", "module.foo.item.post"),
