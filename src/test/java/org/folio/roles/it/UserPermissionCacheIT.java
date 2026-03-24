@@ -102,9 +102,9 @@ class UserPermissionCacheIT extends BaseIntegrationTest {
 
   @Test
   void cacheEviction_positive_evictsOnlyCurrentTenant() {
-    var tenant1CacheKey = TENANT_ID + ":" + USER_ID_1;
+    var tenant1CacheKey = TENANT_ID + ":" + USER_ID_1 + ":mappings";
     var tenant2 = "other_tenant";
-    var tenant2CacheKey = tenant2 + ":" + USER_ID_1;
+    var tenant2CacheKey = tenant2 + ":" + USER_ID_1 + ":mappings";
 
     var cache = getCaffeineCache(USER_PERMISSIONS_CACHE);
 
