@@ -43,7 +43,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Log4j2
 @Service
 @RequiredArgsConstructor
@@ -346,15 +345,15 @@ public class CapabilityService {
       resolved = allPermissions;
     }
 
-    if (!entitledOnly) {
-      return resolved;
-    }
+    return entitledOnly ? filterByEntitledApplications(resolved, mappings.permissionToApplicationId()) : resolved;
+  }
 
+  private List<String> filterByEntitledApplications(List<String> permissions, Map<String, String> permToApp) {
     try {
       var entitledApps = mteEntitlementService.getEntitledApplicationIdsForCurrentTenant();
-      return resolved.stream()
+      return permissions.stream()
         .filter(permission -> {
-          var appId = mappings.permissionToApplicationId().get(permission);
+          var appId = permToApp.get(permission);
           if (appId == null) {
             log.debug("Dropping permission without app mapping in entitled-only mode: {}", permission);
             return false;
@@ -365,7 +364,7 @@ public class CapabilityService {
     } catch (Exception e) {
       var tenantId = folioExecutionContext.getTenantId();
       log.warn("Failed to fetch entitled applications [tenant: {}]; returning unfiltered permissions", tenantId, e);
-      return resolved;
+      return permissions;
     }
   }
 
