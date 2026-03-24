@@ -15,6 +15,7 @@ more information.
     * [Vault](#vault)
     * [Folio Secure Store Proxy (FSSP)](#folio-secure-store-proxy-fssp)
   * [Keycloak environment variables](#keycloak-environment-variables)
+  * [MTE environment variables](#mte-environment-variables)
 * [Loading of client IDs/secrets](#loading-of-client-idssecrets)
 * [Custom permission-capability mappings](#custom-permission-capability-mappings)
 * [Capability duplicate removal](#capability-duplicate-removal)
@@ -85,6 +86,7 @@ Maximum concurrent migrations: **1** (configurable in code)
 | CAPABILITY_TOPIC_RETRY_ATTEMPTS       | 9223372036854775807                                                                                                                                    |  false   | `capability` topic retry attempts if tenant is not initialized (default value is Long.MAX_VALUE ~= infinite amount of retries)          |
 | FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH | [folio permission mapping json file](https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json) |  false   | Link or path to resource that contains folio permission mappings. File path or URL can be used.                                         |
 | CACHE_PERMISSION_MAPPINGS_TTL         | 60                                                                                                                                                     |  false   | TTL for cache of permission mapping overrides, in seconds                                                                               |
+| MTE_URL                               | http://mgr-tenant-entitlements:8081                                                                                                                    |  false   | Base URL of the mgr-tenant-entitlements service, used to resolve entitled applications for permission filtering                          |
 
 See also configurations from https://github.com/folio-org/folio-spring-support/tree/release/v8.1/folio-spring-system-user - FOLIO_ENVIRONMENT, FOLIO_OKAPI_URL, FOLIO_SYSTEM_USER_USERNAME, FOLIO_SYSTEM_USER_PASSWORD.
 
@@ -159,6 +161,17 @@ Keycloak all configuration properties: https://www.keycloak.org/server/all-confi
 | KC_PERMISSIONS_PARALLELISM        | Number of parallel threads used for Keycloak permission create/delete operations. Set to 1 to disable parallelism. Default: `4`                                            |
 | KC_PERMISSIONS_BATCH_SIZE         | Maximum number of permission operations submitted to the thread pool at a time before waiting for the batch to complete. Default: `50`                                     |
 | KC_LOGIN_CLIENT_CACHE_TTL         | Time to live for the cached Keycloak login client representation per tenant. Default: `60s`                                                                                |
+
+### MTE environment variables
+
+TLS configuration for the dedicated mgr-tenant-entitlements HTTP client.
+
+| Name                              | Default value | Description                                                  |
+|:----------------------------------|:--------------|:-------------------------------------------------------------|
+| MTE_CLIENT_TLS_ENABLED            | false         | Enables TLS for the MTE client                               |
+| MTE_CLIENT_TLS_TRUSTSTORE_PATH    | -             | Truststore file path for the MTE client                      |
+| MTE_CLIENT_TLS_TRUSTSTORE_PASSWORD| -             | Truststore password for the MTE client                       |
+| MTE_CLIENT_TLS_TRUSTSTORE_TYPE    | -             | Truststore file type for the MTE client (e.g., JKS, PKCS12) |
 
 ## Loading of client IDs/secrets
 
