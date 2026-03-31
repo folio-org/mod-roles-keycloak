@@ -32,6 +32,7 @@ import org.folio.roles.domain.entity.CapabilityEntity;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.domain.model.event.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.ResourceEventType;
+import org.folio.roles.integration.mte.MteEntitlementService;
 import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.CapabilityRepository;
 import org.folio.spring.FolioExecutionContext;
@@ -54,6 +55,7 @@ public class CapabilityService {
   private final CapabilityEntityMapper capabilityEntityMapper;
   private final ApplicationEventPublisher applicationEventPublisher;
   private final UserPermissionCacheService userPermissionCacheService;
+  private final MteEntitlementService mteEntitlementService;
 
   @Lazy private final CapabilitySetService capabilitySetService;
 
@@ -325,21 +327,45 @@ public class CapabilityService {
    * @param userId - user identifier as {@link UUID} value
    * @param onlyVisible - defines if UI or all permissions must be returned
    * @param desiredPermissions - list of desired permissions to find (supports wildcards)
+   * @param entitledOnly - when true, filter to only permissions from entitled applications
    * @return a {@link List} with folio permission names
    */
   @Transactional(readOnly = true)
-  public List<String> getUserPermissions(UUID userId, boolean onlyVisible, List<String> desiredPermissions) {
-    var allPermissions = userPermissionCacheService.getAllUserPermissions(userId);
+  public List<String> getUserPermissions(UUID userId, boolean onlyVisible, List<String> desiredPermissions,
+    boolean entitledOnly) {
+    var mappings = userPermissionCacheService.getUserPermissionMappings(userId);
+    var allPermissions = mappings.permissions();
 
+    List<String> resolved;
     if (onlyVisible) {
-      return filterByVisiblePrefixes(allPermissions);
+      resolved = filterByVisiblePrefixes(allPermissions);
+    } else if (isNotEmpty(desiredPermissions)) {
+      resolved = filterByDesiredPermissions(allPermissions, desiredPermissions);
+    } else {
+      resolved = allPermissions;
     }
 
-    if (isNotEmpty(desiredPermissions)) {
-      return filterByDesiredPermissions(allPermissions, desiredPermissions);
-    }
+    return entitledOnly ? filterByEntitledApplications(resolved, mappings.permissionToApplicationId()) : resolved;
+  }
 
-    return allPermissions;
+  private List<String> filterByEntitledApplications(List<String> permissions, Map<String, String> permToApp) {
+    try {
+      var entitledApps = mteEntitlementService.getEntitledApplicationIdsForCurrentTenant();
+      return permissions.stream()
+        .filter(permission -> {
+          var appId = permToApp.get(permission);
+          if (appId == null) {
+            log.debug("Dropping permission without app mapping in entitled-only mode: {}", permission);
+            return false;
+          }
+          return entitledApps.contains(appId);
+        })
+        .toList();
+    } catch (Exception e) {
+      var tenantId = folioExecutionContext.getTenantId();
+      log.warn("Failed to fetch entitled applications [tenant: {}]; returning unfiltered permissions", tenantId, e);
+      return permissions;
+    }
   }
 
   @Transactional(readOnly = true)

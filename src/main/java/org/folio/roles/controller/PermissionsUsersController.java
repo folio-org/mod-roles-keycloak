@@ -19,8 +19,12 @@ public class PermissionsUsersController implements PermissionsUsersApi {
 
   @Override
   public ResponseEntity<PermissionsUser> getPermissionsUser(UUID userId, Boolean onlyVisible,
-    List<String> desiredPermissions) {
-    var userPermissions = capabilityService.getUserPermissions(userId, TRUE.equals(onlyVisible), desiredPermissions);
+    List<String> desiredPermissions, Boolean entitledOnly) {
+    var userPermissions = capabilityService.getUserPermissions(
+      userId,
+      TRUE.equals(onlyVisible),
+      desiredPermissions,
+      TRUE.equals(entitledOnly));
     return ResponseEntity.ok(new PermissionsUser().userId(userId).permissions(userPermissions));
   }
 }

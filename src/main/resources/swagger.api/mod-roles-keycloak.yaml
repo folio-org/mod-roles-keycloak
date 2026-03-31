@@ -1037,7 +1037,9 @@ paths:
 
   /permissions/users/{id}:
     get:
-      description: Get permissions by user ID. If there is onlyVisible=true, then desiredPermissions are ignored.
+      description: >-
+        Get permissions by user ID. If onlyVisible=true, then desiredPermissions are ignored.
+        entitledOnly=true applies after onlyVisible and desiredPermissions filtering and may be combined with either.
       operationId: getPermissionsUser
       tags:
         - permissions-users
@@ -1045,6 +1047,7 @@ paths:
         - $ref: '#/components/parameters/pathEntityId'
         - $ref: '#/components/parameters/onlyVisible'
         - $ref: '#/components/parameters/desiredPermissions'
+        - $ref: '#/components/parameters/entitledOnly'
       responses:
         '200':
           description: Retrieve permissions by user id
@@ -1323,6 +1326,14 @@ components:
         items:
           type: string
       example: [ "users.item.get", "users.collection.*" ]
+    entitledOnly:
+      in: query
+      name: entitledOnly
+      description: Return only permissions from currently entitled applications
+      required: false
+      schema:
+        type: boolean
+        default: false
 
 #  examples:
 #    # roles
