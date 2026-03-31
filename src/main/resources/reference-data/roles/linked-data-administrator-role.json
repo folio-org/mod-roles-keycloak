@@ -1,0 +1,20 @@
+{
+  "roles": [
+    {
+      "name": "Linked Data Administrator",
+      "description": "Role for Linked Data Administrator",
+      "permissions": [
+        "linked-data-import.files.collection.post",
+        "linked-data-import.start.post",
+        "linked-data-import.jobs.item.get",
+        "linked-data-import.jobs.failed-lines.collection.get",
+        "linked-data-import.jobs.item.cancel.put",
+        "linked-data.batch.reindex.full.post",
+        "linked-data.batch.reindex.incremental.post",
+        "linked-data.batch.status.get",
+        "linked-data.batch.graph.cleaning.post",
+        "linked-data.admin.caches.delete"
+      ]
+    }
+  ]
+}
