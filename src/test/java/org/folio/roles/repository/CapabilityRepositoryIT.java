@@ -201,7 +201,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     var capabilityEntities = capabilityRepository.findAllByNames(List.of(capabilityEntity.getName(),
       dummyCapabilityEntity.getName()));
     assertThat(capabilityEntities).hasSize(1);
-    var actualCapability = capabilityEntities.get(0);
+    var actualCapability = capabilityEntities.getFirst();
     assertThat(actualCapability.getName()).isEqualTo(capabilityEntity.getName());
   }
 
@@ -283,7 +283,41 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
 
     var permissions = capabilityRepository.findAllFolioPermissions(userId);
     assertThat(permissions).hasSize(1);
-    assertThat(permissions.get(0)).isEqualTo("permission-not-for-dummy");
+    assertThat(permissions.getFirst()).isEqualTo("permission-not-for-dummy");
+  }
+
+  @Test
+  void findAllUserPermissionMappings_positive_returnsPermissionAndApplicationId() {
+    var capabilityEntity = capabilityEntity(null);
+    capabilityEntity.setPermission("perm-a");
+    var userId = UUID.randomUUID();
+    entityManager.persistAndFlush(capabilityEntity);
+    entityManager.persistAndFlush(userCapabilityEntity(userId, capabilityEntity.getId()));
+
+    var mappings = capabilityRepository.findAllUserPermissionMappings(userId);
+    assertThat(mappings).hasSize(1);
+    assertThat(mappings.getFirst().getPermission()).isEqualTo("perm-a");
+    assertThat(mappings.getFirst().getApplicationId()).isNotBlank();
+    assertThat(mappings.getFirst().getReplaces()).isNull();
+  }
+
+  @Test
+  void findAllUserPermissionMappings_positive_excludesDummyCapabilities() {
+    var capabilityEntity = capabilityEntity(null);
+    capabilityEntity.setPermission("perm-real");
+    var dummyCapabilityEntity = capabilityEntity(null);
+    dummyCapabilityEntity.setDummyCapability(true);
+    dummyCapabilityEntity.setName("dummy_" + UUID.randomUUID());
+    dummyCapabilityEntity.setPermission("perm-dummy");
+    var userId = UUID.randomUUID();
+    entityManager.persistAndFlush(capabilityEntity);
+    entityManager.persistAndFlush(dummyCapabilityEntity);
+    entityManager.persistAndFlush(userCapabilityEntity(userId, capabilityEntity.getId()));
+    entityManager.persistAndFlush(userCapabilityEntity(userId, dummyCapabilityEntity.getId()));
+
+    var mappings = capabilityRepository.findAllUserPermissionMappings(userId);
+    assertThat(mappings).hasSize(1);
+    assertThat(mappings.getFirst().getPermission()).isEqualTo("perm-real");
   }
 
   @Test
@@ -300,7 +334,7 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     var capabilityEntities = capabilityRepository
       .findAllByPermissionNames(List.of("permission-not-for-dummy", "permission-for-dummy"));
     assertThat(capabilityEntities).hasSize(1);
-    assertThat(capabilityEntities.get(0).isDummyCapability()).isFalse();
+    assertThat(capabilityEntities.getFirst().isDummyCapability()).isFalse();
 
     capabilityEntities = capabilityRepository
       .findAllByPermissionNamesIncludeDummy(List.of("permission-not-for-dummy", "permission-for-dummy"));

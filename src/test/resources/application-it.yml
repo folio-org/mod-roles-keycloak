@@ -38,6 +38,9 @@ application:
       batch-size: ${KC_PERMISSIONS_BATCH_SIZE:50}
   moduserskc:
     url: moduserskc
+  mte:
+    tls:
+      enabled: false
   folio-permissions:
     mapping:
       source-path: classpath:folio-permissions/mappings-overrides.json

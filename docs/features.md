@@ -7,11 +7,13 @@ This module provides the following features:
 | [Capability Event Migration Guard](features/capability-event-migration-guard.md) | Detects active Liquibase migrations before processing Kafka capability events and retries with back-off until the schema is ready | Active |
 | [User Permissions Cache](features/user-permissions-cache.md) | Caches user permission lookups with tenant-scoped eviction on role/capability changes | Active |
 | [Capability Event Deduplication](features/capability-event-deduplication.md) | De-duplicates capabilities by generated name and merges single-endpoint PUT/PATCH pairs for the same path | Active |
+| [Entitled User Permission Filtering](features/entitled-user-permission-filtering.md) | Filters user permissions to only those from applications currently entitled for the tenant when `entitledOnly=true` | Active |
 
 ## Quick Reference
 
 - **Caching**:
-  - `user-permissions`: Caches user permission lookups with 30-minute TTL, 1000 entry max
+  - `user-permissions`: Caches user permission mappings with tenant-scoped TTL (default 30s, 1000 entries max)
+  - `tenant-entitled-applications`: Caches entitled application IDs per tenant (default 60s TTL, 1000 entries max)
   - `keycloak-users`: Keycloak user lookup cache (180s TTL, 250 max)
   - `keycloak-user-id`: Keycloak user ID cache (180s TTL, 250 max)
   - `authorization-client-cache`: Keycloak authorization client cache (3600s TTL, 100 max)
@@ -23,3 +25,4 @@ This module provides the following features:
 - **External APIs**:
   - Keycloak Admin API (for role/policy/user management)
   - FOLIO permission mapping source (via `FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH`)
+  - mgr-tenant-entitlements REST API (for entitled application resolution, via `MTE_URL`)

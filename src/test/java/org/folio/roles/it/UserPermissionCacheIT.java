@@ -79,14 +79,14 @@ class UserPermissionCacheIT extends BaseIntegrationTest {
       .andExpect(status().isOk());
 
     // Verify repository was called only once (first call hit DB, second hit cache)
-    verify(capabilityRepository, times(1)).findAllFolioPermissions(USER_ID_1);
+    verify(capabilityRepository, times(1)).findAllUserPermissionMappings(USER_ID_1);
   }
 
   @Test
   void getUserPermissions_positive_cacheIsTenantScoped() throws Exception {
-    var tenant1CacheKey = TENANT_ID + ":" + USER_ID_1;
+    var tenant1CacheKey = TENANT_ID + ":" + USER_ID_1 + ":mappings";
     var tenant2 = "tenant2";
-    var tenant2CacheKey = tenant2 + ":" + USER_ID_1;
+    var tenant2CacheKey = tenant2 + ":" + USER_ID_1 + ":mappings";
 
     // Populate cache for tenant1
     mockMvc.perform(get("/permissions/users/{id}", USER_ID_1)
@@ -102,9 +102,9 @@ class UserPermissionCacheIT extends BaseIntegrationTest {
 
   @Test
   void cacheEviction_positive_evictsOnlyCurrentTenant() {
-    var tenant1CacheKey = TENANT_ID + ":" + USER_ID_1;
+    var tenant1CacheKey = TENANT_ID + ":" + USER_ID_1 + ":mappings";
     var tenant2 = "other_tenant";
-    var tenant2CacheKey = tenant2 + ":" + USER_ID_1;
+    var tenant2CacheKey = tenant2 + ":" + USER_ID_1 + ":mappings";
 
     var cache = getCaffeineCache(USER_PERMISSIONS_CACHE);
 
