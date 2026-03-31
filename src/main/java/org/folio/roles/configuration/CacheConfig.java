@@ -55,6 +55,12 @@ public class CacheConfig {
   @Value("${cache.user-permissions.max-size}")
   private int userPermissionsMaxSize;
 
+  @Value("${cache.tenant-entitled-applications.ttl}")
+  private Duration tenantEntitledApplicationsTtl;
+
+  @Value("${cache.tenant-entitled-applications.max-size}")
+  private int tenantEntitledApplicationsMaxSize;
+
   @Bean
   public CacheManager cacheManager() {
     var cacheManager = new SimpleCacheManager();
@@ -66,7 +72,8 @@ public class CacheConfig {
       buildCache("keycloak-user-id", keycloakUserIdMaxSize, keycloakUserIdTtl),
       buildCache("keycloak-login-client", keycloakLoginClientMaxSize, keycloakLoginClientTtl),
       buildCache("authorization-client-cache", authorizationClientMaxSize, authorizationClientTtl),
-      buildCache("user-permissions", userPermissionsMaxSize, userPermissionsTtl)
+      buildCache("user-permissions", userPermissionsMaxSize, userPermissionsTtl),
+      buildCache("tenant-entitled-applications", tenantEntitledApplicationsMaxSize, tenantEntitledApplicationsTtl)
     );
 
     cacheManager.setCaches(caches);
