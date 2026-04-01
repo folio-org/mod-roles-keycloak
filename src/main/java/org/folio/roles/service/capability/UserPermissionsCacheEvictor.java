@@ -46,7 +46,7 @@ public class UserPermissionsCacheEvictor {
         return;
       }
 
-      var cacheKey = tenantId + ":" + userId + ":mappings";
+      var cacheKey = tenantId + ":" + userId;
       cache.evict(cacheKey);
       log.debug("Evicted cache for user {} in tenant {}", userId, tenantId);
     } catch (Exception e) {

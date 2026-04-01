@@ -2,13 +2,13 @@
 feature_id: user-permissions-cache
 title: User Permissions Cache
 status: active
-updated: 2026-03-24
+updated: 02-02-2026
 ---
 
 # User Permissions Cache
 
 ## What it does
-Caches user permission lookups to avoid expensive database queries when checking what permissions a user has. The cache is tenant-scoped, using a cache key pattern of `{tenantId}:{userId}:mappings`. Cache entries are evicted automatically when permissions change via role assignments, capability assignments, or role definition modifications.
+Caches user permission lookups to avoid expensive database queries when checking what permissions a user has. The cache is tenant-scoped, using a cache key pattern of `{tenantId}:{userId}`. Cache entries are evicted automatically when permissions change via role assignments, capability assignments, or role definition modifications.
 
 ## Why it exists
 User permission lookups require joining multiple database tables (user_roles, roles, role_capabilities, capabilities) and are frequently accessed during authorization checks. Without caching, each permission check triggers database queries that impact performance. The cache reduces database load while maintaining consistency through event-driven eviction when permissions change.
@@ -23,10 +23,10 @@ User permission lookups require joining multiple database tables (user_roles, ro
 ## Caching
 
 ### What is cached
-For each user: a `UserPermissionMappings` record containing (1) the complete list of FOLIO permission names (including permissions inherited via the `replaces` field of a capability), and (2) a map from each permission name to the owning application ID. The application ID mapping is used by the [Entitled User Permission Filtering](entitled-user-permission-filtering.md) feature.
+The complete list of FOLIO permission names for a user (all permissions inherited from directly and indirectly assigned roles and capabilities).
 
 ### Cache key structure
-`{tenantId}:{userId}:mappings` — Cache entries are tenant-scoped, ensuring multi-tenant isolation.
+`{tenantId}:{userId}` - Cache entries are tenant-scoped, ensuring multi-tenant isolation.
 
 ### Cache eviction triggers
 - **User-scoped eviction**: Published when a specific user's permissions change
