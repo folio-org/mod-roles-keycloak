@@ -1,5 +1,7 @@
 package org.folio.roles.integration.mte;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 import org.folio.roles.integration.mte.model.MteApplicationDescriptors;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -10,7 +12,7 @@ import org.springframework.web.service.annotation.HttpExchange;
 /**
  * HTTP client for the mgr-tenant-entitlements service.
  */
-@HttpExchange(url = "entitlements")
+@HttpExchange(url = "entitlements", contentType = APPLICATION_JSON_VALUE, accept = APPLICATION_JSON_VALUE)
 public interface TenantEntitlementsClient {
 
   /**
