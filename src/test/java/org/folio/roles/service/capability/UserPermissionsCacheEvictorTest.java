@@ -220,7 +220,7 @@ class UserPermissionsCacheEvictorTest {
 
     evictor.evictUserPermissions(userId);
 
-    verify(caffeineCache).evict(TENANT_1 + ":" + userId + ":mappings");
+    verify(caffeineCache).evict(TENANT_1 + ":" + userId);
     verify(cacheManager).getCache(USER_PERMISSIONS_CACHE);
   }
 
@@ -260,6 +260,6 @@ class UserPermissionsCacheEvictorTest {
     evictor.evictUserPermissions(userId);
 
     verify(cacheManager).getCache(USER_PERMISSIONS_CACHE);
-    verify(caffeineCache).evict(TENANT_1 + ":" + userId + ":mappings");
+    verify(caffeineCache).evict(TENANT_1 + ":" + userId);
   }
 }

@@ -26,18 +26,14 @@ import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.domain.model.event.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.ResourceEventType;
-import org.folio.roles.integration.mte.MteEntitlementService;
 import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.CapabilityRepository;
-import org.folio.roles.service.capability.model.UserPermissionMappings;
 import org.folio.roles.support.TestUtils;
 import org.folio.roles.support.TestUtils.TestModRolesKeycloakModuleMetadata;
 import org.folio.spring.DefaultFolioExecutionContext;
@@ -73,15 +69,13 @@ class CapabilityServiceTest {
   @Mock private CapabilityEntityMapper capabilityEntityMapper;
   @Mock private ApplicationEventPublisher applicationEventPublisher;
   @Mock private UserPermissionCacheService userPermissionCacheService;
-  @Mock private MteEntitlementService mteEntitlementService;
   @Captor private ArgumentCaptor<CapabilityEvent> eventCaptor;
 
   @BeforeEach
   void setUp() {
     var folioExecutionContext = new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
     this.capabilityService = new CapabilityService(capabilityRepository, folioExecutionContext,
-      capabilityEntityMapper, applicationEventPublisher, userPermissionCacheService, mteEntitlementService,
-      capabilitySetService);
+      capabilityEntityMapper, applicationEventPublisher, userPermissionCacheService, capabilitySetService);
   }
 
   @AfterEach
@@ -575,9 +569,8 @@ class CapabilityServiceTest {
 
     @Test
     void positive() {
-      var mappings = new UserPermissionMappings(List.of(PERMISSION_NAME), Map.of(PERMISSION_NAME, APPLICATION_ID));
-      when(userPermissionCacheService.getUserPermissionMappings(USER_ID)).thenReturn(mappings);
-      var result = capabilityService.getUserPermissions(USER_ID, false, emptyList(), false);
+      when(userPermissionCacheService.getAllUserPermissions(USER_ID)).thenReturn(List.of(PERMISSION_NAME));
+      var result = capabilityService.getUserPermissions(USER_ID, false, emptyList());
 
       assertThat(result).containsExactly(PERMISSION_NAME);
     }
@@ -585,10 +578,9 @@ class CapabilityServiceTest {
     @Test
     void positive_onlyVisiblePermissions() {
       var uiPermission = "ui-users.view";
-      var mappings = new UserPermissionMappings(List.of(PERMISSION_NAME, uiPermission),
-        Map.of(PERMISSION_NAME, APPLICATION_ID, uiPermission, APPLICATION_ID));
-      when(userPermissionCacheService.getUserPermissionMappings(USER_ID)).thenReturn(mappings);
-      var result = capabilityService.getUserPermissions(USER_ID, true, emptyList(), false);
+      when(userPermissionCacheService.getAllUserPermissions(USER_ID))
+        .thenReturn(List.of(PERMISSION_NAME, uiPermission));
+      var result = capabilityService.getUserPermissions(USER_ID, true, emptyList());
 
       assertThat(result).containsExactly(uiPermission);
     }
@@ -596,67 +588,12 @@ class CapabilityServiceTest {
     @ParameterizedTest(name = "{index} desired: {0}, user's: {1}, resolved: {2}")
     @MethodSource("permissionsProvider")
     void positive_desiredPermissions(List<String> desiredPerms, List<String> userPerms, List<String> resolvedPerms) {
-      var permToApp = userPerms.stream().collect(Collectors.toMap(p -> p, p -> APPLICATION_ID, (a, b) -> a));
-      var mappings = new UserPermissionMappings(userPerms, permToApp);
-      when(userPermissionCacheService.getUserPermissionMappings(USER_ID)).thenReturn(mappings);
+      // Mock the cache to return the user's permissions
+      when(userPermissionCacheService.getAllUserPermissions(USER_ID)).thenReturn(userPerms);
 
-      var result = capabilityService.getUserPermissions(USER_ID, false, desiredPerms, false);
+      var result = capabilityService.getUserPermissions(USER_ID, false, desiredPerms);
 
       assertThat(result).containsExactlyInAnyOrderElementsOf(resolvedPerms);
-    }
-
-    @Test
-    void positive_onlyVisibleAndEntitledOnly() {
-      var uiPermissionEntitled = "ui-foo.item.delete";
-      var uiPermissionNotEntitled = "ui-bar.item.get";
-      var mappings = new UserPermissionMappings(
-        List.of(uiPermissionEntitled, uiPermissionNotEntitled, PERMISSION_NAME),
-        Map.of(uiPermissionEntitled, "app-a-1.0.0", uiPermissionNotEntitled, "app-b-1.0.0",
-          PERMISSION_NAME, "app-a-1.0.0"));
-      when(userPermissionCacheService.getUserPermissionMappings(USER_ID)).thenReturn(mappings);
-      when(mteEntitlementService.getEntitledApplicationIdsForCurrentTenant()).thenReturn(Set.of("app-a-1.0.0"));
-
-      var result = capabilityService.getUserPermissions(USER_ID, true, emptyList(), true);
-      assertThat(result).containsExactly(uiPermissionEntitled);
-    }
-
-    @Test
-    void positive_entitledOnlyAppliedAfterDesiredPermissions() {
-      var mappings = new UserPermissionMappings(
-        List.of("ui-foo.item.delete", "module.foo.item.post"),
-        Map.of("ui-foo.item.delete", "app-a-1.0.0", "module.foo.item.post", "app-b-1.0.0"));
-      when(userPermissionCacheService.getUserPermissionMappings(USER_ID)).thenReturn(mappings);
-      when(mteEntitlementService.getEntitledApplicationIdsForCurrentTenant()).thenReturn(Set.of("app-a-1.0.0"));
-
-      var result = capabilityService.getUserPermissions(USER_ID, false, List.of("ui-foo.item.*", "module.foo.item.*"),
-        true);
-      assertThat(result).containsExactly("ui-foo.item.delete");
-    }
-
-    @Test
-    void positive_mteFailureReturnsUnfilteredPermissions() {
-      var mappings = new UserPermissionMappings(List.of("ui-foo.item.delete"),
-        Map.of("ui-foo.item.delete", "app-a-1.0.0"));
-      when(userPermissionCacheService.getUserPermissionMappings(USER_ID)).thenReturn(mappings);
-      when(mteEntitlementService.getEntitledApplicationIdsForCurrentTenant())
-        .thenThrow(new RuntimeException("mte down"));
-
-      var result = capabilityService.getUserPermissions(USER_ID, false, emptyList(), true);
-      assertThat(result).containsExactly("ui-foo.item.delete");
-    }
-
-    @Test
-    void positive_mteFailureLogsTenantAndReturnsUnfiltered(CapturedOutput output) {
-      var mappings = new UserPermissionMappings(List.of("ui-foo.item.delete"),
-        Map.of("ui-foo.item.delete", "app-a-1.0.0"));
-      when(userPermissionCacheService.getUserPermissionMappings(USER_ID)).thenReturn(mappings);
-      when(mteEntitlementService.getEntitledApplicationIdsForCurrentTenant())
-        .thenThrow(new RuntimeException("mte down"));
-
-      var result = capabilityService.getUserPermissions(USER_ID, false, emptyList(), true);
-
-      assertThat(result).containsExactly("ui-foo.item.delete");
-      assertThat(output.getAll()).contains("Failed to fetch entitled applications [tenant:");
     }
   }
 
