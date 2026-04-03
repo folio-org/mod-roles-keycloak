@@ -1,6 +1,7 @@
 spring:
   application:
     name: mod-roles-keycloak
+    version: ${MODULE_VERSION:}
   jackson:
     default-property-inclusion: non_null
     deserialization:

@@ -34,7 +34,8 @@ public class KafkaMessageListener {
     id = "capability-event-listener",
     containerFactory = "kafkaListenerContainerFactory",
     groupId = "#{folioKafkaProperties.listener['capability'].groupId}",
-    topicPattern = "#{folioKafkaProperties.listener['capability'].topicPattern}")
+    topicPattern = "#{folioKafkaProperties.listener['capability'].topicPattern}",
+    filter = "tenantAwareMessageFilter")
   public void handleCapabilityEvent(ResourceEvent resourceEvent) {
     try (
       var ignored = new FolioExecutionContextSetter(executionContextBuilder.buildContext(resourceEvent.getTenant()))) {
