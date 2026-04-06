@@ -23,7 +23,7 @@ public class ChainedModuleDataProvider implements ModuleDataProvider {
       try {
         return provider.getModuleData();
       } catch (IllegalStateException e) {
-        log.info("ModuleDataProvider {} failed to provide module data with error: {}",
+        log.info("ModuleDataProvider {} failed to provide module data with error: {}. Attempting next one in the chain",
           provider.getClass().getSimpleName(), e.getMessage());
       }
     }

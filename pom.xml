@@ -591,6 +591,22 @@
         </configuration>
       </plugin>
     </plugins>
+
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <excludes>
+          <exclude>**/module.properties</exclude>
+        </excludes>
+      </testResource>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+        <includes>
+          <include>**/module.properties</include>
+        </includes>
+      </testResource>
+    </testResources>
   </build>
 
   <repositories>

@@ -40,7 +40,7 @@ public class EnabledTenantMessageFilter<K, V extends ResourceEvent> implements R
       var enabledTenants = tenantEntitlementService.getEnabledTenants();
       result = !enabledTenants.contains(tenant);
     } catch (NoTenantsEnabledException e) {
-      log.warn("No tenants are enabled for the module. Applying no enabled tenants strategy: {}",
+      log.warn("No tenants are enabled for the module. Applying 'no enabled tenants' strategy: {}",
         noEnabledTenantsStrategy);
 
       result = switch (noEnabledTenantsStrategy) {

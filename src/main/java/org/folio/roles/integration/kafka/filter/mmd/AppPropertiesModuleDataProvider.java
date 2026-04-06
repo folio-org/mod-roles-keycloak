@@ -23,5 +23,4 @@ public class AppPropertiesModuleDataProvider implements ModuleDataProvider {
       return new ModuleData(applicationName, applicationVersion);
     }
   }
-
 }

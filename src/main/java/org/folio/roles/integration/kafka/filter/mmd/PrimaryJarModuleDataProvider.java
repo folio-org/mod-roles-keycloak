@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
 import java.util.jar.JarFile;
-import org.apache.commons.lang3.tuple.Pair;
-import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
@@ -22,33 +20,11 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
  * {@link #getModuleData()}. Subsequent calls return the cached result without
  * re-reading the JAR.
  */
-abstract class PrimaryJarModuleDataProvider implements ModuleDataProvider {
+abstract class PrimaryJarModuleDataProvider extends AbstractResourceModuleDataProvider {
 
-  private volatile @Nullable Pair<@Nullable IllegalStateException, @Nullable ModuleData> data;
+  private static final String BASE_PACKAGE = "org.folio";
 
-  /**
-   * Returns the module data, loading it from the primary JAR on the first call.
-   */
-  public ModuleData getModuleData() {
-    if (data == null) {
-      synchronized (this) {
-        if (data == null) {
-          try {
-            data = Pair.of(null, load());
-          } catch (IllegalStateException e) {
-            data = Pair.of(e, null);
-          }
-        }
-      }
-    }
-
-    if (data.getLeft() != null) {
-      throw data.getLeft();
-    }
-    return data.getRight();
-  }
-
-  private ModuleData load() {
+  protected ModuleData load() {
     var referenceClass = findSpringBootApplicationClass();
     var location = referenceClass.getProtectionDomain().getCodeSource().getLocation();
     try (var jar = new JarFile(new File(location.toURI()))) {
@@ -73,7 +49,7 @@ abstract class PrimaryJarModuleDataProvider implements ModuleDataProvider {
   private static Class<?> findSpringBootApplicationClass() {
     var scanner = new ClassPathScanningCandidateComponentProvider(false);
     scanner.addIncludeFilter(new AnnotationTypeFilter(SpringBootApplication.class));
-    return scanner.findCandidateComponents("")
+    return scanner.findCandidateComponents(BASE_PACKAGE)
       .stream()
       .map(BeanDefinition::getBeanClassName)
       .filter(Objects::nonNull)
