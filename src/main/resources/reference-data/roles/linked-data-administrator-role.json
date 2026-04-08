@@ -8,7 +8,7 @@
         "linked-data-import.start.post",
         "linked-data-import.jobs.item.get",
         "linked-data-import.jobs.failed-lines.collection.get",
-        "linked-data-import.jobs.item.cancel.put",
+        "linked-data-import.jobs.item.stop.put",
         "linked-data.batch.reindex.full.post",
         "linked-data.batch.reindex.incremental.post",
         "linked-data.batch.status.get",
