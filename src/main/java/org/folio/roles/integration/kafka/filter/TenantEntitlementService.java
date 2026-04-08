@@ -18,10 +18,10 @@ public class TenantEntitlementService {
     this.tenantEntitlementClient = tenantEntitlementClient;
   }
 
-  public Set<String> getEnabledTenants() throws NoTenantsEnabledException {
+  public Set<String> getEnabledTenants() throws TenantsNotEnabledException {
     var result = tenantEntitlementClient.lookupTenantsByModuleId(moduleId);
     if (isEmpty(result)) {
-      throw NoTenantsEnabledException.forModule(moduleId);
+      throw TenantsNotEnabledException.forModule(moduleId);
     }
 
     log.debug("Tenants entitled for module: {}", result);

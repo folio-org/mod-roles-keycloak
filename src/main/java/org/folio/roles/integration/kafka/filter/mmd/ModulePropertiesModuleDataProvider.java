@@ -22,6 +22,10 @@ public class ModulePropertiesModuleDataProvider extends AbstractResourceModuleDa
     this(new PathMatchingResourcePatternResolver(), DEFAULT_MODULE_PROPERTIES_FILE);
   }
 
+  public ModulePropertiesModuleDataProvider(ResourceLoader resourceLoader) {
+    this(resourceLoader, DEFAULT_MODULE_PROPERTIES_FILE);
+  }
+
   public ModulePropertiesModuleDataProvider(ResourceLoader resourceLoader, String modulePropertiesLocation) {
     Objects.requireNonNull(resourceLoader, "Resource loader is required");
     this.resourceLoader = resourceLoader;

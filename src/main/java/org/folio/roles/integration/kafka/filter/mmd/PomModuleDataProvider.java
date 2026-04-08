@@ -16,7 +16,7 @@ import java.util.jar.JarFile;
  * {@code META-INF/maven/<groupId>/<artifactId>/pom.properties},
  * containing {@code artifactId} and {@code version} properties.
  */
-public class PomPropertiesModuleDataProvider extends PrimaryJarModuleDataProvider {
+public class PomModuleDataProvider extends PrimaryJarModuleDataProvider {
 
   private static final String POM_PROPERTIES_PREFIX = "META-INF/maven/";
   private static final String POM_PROPERTIES_SUFFIX = "/pom.properties";

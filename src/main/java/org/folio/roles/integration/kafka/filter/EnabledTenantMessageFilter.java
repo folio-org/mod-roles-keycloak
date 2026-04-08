@@ -1,6 +1,6 @@
 package org.folio.roles.integration.kafka.filter;
 
-import static org.folio.roles.integration.kafka.filter.EnabledTenantMessageFilter.NoEnabledTenantsStrategy.FAIL;
+import static org.folio.roles.integration.kafka.filter.TenantsNotEnabledStrategy.FAIL;
 
 import java.util.Objects;
 import lombok.extern.log4j.Log4j2;
@@ -13,18 +13,18 @@ public class EnabledTenantMessageFilter<K, V extends ResourceEvent> implements R
 
   private final TenantEntitlementService tenantEntitlementService;
   private final boolean ignoreEmptyBatch;
-  private final NoEnabledTenantsStrategy noEnabledTenantsStrategy;
+  private final TenantsNotEnabledStrategy tenantsNotEnabledStrategy;
 
   public EnabledTenantMessageFilter(TenantEntitlementService tenantEntitlementService, boolean ignoreEmptyBatch) {
     this(tenantEntitlementService, ignoreEmptyBatch, FAIL);
   }
 
   public EnabledTenantMessageFilter(TenantEntitlementService tenantEntitlementService, boolean ignoreEmptyBatch,
-    NoEnabledTenantsStrategy noEnabledTenantsStrategy) {
-    Objects.requireNonNull(noEnabledTenantsStrategy, "NoEnabledTenantsStrategy must not be null");
+    TenantsNotEnabledStrategy tenantsNotEnabledStrategy) {
+    Objects.requireNonNull(tenantsNotEnabledStrategy, "TenantsNotEnabledStrategy must not be null");
     this.tenantEntitlementService = tenantEntitlementService;
     this.ignoreEmptyBatch = ignoreEmptyBatch;
-    this.noEnabledTenantsStrategy = noEnabledTenantsStrategy;
+    this.tenantsNotEnabledStrategy = tenantsNotEnabledStrategy;
   }
 
   @Override
@@ -39,11 +39,11 @@ public class EnabledTenantMessageFilter<K, V extends ResourceEvent> implements R
     try {
       var enabledTenants = tenantEntitlementService.getEnabledTenants();
       result = !enabledTenants.contains(tenant);
-    } catch (NoTenantsEnabledException e) {
+    } catch (TenantsNotEnabledException e) {
       log.warn("No tenants are enabled for the module. Applying 'no enabled tenants' strategy: {}",
-        noEnabledTenantsStrategy);
+        tenantsNotEnabledStrategy);
 
-      result = switch (noEnabledTenantsStrategy) {
+      result = switch (tenantsNotEnabledStrategy) {
         case ACCEPT -> false;
         case FILTER_OUT -> true;
         case FAIL -> throw e;
@@ -59,9 +59,5 @@ public class EnabledTenantMessageFilter<K, V extends ResourceEvent> implements R
   @Override
   public boolean ignoreEmptyBatch() {
     return ignoreEmptyBatch;
-  }
-
-  public enum NoEnabledTenantsStrategy {
-    FAIL, ACCEPT, FILTER_OUT
   }
 }
