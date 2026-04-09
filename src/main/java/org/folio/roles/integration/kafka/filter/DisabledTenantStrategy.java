@@ -1,7 +1,7 @@
 package org.folio.roles.integration.kafka.filter;
 
-public enum TenantsNotEnabledStrategy {
-  FAIL,
+public enum DisabledTenantStrategy {
   ACCEPT,
-  FILTER_OUT
+  SKIP,
+  FAIL
 }

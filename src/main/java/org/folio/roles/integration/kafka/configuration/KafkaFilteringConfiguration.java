@@ -19,10 +19,15 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 public class KafkaFilteringConfiguration {
 
   @ConditionalOnProperty(value = "application.kafka.filtering.tenant-filter.enabled")
-  @RequiredArgsConstructor
   public static class TenantFilterConfiguration {
 
+    private final ModuleMetadata moduleMetadata;
     private final TenantFilter tenantFilter;
+
+    public TenantFilterConfiguration(ModuleMetadata moduleMetadata, FolioKafkaProperties kafkaProperties) {
+      this.moduleMetadata = moduleMetadata;
+      this.tenantFilter = kafkaProperties.getFiltering().getTenantFilter();
+    }
 
     @Bean
     public TenantEntitlementClient tenantEntitlementClient(HttpServiceProxyFactory factory) {
@@ -30,19 +35,19 @@ public class KafkaFilteringConfiguration {
     }
 
     @Bean
-    public TenantEntitlementService tenantEntitlementService(TenantEntitlementClient tenantEntitlementClient,
-      ModuleMetadata moduleMetadata) {
-      var moduleId = moduleMetadata.getModuleId();
-      return new TenantEntitlementService(moduleId, tenantEntitlementClient);
+    public TenantEntitlementService tenantEntitlementService(TenantEntitlementClient tenantEntitlementClient) {
+      return new TenantEntitlementService(moduleMetadata.getModuleId(), tenantEntitlementClient);
     }
 
     @Bean("tenantAwareMessageFilter")
     public <K, V extends ResourceEvent> RecordFilterStrategy<K, V> enabledTenantMessageFilter(
       TenantEntitlementService tenantEntitlementService) {
       return new EnabledTenantMessageFilter<>(
+        moduleMetadata.getModuleId(),
         tenantEntitlementService,
         tenantFilter.isIgnoreEmptyBatch(),
-        tenantFilter.getTenantsNotEnabledStrategy()
+        tenantFilter.getTenantDisabledStrategy(),
+        tenantFilter.getAllTenantsDisabledStrategy()
       );
     }
   }

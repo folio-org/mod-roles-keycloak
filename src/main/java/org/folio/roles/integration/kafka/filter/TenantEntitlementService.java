@@ -1,7 +1,5 @@
 package org.folio.roles.integration.kafka.filter;
 
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-
 import java.util.Objects;
 import java.util.Set;
 import lombok.extern.log4j.Log4j2;
@@ -18,12 +16,8 @@ public class TenantEntitlementService {
     this.tenantEntitlementClient = tenantEntitlementClient;
   }
 
-  public Set<String> getEnabledTenants() throws TenantsNotEnabledException {
+  public Set<String> getEnabledTenants() throws TenantsAreDisabledException {
     var result = tenantEntitlementClient.lookupTenantsByModuleId(moduleId);
-    if (isEmpty(result)) {
-      throw TenantsNotEnabledException.forModule(moduleId);
-    }
-
     log.debug("Tenants entitled for module: {}", result);
     return result;
   }

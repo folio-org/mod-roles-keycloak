@@ -56,7 +56,7 @@ public class ModuleMetadataConfiguration {
   }
 
   @Bean("moduleDataProvider")
-  @ConditionalOnMissingBean
+  @ConditionalOnMissingBean(name = "moduleDataProvider")
   public ModuleDataProvider moduleDataProvider(List<ModuleDataProvider> providers) {
     return new ChainedModuleDataProvider(providers);
   }

@@ -11,6 +11,8 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.folio.roles.integration.kafka.filter.TenantIsDisabledException;
+import org.folio.roles.integration.kafka.filter.TenantsAreDisabledException;
 import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.spring.exception.LiquibaseMigrationException;
 import org.hibernate.exception.SQLGrammarException;
@@ -66,6 +68,12 @@ public class KafkaConfiguration {
   private BackOff getBackOff(Exception exception) {
     if (exception instanceof LiquibaseMigrationException) {
       log.warn("Liquibase migration in progress, retrying Kafka event", exception);
+      return getFixedBackOff();
+    }
+
+    if (exception instanceof TenantsAreDisabledException
+      || exception instanceof TenantIsDisabledException) {
+      log.warn("Tenant(s) is disabled, retrying Kafka event", exception);
       return getFixedBackOff();
     }
 

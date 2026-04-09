@@ -113,7 +113,8 @@ application:
       tenant-filter:
         enabled: true
         ignore-empty-batch: true
-        tenants-not-enabled-strategy: fail
+        tenant-disabled-strategy: skip
+        all-tenants-disabled-strategy: fail
   retry:
     capability-event:
       retry-attempts: ${CAPABILITY_TOPIC_RETRY_ATTEMPTS:9223372036854775807}
