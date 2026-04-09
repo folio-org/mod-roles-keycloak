@@ -31,6 +31,7 @@ import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
+import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.service.ServiceUtils.UpdatePair;
 import org.folio.spring.data.OffsetRequest;
@@ -44,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class LoadableRoleService {
 
   private final LoadableRoleRepository repository;
+  private final LoadablePermissionRepository permissionRepository;
   private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
   private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
@@ -92,17 +94,46 @@ public class LoadableRoleService {
       .forEach(this::saveAllByType);
   }
 
-  @Transactional
   public LoadableRole upsertDefaultLoadableRole(LoadableRole loadableRole) {
     prepareLoadableRole(loadableRole);
     var incoming = mapper.toRoleEntity(loadableRole);
-    var existing = findAllDefaultRolesNotLoadedFromFiles();
+    var existingRole = repository.findByIdOrNameWithPermissions(loadableRole.getId(), loadableRole.getName());
 
-    mergeInBatch(List.of(incoming), existing, comparatorById(), this::createAll, this::updateAll, nothing());
+    if (existingRole.isEmpty()) {
+      createDefaultLoadableRole(incoming);
+    } else {
+      updateAll(List.of(new UpdatePair<>(incoming, existingRole.get())));
+    }
 
-    var saved = repository.findByIdOrName(loadableRole.getId(), loadableRole.getName())
+    var saved = repository.findByIdOrNameWithPermissions(loadableRole.getId(), loadableRole.getName())
       .orElseThrow(() -> new ServiceException("Loadable role not found in DB"));
     return mapper.toRole(saved);
+  }
+
+  private void createDefaultLoadableRole(LoadableRoleEntity entity) {
+    var role = mapper.toRegularRole(entity);
+    UUID roleId;
+    try {
+      roleId = keycloakService.findByName(role.getName())
+        .orElseGet(() -> keycloakService.create(role))
+        .getId();
+    } catch (Exception e) {
+      throw new ServiceException("Failed to create default loadable role in keycloak", e);
+    }
+
+    updateRoleId(entity, roleId);
+    try {
+      repository.save(entity);
+      log.info("Default loadable role has been created: id = {}, name = {}", entity.getId(), entity.getName());
+    } catch (Exception e) {
+      deleteByIdSafe(entity.getId());
+      throw new ServiceException("Failed to create default loadable role in database", e);
+    }
+
+    var changed = assignmentHelper.assignCapabilitiesAndSetsForPermissions(entity.getPermissions());
+    if (isNotEmpty(changed)) {
+      permissionRepository.saveAll(changed);
+    }
   }
 
   /**
@@ -186,12 +217,6 @@ public class LoadableRoleService {
 
   private List<LoadableRoleEntity> findAllDefaultRolesLoadedFromFiles() {
     try (var defaultRoles = repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, true)) {
-      return defaultRoles.toList();
-    }
-  }
-
-  private List<LoadableRoleEntity> findAllDefaultRolesNotLoadedFromFiles() {
-    try (var defaultRoles = repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, false)) {
       return defaultRoles.toList();
     }
   }

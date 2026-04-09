@@ -9,18 +9,20 @@ import static org.folio.roles.support.LoadableRoleUtils.loadableRoleEntity;
 import static org.folio.roles.support.LoadableRoleUtils.regularRole;
 import static org.folio.roles.support.RoleUtils.role;
 import static org.folio.roles.support.TestUtils.copy;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
+import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
@@ -42,6 +44,7 @@ class LoadableRoleServiceTest {
 
   @InjectMocks private LoadableRoleService service;
   @Mock private LoadableRoleRepository repository;
+  @Mock private LoadablePermissionRepository permissionRepository;
   @Mock private LoadableRoleMapper mapper;
   @Mock private KeycloakRoleService keycloakService;
   @Mock private LoadableRoleCapabilityAssignmentHelper capabilityAssignmentHelper;
@@ -187,17 +190,16 @@ class LoadableRoleServiceTest {
       var createdRegularRole = regularRole(role);
       var regularRole = copy(createdRegularRole).id(null);
 
-      when(repository.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
+      when(repository.findByIdOrName(role.getId(), role.getName()))
+        .thenReturn(Optional.empty());
+      when(repository.findByIdOrNameWithPermissions(role.getId(), role.getName()))
+        .thenReturn(Optional.empty(), Optional.of(roleEntity));
       when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
-      when(repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, false)).thenReturn(Stream.empty());
       when(mapper.toRegularRole(roleEntity)).thenReturn(regularRole);
       when(keycloakService.findByName(regularRole.getName())).thenReturn(Optional.empty());
       when(keycloakService.create(regularRole)).thenReturn(createdRegularRole);
-      when(repository.saveAndFlush(roleEntity)).thenReturn(roleEntity);
-      when(capabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(roleEntity.getPermissions()))
-        .thenReturn(roleEntity.getPermissions());
-      when(repository.saveAllAndFlush(org.mockito.ArgumentMatchers.anyList())).thenReturn(List.of(roleEntity));
-      when(repository.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.of(roleEntity));
+      when(repository.save(roleEntity)).thenReturn(roleEntity);
+      when(capabilityAssignmentHelper.assignCapabilitiesAndSetsForPermissions(anyCollection())).thenReturn(Set.of());
       when(mapper.toRole(roleEntity)).thenReturn(role);
 
       var actual = service.upsertDefaultLoadableRole(role);
@@ -211,16 +213,18 @@ class LoadableRoleServiceTest {
       var roleEntity = loadableRoleEntity(role);
       var regularRole = regularRole(role);
 
-      when(repository.findByIdOrName(role.getId(), role.getName())).thenReturn(Optional.empty());
+      when(repository.findByIdOrName(role.getId(), role.getName()))
+        .thenReturn(Optional.empty());
+      when(repository.findByIdOrNameWithPermissions(role.getId(), role.getName()))
+        .thenReturn(Optional.empty());
       when(mapper.toRoleEntity(role)).thenReturn(roleEntity);
-      when(repository.findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, false)).thenReturn(Stream.empty());
       when(mapper.toRegularRole(roleEntity)).thenReturn(regularRole);
       when(keycloakService.findByName(regularRole.getName())).thenReturn(Optional.empty());
       when(keycloakService.create(regularRole)).thenThrow(new RuntimeException("Keycloak error"));
 
       assertThatThrownBy(() -> service.upsertDefaultLoadableRole(role))
         .isInstanceOf(ServiceException.class)
-        .hasMessage("Failed to create loadable roles")
+        .hasMessage("Failed to create default loadable role in keycloak")
         .satisfies(throwable -> {
           var se = (ServiceException) throwable;
 
