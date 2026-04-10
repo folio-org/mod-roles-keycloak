@@ -100,17 +100,36 @@ public class LoadableRoleService {
     var existingRole = repository.findByIdOrNameWithPermissions(loadableRole.getId(), loadableRole.getName());
 
     if (existingRole.isEmpty()) {
-      createDefaultLoadableRole(incoming);
+      var updated = createDefaultLodableRoleInKeycloak(incoming);
+      createDefaultLoadableRole(updated);
+      var saved = repository.findByIdOrNameWithPermissions(loadableRole.getId(), loadableRole.getName())
+        .orElseThrow(() -> new ServiceException("Loadable role not found in DB"));
+
+      var changed = assignmentHelper.assignCapabilitiesAndSetsForPermissions(saved.getPermissions());
+      if (isNotEmpty(changed)) {
+        permissionRepository.saveAll(changed);
+      }
+      return mapper.toRole(saved);
     } else {
       updateAll(List.of(new UpdatePair<>(incoming, existingRole.get())));
+      var saved = repository.findByIdOrNameWithPermissions(loadableRole.getId(), loadableRole.getName())
+        .orElseThrow(() -> new ServiceException("Loadable role not found in DB"));
+      return mapper.toRole(saved);
     }
-
-    var saved = repository.findByIdOrNameWithPermissions(loadableRole.getId(), loadableRole.getName())
-      .orElseThrow(() -> new ServiceException("Loadable role not found in DB"));
-    return mapper.toRole(saved);
   }
 
   private void createDefaultLoadableRole(LoadableRoleEntity entity) {
+
+    try {
+      repository.save(entity);
+      log.info("Default loadable role has been created: id = {}, name = {}", entity.getId(), entity.getName());
+    } catch (Exception e) {
+      deleteByIdSafe(entity.getId());
+      throw new ServiceException("Failed to create default loadable role in database", e);
+    }
+  }
+
+  private LoadableRoleEntity createDefaultLodableRoleInKeycloak(LoadableRoleEntity entity) {
     var role = mapper.toRegularRole(entity);
     UUID roleId;
     try {
@@ -122,18 +141,7 @@ public class LoadableRoleService {
     }
 
     updateRoleId(entity, roleId);
-    try {
-      repository.save(entity);
-      log.info("Default loadable role has been created: id = {}, name = {}", entity.getId(), entity.getName());
-    } catch (Exception e) {
-      deleteByIdSafe(entity.getId());
-      throw new ServiceException("Failed to create default loadable role in database", e);
-    }
-
-    var changed = assignmentHelper.assignCapabilitiesAndSetsForPermissions(entity.getPermissions());
-    if (isNotEmpty(changed)) {
-      permissionRepository.saveAll(changed);
-    }
+    return entity;
   }
 
   /**
