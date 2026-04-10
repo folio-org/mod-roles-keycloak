@@ -2,24 +2,25 @@ package org.folio.roles.integration.kafka.filter.mmd;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class ChainedModuleDataProvider implements ModuleDataProvider {
+public class CompositeModuleDataProvider implements ModuleDataProvider {
 
-  private final List<ModuleDataProvider> providers;
+  private final List<ModuleDataProvider> delegates;
 
-  public ChainedModuleDataProvider(List<ModuleDataProvider> providers) {
-    if (isEmpty(providers)) {
+  public CompositeModuleDataProvider(List<ModuleDataProvider> delegates) {
+    if (isEmpty(delegates)) {
       throw new IllegalArgumentException("At least one module data provider must be set");
     }
-    this.providers = providers;
+    this.delegates = new ArrayList<>(delegates);
   }
 
   @Override
   public ModuleData getModuleData() {
-    for (ModuleDataProvider provider : providers) {
+    for (ModuleDataProvider provider : delegates) {
       try {
         return provider.getModuleData();
       } catch (IllegalStateException e) {

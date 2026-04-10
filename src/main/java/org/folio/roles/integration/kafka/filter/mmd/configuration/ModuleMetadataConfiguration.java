@@ -3,7 +3,7 @@ package org.folio.roles.integration.kafka.filter.mmd.configuration;
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.integration.kafka.filter.mmd.AppPropertiesModuleDataProvider;
-import org.folio.roles.integration.kafka.filter.mmd.ChainedModuleDataProvider;
+import org.folio.roles.integration.kafka.filter.mmd.CompositeModuleDataProvider;
 import org.folio.roles.integration.kafka.filter.mmd.ManifestModuleDataProvider;
 import org.folio.roles.integration.kafka.filter.mmd.ModuleData;
 import org.folio.roles.integration.kafka.filter.mmd.ModuleDataProvider;
@@ -58,7 +58,7 @@ public class ModuleMetadataConfiguration {
   @Bean("moduleDataProvider")
   @ConditionalOnMissingBean(name = "moduleDataProvider")
   public ModuleDataProvider moduleDataProvider(List<ModuleDataProvider> providers) {
-    return new ChainedModuleDataProvider(providers);
+    return new CompositeModuleDataProvider(providers);
   }
 
   @Bean
