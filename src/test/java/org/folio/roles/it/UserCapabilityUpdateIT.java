@@ -38,13 +38,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
+import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.KeycloakTestClient;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.UserCapabilitiesRequest;
 import org.folio.roles.domain.dto.UserCapabilitySetsRequest;
-import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;

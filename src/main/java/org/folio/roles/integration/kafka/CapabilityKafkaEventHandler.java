@@ -2,8 +2,8 @@ package org.folio.roles.integration.kafka;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.common.utils.CollectionUtils.toStream;
-import static org.folio.roles.integration.kafka.model.ResourceEventType.CREATE;
-import static org.folio.roles.integration.kafka.model.ResourceEventType.UPDATE;
+import static org.folio.integration.kafka.model.ResourceEventType.CREATE;
+import static org.folio.integration.kafka.model.ResourceEventType.UPDATE;
 import static org.folio.roles.utils.CapabilityUtils.getNameFromAppOrModuleId;
 import static org.folio.roles.utils.CollectionUtils.toSet;
 
@@ -14,13 +14,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.model.CapabilityReplacements;
 import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
 import org.folio.roles.integration.kafka.model.FolioResource;
 import org.folio.roles.integration.kafka.model.Permission;
-import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.permission.FolioPermissionService;
@@ -47,7 +47,7 @@ public class CapabilityKafkaEventHandler {
    * @param resourceEvent - resource event from message bus
    */
   @Transactional
-  public Optional<CapabilityReplacements> handleEvent(ResourceEvent resourceEvent) {
+  public Optional<CapabilityReplacements> handleEvent(ResourceEvent<?> resourceEvent) {
     var eventType = resourceEvent.getType();
     var newValue = objectMapper.convertValue(resourceEvent.getNewValue(), CapabilityEvent.class);
     var oldValue = objectMapper.convertValue(resourceEvent.getOldValue(), CapabilityEvent.class);

@@ -2,7 +2,7 @@ package org.folio.roles.integration.kafka;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.roles.service.capability.UserPermissionsCacheEvictor;
 import org.folio.spring.context.ExecutionContextBuilder;
@@ -33,10 +33,10 @@ public class KafkaMessageListener {
   @KafkaListener(
     id = "capability-event-listener",
     containerFactory = "kafkaListenerContainerFactory",
-    groupId = "#{folioKafkaProperties.listener['capability'].groupId}",
-    topicPattern = "#{folioKafkaProperties.listener['capability'].topicPattern}",
+    groupId = "#{kafkaConsumerProperties.listener['capability'].groupId}",
+    topicPattern = "#{kafkaConsumerProperties.listener['capability'].topicPattern}",
     filter = "tenantAwareMessageFilter")
-  public void handleCapabilityEvent(ResourceEvent resourceEvent) {
+  public void handleCapabilityEvent(ResourceEvent<?> resourceEvent) {
     try (
       var ignored = new FolioExecutionContextSetter(executionContextBuilder.buildContext(resourceEvent.getTenant()))) {
       try {
@@ -53,7 +53,7 @@ public class KafkaMessageListener {
     }
   }
 
-  private void checkLiquibaseMigrationRunning(ResourceEvent resourceEvent) {
+  private void checkLiquibaseMigrationRunning(ResourceEvent<?> resourceEvent) {
     if (liquibaseMigrationLockService.isMigrationRunning()) {
       log.warn("Liquibase migration in progress for tenant: {}", resourceEvent.getTenant());
       throw new LiquibaseMigrationException(

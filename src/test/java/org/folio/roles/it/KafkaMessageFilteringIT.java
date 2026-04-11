@@ -13,9 +13,10 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import java.util.Set;
+import org.folio.integration.kafka.consumer.filter.te.TenantEntitlementClient;
+import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.base.BaseIntegrationTest;
-import org.folio.roles.integration.kafka.filter.TenantEntitlementClient;
-import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -134,13 +135,13 @@ class KafkaMessageFilteringIT extends BaseIntegrationTest {
     await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(5))));
   }
 
-  private ResourceEvent eventForTenant(String tenant) {
+  private ResourceEvent<CapabilityEvent> eventForTenant(String tenant) {
     var base = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
-    return ResourceEvent.builder()
+    return ResourceEvent.<CapabilityEvent>builder()
       .type(base.getType())
       .tenant(tenant)
       .resourceName(base.getResourceName())
-      .newValue(base.getNewValue())
+      .newValue((CapabilityEvent) base.getNewValue())
       .build();
   }
 }

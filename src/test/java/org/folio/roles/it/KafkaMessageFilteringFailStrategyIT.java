@@ -12,9 +12,9 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import java.util.Set;
+import org.folio.integration.kafka.consumer.filter.te.TenantEntitlementClient;
+import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.base.BaseIntegrationTest;
-import org.folio.roles.integration.kafka.filter.TenantEntitlementClient;
-import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;

@@ -44,9 +44,10 @@ application:
     mapping:
       source-path: classpath:folio-permissions/mappings-overrides.json
   kafka:
-    filtering:
-      tenant-filter:
-        enabled: false
+    consumer:
+      filtering:
+        tenant-filter:
+          enabled: false
 
 header:
   validation:

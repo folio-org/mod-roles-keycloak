@@ -105,16 +105,17 @@ application:
       trust-store-file-type: ${SECRET_STORE_FSSP_TRUSTSTORE_FILE_TYPE:}
       trust-store-password: ${SECRET_STORE_FSSP_TRUSTSTORE_PASSWORD:}
   kafka:
-    listener:
-      capability:
-        topic-pattern: ${KAFKA_CAPABILITIES_TOPIC_PATTERN:(${application.environment}\.)(.*\.)mgr-tenant-entitlements.capability}
-        group-id: ${application.environment}-mod-roles-keycloak-capability-group
-    filtering:
-      tenant-filter:
-        enabled: true
-        ignore-empty-batch: true
-        tenant-disabled-strategy: skip
-        all-tenants-disabled-strategy: fail
+    consumer:
+      listener:
+        capability:
+          topic-pattern: ${KAFKA_CAPABILITIES_TOPIC_PATTERN:(${application.environment}\.)(.*\.)mgr-tenant-entitlements.capability}
+          group-id: ${application.environment}-mod-roles-keycloak-capability-group
+      filtering:
+        tenant-filter:
+          enabled: true
+          ignore-empty-batch: true
+          tenant-disabled-strategy: skip
+          all-tenants-disabled-strategy: fail
   retry:
     capability-event:
       retry-attempts: ${CAPABILITY_TOPIC_RETRY_ATTEMPTS:9223372036854775807}
