@@ -16,7 +16,6 @@ import java.util.Set;
 import org.folio.integration.kafka.consumer.filter.te.TenantEntitlementClient;
 import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.base.BaseIntegrationTest;
-import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,7 +28,7 @@ import org.springframework.test.context.jdbc.Sql;
 
 @IntegrationTest
 @TestPropertySource(properties = {
-  "application.kafka.filtering.tenant-filter.enabled=true",
+  "application.kafka.consumer.filtering.tenant-filter.enabled=true",
   "application.retry.capability-event.retry-delay=10ms"
 })
 @Sql(executionPhase = AFTER_TEST_METHOD, scripts = {
@@ -135,13 +134,13 @@ class KafkaMessageFilteringIT extends BaseIntegrationTest {
     await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(5))));
   }
 
-  private ResourceEvent<CapabilityEvent> eventForTenant(String tenant) {
+  private ResourceEvent<?> eventForTenant(String tenant) {
     var base = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
-    return ResourceEvent.<CapabilityEvent>builder()
+    return ResourceEvent.builder()
       .type(base.getType())
       .tenant(tenant)
       .resourceName(base.getResourceName())
-      .newValue((CapabilityEvent) base.getNewValue())
+      .newValue(base.getNewValue())
       .build();
   }
 }

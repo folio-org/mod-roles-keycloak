@@ -27,8 +27,8 @@ import org.springframework.test.context.jdbc.Sql;
 
 @IntegrationTest
 @TestPropertySource(properties = {
-  "application.kafka.filtering.tenant-filter.enabled=true",
-  "application.kafka.filtering.tenant-filter.tenant-disabled-strategy=FAIL",
+  "application.kafka.consumer.filtering.tenant-filter.enabled=true",
+  "application.kafka.consumer.filtering.tenant-filter.tenant-disabled-strategy=FAIL",
   "application.retry.capability-event.retry-delay=10ms"
 })
 @Sql(executionPhase = AFTER_TEST_METHOD, scripts = {
