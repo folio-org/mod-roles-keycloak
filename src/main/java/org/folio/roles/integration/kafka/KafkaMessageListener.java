@@ -28,6 +28,10 @@ public class KafkaMessageListener {
   /**
    * Handles capability event.
    *
+   * <p>The {@code kafkaConsumerProperties} bean (used in SpEL expressions) and the
+   * {@code tenantAwareMessageFilter} bean are both registered by {@code @EnableKafkaConsumer}
+   * on {@link org.folio.roles.integration.kafka.configuration.KafkaConfiguration}.
+   *
    * @param resourceEvent - capability {@link ResourceEvent} object
    */
   @KafkaListener(

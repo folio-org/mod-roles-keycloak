@@ -18,6 +18,7 @@ more information.
 * [Loading of client IDs/secrets](#loading-of-client-idssecrets)
 * [Custom permission-capability mappings](#custom-permission-capability-mappings)
 * [Capability duplicate removal](#capability-duplicate-removal)
+* [Kafka message filtering](#kafka-message-filtering)
 
 ## Introduction
 
@@ -234,3 +235,39 @@ public void mergeDuplicateCapabilities() {
 
 If either the old or new capability does not exist, the migration is skipped with a log message.
 Migration errors are logged but do not block tenant initialization.
+
+## Kafka message filtering
+
+The module filters incoming Kafka capability events by tenant entitlement status. Before processing an event, the
+`tenantAwareMessageFilter` checks whether the event's tenant is currently enabled (i.e. entitled) by querying the
+tenant entitlement service. Events for disabled tenants are either silently skipped or retried, depending on the
+configured strategy.
+
+### How it works
+
+1. The filter calls the tenant entitlement service to retrieve the set of enabled tenants for the current module.
+2. If the event's tenant is in the enabled set, the message is passed through and processed normally.
+3. If the event's tenant is **not** in the enabled set, the configured `tenant-disabled-strategy` determines what
+   happens (see below).
+4. If the enabled-tenant set is **empty or unavailable**, the `all-tenants-disabled-strategy` determines what happens.
+
+When a strategy throws an exception (`FAIL`), the error handler retries the message with the configured backoff until
+the tenant becomes enabled or the retry limit is reached.
+
+### Configuration properties
+
+| Property                                                                           | Default | Description                                                                                                                                                             |
+|:-----------------------------------------------------------------------------------|:--------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `application.kafka.consumer.filtering.tenant-filter.enabled`                       | `true`  | Enables or disables tenant-based message filtering.                                                                                                                     |
+| `application.kafka.consumer.filtering.tenant-filter.ignore-empty-batch`            | `true`  | When `true`, messages with an empty payload batch are silently ignored without invoking the filter.                                                                     |
+| `application.kafka.consumer.filtering.tenant-filter.tenant-disabled-strategy`      | `skip`  | Action taken when the event's tenant is not in the enabled set. `skip` — silently discard the message; `fail` — throw `TenantIsDisabledException` to trigger retry.     |
+| `application.kafka.consumer.filtering.tenant-filter.all-tenants-disabled-strategy` | `fail`  | Action taken when the enabled-tenant set is empty or unavailable. `skip` — silently discard the message; `fail` — throw `TenantsAreDisabledException` to trigger retry. |
+
+### Strategy summary
+
+| Strategy value | Applicable condition           | Behaviour                                                                                               |
+|:---------------|:-------------------------------|:--------------------------------------------------------------------------------------------------------|
+| `skip`         | Single tenant disabled         | Message is silently discarded. Use when receiving messages for tenants that are not yet installed.      |
+| `fail`         | Single tenant disabled         | `TenantIsDisabledException` is thrown; the error handler retries the message until the tenant is ready. |
+| `skip`         | All tenants disabled           | Message is silently discarded.                                                                          |
+| `fail`         | All tenants disabled (default) | `TenantsAreDisabledException` is thrown; the error handler retries until at least one tenant is ready.  |
