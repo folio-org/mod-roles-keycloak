@@ -112,10 +112,10 @@ application:
           group-id: ${application.environment}-mod-roles-keycloak-capability-group
       filtering:
         tenant-filter:
-          enabled: true
+          enabled: ${KAFKA_TENANT_FILTER_ENABLED:false}
           ignore-empty-batch: true
-          tenant-disabled-strategy: skip
-          all-tenants-disabled-strategy: fail
+          tenant-disabled-strategy: ${KAFKA_TENANT_FILTER_TENANT_DISABLED_STRATEGY:skip}
+          all-tenants-disabled-strategy: ${KAFKA_TENANT_FILTER_ALL_TENANTS_DISABLED_STRATEGY:fail}
   retry:
     capability-event:
       retry-attempts: ${CAPABILITY_TOPIC_RETRY_ATTEMPTS:9223372036854775807}
