@@ -1,4 +1,6 @@
 spring:
+  application:
+    version: 0.0.1-TEST
   datasource:
     username: folio_admin
     password: qwerty123
@@ -41,12 +43,18 @@ application:
   folio-permissions:
     mapping:
       source-path: classpath:folio-permissions/mappings-overrides.json
+  kafka:
+    consumer:
+      filtering:
+        tenant-filter:
+          enabled: false
 
 header:
   validation:
     x-okapi-user-id:
       exclude:
         base-paths: /tests, /admin
+
 folio:
   environment: test
   system-user:

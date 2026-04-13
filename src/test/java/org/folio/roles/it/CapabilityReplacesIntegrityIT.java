@@ -12,10 +12,10 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import java.util.UUID;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
+import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.Capabilities;
 import org.folio.roles.domain.dto.Capability;
-import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;

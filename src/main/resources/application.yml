@@ -1,6 +1,7 @@
 spring:
   application:
     name: mod-roles-keycloak
+    version: ${MODULE_VERSION:}
   jackson:
     default-property-inclusion: non_null
     deserialization:
@@ -104,10 +105,17 @@ application:
       trust-store-file-type: ${SECRET_STORE_FSSP_TRUSTSTORE_FILE_TYPE:}
       trust-store-password: ${SECRET_STORE_FSSP_TRUSTSTORE_PASSWORD:}
   kafka:
-    listener:
-      capability:
-        topic-pattern: ${KAFKA_CAPABILITIES_TOPIC_PATTERN:(${application.environment}\.)(.*\.)mgr-tenant-entitlements.capability}
-        group-id: ${application.environment}-mod-roles-keycloak-capability-group
+    consumer:
+      listener:
+        capability:
+          topic-pattern: ${KAFKA_CAPABILITIES_TOPIC_PATTERN:(${application.environment}\.)(.*\.)mgr-tenant-entitlements.capability}
+          group-id: ${application.environment}-mod-roles-keycloak-capability-group
+      filtering:
+        tenant-filter:
+          enabled: ${KAFKA_TENANT_FILTER_ENABLED:false}
+          ignore-empty-batch: true
+          tenant-disabled-strategy: ${KAFKA_TENANT_FILTER_TENANT_DISABLED_STRATEGY:skip}
+          all-tenants-disabled-strategy: ${KAFKA_TENANT_FILTER_ALL_TENANTS_DISABLED_STRATEGY:fail}
   retry:
     capability-event:
       retry-attempts: ${CAPABILITY_TOPIC_RETRY_ATTEMPTS:9223372036854775807}
