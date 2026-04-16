@@ -41,5 +41,7 @@ build/
 .agents/
 .codemie/
 .claude/
+.gemini/
+CLAUDE.md
 
 .worktrees
