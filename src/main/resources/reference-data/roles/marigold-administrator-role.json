@@ -1,8 +1,8 @@
 {
   "roles": [
     {
-      "name": "Linked Data Administrator",
-      "description": "Role for Linked Data Administrator",
+      "name": "Marigold Administrator",
+      "description": "Role for Marigold Administrator",
       "permissions": [
         "linked-data-import.files.collection.post",
         "linked-data-import.start.post",
