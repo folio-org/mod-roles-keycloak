@@ -1,3 +1,6 @@
+## Version `v4.0.1` (21.04.2025)
+* Linked Data -> Marigold re-branding fix (MODROLESKC-321)
+
 ## Version `v4.0.0` (16.04.2025)
 * Added endpoint to create or update default roles via REST API (MODROLESKC-301)
 * Introduce configuration for FSSP (APPPOCTOOL-59)
