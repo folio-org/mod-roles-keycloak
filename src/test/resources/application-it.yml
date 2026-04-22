@@ -1,4 +1,6 @@
 spring:
+  application:
+    version: 0.0.1-TEST
   datasource:
     username: folio_admin
     password: qwerty123

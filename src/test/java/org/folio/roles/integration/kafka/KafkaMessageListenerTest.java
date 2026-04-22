@@ -11,7 +11,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.roles.service.capability.UserPermissionsCacheEvictor;
 import org.folio.spring.FolioExecutionContext;

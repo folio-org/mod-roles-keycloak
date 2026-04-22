@@ -11,7 +11,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.folio.roles.integration.kafka.model.ResourceEvent;
+import org.folio.integration.kafka.consumer.EnableKafkaConsumer;
+import org.folio.integration.kafka.consumer.filter.TenantIsDisabledException;
+import org.folio.integration.kafka.consumer.filter.TenantsAreDisabledException;
+import org.folio.integration.kafka.model.ResourceEvent;
 import org.hibernate.exception.SQLGrammarException;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +31,7 @@ import org.springframework.util.backoff.FixedBackOff;
 
 @Log4j2
 @Configuration
+@EnableKafkaConsumer
 @RequiredArgsConstructor
 public class KafkaConfiguration {
 
@@ -35,17 +39,17 @@ public class KafkaConfiguration {
   private final CapabilityEventRetryConfiguration retryConfiguration;
 
   @Bean
-  public ConcurrentKafkaListenerContainerFactory<String, ResourceEvent> kafkaListenerContainerFactory(
-    ConsumerFactory<String, ResourceEvent> consumerFactory) {
-    var factory = new ConcurrentKafkaListenerContainerFactory<String, ResourceEvent>();
+  public ConcurrentKafkaListenerContainerFactory<String, ResourceEvent<?>> kafkaListenerContainerFactory(
+    ConsumerFactory<String, ResourceEvent<?>> consumerFactory) {
+    var factory = new ConcurrentKafkaListenerContainerFactory<String, ResourceEvent<?>>();
     factory.setConsumerFactory(consumerFactory);
     factory.setCommonErrorHandler(capabilityEventErrorHandler());
     return factory;
   }
 
   @Bean
-  public ConsumerFactory<String, ResourceEvent> jsonNodeConsumerFactory() {
-    var deserializer = new JsonDeserializer<>(ResourceEvent.class);
+  public ConsumerFactory<String, ResourceEvent<?>> jsonNodeConsumerFactory() {
+    var deserializer = new JsonDeserializer<ResourceEvent<?>>(ResourceEvent.class);
     Map<String, Object> config = new HashMap<>(kafkaProperties.buildConsumerProperties(null));
     config.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
@@ -63,14 +67,24 @@ public class KafkaConfiguration {
   }
 
   private BackOff getBackOff(Exception exception) {
+    if (exception instanceof TenantsAreDisabledException
+      || exception instanceof TenantIsDisabledException) {
+      log.warn("Tenant(s) is disabled, retrying Kafka event", exception);
+      return getFixedBackOff();
+    }
+
     var migrationErrorMessage = detectMigrationError(exception);
     if (migrationErrorMessage.isPresent()) {
       log.warn("Database migration in progress, retrying Kafka event [error: {}]", migrationErrorMessage.get());
-      return new FixedBackOff(retryConfiguration.getRetryDelay().toMillis(), retryConfiguration.getRetryAttempts());
+      return getFixedBackOff();
     }
 
     log.warn("Non-retryable error, skipping message", exception);
     return new FixedBackOff(0L, 0L);
+  }
+
+  private FixedBackOff getFixedBackOff() {
+    return new FixedBackOff(retryConfiguration.getRetryDelay().toMillis(), retryConfiguration.getRetryAttempts());
   }
 
   /**
