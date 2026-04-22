@@ -10,6 +10,7 @@ more information.
 * [Introduction](#introduction)
 * [Migration API](#migration-api)
 * [Environment Variables](#environment-variables)
+* [Kafka message filtering](#kafka-message-filtering)
 * [Capability duplicate removal](#capability-duplicate-removal)
 
 ## Introduction
@@ -73,11 +74,16 @@ Maximum concurrent migrations: **1** (configurable in code)
 | KC_USER_ID_CACHE_TTL                  | 180s                                                                                                                                                    |  false   | Time to live in sec for cached `keycloakUserId` by folio `userId`                                                                       |
 | USER_PERMISSIONS_CACHE_TTL            | 1800s                                                                                                                                                   |  false   | Time to live for cached user permissions. Cache is evicted on role/capability changes. Can be set to average user session length + 10%. |
 | USER_PERMISSIONS_CACHE_MAX_SIZE       | 1000                                                                                                                                                    |  false   | Maximum number of cache entries. This limit is shared across all tenants. Estimate based on concurrent active users across all tenants. |
-| KAFKA_CAPABILITIES_TOPIC_PATTERN      | `(${application.environment}\.)(.*\.)mgr-tenant-entitlements.capability`                                                                                |  false   | Topic pattern for `capability` topic filled by mgr-tenants-entitlement                                                                  |
-| CAPABILITY_TOPIC_RETRY_DELAY          | 1s                                                                                                                                                      |  false   | `capability` topic retry delay if tenant is not initialized                                                                             |
-| CAPABILITY_TOPIC_RETRY_ATTEMPTS       | 9223372036854775807                                                                                                                                     |  false   | `capability` topic retry attempts if tenant is not initialized (default value is Long.MAX_VALUE ~= infinite amount of retries)          |
-| FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH | [folio permission mapping json file](https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json)  |  false   | Link or path to resource that contains folio permission mappings. File path or URL can be used.                                         |
-| CACHE_PERMISSION_MAPPINGS_TTL         | 60                                                                                                                                                      |  false   | TTL for cache of permission mapping overrides, in seconds                                                                               |
+| KAFKA_CAPABILITIES_TOPIC_PATTERN                    | `(${application.environment}\.)(.*\.)mgr-tenant-entitlements.capability`                                                                                |  false   | Topic pattern for `capability` topic filled by mgr-tenants-entitlement                                                                  |
+| CAPABILITY_TOPIC_RETRY_DELAY                        | 1s                                                                                                                                                      |  false   | `capability` topic retry delay if tenant is not initialized                                                                             |
+| CAPABILITY_TOPIC_RETRY_ATTEMPTS                     | 9223372036854775807                                                                                                                                     |  false   | `capability` topic retry attempts if tenant is not initialized (default value is Long.MAX_VALUE ~= infinite amount of retries)          |
+| OKAPI_URL                                           | http://localhost:9130                                                                                                                                   |  false   | Base URL of the tenant entitlement service (`mgr-tenant-entitlements`). Required when `KAFKA_TENANT_FILTER_ENABLED=true`.               |
+| MODULE_VERSION                                      | -                                                                                                                                                       |  false   | Module version used for tenant entitlement lookup. Populated automatically at build time via `build-info` Maven goal.                   |
+| KAFKA_TENANT_FILTER_ENABLED                         | false                                                                                                                                                   |  false   | Enables tenant-aware Kafka message filtering. When `true`, messages for non-entitled tenants are handled per strategy below.            |
+| KAFKA_TENANT_FILTER_TENANT_DISABLED_STRATEGY        | skip                                                                                                                                                    |  false   | Strategy when a message's tenant is not in the entitled set: `ACCEPT` (process anyway), `SKIP` (discard), `FAIL` (retry).              |
+| KAFKA_TENANT_FILTER_ALL_TENANTS_DISABLED_STRATEGY   | fail                                                                                                                                                    |  false   | Strategy when no tenants are entitled at all (empty set): `ACCEPT`, `SKIP`, or `FAIL` (default — retries to avoid message loss).        |
+| FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH               | [folio permission mapping json file](https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json)  |  false   | Link or path to resource that contains folio permission mappings. File path or URL can be used.                                         |
+| CACHE_PERMISSION_MAPPINGS_TTL                       | 60                                                                                                                                                      |  false   | TTL for cache of permission mapping overrides, in seconds                                                                               |
 
 See also configurations from https://github.com/folio-org/folio-spring-support/tree/release/v8.1/folio-spring-system-user - FOLIO_ENVIRONMENT, FOLIO_OKAPI_URL, FOLIO_SYSTEM_USER_USERNAME, FOLIO_SYSTEM_USER_PASSWORD.
 
@@ -163,6 +169,39 @@ One can define custom mapping of a module-descriptor permission to Eureka capabi
 See [Permissions naming convention](https://folio-org.atlassian.net/wiki/spaces/FOLIJET/pages/156368925/Permissions+naming+convention) for more
 information regarding permission properties such as "action", permission naming conventions and other permission related
 information.
+
+## Kafka message filtering
+
+The module supports **tenant-aware filtering** of incoming Kafka capability events. When enabled,
+each message is checked against the `mgr-tenant-entitlements` service before processing.
+Messages for tenants that are not yet entitled are handled according to a configurable strategy.
+
+### How it works
+
+Set `KAFKA_TENANT_FILTER_ENABLED=true` to activate filtering. For each message received, the filter
+calls `GET {OKAPI_URL}/entitlements/modules/{moduleId}` and compares the message's tenant against
+the returned set of entitled tenants.
+
+Two strategies control what happens when a tenant is not entitled:
+
+| Scenario | Variable | Default | Options |
+|---|---|---|---|
+| Message tenant absent from non-empty entitled set | `KAFKA_TENANT_FILTER_TENANT_DISABLED_STRATEGY` | `skip` | `ACCEPT`, `SKIP`, `FAIL` |
+| Entitled set is completely empty (no tenants at all) | `KAFKA_TENANT_FILTER_ALL_TENANTS_DISABLED_STRATEGY` | `fail` | `ACCEPT`, `SKIP`, `FAIL` |
+
+- **`ACCEPT`** — process the message regardless
+- **`SKIP`** — silently discard the message (suitable for permanently non-entitled tenants)
+- **`FAIL`** — throw an exception, triggering the existing retry backoff (suitable for temporarily
+  unavailable tenants during deployment gaps or cold-start)
+
+The `FAIL` strategy on an empty entitled set is the production default because it prevents silent
+message loss when the entitlement service has not yet registered any tenants.
+
+### Module identification
+
+The filter identifies the module by combining `spring.application.name` and `spring.application.version`.
+The version is populated at build time by the `build-info` Maven goal and can be overridden with the
+`MODULE_VERSION` environment variable.
 
 ## Capability duplicate removal
 

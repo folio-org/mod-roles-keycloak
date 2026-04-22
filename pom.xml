@@ -45,7 +45,7 @@
     <folio-spring-support.version>9.0.0</folio-spring-support.version>
     <coffee-boots.version>4.0.0</coffee-boots.version>
     <folio-java-checkstyle.version>1.1.0</folio-java-checkstyle.version>
-    <applications-poc-tools.version>3.0.9</applications-poc-tools.version>
+    <applications-poc-tools.version>3.0.10-SNAPSHOT</applications-poc-tools.version>
     <hibernate.version>6.5.3.Final</hibernate.version>
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
@@ -219,6 +219,12 @@
       <artifactId>spring-kafka</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>folio-integration-kafka</artifactId>
+      <version>${applications-poc-tools.version}</version>
+    </dependency>
+
     <!-- OAS generation -->
     <dependency>
       <groupId>org.openapitools</groupId>
@@ -317,6 +323,13 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build-info</goal>
+            </goals>
+          </execution>
+        </executions>
         <configuration>
           <layers>
             <enabled>true</enabled>

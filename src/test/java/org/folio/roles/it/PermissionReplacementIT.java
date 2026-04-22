@@ -27,12 +27,12 @@ import static org.testcontainers.shaded.org.awaitility.Durations.ONE_MINUTE;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
+import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.Capabilities;
 import org.folio.roles.domain.dto.CapabilitySets;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.RoleType;
-import org.folio.roles.integration.kafka.model.ResourceEvent;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.test.extensions.KeycloakRealms;
