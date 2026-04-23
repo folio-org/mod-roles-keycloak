@@ -1,3 +1,6 @@
+## Version `v3.0.15` (23.04.2026)
+* Filter Kafka messages by tenant entitlements (MODROLESKC-396)
+
 ## Version `v3.0.14` (15.01.2026)
 * Optimization SQL for `/permissions/users/{id}`, local cache added (MODROLESKC-333)
 
