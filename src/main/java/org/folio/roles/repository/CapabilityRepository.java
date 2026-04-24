@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.entity.CapabilityEntity;
+import org.folio.roles.repository.projection.UserPermissionApplicationProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
@@ -271,6 +272,48 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
     ) all_permissions;
     """)
   List<String> findAllFolioPermissions(@Param("user_id") UUID userId);
+
+  @Query(nativeQuery = true, value = """
+    WITH user_caps AS (
+      -- Direct user capabilities
+      SELECT c.folio_permission AS permission, c.application_id AS application_id
+      FROM user_capability uc
+      INNER JOIN capability c ON uc.capability_id = c.id
+      WHERE uc.user_id = :user_id AND c.dummy_capability = false
+
+      UNION
+
+      -- User capability sets
+      SELECT c.folio_permission AS permission, c.application_id AS application_id
+      FROM user_capability_set ucs
+      INNER JOIN capability_set_capability csc ON ucs.capability_set_id = csc.capability_set_id
+      INNER JOIN capability c ON csc.capability_id = c.id
+      WHERE ucs.user_id = :user_id AND c.dummy_capability = false
+
+      UNION
+
+      -- Role capabilities via user_role
+      SELECT c.folio_permission AS permission, c.application_id AS application_id
+      FROM user_role ur
+      INNER JOIN role_capability rc ON ur.role_id = rc.role_id
+      INNER JOIN capability c ON rc.capability_id = c.id
+      WHERE ur.user_id = :user_id AND c.dummy_capability = false
+
+      UNION
+
+      -- Role capability sets via user_role
+      SELECT c.folio_permission AS permission, c.application_id AS application_id
+      FROM user_role ur
+      INNER JOIN role_capability_set rcs ON ur.role_id = rcs.role_id
+      INNER JOIN capability_set_capability csc ON rcs.capability_set_id = csc.capability_set_id
+      INNER JOIN capability c ON csc.capability_id = c.id
+      WHERE ur.user_id = :user_id AND c.dummy_capability = false
+    )
+    SELECT DISTINCT uc.permission AS permission, uc.application_id AS applicationId, p.replaces AS replaces
+    FROM user_caps uc
+    LEFT JOIN permission p ON p.name = uc.permission
+    """)
+  List<UserPermissionApplicationProjection> findAllUserPermissionMappings(@Param("user_id") UUID userId);
 
   @Modifying
   @Query("update CapabilityEntity ce set ce.applicationId = :applicationId "

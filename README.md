@@ -15,6 +15,7 @@ more information.
     * [Vault](#vault)
     * [Folio Secure Store Proxy (FSSP)](#folio-secure-store-proxy-fssp)
   * [Keycloak environment variables](#keycloak-environment-variables)
+  * [MTE environment variables](#mte-environment-variables)
 * [Loading of client IDs/secrets](#loading-of-client-idssecrets)
 * [Custom permission-capability mappings](#custom-permission-capability-mappings)
 * [Capability duplicate removal](#capability-duplicate-removal)
@@ -164,6 +165,18 @@ Keycloak all configuration properties: https://www.keycloak.org/server/all-confi
 | KC_PERMISSIONS_PARALLELISM        | Number of parallel threads used for Keycloak permission create/delete operations. Set to 1 to disable parallelism. Default: `4`                                            |
 | KC_PERMISSIONS_BATCH_SIZE         | Maximum number of permission operations submitted to the thread pool at a time before waiting for the batch to complete. Default: `50`                                     |
 | KC_LOGIN_CLIENT_CACHE_TTL         | Time to live for the cached Keycloak login client representation per tenant. Default: `60s`                                                                                |
+
+### MTE environment variables
+
+Base URL and TLS configuration for the dedicated mgr-tenant-entitlements HTTP client.
+
+| Name                               | Default value                       | Description                                                                             |
+|:-----------------------------------|:------------------------------------|:----------------------------------------------------------------------------------------|
+| MTE_URL                            | http://mgr-tenant-entitlements:8081 | Base URL of the mgr-tenant-entitlements service for entitled application resolution     |
+| MTE_CLIENT_TLS_ENABLED             | false                               | Enables TLS for the MTE client                                                          |
+| MTE_CLIENT_TLS_TRUSTSTORE_PATH     | -                                   | Truststore file path for the MTE client                                                 |
+| MTE_CLIENT_TLS_TRUSTSTORE_PASSWORD | -                                   | Truststore password for the MTE client                                                  |
+| MTE_CLIENT_TLS_TRUSTSTORE_TYPE     | -                                   | Truststore file type for the MTE client (e.g., JKS, PKCS12)                            |
 
 ## Loading of client IDs/secrets
 
