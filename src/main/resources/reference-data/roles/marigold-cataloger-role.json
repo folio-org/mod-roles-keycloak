@@ -1,0 +1,11 @@
+{
+  "roles": [
+    {
+      "name": "Cataloger - Marigold",
+      "description": "Role for Marigold Cataloger",
+      "permissions": [
+        "ui-marigold.cataloger.all"
+      ]
+    }
+  ]
+}

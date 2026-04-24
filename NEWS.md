@@ -1,4 +1,4 @@
-## Version `v3.1.0` (in progress)
+## Version `v4.0.0` (16.04.2025)
 * Added endpoint to create or update default roles via REST API (MODROLESKC-301)
 * Introduce configuration for FSSP (APPPOCTOOL-59)
 * Provide "Data Import" role with permission for central tenant record update through data import (MODROLESKC-304)
@@ -28,6 +28,7 @@
 * Fix NPE during dummyCapability processing (EUREKA-866)
 * Replace global Kafka listener suspension with Liquibase migration lock detection in capability event processing (MODROLESKC-386)
 * Add "Linked Data Administrator" reference-data role (MODROLESKC-389)
+* Import job cancel permission renamed to stop (MODLD-1035)
 
 ## Version `v3.0.0` (14.03.2025)
 * Error with roles migration (MODROLESKC-282)
