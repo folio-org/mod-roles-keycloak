@@ -127,7 +127,7 @@ application:
     mapping:
       source-path: ${FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH:https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json}
   mte:
-    url: ${MTE_URL:http://mgr-tenant-entitlements:8081}
+    url: ${MTE_URL:http://mgr-tenant-entitlements}
     tls:
       enabled: ${MTE_CLIENT_TLS_ENABLED:false}
       trust-store-path: ${MTE_CLIENT_TLS_TRUSTSTORE_PATH:}

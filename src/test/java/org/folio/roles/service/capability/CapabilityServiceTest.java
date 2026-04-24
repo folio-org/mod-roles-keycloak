@@ -34,7 +34,6 @@ import java.util.stream.Stream;
 import org.folio.integration.kafka.model.ResourceEventType;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.domain.model.event.CapabilityEvent;
-import org.folio.roles.integration.kafka.model.ResourceEventType;
 import org.folio.roles.integration.mte.MteEntitlementService;
 import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.CapabilityRepository;
