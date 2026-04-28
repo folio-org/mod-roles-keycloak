@@ -275,7 +275,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
-  void upsertLoadableRole_positive_whenCapabilityEventCommitsBeforeLoadableRoleCommit() throws Exception {
+  void upsertLoadableRole_positive_handlesCapabilityAssignmentRaceCondition() throws Exception {
     var permissionName = "notes.collection.get";
     var roleName = "Race Condition Role";
     var role = new LoadableRole()
@@ -294,7 +294,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
     }).when(assignmentHelper).assignCapabilitiesAndSetsForPermissions(anyCollection());
 
     try (var executor = Executors.newSingleThreadExecutor()) {
-      var upsertFuture = executor.submit(() -> {
+      final var upsertFuture = executor.submit(() -> {
         doPut("/loadable-roles", role);
         return null;
       });

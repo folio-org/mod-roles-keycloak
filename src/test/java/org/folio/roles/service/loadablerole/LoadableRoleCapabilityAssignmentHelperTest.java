@@ -193,14 +193,14 @@ class LoadableRoleCapabilityAssignmentHelperTest {
       capabilityService.findByPermissionNames(Set.of(perm1.getPermissionName(), perm2.getPermissionName())))
       .thenReturn(cap != null ? List.of(cap) : emptyList());
     if (cap != null) {
-      when(roleCapabilityService.create(perm1.getRoleId(), List.of(cap.getId()), false))
+      when(roleCapabilityService.create(perm1.getRoleId(), List.of(cap.getId()), true))
         .thenReturn(empty()); // response is not used, can return empty()
     }
 
     when(capabilitySetService.findByPermissionNames(Set.of(perm1.getPermissionName(), perm2.getPermissionName())))
       .thenReturn(capSet != null ? List.of(capSet) : emptyList());
     if (capSet != null) {
-      when(roleCapabilitySetService.create(perm1.getRoleId(), List.of(capSet.getId()), false))
+      when(roleCapabilitySetService.create(perm1.getRoleId(), List.of(capSet.getId()), true))
         .thenReturn(empty()); // response is not used, can return empty()
     }
   }

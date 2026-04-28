@@ -6,9 +6,14 @@ import static org.folio.roles.support.LoadablePermissionUtils.loadablePermission
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissionEntities;
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissionEntity;
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissions;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+import java.util.Set;
 import org.folio.roles.domain.dto.LoadablePermission;
+import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadablePermissionRepository;
 import org.folio.roles.support.TestUtils;
@@ -29,6 +34,7 @@ class LoadablePermissionServiceTest {
   @InjectMocks private LoadablePermissionService service;
   @Mock private LoadablePermissionRepository repository;
   @Mock private LoadableRoleMapper mapper;
+  @Mock private LoadableRoleCapabilityAssignmentHelper assignmentHelper;
 
   @AfterEach
   void tearDown() {
@@ -75,5 +81,28 @@ class LoadablePermissionServiceTest {
     var actual = service.saveAll(perms);
 
     assertThat(actual).isEqualTo(perms);
+  }
+
+  @Test
+  void assignCapabilitiesAndSets_positive() {
+    var permissions = loadablePermissions(2);
+    var permissionEntities = loadablePermissionEntities(permissions);
+    var permissionKeys = mapItems(permissionEntities, entity -> LoadablePermissionKey.of(entity.getRoleId(),
+      entity.getPermissionName()));
+
+    when(repository.findAllById(permissionKeys)).thenReturn(permissionEntities);
+    when(assignmentHelper.assignCapabilitiesAndSetsForPermissions(permissionEntities)).thenReturn(
+      Set.of(permissionEntities.getFirst()));
+
+    service.assignCapabilitiesAndSets(permissionKeys);
+
+    verify(assignmentHelper).assignCapabilitiesAndSetsForPermissions(permissionEntities);
+  }
+
+  @Test
+  void assignCapabilitiesAndSets_positive_emptyInput() {
+    service.assignCapabilitiesAndSets(List.of());
+
+    verifyNoInteractions(repository, assignmentHelper);
   }
 }

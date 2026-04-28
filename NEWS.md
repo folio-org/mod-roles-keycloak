@@ -1,3 +1,6 @@
+## Version `v4.1.0` (IN PROGRESS)
+* Fix race condition that could leave default loadable-role permissions without assigned capabilities during tenant initialization (MODROLESKC-347)
+
 ## Version `v4.0.0` (16.04.2025)
 * Added endpoint to create or update default roles via REST API (MODROLESKC-301)
 * Introduce configuration for FSSP (APPPOCTOOL-59)
