@@ -289,7 +289,7 @@ public class RoleService {
     return RoleType.DEFAULT == role.getType();
   }
 
-  private static class RoleCleanupData {
+  private static final class RoleCleanupData {
 
     private final List<UUID> unlinkedUserIds = new ArrayList<>();
     private Policy policy;

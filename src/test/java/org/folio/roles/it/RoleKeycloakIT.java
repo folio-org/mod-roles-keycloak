@@ -2,8 +2,8 @@ package org.folio.roles.it;
 
 import static java.time.ZoneId.systemDefault;
 import static java.util.UUID.fromString;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.apache.commons.collections4.IterableUtils.find;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.roles.support.RoleCapabilitySetUtils.roleCapabilitySets;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
@@ -195,7 +195,8 @@ class RoleKeycloakIT extends BaseIntegrationTest {
     doDelete("/roles/{id}", ROLE_1.getId());
 
     assertThat(kcTestClient.getPolicyNames()).doesNotContain(ROLE_1_POLICY_NAME);
-    assertThat(kcTestClient.getPermissionNames()).doesNotContain(ROLE_1_GET_PERMISSION_NAME, ROLE_1_POST_PERMISSION_NAME);
+    assertThat(kcTestClient.getPermissionNames())
+      .doesNotContain(ROLE_1_GET_PERMISSION_NAME, ROLE_1_POST_PERMISSION_NAME);
 
     attemptGet("/roles/{id}", ROLE_1.getId())
       .andExpect(status().isNotFound())
