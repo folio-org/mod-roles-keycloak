@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -501,7 +502,7 @@ class RoleServiceTest {
       verify(keycloakAuthService).deletePermissions(eq(policy), eq(endpoints), any());
       verify(policyService).deleteById(policy.getId());
       verify(entityService).deleteById(ROLE_ID);
-      verify(entityService).create(role);
+      verify(entityService, never()).create(role);
       verify(keycloakPolicyService).create(policy);
       verify(keycloakAuthService).createPermissions(eq(policy), eq(endpoints), any());
       verify(keycloakRolesUserService).assignRolesToUser(USER_ID, List.of(role));
@@ -521,6 +522,7 @@ class RoleServiceTest {
       verify(policyEntityService).findByName("Policy for role: " + ROLE_ID);
       verify(userRoleEntityService).findByRoleId(ROLE_ID);
       verify(keycloakRolesUserService).unlinkRolesFromUser(USER_ID, List.of(role));
+      verify(keycloakRolesUserService, never()).assignRolesToUser(any(), any());
       verifyNoInteractions(policyService, keycloakService);
     }
 

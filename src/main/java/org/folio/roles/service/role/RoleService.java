@@ -1,15 +1,15 @@
 package org.folio.roles.service.role;
 
-import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.dto.PolicyType.ROLE;
+import static org.folio.roles.service.role.RolePolicyNameProvider.getPermissionNameGenerator;
+import static org.folio.roles.service.role.RolePolicyNameProvider.getPolicyName;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.ListUtils;
@@ -158,17 +158,15 @@ public class RoleService {
     var actualRole = entityService.getById(id);
     checkIfRoleHasDefaultType(actualRole);
     var cleanupData = cleanupRoleData(actualRole);
-    var roleDeletedFromDb = false;
     try {
       entityService.deleteById(id);
-      roleDeletedFromDb = true;
       keycloakService.deleteById(id);
     } catch (Exception e) {
-      log.debug("Rollback deleted policy in db: id = {}, name = {}", actualRole.getId(), actualRole.getName());
+      log.debug("Rollback role deletion: id = {}, name = {}", actualRole.getId(), actualRole.getName());
+      // DB-side state (role row, policy row, user_role rows) is restored automatically by the
+      // surrounding @Transactional rollback. We only need to compensate the Keycloak-side
+      // mutations performed by cleanupRoleData (user-role unlinks + policy/permissions deletion).
       rollbackRoleCleanup(actualRole, cleanupData);
-      if (roleDeletedFromDb) {
-        entityService.create(actualRole);
-      }
       throw e;
     }
   }
@@ -254,6 +252,9 @@ public class RoleService {
         keycloakPolicyService.create(policy);
       }
       if (cleanupData.permissionsDeletionAttempted) {
+        // createPermission() in KeycloakAuthorizationService treats Keycloak 409 CONFLICT as
+        // success, so re-creating the full set of permissions is safe even when only a subset
+        // was actually deleted before the original failure.
         keycloakAuthService.createPermissions(policy, cleanupData.endpoints, getPermissionNameGenerator(roleId));
       }
     } catch (Exception e) {
@@ -267,14 +268,6 @@ public class RoleService {
 
   private static Roles buildRoles(PageResult<Role> roles) {
     return new Roles().roles(roles.getRecords()).totalRecords(roles.getTotalRecords());
-  }
-
-  private static Function<Endpoint, String> getPermissionNameGenerator(UUID roleId) {
-    return endpoint -> format("%s access for role '%s' to '%s'", endpoint.getMethod(), roleId, endpoint.getPath());
-  }
-
-  private static String getPolicyName(UUID roleId) {
-    return "Policy for role: " + roleId;
   }
 
   private static void checkIfRoleHasDefaultType(Role role) {
