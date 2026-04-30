@@ -1,3 +1,6 @@
+## Version `v4.1.0` (in progress)
+* Improve cleanup of keycloak records upon role removal (MODROLESKC-384)
+
 ## Version `v4.0.0` (16.04.2025)
 * Added endpoint to create or update default roles via REST API (MODROLESKC-301)
 * Introduce configuration for FSSP (APPPOCTOOL-59)

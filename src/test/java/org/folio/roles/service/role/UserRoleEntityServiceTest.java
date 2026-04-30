@@ -129,6 +129,18 @@ class UserRoleEntityServiceTest {
   }
 
   @Nested
+  @DisplayName("deleteByRoleId")
+  class DeleteByRoleId {
+
+    @Test
+    void positive() {
+      service.deleteByRoleId(ROLE_ID);
+
+      verify(repository).deleteByRoleId(ROLE_ID);
+    }
+  }
+
+  @Nested
   @DisplayName("findByUserId")
   class FindByUserId {
 
@@ -147,6 +159,31 @@ class UserRoleEntityServiceTest {
     void negative_entityNotFound() {
       when(repository.findByUserId(any(UUID.class))).thenReturn(emptyList());
       var result = service.findByUserId(USER_ID);
+      assertThat(result).isEmpty();
+    }
+  }
+
+  @Nested
+  @DisplayName("findByRoleId")
+  class FindByRoleId {
+
+    @Test
+    void positive() {
+      var rolesUserEntity = userRoleEntity();
+      when(repository.findByRoleId(ROLE_ID)).thenReturn(List.of(rolesUserEntity));
+
+      var result = service.findByRoleId(ROLE_ID);
+
+      var expectedUserRole = userRole(USER_ID, ROLE_ID).metadata(new Metadata());
+      assertThat(result).containsExactly(expectedUserRole);
+    }
+
+    @Test
+    void negative_entityNotFound() {
+      when(repository.findByRoleId(ROLE_ID)).thenReturn(emptyList());
+
+      var result = service.findByRoleId(ROLE_ID);
+
       assertThat(result).isEmpty();
     }
   }

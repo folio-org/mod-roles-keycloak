@@ -3,6 +3,7 @@ package org.folio.roles.it;
 import static java.time.ZoneId.systemDefault;
 import static java.util.UUID.fromString;
 import static org.apache.commons.collections4.IterableUtils.find;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.roles.support.RoleCapabilitySetUtils.roleCapabilitySets;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
@@ -30,6 +31,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.UUID;
+import org.folio.roles.KeycloakTestClient;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.Role;
 import org.folio.roles.domain.dto.RoleType;
@@ -56,6 +59,13 @@ class RoleKeycloakIT extends BaseIntegrationTest {
     .name("role1")
     .description("role1_description");
 
+  private static final String ROLE_1_POLICY_NAME = "Policy for role: " + ROLE_1.getId();
+  private static final String ROLE_1_GET_PERMISSION_NAME =
+    "GET access for role '" + ROLE_1.getId() + "' to '/foo/items/{id}'";
+  private static final String ROLE_1_POST_PERMISSION_NAME =
+    "POST access for role '" + ROLE_1.getId() + "' to '/foo/items'";
+  private static final UUID ROLE_1_USER_ID = fromString("8c6d12fa-33a7-48c9-8769-71168d441345");
+
   private static final Role ROLE_2 = new Role()
     .id(fromString("2e985e76-e9ca-401c-ad8e-0d121a22222e"))
     .name("role2")
@@ -67,6 +77,7 @@ class RoleKeycloakIT extends BaseIntegrationTest {
     .description("role3_description");
 
   @Autowired private Keycloak keycloak;
+  @Autowired private KeycloakTestClient kcTestClient;
 
   @BeforeAll
   static void beforeAll() {
@@ -178,7 +189,14 @@ class RoleKeycloakIT extends BaseIntegrationTest {
     "classpath:/sql/populate-role-policy.sql"
   })
   void deleteRole_positive() throws Exception {
+    assertThat(kcTestClient.getPolicyNames()).contains(ROLE_1_POLICY_NAME);
+    assertThat(kcTestClient.getPermissionNames()).contains(ROLE_1_GET_PERMISSION_NAME, ROLE_1_POST_PERMISSION_NAME);
+
     doDelete("/roles/{id}", ROLE_1.getId());
+
+    assertThat(kcTestClient.getPolicyNames()).doesNotContain(ROLE_1_POLICY_NAME);
+    assertThat(kcTestClient.getPermissionNames())
+      .doesNotContain(ROLE_1_GET_PERMISSION_NAME, ROLE_1_POST_PERMISSION_NAME);
 
     attemptGet("/roles/{id}", ROLE_1.getId())
       .andExpect(status().isNotFound())
@@ -192,7 +210,7 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
       .andExpect(jsonPath("$.errors[0].code", is("not_found_error")));
 
-    doGet("/roles/users/{userId}", fromString("8c6d12fa-33a7-48c9-8769-71168d441345"))
+    doGet("/roles/users/{userId}", ROLE_1_USER_ID)
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(asJsonString(userRoles())));
 
