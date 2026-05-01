@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.type.EntityRoleType;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
@@ -33,6 +34,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 
 @UnitTest
@@ -45,6 +47,7 @@ class LoadableRoleServiceTest {
   @Mock private LoadableRoleMapper mapper;
   @Mock private KeycloakRoleService keycloakService;
   @Mock private LoadableRoleCapabilityAssignmentHelper capabilityAssignmentHelper;
+  @Mock private ApplicationEventPublisher applicationEventPublisher;
 
   @AfterEach
   void tearDown() {
@@ -184,6 +187,9 @@ class LoadableRoleServiceTest {
     void positive() {
       var role = loadableRole();
       var roleEntity = loadableRoleEntity(role);
+      var unresolvedPermission = new LoadablePermissionEntity();
+      unresolvedPermission.setPermissionName("unresolved.permission");
+      roleEntity.addPermission(unresolvedPermission);
       var createdRegularRole = regularRole(role);
       var regularRole = copy(createdRegularRole).id(null);
 
@@ -203,6 +209,8 @@ class LoadableRoleServiceTest {
       var actual = service.upsertDefaultLoadableRole(role);
 
       assertThat(actual).isEqualTo(role);
+      verify(applicationEventPublisher).publishEvent(
+        new UnresolvedLoadablePermissionsCreatedEvent(List.of(unresolvedPermission.getId())));
     }
 
     @Test

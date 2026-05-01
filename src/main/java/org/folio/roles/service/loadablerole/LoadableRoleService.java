@@ -34,6 +34,7 @@ import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.service.ServiceUtils.UpdatePair;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +48,7 @@ public class LoadableRoleService {
   private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
   private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
+  private final ApplicationEventPublisher applicationEventPublisher;
 
   @Transactional(readOnly = true)
   public LoadableRoles find(String query, Integer limit, Integer offset) {
@@ -219,6 +221,7 @@ public class LoadableRoleService {
       }
 
       var result = repository.saveAllAndFlush(entities);
+      publishUnresolvedPermissionsCreatedEvent(flattenPermissions(result));
       log.info("Loadable roles created: {}", () -> toIdNames(result));
 
       return result;
@@ -236,18 +239,21 @@ public class LoadableRoleService {
     }
 
     var changedRoles = new ArrayList<LoadableRoleEntity>();
+    var allCreatedPermissions = new LinkedHashSet<LoadablePermissionEntity>();
     for (var pair : updatePairs) {
       var incoming = pair.newItem();
       var existing = pair.oldItem();
 
       var nameDescriptionUpdated = updateNameAndDescription(incoming, existing);
-      var permsUpdated = updatePermissions(incoming, existing);
-      if (nameDescriptionUpdated || permsUpdated) {
+      var permissionsUpdate = updatePermissions(incoming, existing);
+      allCreatedPermissions.addAll(permissionsUpdate.createdPermissions());
+      if (nameDescriptionUpdated || permissionsUpdate.hasChanges()) {
         changedRoles.add(existing);
       }
     }
 
     repository.saveAllAndFlush(changedRoles);
+    publishUnresolvedPermissionsCreatedEvent(allCreatedPermissions);
     log.info("Loadable roles updated: {}", () -> toIdNames(changedRoles));
   }
 
@@ -268,7 +274,7 @@ public class LoadableRoleService {
     return modified;
   }
 
-  private boolean updatePermissions(LoadableRoleEntity source, LoadableRoleEntity target) {
+  private UpdatePermissionsResult updatePermissions(LoadableRoleEntity source, LoadableRoleEntity target) {
     var existingPerms = target.getPermissions();
     var incomingPerms = source.getPermissions();
 
@@ -284,7 +290,7 @@ public class LoadableRoleService {
     assignmentHelper.removeCapabilitiesAndSetsForPermissions(deleted);
     deleted.forEach(target::removePermission);
 
-    return isNotEmpty(created) || isNotEmpty(deleted);
+    return new UpdatePermissionsResult(created, deleted);
   }
 
   private void deleteAll(Collection<LoadableRoleEntity> entities) {
@@ -321,5 +327,36 @@ public class LoadableRoleService {
 
   private static List<String> toNames(Collection<LoadablePermissionEntity> perms) {
     return mapItems(perms, LoadablePermissionEntity::getPermissionName);
+  }
+
+  private static List<LoadablePermissionEntity> flattenPermissions(Collection<LoadableRoleEntity> roles) {
+    return roles.stream()
+      .flatMap(role -> role.getPermissions().stream())
+      .toList();
+  }
+
+  private void publishUnresolvedPermissionsCreatedEvent(Collection<LoadablePermissionEntity> permissions) {
+    if (isEmpty(permissions)) {
+      return;
+    }
+
+    var unresolvedPermissionKeys = permissions.stream()
+      .filter(permission -> permission.getCapabilityId() == null && permission.getCapabilitySetId() == null)
+      .map(LoadablePermissionEntity::getId)
+      .toList();
+    if (isEmpty(unresolvedPermissionKeys)) {
+      return;
+    }
+
+    log.debug("Publishing unresolved loadable permissions event: permissionKeys = {}", unresolvedPermissionKeys);
+    applicationEventPublisher.publishEvent(new UnresolvedLoadablePermissionsCreatedEvent(unresolvedPermissionKeys));
+  }
+
+  private record UpdatePermissionsResult(Collection<LoadablePermissionEntity> createdPermissions,
+                                         Collection<LoadablePermissionEntity> deletedPermissions) {
+
+    private boolean hasChanges() {
+      return isNotEmpty(createdPermissions) || isNotEmpty(deletedPermissions);
+    }
   }
 }
