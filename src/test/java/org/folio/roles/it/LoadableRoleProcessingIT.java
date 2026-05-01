@@ -13,6 +13,8 @@ import static org.folio.roles.utils.TestValues.readValue;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.USER_ID;
 import static org.folio.test.TestUtils.parseResponse;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -20,6 +22,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.extern.log4j.Log4j2;
 import org.assertj.core.api.ThrowingConsumer;
@@ -35,6 +40,8 @@ import org.folio.roles.domain.dto.CapabilitySets;
 import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.dto.LoadableRoles;
+import org.folio.roles.integration.kafka.KafkaMessageListener;
+import org.folio.roles.service.loadablerole.LoadableRoleCapabilityAssignmentHelper;
 import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
@@ -45,6 +52,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -68,6 +76,9 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
   @Autowired private JdbcTemplate jdbcTemplate;
   @Autowired private Keycloak keycloak;
+  @Autowired private KafkaMessageListener kafkaMessageListener;
+
+  @MockitoSpyBean private LoadableRoleCapabilityAssignmentHelper assignmentHelper;
 
   @BeforeAll
   static void beforeAll() {
@@ -260,6 +271,57 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
         .orElseThrow();
       assertThat(matchingPermission.getCapabilityId()).isNotNull();
     });
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
+  void upsertLoadableRole_positive_handlesCapabilityAssignmentRaceCondition() throws Exception {
+    var permissionName = "notes.collection.get";
+    var roleName = "Race Condition Role";
+    var role = new LoadableRole()
+      .name(roleName)
+      .description("Role used to reproduce the capability assignment race")
+      .permissions(List.of(new LoadablePermission().permissionName(permissionName)));
+
+    var helperCompletedInsideTransaction = new CountDownLatch(1);
+    var allowLoadableRoleCommit = new CountDownLatch(1);
+
+    doAnswer(invocation -> {
+      var result = invocation.callRealMethod();
+      helperCompletedInsideTransaction.countDown();
+      assertThat(allowLoadableRoleCommit.await(10, TimeUnit.SECONDS)).isTrue();
+      return result;
+    }).when(assignmentHelper).assignCapabilitiesAndSetsForPermissions(anyCollection());
+
+    try (var executor = Executors.newSingleThreadExecutor()) {
+      final var upsertFuture = executor.submit(() -> {
+        doPut("/loadable-roles", role);
+        return null;
+      });
+
+      assertThat(helperCompletedInsideTransaction.await(10, TimeUnit.SECONDS)).isTrue();
+
+      var capabilityEvent = readValue("json/kafka-events/be-notes-capability-event.json", ResourceEvent.class);
+      kafkaMessageListener.handleCapabilityEvent(capabilityEvent);
+
+      allowLoadableRoleCommit.countDown();
+      upsertFuture.get(10, TimeUnit.SECONDS);
+    }
+
+    assertThat(unassignedCapabilityCountForPermissionLike(permissionName)).isZero();
+
+    var fetchedRole = getLoadableRoleByName(roleName);
+    var matchingPermission = fetchedRole.getPermissions().stream()
+      .filter(permission -> permissionName.equals(permission.getPermissionName()))
+      .findFirst()
+      .orElseThrow();
+    assertThat(matchingPermission.getCapabilityId()).isNotNull();
+
+    var roleCapabilities = parseResponse(doGet("/roles/{id}/capabilities", fetchedRole.getId()).andReturn(),
+      Capabilities.class);
+    assertThat(roleCapabilities.getCapabilities())
+      .extracting(Capability::getPermission)
+      .contains(permissionName);
   }
 
   @Test

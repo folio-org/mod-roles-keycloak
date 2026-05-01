@@ -1,7 +1,10 @@
-## Version `v4.0.1` (21.04.2025)
+## Version `v4.0.2` (11.05.2026)
+* Fix race condition that could leave default loadable-role permissions without assigned capabilities during tenant initialization (MODROLESKC-347)
+
+## Version `v4.0.1` (21.04.2026)
 * Linked Data -> Marigold re-branding fix (MODROLESKC-321)
 
-## Version `v4.0.0` (16.04.2025)
+## Version `v4.0.0` (16.04.2026)
 * Added endpoint to create or update default roles via REST API (MODROLESKC-301)
 * Introduce configuration for FSSP (APPPOCTOOL-59)
 * Provide "Data Import" role with permission for central tenant record update through data import (MODROLESKC-304)
