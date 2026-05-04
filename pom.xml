@@ -30,7 +30,7 @@
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <lombok.version>1.18.46</lombok.version>
-    <swagger-annotations.version>2.2.48</swagger-annotations.version>
+    <swagger-annotations.version>2.2.49</swagger-annotations.version>
     <commons-lang3.version>3.20.0</commons-lang3.version>
     <apache-commons-collections4.version>4.5.0</apache-commons-collections4.version>
     <openapi-tools.jackson-databind-nullable.version>0.2.10</openapi-tools.jackson-databind-nullable.version>
@@ -50,7 +50,7 @@
 
     <!-- Plugins versions -->
     <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
-    <maven-checkstyle.version>13.4.0</maven-checkstyle.version>
+    <maven-checkstyle.version>13.4.2</maven-checkstyle.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
