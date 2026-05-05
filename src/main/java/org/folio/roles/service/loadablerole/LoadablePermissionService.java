@@ -1,10 +1,13 @@
 package org.folio.roles.service.loadablerole;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+
 import java.util.Collection;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.LoadablePermission;
+import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadablePermissionRepository;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ public class LoadablePermissionService {
 
   private final LoadablePermissionRepository repository;
   private final LoadableRoleMapper mapper;
+  private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
 
   @Transactional(readOnly = true)
   public List<LoadablePermission> findAllByPermissions(Collection<String> permissionNames) {
@@ -37,5 +41,14 @@ public class LoadablePermissionService {
     var saved = repository.saveAll(entities);
 
     return mapper.toPermission(saved);
+  }
+
+  public void assignCapabilitiesAndSets(Collection<LoadablePermissionKey> permissionKeys) {
+    if (isEmpty(permissionKeys)) {
+      return;
+    }
+
+    var permissions = repository.findAllById(permissionKeys);
+    assignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions);
   }
 }
