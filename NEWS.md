@@ -1,4 +1,5 @@
 ## Version `v4.1.0` (IN PROGRESS)
+* Improve cleanup of keycloak records upon role removal (MODROLESKC-384)
 * Fix race condition that could leave default loadable-role permissions without assigned capabilities during tenant initialization (MODROLESKC-347)
 
 ## Version `v4.0.0` (16.04.2025)

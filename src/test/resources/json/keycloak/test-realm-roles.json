@@ -4,6 +4,100 @@
   "verifyEmail": false,
   "loginWithEmailAllowed": false,
   "duplicateEmailsAllowed": true,
+  "users": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "username": "user1-for-role-deletion",
+      "enabled": true,
+      "attributes": {
+        "user_id": [
+          "8c6d12fa-33a7-48c9-8769-71168d441345"
+        ]
+      },
+      "realmRoles": [
+        "role1"
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "id": "00000000-0000-0000-0000-000000000010",
+      "clientId": "test-login-application",
+      "description": "Client for role deletion cleanup",
+      "clientAuthenticatorType": "client-secret",
+      "secret": "kc-client-password",
+      "redirectUris": [ "/*" ],
+      "fullScopeAllowed": true,
+      "authorizationSettings": {
+        "allowRemoteResourceManagement": true,
+        "policyEnforcementMode": "ENFORCING",
+        "resources": [
+          {
+            "_id": "994b345b-09b2-416d-ac72-252155be4664",
+            "name": "/foo/items/{id}",
+            "displayName": "/foo/items/{id}",
+            "scopes": [
+              { "name": "GET" }
+            ]
+          },
+          {
+            "_id": "44147c30-e76e-4468-adff-e403bd175aca",
+            "name": "/foo/items",
+            "displayName": "/foo/items",
+            "scopes": [
+              { "name": "POST" }
+            ]
+          }
+        ],
+        "scopes": [
+          {
+            "id": "fcf915d3-0a7f-4ee1-bb8a-fc60aa93a4d6",
+            "name": "POST"
+          },
+          {
+            "id": "859b3f82-99aa-48d6-b3d6-9b5d222c3c00",
+            "name": "GET"
+          }
+        ],
+        "policies": [
+          {
+            "id": "dec68c30-4f93-4481-95bd-9ec587b15c1c",
+            "name": "Policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e",
+            "description": "System generated policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "roles": "[{\"id\":\"role1\",\"required\":false}]"
+            }
+          },
+          {
+            "name": "GET access for role '1e985e76-e9ca-401c-ad8e-0d121a11111e' to '/foo/items/{id}'",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "resources": "[\"/foo/items/{id}\"]",
+              "scopes": "[\"GET\"]",
+              "applyPolicies": "[\"Policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e\"]"
+            }
+          },
+          {
+            "name": "POST access for role '1e985e76-e9ca-401c-ad8e-0d121a11111e' to '/foo/items'",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "resources": "[\"/foo/items\"]",
+              "scopes": "[\"POST\"]",
+              "applyPolicies": "[\"Policy for role: 1e985e76-e9ca-401c-ad8e-0d121a11111e\"]"
+            }
+          }
+        ],
+        "decisionStrategy": "AFFIRMATIVE"
+      }
+    }
+  ],
   "roles": {
     "realm": [
       {

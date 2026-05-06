@@ -65,7 +65,7 @@ public class KeycloakTestClient {
   public List<String> getPermissionNames() {
     var headers = Map.<String, Collection<String>>of(TENANT, List.of(TENANT_ID));
     try (var ignored = new FolioExecutionContextSetter(folioModuleMetadata, headers)) {
-      var keycloakPermissions = findKeycloakPermissions();
+      var keycloakPermissions = findKeycloakAuthorizationNames("permission");
       log.info("Found permissions: {}", keycloakPermissions);
       return keycloakPermissions;
     } catch (Exception exception) {
@@ -73,8 +73,20 @@ public class KeycloakTestClient {
     }
   }
 
-  private List<String> findKeycloakPermissions() throws Exception {
-    var request = keycloakPermissionsRequest();
+  @SneakyThrows
+  public List<String> getPolicyNames() {
+    var headers = Map.<String, Collection<String>>of(TENANT, List.of(TENANT_ID));
+    try (var ignored = new FolioExecutionContextSetter(folioModuleMetadata, headers)) {
+      var keycloakPolicies = findKeycloakAuthorizationNames("policy");
+      log.info("Found policies: {}", keycloakPolicies);
+      return keycloakPolicies;
+    } catch (Exception exception) {
+      throw new AssertionError("Failed to find keycloak policies", exception);
+    }
+  }
+
+  private List<String> findKeycloakAuthorizationNames(String type) throws Exception {
+    var request = keycloakAuthorizationRequest(type);
     var response = httpClient.send(request, BodyHandlers.ofString());
     assertThat(response.statusCode()).isEqualTo(200);
 
@@ -88,8 +100,8 @@ public class KeycloakTestClient {
       .collect(toList());
   }
 
-  private HttpRequest keycloakPermissionsRequest() {
-    var path = "/admin/realms/{realm}/clients/{clientId}/authz/resource-server/permission";
+  private HttpRequest keycloakAuthorizationRequest(String type) {
+    var path = "/admin/realms/{realm}/clients/{clientId}/authz/resource-server/" + type;
     var uri = fromUriString(keycloakConfiguration.getBaseUrl() + path)
       .queryParam("first", 0)
       .queryParam("last", 100)

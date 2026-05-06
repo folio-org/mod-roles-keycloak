@@ -1,13 +1,13 @@
 package org.folio.roles.service.permission;
 
-import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.folio.roles.domain.dto.PolicyType.ROLE;
 import static org.folio.roles.service.permission.PermissionService.convertToString;
+import static org.folio.roles.service.role.RolePolicyNameProvider.getPermissionNameGenerator;
+import static org.folio.roles.service.role.RolePolicyNameProvider.getPolicyName;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Endpoint;
@@ -64,14 +64,6 @@ public class RolePermissionService implements PermissionService {
   @Transactional(readOnly = true)
   public List<Endpoint> getAssignedEndpoints(UUID roleId, List<UUID> excludedCapabilityIds, List<UUID> excludedSetIds) {
     return capabilityEndpointService.getRoleAssignedEndpoints(roleId, excludedCapabilityIds, excludedSetIds);
-  }
-
-  private static Function<Endpoint, String> getPermissionNameGenerator(UUID roleId) {
-    return endpoint -> format("%s access for role '%s' to '%s'", endpoint.getMethod(), roleId, endpoint.getPath());
-  }
-
-  private static String getPolicyName(UUID roleId) {
-    return "Policy for role: " + roleId;
   }
 
   private static Policy createNewRolePolicy(UUID roleId) {
