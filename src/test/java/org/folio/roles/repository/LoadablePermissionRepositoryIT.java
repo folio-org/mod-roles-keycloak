@@ -17,8 +17,12 @@ import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
+@ExtendWith(OutputCaptureExtension.class)
 class LoadablePermissionRepositoryIT extends BaseRepositoryTest {
 
   @Autowired
@@ -33,8 +37,13 @@ class LoadablePermissionRepositoryIT extends BaseRepositoryTest {
   void create_positive_updatedAndCreatedFieldsNotNull() {
     var perm = loadablePermission();
     perm.setMetadata(null);
+    perm.setCapabilityId(null);
+    perm.setCapabilitySetId(null);
 
     var roleId = UUID.randomUUID();
+    var loadableRole = loadableRoleEntity();
+    loadableRole.setId(roleId);
+    entityManager.persistAndFlush(loadableRole);
     var entity = loadablePermissionEntity(roleId, perm);
     var now = OffsetDateTime.now();
 
@@ -46,6 +55,52 @@ class LoadablePermissionRepositoryIT extends BaseRepositoryTest {
     assertThat(stored.getCreatedByUserId()).isEqualTo(USER_ID);
     assertThat(stored.getUpdatedDate()).isCloseTo(now, within(1, MINUTES));
     assertThat(stored.getUpdatedByUserId()).isEqualTo(USER_ID);
+  }
+
+  @Test
+  void save_positive_logsPersistedEntity(CapturedOutput output) {
+    var perm = loadablePermission();
+    perm.setMetadata(null);
+    perm.setCapabilityId(null);
+    perm.setCapabilitySetId(null);
+
+    var loadableRole = loadableRoleEntity();
+    entityManager.persistAndFlush(loadableRole);
+    var entity = loadablePermissionEntity(loadableRole.getId(), perm);
+
+    loadablePermissionRepository.save(entity);
+    entityManager.flush();
+
+    assertThat(output).contains("Saved role_loadable_permission record: roleId=" + entity.getRoleId()
+      + ", permissionName=" + entity.getPermissionName());
+  }
+
+  @Test
+  void update_positive_logsUpdatedEntity(CapturedOutput output) {
+    var perm = loadablePermission();
+    perm.setMetadata(null);
+    perm.setCapabilityId(null);
+    perm.setCapabilitySetId(null);
+    var loadableRole = loadableRoleEntity();
+    entityManager.persistAndFlush(loadableRole);
+    var roleId = loadableRole.getId();
+    var entity = loadablePermissionEntity(roleId, perm);
+
+    loadablePermissionRepository.save(entity);
+    entityManager.flush();
+    entityManager.clear();
+
+    var stored = loadablePermissionRepository.findById(LoadablePermissionKey.of(roleId, perm.getPermissionName()))
+      .orElseThrow();
+    var capability = capabilityEntity(null);
+    entityManager.persistAndFlush(capability);
+    stored.setCapabilityId(capability.getId());
+
+    loadablePermissionRepository.save(stored);
+    entityManager.flush();
+
+    assertThat(output).contains("Updated role_loadable_permission record: roleId=" + roleId
+      + ", permissionName=" + perm.getPermissionName() + ", capabilityId=" + capability.getId());
   }
 
   @Test

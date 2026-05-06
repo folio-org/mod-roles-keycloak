@@ -9,15 +9,19 @@ import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PostPersist;
+import jakarta.persistence.PostUpdate;
 import jakarta.persistence.Table;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.springframework.data.domain.Sort;
 
 @Data
+@Log4j2
 @Entity
 @Table(name = "role_loadable_permission")
 @IdClass(LoadablePermissionKey.class)
@@ -60,5 +64,23 @@ public class LoadablePermissionEntity extends Auditable implements Identifiable<
       roleId = id.getRoleId();
       permissionName = id.getPermissionName();
     }
+  }
+
+  @PostPersist
+  void logCreated() {
+    log.info(
+      "Saved role_loadable_permission record: roleId={}, permissionName={}, capabilityId={}, capabilitySetId={}",
+      roleId, permissionName, capabilityId, capabilitySetId, persistenceTrace("save"));
+  }
+
+  @PostUpdate
+  void logUpdated() {
+    log.info(
+      "Updated role_loadable_permission record: roleId={}, permissionName={}, capabilityId={}, capabilitySetId={}",
+      roleId, permissionName, capabilityId, capabilitySetId, persistenceTrace("update"));
+  }
+
+  private IllegalStateException persistenceTrace(String operation) {
+    return new IllegalStateException("role_loadable_permission " + operation + " stack trace");
   }
 }
