@@ -135,7 +135,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
       var capabilityIds = selectCapabilityIdsByRolePermissions(capabilityByPerm, rolePermissions);
 
-      roleCapabilityService.create(roleId, capabilityIds, false);
+      roleCapabilityService.create(roleId, capabilityIds, true);
 
       rolePermissions.forEach(assignCapabilityId(capabilityByPerm));
 
@@ -148,7 +148,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     return (roleId, rolePermissions) -> {
       var rolePermission = getSingleLoadablePermission(roleId, rolePermissions);
 
-      roleCapabilitySetService.create(roleId, List.of(capabilitySet.getId()), false);
+      roleCapabilitySetService.create(roleId, List.of(capabilitySet.getId()), true);
 
       rolePermission.setCapabilitySetId(capabilitySet.getId());
       service.save(rolePermission);

@@ -326,6 +326,63 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
+  void handleCapabilityEvent_positive_whenOneMatchingRoleAlreadyHasCapabilityAndAnotherDoesNot() throws Exception {
+    var permissionName = "notes.collection.get";
+    var assignedRoleName = "Already Assigned Role";
+    var unresolvedRoleName = "Still Unresolved Role";
+
+    sendCapabilityEvent("json/kafka-events/be-notes-capability-event.json");
+    await().untilAsserted(() -> assertThat(getExistingCapabilities()).containsKey(permissionName));
+
+    var role = new LoadableRole()
+      .description("Role used to reproduce mixed capability assignment state")
+      .permissions(List.of(new LoadablePermission().permissionName(permissionName)));
+    doPut("/loadable-roles", role.name(assignedRoleName));
+    doPut("/loadable-roles", role.name(unresolvedRoleName));
+
+    var capabilitiesByPermission = getExistingCapabilities();
+    var capabilityId = capabilitiesByPermission.get(permissionName).getId();
+    await().untilAsserted(() -> {
+      var createdAssignedRole = getLoadableRoleByName(assignedRoleName);
+      var createdUnresolvedRole = getLoadableRoleByName(unresolvedRoleName);
+
+      assertThat(findPermission(createdAssignedRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+      assertThat(findPermission(createdUnresolvedRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+    });
+
+    var assignedRole = getLoadableRoleByName(assignedRoleName);
+    var unresolvedRole = getLoadableRoleByName(unresolvedRoleName);
+
+    assertThat(findPermission(assignedRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+    assertThat(findPermission(unresolvedRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+
+    jdbcTemplate.update(
+      "UPDATE test_mod_roles_keycloak.role_loadable_permission SET capability_id = NULL "
+        + "WHERE role_loadable_id = ? AND folio_permission = ?",
+      unresolvedRole.getId(), permissionName);
+    jdbcTemplate.update(
+      "DELETE FROM test_mod_roles_keycloak.role_capability WHERE role_id = ? AND capability_id = ?",
+      unresolvedRole.getId(), capabilityId);
+
+    assertThat(unassignedCapabilityCountForRoleAndPermission(unresolvedRole.getId(), permissionName)).isEqualTo(1);
+    assertThat(roleCapabilityCount(unresolvedRole.getId(), capabilityId)).isZero();
+
+    var capabilityEvent = readValue("json/kafka-events/be-notes-capability-event.json", ResourceEvent.class);
+    kafkaMessageListener.handleCapabilityEvent(capabilityEvent);
+
+    await().untilAsserted(() -> {
+      var refreshedAssignedRole = getLoadableRoleByName(assignedRoleName);
+      var refreshedUnresolvedRole = getLoadableRoleByName(unresolvedRoleName);
+
+      assertThat(findPermission(refreshedAssignedRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+      assertThat(findPermission(refreshedUnresolvedRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+      assertThat(roleCapabilityCount(refreshedAssignedRole.getId(), capabilityId)).isEqualTo(1);
+      assertThat(roleCapabilityCount(refreshedUnresolvedRole.getId(), capabilityId)).isEqualTo(1);
+    });
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
   void upsertLoadableRole_positive_populateRoleWithExistingCapabilitySet() throws Exception {
     sendCapabilityEvent("json/kafka-events/be-notes-capability-event.json");
 
@@ -404,6 +461,16 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       format("folio_permission LIKE '%%%s%%' and capability_id IS NULL", permission));
   }
 
+  private int unassignedCapabilityCountForRoleAndPermission(Object roleId, String permission) {
+    return JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, ROLE_LOADABLE_PERMISSION_TABLE,
+      format("role_loadable_id = '%s' and folio_permission = '%s' and capability_id IS NULL", roleId, permission));
+  }
+
+  private int roleCapabilityCount(Object roleId, Object capabilityId) {
+    return JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "test_mod_roles_keycloak.role_capability",
+      format("role_id = '%s' and capability_id = '%s'", roleId, capabilityId));
+  }
+
   private void sendCapabilityEvent(String file) {
     var capabilityEvent = readValue(file, ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
@@ -458,6 +525,13 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
     return permissions.stream()
       .filter(p -> stream(permissionMask).anyMatch(mask -> p.getPermissionName().contains(mask)))
       .toList();
+  }
+
+  private static LoadablePermission findPermission(LoadableRole role, String permissionName) {
+    return role.getPermissions().stream()
+      .filter(permission -> permissionName.equals(permission.getPermissionName()))
+      .findFirst()
+      .orElseThrow();
   }
 
   private static LoadableRole getLoadableRoleByName(String name) throws Exception {
