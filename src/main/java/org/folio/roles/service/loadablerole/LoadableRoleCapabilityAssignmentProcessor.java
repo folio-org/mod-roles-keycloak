@@ -117,9 +117,14 @@ public class LoadableRoleCapabilityAssignmentProcessor {
 
   private Map<UUID, List<LoadablePermission>> findRoleWithPermissionsByPermissionNames(
     Collection<String> permissions) {
-    return service.findAllByPermissions(permissions)
+    var groupedPermissions = service.findAllByPermissions(permissions)
       .stream()
       .collect(groupingBy(LoadablePermission::getRoleId));
+
+    log.info("Grouped loadable permissions by role: permissions = {}, matchedRoles = {}, roleIds = {}", permissions,
+      groupedPermissions.size(), groupedPermissions.keySet());
+
+    return groupedPermissions;
   }
 
   private BiConsumer<UUID, List<LoadablePermission>> assignCapabilitiesToRole(

@@ -3,13 +3,16 @@ package org.folio.roles.service.loadablerole;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilitySetUtils.extendedCapabilitySet;
 import static org.folio.roles.support.CapabilityUtils.capability;
+import static org.folio.roles.support.LoadablePermissionUtils.loadablePermission;
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissions;
 import static org.folio.roles.support.TestUtils.copy;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -31,13 +34,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
 @ExtendWith(InstancioExtension.class)
+@ExtendWith(OutputCaptureExtension.class)
 class LoadableRoleCapabilityAssignmentProcessorTest {
 
   @InjectMocks private LoadableRoleCapabilityAssignmentProcessor processor;
@@ -84,6 +91,46 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     var firstLoadablePermission = perms.get(0);
     verify(roleCapabilityService).create(firstLoadablePermission.getRoleId(), List.of(capabilityId), false);
     verify(service).saveAll(List.of(copy(firstLoadablePermission).capabilityId(capabilityId)));
+  }
+
+  @Test
+  void handleCapabilitiesCreatedEvent_positive_samePermissionAssignedToMultipleRoles(CapturedOutput output) {
+    var permission = "inventory-storage.locations.collection.get";
+    var capabilityId = randomUUID();
+    var roleId1 = randomUUID();
+    var roleId2 = randomUUID();
+    var perm1 = loadablePermission(roleId1, permission).capabilityId(null).capabilitySetId(null);
+    var perm2 = loadablePermission(roleId2, permission).capabilityId(null).capabilitySetId(null);
+    var perms = List.of(perm1, perm2);
+
+    when(service.findAllByPermissions(List.of(permission))).thenReturn(perms);
+    when(roleCapabilityService.create(roleId1, List.of(capabilityId), false)).thenReturn(null);
+    when(roleCapabilityService.create(roleId2, List.of(capabilityId), false)).thenReturn(null);
+    when(service.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+    var capability = capability(capabilityId, permission);
+    var event = (CapabilityEvent) CapabilityEvent.created(capability).withContext(context);
+
+    processor.handleCapabilitiesCreatedEvent(event);
+
+    var saveAllCaptor = ArgumentCaptor.forClass(List.class);
+    verify(roleCapabilityService).create(roleId1, List.of(capabilityId), false);
+    verify(roleCapabilityService).create(roleId2, List.of(capabilityId), false);
+    verify(service, org.mockito.Mockito.times(2)).saveAll(saveAllCaptor.capture());
+
+    List<LoadablePermission> savedPermissions = saveAllCaptor.getAllValues().stream()
+      .flatMap(capturedList -> ((List<?>) capturedList).stream())
+      .map(capturedPermission -> (LoadablePermission) capturedPermission)
+      .toList();
+
+    assertThat(savedPermissions).hasSize(2);
+    assertThat(savedPermissions.stream().map(LoadablePermission::getRoleId).toList())
+      .containsExactlyInAnyOrder(roleId1, roleId2);
+    assertThat(savedPermissions.stream().map(LoadablePermission::getCapabilityId).toList())
+      .containsOnly(capabilityId);
+    assertThat(output.getAll()).contains("matchedRoles = 2")
+      .contains(roleId1.toString())
+      .contains(roleId2.toString());
   }
 
   @Test

@@ -11,6 +11,7 @@ import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.mockito.Mockito.when;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.folio.roles.base.BaseRepositoryTest;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
@@ -101,6 +102,37 @@ class LoadablePermissionRepositoryIT extends BaseRepositoryTest {
 
     assertThat(output).contains("Updated role_loadable_permission record: roleId=" + roleId
       + ", permissionName=" + perm.getPermissionName() + ", capabilityId=" + capability.getId());
+  }
+
+  @Test
+  void findAllByPermissionNameIn_positive_samePermissionForMultipleRoles() {
+    var permissionName = "inventory-storage.locations.collection.get";
+    var role1 = loadableRoleEntity();
+    var role2 = loadableRoleEntity();
+    entityManager.persistAndFlush(role1);
+    entityManager.persistAndFlush(role2);
+
+    var perm1 = loadablePermission(role1.getId(), permissionName);
+    perm1.setMetadata(null);
+    perm1.setCapabilityId(null);
+    perm1.setCapabilitySetId(null);
+
+    var perm2 = loadablePermission(role2.getId(), permissionName);
+    perm2.setMetadata(null);
+    perm2.setCapabilityId(null);
+    perm2.setCapabilitySetId(null);
+
+    entityManager.persistAndFlush(loadablePermissionEntity(role1.getId(), perm1));
+    entityManager.persistAndFlush(loadablePermissionEntity(role2.getId(), perm2));
+    entityManager.clear();
+
+    var actual = loadablePermissionRepository.findAllByPermissionNameIn(List.of(permissionName));
+
+    assertThat(actual).hasSize(2);
+    assertThat(actual.stream().map(LoadablePermissionEntity::getRoleId).toList())
+      .containsExactlyInAnyOrder(role1.getId(), role2.getId());
+    assertThat(actual.stream().map(LoadablePermissionEntity::getPermissionName).toList())
+      .containsOnly(permissionName);
   }
 
   @Test

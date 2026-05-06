@@ -70,7 +70,7 @@ public class LoadablePermissionUtils {
     var roleId = UUID.randomUUID();
     var loadableRole = new LoadableRoleEntity();
     loadableRole.setId(roleId);
-    loadableRole.setName("roleName");
+    loadableRole.setName("roleName-" + roleId);
     loadableRole.setDescription("roleDescription");
     return loadableRole;
   }

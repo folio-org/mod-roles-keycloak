@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.folio.roles.mapper.LoadableRoleMapper;
@@ -25,10 +26,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
 @ExtendWith(InstancioExtension.class)
+@ExtendWith(OutputCaptureExtension.class)
 class LoadablePermissionServiceTest {
 
   @InjectMocks private LoadablePermissionService service;
@@ -53,6 +57,29 @@ class LoadablePermissionServiceTest {
     var actual = service.findAllByPermissions(permNames);
 
     assertThat(actual).isEqualTo(perms);
+  }
+
+  @Test
+  void findAllByPermissions_positive_samePermissionForMultipleRoles(CapturedOutput output) {
+    var permissionName = "inventory-storage.locations.collection.get";
+    var roleId1 = UUID.randomUUID();
+    var roleId2 = UUID.randomUUID();
+    var perm1 = loadablePermission(roleId1, permissionName);
+    var perm2 = loadablePermission(roleId2, permissionName);
+    var perms = List.of(perm1, perm2);
+    var permEntities = loadablePermissionEntities(perms);
+
+    when(repository.findAllByPermissionNameIn(List.of(permissionName))).thenReturn(permEntities);
+    when(mapper.toPermission(permEntities)).thenReturn(perms);
+
+    var actual = service.findAllByPermissions(List.of(permissionName));
+
+    assertThat(actual).hasSize(2)
+      .extracting(LoadablePermission::getRoleId)
+      .containsExactlyInAnyOrder(roleId1, roleId2);
+    assertThat(output.getAll()).contains("totalRecords = 2")
+      .contains(roleId1.toString())
+      .contains(roleId2.toString());
   }
 
   @Test

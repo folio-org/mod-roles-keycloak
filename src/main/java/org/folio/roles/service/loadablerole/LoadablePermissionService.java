@@ -4,6 +4,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.LoadablePermission;
@@ -26,7 +27,13 @@ public class LoadablePermissionService {
   @Transactional(readOnly = true)
   public List<LoadablePermission> findAllByPermissions(Collection<String> permissionNames) {
     var entities = repository.findAllByPermissionNameIn(permissionNames);
-    return mapper.toPermission(entities);
+    var permissions = mapper.toPermission(entities);
+
+    log.info("Loadable permissions fetched by permission names: permissionNames = {}, totalRecords = {}, roleIds = {}",
+      permissionNames, permissions.size(),
+      permissions.stream().map(LoadablePermission::getRoleId).distinct().collect(Collectors.toList()));
+
+    return permissions;
   }
 
   public LoadablePermission save(LoadablePermission perm) {
