@@ -78,9 +78,20 @@ public class UserRoleEntityService {
     log.debug("User roles have been deleted: userId = {}", userId);
   }
 
+  public void deleteByRoleId(UUID roleId) {
+    repository.deleteByRoleId(roleId);
+    log.debug("User roles have been deleted: roleId = {}", roleId);
+  }
+
   @Transactional(readOnly = true)
   public List<UserRole> findByUserId(UUID userId) {
     var rolesUserEntity = repository.findByUserId(userId);
+    return mapper.toDto(rolesUserEntity);
+  }
+
+  @Transactional(readOnly = true)
+  public List<UserRole> findByRoleId(UUID roleId) {
+    var rolesUserEntity = repository.findByRoleId(roleId);
     return mapper.toDto(rolesUserEntity);
   }
 

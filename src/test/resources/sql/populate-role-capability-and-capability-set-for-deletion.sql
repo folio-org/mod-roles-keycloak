@@ -19,6 +19,10 @@ INSERT INTO test_mod_roles_keycloak.role_capability(role_id, capability_id)
 VALUES ('1e985e76-e9ca-401c-ad8e-0d121a11111e', '8d2da27c-1d56-48b6-958d-2bfae6d79dc8'),
        ('1e985e76-e9ca-401c-ad8e-0d121a11111e', 'e2628d7d-059a-46a1-a5ea-10a5a37b1af2');
 
+INSERT INTO test_mod_roles_keycloak.capability_endpoint(capability_id, path, method)
+VALUES ('8d2da27c-1d56-48b6-958d-2bfae6d79dc8', '/foo/items', 'POST'),
+       ('e2628d7d-059a-46a1-a5ea-10a5a37b1af2', '/foo/items/{id}', 'GET');
+
 INSERT INTO test_mod_roles_keycloak.capability_set
   (id, name, description, resource, action, type, application_id, created_by_user_id)
 VALUES ('8d2da27c-1d56-48b6-958d-2bfae6d79dc8', 'foo_item.create',

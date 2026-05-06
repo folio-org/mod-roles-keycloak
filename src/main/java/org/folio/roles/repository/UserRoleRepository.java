@@ -12,9 +12,13 @@ public interface UserRoleRepository extends JpaCqlRepository<UserRoleEntity, Use
 
   List<UserRoleEntity> findByUserId(UUID userId);
 
+  List<UserRoleEntity> findByRoleId(UUID roleId);
+
   List<UserRoleEntity> findByUserIdAndRoleIdIn(UUID userId, List<UUID> roleIds);
 
   void deleteByUserId(UUID userId);
+
+  void deleteByRoleId(UUID roleId);
 
   void deleteByUserIdAndRoleIdIn(UUID userId, List<UUID> roleIds);
 }
