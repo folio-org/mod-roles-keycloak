@@ -13,6 +13,7 @@ import static org.folio.roles.utils.TestValues.readValue;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.USER_ID;
 import static org.folio.test.TestUtils.parseResponse;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +44,7 @@ import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.dto.LoadableRoles;
 import org.folio.roles.integration.kafka.KafkaMessageListener;
 import org.folio.roles.service.loadablerole.LoadableRoleCapabilityAssignmentHelper;
+import org.folio.roles.service.loadablerole.LoadableRoleCapabilityAssignmentProcessor;
 import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
@@ -79,6 +82,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
   @Autowired private KafkaMessageListener kafkaMessageListener;
 
   @MockitoSpyBean private LoadableRoleCapabilityAssignmentHelper assignmentHelper;
+  @MockitoSpyBean private LoadableRoleCapabilityAssignmentProcessor assignmentProcessor;
 
   @BeforeAll
   static void beforeAll() {
@@ -326,6 +330,85 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
+  void handleCapabilityEvent_positive_whenOneMatchingRoleAlreadyHasCapabilityAndAnotherDoesNot() throws Exception {
+    var permissionName = "notes.collection.get";
+    var firstRoleName = "Initially Unresolved Role";
+    var secondRoleName = "Assigned While Event Blocked Role";
+
+    // Step 1: Create the first role having permission "notes.collection.get".
+    // Because the capability does not exist for this permission, the "capabilityId" should be null for this role
+    // in the DB.
+    var firstRole = new LoadableRole()
+      .name(firstRoleName)
+      .description("Role created before capability exists")
+      .permissions(List.of(new LoadablePermission().permissionName(permissionName)));
+
+    doPut("/loadable-roles", firstRole);
+
+    var createdFirstRole = getLoadableRoleByName(firstRoleName);
+    assertThat(findPermission(createdFirstRole, permissionName).getCapabilityId()).isNull();
+
+    // Step 2: Create the capability now. However, pause handleCapabilitiesCreatedEvent(...) after the capability
+    // event reaches the listener to simulate the race condition.
+    var processorEntered = new CountDownLatch(1);
+    var allowProcessorToContinue = new CountDownLatch(1);
+
+    doAnswer(invocation -> {
+      processorEntered.countDown();
+      assertThat(allowProcessorToContinue.await(10, TimeUnit.SECONDS)).isTrue();
+      return invocation.callRealMethod();
+    }).when(assignmentProcessor).handleCapabilitiesCreatedEvent(any());
+
+    try (var executor = Executors.newSingleThreadExecutor()) {
+      var capabilityEvent = readValue("json/kafka-events/be-notes-capability-event.json", ResourceEvent.class);
+      final var createCapabilityFuture = executor.submit(() -> {
+        kafkaMessageListener.handleCapabilityEvent(capabilityEvent);
+        return null;
+      });
+
+      assertThat(processorEntered.await(10, TimeUnit.SECONDS)).isTrue();
+
+      // Step 3: While the listener is blocked, creating another loadable role for the same permission.
+      // This should resolve immediately because the capability now exists and the normal save path can see it.
+      var secondRole = new LoadableRole()
+        .name(secondRoleName)
+        .description("Role created while capability assignment processor is blocked")
+        .permissions(List.of(new LoadablePermission().permissionName(permissionName)));
+      doPut("/loadable-roles", secondRole);
+
+      var capabilityId = getExistingCapabilities().get(permissionName).getId();
+      assertThat(capabilityId).isNotNull();
+
+      var unresolvedFirstRole = getLoadableRoleByName(firstRoleName);
+      var assignedSecondRole = getLoadableRoleByName(secondRoleName);
+
+      // Before unblocking the listener, only the second role should be assigned.
+      assertThat(findPermission(unresolvedFirstRole, permissionName).getCapabilityId()).isNull();
+      assertThat(findPermission(assignedSecondRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+      assertThat(unassignedCapabilityCountForRoleAndPermission(unresolvedFirstRole.getId(), permissionName))
+        .isEqualTo(1);
+      assertThat(roleCapabilityCount(unresolvedFirstRole.getId(), capabilityId)).isZero();
+      assertThat(roleCapabilityCount(assignedSecondRole.getId(), capabilityId)).isEqualTo(1);
+
+      // Step 4: Now, unpause the listener.
+      // Once the listener continues, it should repair the first role without disturbing the second one.
+      allowProcessorToContinue.countDown();
+      createCapabilityFuture.get(10, TimeUnit.SECONDS);
+
+      await().untilAsserted(() -> {
+        var resolvedFirstRole = getLoadableRoleByName(firstRoleName);
+        var resolvedSecondRole = getLoadableRoleByName(secondRoleName);
+
+        assertThat(findPermission(resolvedFirstRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+        assertThat(findPermission(resolvedSecondRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+        assertThat(roleCapabilityCount(resolvedFirstRole.getId(), capabilityId)).isEqualTo(1);
+        assertThat(roleCapabilityCount(resolvedSecondRole.getId(), capabilityId)).isEqualTo(1);
+      });
+    }
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
   void upsertLoadableRole_positive_populateRoleWithExistingCapabilitySet() throws Exception {
     sendCapabilityEvent("json/kafka-events/be-notes-capability-event.json");
 
@@ -404,6 +487,16 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       format("folio_permission LIKE '%%%s%%' and capability_id IS NULL", permission));
   }
 
+  private int unassignedCapabilityCountForRoleAndPermission(UUID roleId, String permission) {
+    return JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, ROLE_LOADABLE_PERMISSION_TABLE,
+      format("role_loadable_id = '%s' and folio_permission = '%s' and capability_id IS NULL", roleId, permission));
+  }
+
+  private int roleCapabilityCount(UUID roleId, Object capabilityId) {
+    return JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "test_mod_roles_keycloak.role_capability",
+      format("role_id = '%s' and capability_id = '%s'", roleId, capabilityId));
+  }
+
   private void sendCapabilityEvent(String file) {
     var capabilityEvent = readValue(file, ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
@@ -458,6 +551,13 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
     return permissions.stream()
       .filter(p -> stream(permissionMask).anyMatch(mask -> p.getPermissionName().contains(mask)))
       .toList();
+  }
+
+  private static LoadablePermission findPermission(LoadableRole role, String permissionName) {
+    return role.getPermissions().stream()
+      .filter(permission -> permissionName.equals(permission.getPermissionName()))
+      .findFirst()
+      .orElseThrow();
   }
 
   private static LoadableRole getLoadableRoleByName(String name) throws Exception {
