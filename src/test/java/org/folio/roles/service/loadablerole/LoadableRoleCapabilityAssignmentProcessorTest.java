@@ -71,7 +71,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     when(service.findAllByPermissions(List.of(permission))).thenReturn(perms);
 
     perms.forEach(perm -> {
-      when(roleCapabilityService.create(perm.getRoleId(), List.of(capabilityId), false)).thenReturn(null);
+      when(roleCapabilityService.create(perm.getRoleId(), List.of(capabilityId), true)).thenReturn(null);
 
       var permsWithCapabilityId = List.of(copy(perm).capabilityId(capabilityId));
       when(service.saveAll(permsWithCapabilityId)).thenReturn(permsWithCapabilityId);
@@ -82,7 +82,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     processor.handleCapabilitiesCreatedEvent(event);
 
     var firstLoadablePermission = perms.get(0);
-    verify(roleCapabilityService).create(firstLoadablePermission.getRoleId(), List.of(capabilityId), false);
+    verify(roleCapabilityService).create(firstLoadablePermission.getRoleId(), List.of(capabilityId), true);
     verify(service).saveAll(List.of(copy(firstLoadablePermission).capabilityId(capabilityId)));
   }
 
@@ -112,7 +112,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     when(service.findAllByPermissions(List.of(permission))).thenReturn(perms);
 
     perms.forEach(perm -> {
-      when(roleCapabilityService.create(perm.getRoleId(), List.of(capabilityId), false)).thenReturn(null);
+      when(roleCapabilityService.create(perm.getRoleId(), List.of(capabilityId), true)).thenReturn(null);
 
       var permsWithCapabilityId = List.of(copy(perm).capabilityId(capabilityId));
       when(service.saveAll(permsWithCapabilityId)).thenReturn(permsWithCapabilityId);
@@ -123,7 +123,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     processor.handleCapabilitiesUpdateEvent(event);
 
     var firstLoadablePermission = perms.getFirst();
-    verify(roleCapabilityService).create(firstLoadablePermission.getRoleId(), List.of(capabilityId), false);
+    verify(roleCapabilityService).create(firstLoadablePermission.getRoleId(), List.of(capabilityId), true);
     verify(service).saveAll(List.of(copy(firstLoadablePermission).capabilityId(capabilityId)));
   }
 
@@ -153,7 +153,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
     when(service.findAllByPermissions(List.of(capability.getPermission()))).thenReturn(perms);
     perms.forEach(perm -> {
-      when(roleCapabilitySetService.create(perm.getRoleId(), List.of(capabilitySet.getId()), false)).thenReturn(null);
+      when(roleCapabilitySetService.create(perm.getRoleId(), List.of(capabilitySet.getId()), true)).thenReturn(null);
 
       var permWithCapabilitySetId = copy(perm).capabilitySetId(capabilitySet.getId());
       when(service.save(permWithCapabilitySetId)).thenReturn(permWithCapabilitySetId);
@@ -164,7 +164,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     processor.handleCapabilitySetCreatedEvent(event);
 
     var firstLoadablePermission = perms.get(0);
-    verify(roleCapabilitySetService).create(firstLoadablePermission.getRoleId(), List.of(CAPABILITY_SET_ID), false);
+    verify(roleCapabilitySetService).create(firstLoadablePermission.getRoleId(), List.of(CAPABILITY_SET_ID), true);
     verify(service).save(copy(firstLoadablePermission).capabilitySetId(CAPABILITY_SET_ID));
   }
 
