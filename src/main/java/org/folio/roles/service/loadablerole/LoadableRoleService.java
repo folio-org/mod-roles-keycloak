@@ -116,7 +116,7 @@ public class LoadableRoleService {
     try {
       keycloakService.deleteById(id);
     } catch (Exception exception) {
-      log.debug("Failed to delete Role in Keycloak: id = {}", id, exception);
+      log.warn("Failed to delete Role in Keycloak: id = {}", id, exception);
     }
   }
 

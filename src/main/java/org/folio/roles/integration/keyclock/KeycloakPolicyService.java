@@ -4,6 +4,7 @@ import static jakarta.ws.rs.core.Response.Status.Family.SUCCESSFUL;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.folio.common.utils.CollectionUtils.toStream;
+import static org.folio.roles.integration.keyclock.KeycloakResponseErrorHelper.errorDetails;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
@@ -183,8 +184,10 @@ public class KeycloakPolicyService {
       return;
     }
 
-    throw new KeycloakApiException(format(
-      "Error during policy creation in Keycloak. Details: id = %s, status = %s, message = %s", policy.getId(),
-      statusInfo.getStatusCode(), statusInfo.getReasonPhrase()), null, response.getStatus());
+    var details = errorDetails(response);
+    log.warn("Failed to create Keycloak policy [id: {}, name: {}]. Details: {}",
+      policy.getId(), policy.getName(), details);
+    throw new KeycloakApiException(format("Error during policy creation in Keycloak. Details: id = %s, %s",
+      policy.getId(), details), null, response.getStatus());
   }
 }

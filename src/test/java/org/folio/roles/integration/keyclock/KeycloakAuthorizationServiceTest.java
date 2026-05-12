@@ -58,9 +58,11 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 @UnitTest
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class KeycloakAuthorizationServiceTest {
 
   private static final String SCOPE_ID = UUID.randomUUID().toString();
@@ -230,7 +232,7 @@ class KeycloakAuthorizationServiceTest {
     }
 
     @Test
-    void negative_permissionIsNotCreated() {
+    void negative_permissionIsNotCreated(CapturedOutput output) {
       when(authResourceProvider.createAuthorizationClient()).thenReturn(authorizationClient);
       when(authorizationClient.resources()).thenReturn(authResourcesClient);
       when(authorizationClient.permissions()).thenReturn(authPermissionsClient);
@@ -242,6 +244,10 @@ class KeycloakAuthorizationServiceTest {
       when(authResourcesClient.find(path, null, null, null, null, 0, MAX_VALUE)).thenReturn(resourceRepresentations);
       when(scopePermissionsClient.create(scopePermissionCaptor.capture())).thenReturn(response);
       when(response.getStatusInfo()).thenReturn(Status.INTERNAL_SERVER_ERROR);
+      when(response.hasEntity()).thenReturn(true);
+      when(response.readEntity(String.class)).thenReturn("""
+        {"error":"server_error","error_description":"Scope permission rejected"}
+        """);
 
       var policy = rolePolicy();
       var endpoints = List.of(endpoint("/foo/entities", GET));
@@ -249,9 +255,17 @@ class KeycloakAuthorizationServiceTest {
       assertThatThrownBy(() -> keycloakAuthService.createPermissions(policy, endpoints, PERMISSION_NAME_GENERATOR))
         .isInstanceOf(ServiceException.class)
         .hasMessage("Error during scope-based permission creation in Keycloak. "
-          + "Details: status = 500, message = Internal Server Error");
+          + "Details: status = 500, message = Internal Server Error, "
+          + "responseBody = {\"error\":\"server_error\",\"error_description\":\"Scope permission rejected\"}");
+
+      assertThat(output.getAll())
+        .contains("Failed to create Keycloak permission [name: GET access to /foo/entities]. Details: "
+          + "status = 500, message = Internal Server Error, "
+          + "responseBody = {\"error\":\"server_error\",\"error_description\":\"Scope permission rejected\"}");
 
       verify(response).close();
+      verify(response).hasEntity();
+      verify(response).readEntity(String.class);
       verify(jsonHelper).asJsonStringSafe(resourceRepresentation);
       assertThat(scopePermissionCaptor.getValue())
         .usingRecursiveComparison()

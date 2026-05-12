@@ -45,9 +45,11 @@ import org.keycloak.admin.client.resource.PolicyResource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 @UnitTest
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class KeycloakPolicyServiceTest {
 
   @InjectMocks private KeycloakPolicyService keycloakPolicyService;
@@ -167,21 +169,34 @@ class KeycloakPolicyServiceTest {
     }
 
     @Test
-    void positive_notAuthorizedException() {
+    void positive_notAuthorizedException(CapturedOutput output) {
       var timePolicy = timePolicy();
       var keycloakPolicy = keycloakTimePolicy();
       var response = mock(Response.class);
 
       when(response.getStatusInfo()).thenReturn(Status.UNAUTHORIZED);
+      when(response.hasEntity()).thenReturn(true);
+      when(response.readEntity(String.class)).thenReturn("""
+        {"error":"unauthorized","error_description":"Policy creation is not allowed"}
+        """);
       when(keycloakPolicyMapper.toKeycloakPolicy(timePolicy, PolicyMapperContext.empty())).thenReturn(keycloakPolicy);
       when(authClientProvider.getAuthorizationClient()).thenReturn(authorizationResource);
       when(authorizationResource.policies().create(keycloakPolicy)).thenReturn(response);
 
       assertThatThrownBy(() -> keycloakPolicyService.create(timePolicy))
         .isInstanceOf(KeycloakApiException.class)
-        .hasMessage("Error during policy creation in Keycloak. Details: id = %s, status = %s, message = %s",
-          POLICY_ID, 401, "Unauthorized");
+        .hasMessage("Error during policy creation in Keycloak. Details: id = %s, status = %s, message = %s, "
+          + "responseBody = %s", POLICY_ID, 401, "Unauthorized",
+          "{\"error\":\"unauthorized\",\"error_description\":\"Policy creation is not allowed\"}");
 
+      assertThat(output.getAll())
+        .contains("Failed to create Keycloak policy [id: " + POLICY_ID + ", name: Test time policy]. Details: "
+          + "status = 401, message = Unauthorized, "
+          + "responseBody = {\"error\":\"unauthorized\",\"error_description\":\"Policy creation is not allowed\"}");
+
+      verify(response).close();
+      verify(response).hasEntity();
+      verify(response).readEntity(String.class);
       verify(authorizationResource, atLeastOnce()).policies();
     }
   }

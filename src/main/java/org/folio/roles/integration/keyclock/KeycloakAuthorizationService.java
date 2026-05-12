@@ -3,8 +3,8 @@ package org.folio.roles.integration.keyclock;
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static jakarta.ws.rs.core.Response.Status.Family.SUCCESSFUL;
 import static java.lang.Integer.MAX_VALUE;
-import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.folio.roles.integration.keyclock.KeycloakResponseErrorHelper.errorDetails;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.ws.rs.core.Response;
@@ -104,7 +104,11 @@ public class KeycloakAuthorizationService {
     var resourceRepresentation = resources.stream()
       .filter(resource -> Strings.CS.equals(staticPath, resource.getName()))
       .findFirst()
-      .orElseThrow(() -> new EntityNotFoundException("Keycloak resource is not found by static path: " + staticPath));
+      .orElseThrow(() -> {
+        var message = "Keycloak resource is not found by static path: " + staticPath;
+        log.warn(message);
+        return new EntityNotFoundException(message);
+      });
 
     log.debug("Keycloak resource found [value: {}]", () -> jsonHelper.asJsonStringSafe(resourceRepresentation));
     return resourceRepresentation;
@@ -159,9 +163,9 @@ public class KeycloakAuthorizationService {
       return;
     }
 
-    throw new ServiceException(format(
-      "Error during scope-based permission creation in Keycloak. Details: status = %s, message = %s",
-      statusInfo.getStatusCode(), statusInfo.getReasonPhrase()),
+    var details = errorDetails(response);
+    log.warn("Failed to create Keycloak permission [name: {}]. Details: {}", permission.getName(), details);
+    throw new ServiceException("Error during scope-based permission creation in Keycloak. Details: " + details,
       "permission", permission.getName());
   }
 }
