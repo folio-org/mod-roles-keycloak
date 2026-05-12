@@ -3,12 +3,11 @@ package org.folio.roles.integration.keyclock;
 import static java.lang.String.format;
 
 import jakarta.ws.rs.core.Response;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-final class KeycloakResponseErrorHelper {
+@UtilityClass
+public class KeycloakResponseErrorHelper {
 
   private static final int MAX_RESPONSE_BODY_LENGTH = 2048;
 
