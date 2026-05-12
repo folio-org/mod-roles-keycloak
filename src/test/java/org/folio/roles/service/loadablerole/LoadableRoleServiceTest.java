@@ -10,6 +10,7 @@ import static org.folio.roles.support.LoadableRoleUtils.regularRole;
 import static org.folio.roles.support.RoleUtils.role;
 import static org.folio.roles.support.TestUtils.copy;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -34,11 +35,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 
 @UnitTest
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 @ExtendWith(InstancioExtension.class)
 class LoadableRoleServiceTest {
 
@@ -176,6 +179,25 @@ class LoadableRoleServiceTest {
       service.cleanupDefaultRolesFromKeycloak();
 
       verifyNoInteractions(keycloakService);
+    }
+
+    @Test
+    void positive_keycloakDeleteFails_logsWarn(CapturedOutput output) {
+      var role = role();
+      var loadableRole = loadableRoleEntity(loadableRole());
+      var exception = new RuntimeException("Keycloak is unavailable");
+
+      when(repository.findAllByType(EntityRoleType.DEFAULT))
+        .thenReturn(Stream.of(loadableRole));
+      when(keycloakService.findByName(loadableRole.getName()))
+        .thenReturn(Optional.of(role));
+      doThrow(exception).when(keycloakService).deleteById(role.getId());
+
+      service.cleanupDefaultRolesFromKeycloak();
+
+      assertThat(output.getAll()).contains("Failed to delete Role in Keycloak: id = " + role.getId());
+      assertThat(output.getAll()).contains("Keycloak is unavailable");
+      verify(keycloakService).deleteById(role.getId());
     }
   }
 
