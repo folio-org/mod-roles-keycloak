@@ -5,6 +5,7 @@ This module provides the following features:
 | Feature | Description | Status |
 |---------|-------------|--------|
 | [Capability Event Migration Guard](features/capability-event-migration-guard.md) | Detects active Liquibase migrations before processing Kafka capability events and retries with back-off until the schema is ready | Active |
+| [Default Role Provisioning](features/default-role-provisioning.md) | Creates or updates default roles via `/loadable-roles` and backfills permission links as matching capability data becomes available | Active |
 | [User Permissions Cache](features/user-permissions-cache.md) | Caches user permission lookups with tenant-scoped eviction on role/capability changes | Active |
 | [Capability Event Deduplication](features/capability-event-deduplication.md) | De-duplicates capabilities by generated name and merges single-endpoint PUT/PATCH pairs for the same path | Active |
 | [Entitled User Permission Filtering](features/entitled-user-permission-filtering.md) | Filters user permissions to only those from applications currently entitled for the tenant when `entitledOnly=true` | Active |
