@@ -89,7 +89,7 @@ class KafkaConfigurationErrorDetectionTest {
     var retryDelay = Duration.ofMillis(500);
     var retryAttempts = 10L;
     var retryConfig = createRetryConfiguration(retryDelay, retryAttempts);
-    var kafkaConfig = new KafkaConfiguration(new KafkaProperties(), retryConfig);
+    var kafkaConfig = new KafkaConfiguration(new KafkaProperties(), retryConfig, null);
     var exception = new LiquibaseMigrationException("Migration in progress for tenant: test");
 
     // when
