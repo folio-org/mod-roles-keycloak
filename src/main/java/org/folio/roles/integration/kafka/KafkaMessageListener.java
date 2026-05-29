@@ -1,5 +1,6 @@
 package org.folio.roles.integration.kafka;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.integration.kafka.model.ResourceEvent;
@@ -11,6 +12,7 @@ import org.folio.spring.liquibase.LiquibaseMigrationLockService;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 @Log4j2
@@ -40,7 +42,7 @@ public class KafkaMessageListener {
     groupId = "#{kafkaConsumerProperties.listener['capability'].groupId}",
     topicPattern = "#{kafkaConsumerProperties.listener['capability'].topicPattern}",
     filter = "tenantAwareMessageFilter")
-  public void handleCapabilityEvent(ResourceEvent<?> resourceEvent) {
+  public void handleCapabilityEvent(@Payload @Valid ResourceEvent<?> resourceEvent) {
     try (
       var ignored = new FolioExecutionContextSetter(executionContextBuilder.buildContext(resourceEvent.getTenant()))) {
       try {
