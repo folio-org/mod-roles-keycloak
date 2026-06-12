@@ -30,27 +30,28 @@
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <lombok.version>1.18.46</lombok.version>
-    <swagger-annotations.version>2.2.49</swagger-annotations.version>
+    <swagger-annotations.version>2.2.50</swagger-annotations.version>
     <commons-lang3.version>3.20.0</commons-lang3.version>
     <apache-commons-collections4.version>4.5.0</apache-commons-collections4.version>
     <openapi-tools.jackson-databind-nullable.version>0.2.10</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.6.3</mapstruct.version>
-    <hypersistence-utils-hibernate-70.version>3.15.2</hypersistence-utils-hibernate-70.version>
+    <hypersistence-utils-hibernate-70.version>3.15.3</hypersistence-utils-hibernate-70.version>
     <folio-spring-support.version>10.0.0</folio-spring-support.version>
     <folio-java-checkstyle.version>1.2.0</folio-java-checkstyle.version>
     <applications-poc-tools.version>4.1.0-SNAPSHOT</applications-poc-tools.version>
+    <kafka.version>4.2.0</kafka.version> <!-- can be removed once Spring Boot migrates to this version -->
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
     </mod-roles-keycloak.yaml-file>
 
     <!-- Test dependencies versions -->
     <testcontainer.version>2.0.5</testcontainer.version>
-    <instancio.version>5.5.1</instancio.version>
+    <instancio.version>5.6.0</instancio.version>
     <kryo.version>5.6.2</kryo.version>
 
     <!-- Plugins versions -->
     <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
-    <maven-checkstyle.version>13.4.2</maven-checkstyle.version>
+    <maven-checkstyle.version>13.5.0</maven-checkstyle.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
@@ -682,7 +683,7 @@
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.8.14</version>
+            <version>0.8.15</version>
             <configuration>
               <excludes>
                 <exclude>**/domain/**/*</exclude>

@@ -22,22 +22,26 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.kafka.KafkaException.Level;
+import org.springframework.kafka.annotation.KafkaListenerConfigurer;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistrar;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 @Log4j2
 @Configuration
 @EnableKafkaConsumer
 @RequiredArgsConstructor
-public class KafkaConfiguration {
+public class KafkaConfiguration implements KafkaListenerConfigurer {
 
   private final KafkaProperties kafkaProperties;
   private final CapabilityEventRetryConfiguration retryConfiguration;
+  private final LocalValidatorFactoryBean validator;
 
   @Bean
   public ConcurrentKafkaListenerContainerFactory<String, ResourceEvent<?>> kafkaListenerContainerFactory(
@@ -56,6 +60,11 @@ public class KafkaConfiguration {
     config.put(VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
     config.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
     return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), deserializer);
+  }
+
+  @Override
+  public void configureKafkaListeners(KafkaListenerEndpointRegistrar registrar) {
+    registrar.setValidator(this.validator);
   }
 
   private DefaultErrorHandler capabilityEventErrorHandler() {
