@@ -162,6 +162,7 @@ public class CapabilityService {
    * @return {@link PageResult} object with found {@link Capability} relation descriptors
    */
   @Transactional(readOnly = true)
+  @SuppressWarnings("java:S6809") // both overloads are @Transactional(readOnly=true, REQUIRED); self-call is safe
   public PageResult<Capability> findByRoleId(UUID roleId, boolean expand, boolean includeDummy, int limit, int offset) {
     return findByRoleId(roleId, expand, includeDummy, true, limit, offset);
   }
