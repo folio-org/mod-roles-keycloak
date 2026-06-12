@@ -1,111 +1,65 @@
-# AGENTS.md
+# mod-roles-keycloak
 
-This file provides guidance to agents when working with code in this repository.
+FOLIO Spring Boot 4 service (Java 21) managing roles, capabilities, policies, and permission migrations in the Eureka authorization model. Proxies role/policy management to Keycloak; stores metadata in Postgres; handles async migration of legacy FOLIO permissions to the roles model.
 
-## About This Module
-
-`mod-roles-keycloak` is a FOLIO Spring Boot 4 service (Java 21) that manages roles, capabilities, policies, and permission migrations in the Eureka authorization model. It proxies role/policy management to Keycloak while storing metadata in Postgres. The module also handles async migration of legacy FOLIO permissions to the new roles-based model.
-
-## Build & Test Commands
+## Build & Test
 
 ```bash
-# Build (skip tests)
-mvn package -DskipTests
-
-# Run unit tests only
-mvn test
-
-# Run a single unit test class
-mvn test -Dtest=RoleServiceTest
-
-# Run a single unit test method
-mvn test -Dtest=RoleServiceTest#positive_singleRole
-
-# Run all tests (unit + integration)
-mvn verify
-
-# Run a single integration test class
-mvn verify -Dit.test=RoleKeycloakIT
-
-# Run a single integration test method
-mvn verify -Dit.test=RoleKeycloakIT#createRole_positive
-
-# Run with coverage (80% instruction minimum)
-mvn verify -Pcoverage
-
-# Skip checkstyle during development
-mvn test -Dcheckstyle.skip=true
-
-# Generate OpenAPI-derived sources
-mvn generate-sources
+mvn package -DskipTests        # build, skip tests
+mvn test                       # unit tests (@UnitTest)
+mvn test -Dtest=RoleServiceTest#positive_singleRole   # single unit test
+mvn verify                     # unit + integration (@IntegrationTest, profile `it`)
+mvn verify -Dit.test=RoleKeycloakIT#createRole_positive   # single IT
+mvn verify -Pcoverage          # JaCoCo 80% instruction min
+mvn test -Dcheckstyle.skip=true        # skip checkstyle while developing
+mvn generate-sources           # regenerate OpenAPI sources
 ```
+
+Checkstyle: `folio-checkstyle/checkstyle.xml` + suppressions in `checkstyle/checkstyle-suppressions.xml`; max 20 violations before build fails.
 
 ## Architecture
 
-### Request Flow
-
+**Request flow**:
 ```
-HTTP → Controller (implements OpenAPI-generated interface)
-     → Service (business logic, orchestration)
-         → Repository (Postgres/JPA) + KeycloakXxxService (Keycloak Admin API)
-
-Kafka (capability events) → KafkaMessageListener → CapabilityKafkaEventHandler
-     → CapabilityService / CapabilitySetService → Repository + KeycloakAuthorizationService
-
-Tenant lifecycle (/_/tenant) → CustomTenantService
-     → Liquibase + ReferenceDataLoader + LoadableRoleService + CapabilitiesMergeService
+HTTP → Controller (OpenAPI-generated interface) → Service → Repository (Postgres/JPA) + KeycloakXxxService (Keycloak Admin API)
+Kafka (capability events) → KafkaMessageListener → CapabilityKafkaEventHandler → Capability(Set)Service → Repository + KeycloakAuthorizationService
+Tenant lifecycle (/_/tenant) → CustomTenantService → Liquibase + ReferenceDataLoader + LoadableRoleService + CapabilitiesMergeService
 ```
 
-### Key Architectural Patterns
+**Patterns**:
+- **Dual-write**: every mutation writes Postgres + Keycloak; failures trigger compensating rollback.
+- **OpenAPI-first**: interfaces generated from `src/main/resources/swagger.api/mod-roles-keycloak.yaml`; DTOs in `domain.dto` (generated, do not edit).
+- **CQL**: paginated list endpoints support FOLIO CQL via `BaseCqlJpaRepository`.
+- **Caching**: Caffeine for Keycloak data + user permissions; evicted via Spring app events on mutations.
+- **Kafka retry**: capability events retry infinitely at 1s intervals by default.
 
-- **Dual-write consistency**: Every mutating operation writes to both Postgres and Keycloak. Failures trigger compensating rollbacks.
-- **OpenAPI-first**: All REST interfaces are generated from `src/main/resources/swagger.api/mod-roles-keycloak.yaml`. Controllers implement the generated interfaces; DTOs live in `domain.dto` (generated, do not edit manually).
-- **CQL query support**: All paginated list endpoints support FOLIO CQL queries via `BaseCqlJpaRepository`.
-- **Caffeine caching**: Multiple caches for Keycloak data and user permissions, evicted via Spring application events on mutations.
-- **Kafka retry**: Capability events retry infinitely at 1-second intervals by default.
-
-### Package Map
-
+**Package map**:
 | Package | Role |
 |---|---|
 | `controller/` | 14 REST controllers + global `ApiExceptionHandler` |
-| `domain/entity/` | JPA entities; composite keys in `key/`; migration entities in `migration/` |
-| `domain/dto/` | **Generated** — do not edit |
-| `domain/model/` | Internal models (`PageResult`, Spring domain events) |
-| `integration/kafka/` | Kafka listener + capability event processing pipeline |
+| `domain/entity/` | JPA entities (composite keys in `key/`, migration in `migration/`) |
+| `domain/dto/` | **Generated — do not edit** |
+| `domain/model/` | internal models (`PageResult`, domain events) |
+| `integration/kafka/` | Kafka listener + capability event pipeline |
 | `integration/keyclock/` | Keycloak Admin client wrappers (roles, policies, permissions, users, realms) |
-| `integration/permissions/` | HTTP client to FOLIO `mod-permissions` |
-| `mapper/` | MapStruct mappers (entity ↔ DTO, Keycloak model ↔ DTO) |
-| `repository/` | Spring Data JPA repos; `BaseCqlJpaRepository` adds CQL support |
-| `service/capability/` | Capability + capability set CRUD, role/user capability assignments, user permissions cache |
-| `service/migration/` | Async permission-migration job: role creation, user assignment, error tracking |
+| `integration/permissions/` | HTTP client to `mod-permissions` |
+| `mapper/` | MapStruct mappers |
+| `repository/` | JPA repos; `BaseCqlJpaRepository` adds CQL |
+| `service/capability/` | capability + set CRUD, role/user assignments, permission cache |
+| `service/migration/` | async permission-migration job |
 | `service/role/` | `RoleService` (dual-write), `UserRoleService`, `RoleEntityService` |
-| `service/reference/` | Loads JSON reference data (roles, policies) on tenant init |
-| `service/loadablerole/` | Default/loadable role management |
-| `configuration/` | Spring `@Configuration` beans: caches, JPA auditing, Keycloak client, key generators |
+| `service/reference/`, `service/loadablerole/` | JSON reference + loadable roles on tenant init |
+| `configuration/` | caches, JPA auditing, Keycloak client, key generators |
 
-## Testing Standards
+## Codegen & DB
 
-Tests use JUnit 5 + Mockito. Two custom meta-annotations control Maven plugin routing:
-- `@UnitTest` → tagged `unit` → runs with `mvn test` (Surefire)
-- `@IntegrationTest` → tagged `integration` → runs with `mvn verify` (Failsafe), activates profile `it`
+- Do not edit `domain/dto/` or `rest/resource/` — generated from the OpenAPI spec at `generate-sources`.
+- Liquibase `src/main/resources/changelog/changelog-master.xml` (40+ changesets); always add new changesets, never modify existing.
 
-**Unit tests**: extend nothing; use `@ExtendWith(MockitoExtension.class)`, `@Mock`/`@InjectMocks`. Strict stubbing is enforced — `@MockitoSettings(strictness = LENIENT)` is forbidden. Name tests as `methodName_scenario_expectedBehavior`.
+## Testing
 
-**Repository integration tests**: extend `BaseRepositoryTest` (`@DataJpaTest` + Testcontainers Postgres).
-
-**Full integration tests**: extend `BaseIntegrationTest` (full Spring Boot context + Kafka + Postgres + WireMock + Keycloak TLS).
-
-Test support utilities (factories, constants, builders) live in `src/test/java/.../support/`.
-
-## Code Generation
-
-Do not manually edit files in `src/main/java/org/folio/roles/domain/dto/` or `src/main/java/org/folio/roles/rest/resource/` — these are generated from `src/main/resources/swagger.api/mod-roles-keycloak.yaml` by the OpenAPI Generator Maven plugin during `generate-sources`.
-
-## Database
-
-Liquibase manages schema: `src/main/resources/changelog/changelog-master.xml` orchestrates 40+ changesets. Always add new changesets rather than modifying existing ones.
-
-## Checkstyle
-
-Uses `folio-checkstyle/checkstyle.xml` with suppression overrides in `checkstyle/`. Max 20 violations allowed before build fails. Suppress config is at `checkstyle/checkstyle-suppressions.xml`.
+JUnit 5 + Mockito. `@UnitTest` → `mvn test` (Surefire); `@IntegrationTest` → `mvn verify` (Failsafe, profile `it`).
+- **Unit**: `@ExtendWith(MockitoExtension.class)`, `@Mock`/`@InjectMocks`; strict stubbing enforced (`@MockitoSettings(strictness=LENIENT)` forbidden); name `methodName_scenario_expectedBehavior`.
+- **Repository IT**: extend `BaseRepositoryTest` (`@DataJpaTest` + Testcontainers Postgres).
+- **Full IT**: extend `BaseIntegrationTest` (full context + Kafka + Postgres + WireMock + Keycloak TLS).
+- Support utilities in `src/test/java/.../support/`.
