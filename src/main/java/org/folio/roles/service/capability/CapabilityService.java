@@ -2,6 +2,7 @@ package org.folio.roles.service.capability;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
+import static java.util.function.Function.identity;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
@@ -10,6 +11,7 @@ import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.common.utils.Collectors.toLinkedHashMap;
 import static org.folio.integration.kafka.model.ResourceEventType.CREATE;
+import static org.folio.roles.domain.entity.CapabilityEntity.DEFAULT_CAPABILITY_SORT;
 import static org.folio.roles.utils.CollectionUtils.toSet;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -35,11 +37,15 @@ import org.folio.roles.domain.model.event.CapabilityEvent;
 import org.folio.roles.integration.mte.MteEntitlementService;
 import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.CapabilityRepository;
+import org.folio.roles.repository.RoleCapabilityRepository;
+import org.folio.roles.repository.projection.CapabilityDirectProjection;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +57,7 @@ public class CapabilityService {
   public static final List<String> VISIBLE_PERMISSION_PREFIXES = List.of("ui-", "module", "plugin");
 
   private final CapabilityRepository capabilityRepository;
+  private final RoleCapabilityRepository roleCapabilityRepository;
   private final FolioExecutionContext folioExecutionContext;
   private final CapabilityEntityMapper capabilityEntityMapper;
   private final ApplicationEventPublisher applicationEventPublisher;
@@ -117,7 +124,7 @@ public class CapabilityService {
    */
   @Transactional(readOnly = true)
   public PageResult<Capability> find(String query, int limit, int offset) {
-    var offsetRequest = OffsetRequest.of(offset, limit, CapabilityEntity.DEFAULT_CAPABILITY_SORT);
+    var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_CAPABILITY_SORT);
     var capabilityEntities = capabilityRepository.findByQuery(query, offsetRequest);
     var capabilitiesPage = capabilityEntities.map(capabilityEntityMapper::convert);
     return PageResult.fromPage(capabilitiesPage);
@@ -135,7 +142,7 @@ public class CapabilityService {
    */
   @Transactional(readOnly = true)
   public PageResult<Capability> findByUserId(UUID userId, boolean expand, boolean includeDummy, int limit, int offset) {
-    var offsetRequest = OffsetRequest.of(offset, limit, CapabilityEntity.DEFAULT_CAPABILITY_SORT);
+    var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_CAPABILITY_SORT);
     var capabilityEntitiesPage = expand
       ? findAllCapabilityEntitiesByUserId(includeDummy, userId, offsetRequest)
       : findCapabilityEntitiesByUserId(includeDummy, userId, offsetRequest);
@@ -145,7 +152,7 @@ public class CapabilityService {
   }
 
   /**
-   * Retrieves capabilities by role id.
+   * Retrieves capabilities by role id (deduplicated).
    *
    * @param roleId - role identifier as {@link UUID} object
    * @param expand - defines if capability sets must be expanded
@@ -156,13 +163,74 @@ public class CapabilityService {
    */
   @Transactional(readOnly = true)
   public PageResult<Capability> findByRoleId(UUID roleId, boolean expand, boolean includeDummy, int limit, int offset) {
-    var offsetRequest = OffsetRequest.of(offset, limit, CapabilityEntity.DEFAULT_CAPABILITY_SORT);
-    var capabilityEntitiesPage = expand
-      ? findAllCapabilityEntitiesByRoleId(includeDummy, roleId, offsetRequest)
-      : findCapabilityEntitiesByRoleId(includeDummy, roleId, offsetRequest);
+    return findByRoleId(roleId, expand, includeDummy, true, limit, offset);
+  }
 
-    var capabilitiesPage = capabilityEntitiesPage.map(capabilityEntityMapper::convert);
+  /**
+   * Retrieves capabilities by role id.
+   *
+   * <p>Each returned {@link Capability} carries a {@code direct} flag indicating whether it was directly
+   * assigned to the role ({@code true}) or inherited via a capability set ({@code false}). When
+   * {@code dedup} is {@code false} and {@code expand} is {@code true}, a capability that is both directly
+   * assigned and present in a capability set is returned more than once, preserving each row's origin.</p>
+   *
+   * @param roleId - role identifier as {@link UUID} object
+   * @param expand - defines if capability sets must be expanded
+   * @param includeDummy - defines if capability set should include dummy capabilities
+   * @param dedup - defines if duplicate capabilities (direct + via capability set) must be deduplicated
+   * @param limit - a number of results in response
+   * @param offset - offset in pagination from first record
+   * @return {@link PageResult} object with found {@link Capability} relation descriptors
+   */
+  @Transactional(readOnly = true)
+  public PageResult<Capability> findByRoleId(UUID roleId, boolean expand, boolean includeDummy, boolean dedup,
+    int limit, int offset) {
+    if (!expand) {
+      var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_CAPABILITY_SORT);
+      var capabilitiesPage = findCapabilityEntitiesByRoleId(includeDummy, roleId, offsetRequest)
+        .map(capabilityEntityMapper::convert)
+        .map(capability -> capability.direct(true));
+      return PageResult.fromPage(capabilitiesPage);
+    }
+
+    return dedup
+      ? findExpandedCapabilitiesByRoleId(roleId, includeDummy, limit, offset)
+      : findExpandedCapabilitiesByRoleIdNoDedup(roleId, includeDummy, limit, offset);
+  }
+
+  private PageResult<Capability> findExpandedCapabilitiesByRoleId(UUID roleId, boolean includeDummy,
+    int limit, int offset) {
+    var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_CAPABILITY_SORT);
+    var capabilityEntitiesPage = findAllCapabilityEntitiesByRoleId(includeDummy, roleId, offsetRequest);
+    if (capabilityEntitiesPage.isEmpty()) {
+      return PageResult.of(capabilityEntitiesPage.getTotalElements(), emptyList());
+    }
+
+    var directCapabilityIds = roleCapabilityRepository.findCapabilityIdsByRoleId(roleId);
+    var capabilitiesPage = capabilityEntitiesPage
+      .map(capabilityEntityMapper::convert)
+      .map(capability -> capability.direct(directCapabilityIds.contains(capability.getId())));
     return PageResult.fromPage(capabilitiesPage);
+  }
+
+  private PageResult<Capability> findExpandedCapabilitiesByRoleIdNoDedup(UUID roleId, boolean includeDummy,
+    int limit, int offset) {
+    var sort = Sort.by(Order.asc("name"), Order.desc("direct"));
+    var offsetRequest = OffsetRequest.of(offset, limit, sort);
+    var rows = includeDummy
+      ? capabilityRepository.findAllByRoleIdNoDedupIncludeDummy(roleId, offsetRequest)
+      : capabilityRepository.findAllByRoleIdNoDedup(roleId, offsetRequest);
+
+    var capabIds = toStream(rows.getContent()).map(CapabilityDirectProjection::getId).distinct().toList();
+    var entitiesById = capabilityRepository.findAllById(capabIds)
+      .stream()
+      .collect(Collectors.toMap(CapabilityEntity::getId, identity()));
+
+    var capabilities = toStream(rows.getContent())
+      .filter(row -> entitiesById.containsKey(row.getId()))
+      .map(row -> capabilityEntityMapper.convert(entitiesById.get(row.getId())).direct(row.getDirect()))
+      .toList();
+    return PageResult.of(rows.getTotalElements(), capabilities);
   }
 
   /**
@@ -255,7 +323,7 @@ public class CapabilityService {
   @Transactional(readOnly = true)
   public PageResult<Capability> findByCapabilitySetId(UUID capabilitySetId,
     boolean includeDummy, int limit, int offset) {
-    var offsetRequest = OffsetRequest.of(offset, limit, CapabilityEntity.DEFAULT_CAPABILITY_SORT);
+    var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_CAPABILITY_SORT);
     capabilitySetService.get(capabilitySetId);
     var capabilityEntities = includeDummy
       ? capabilityRepository.findByCapabilitySetIdIncludeDummy(capabilitySetId, offsetRequest)

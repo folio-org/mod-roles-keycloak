@@ -29,14 +29,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.folio.integration.kafka.model.ResourceEventType;
+import org.folio.roles.domain.dto.Capability;
+import org.folio.roles.domain.entity.CapabilityEntity;
 import org.folio.roles.domain.model.PageResult;
 import org.folio.roles.domain.model.event.CapabilityEvent;
 import org.folio.roles.integration.mte.MteEntitlementService;
 import org.folio.roles.mapper.entity.CapabilityEntityMapper;
 import org.folio.roles.repository.CapabilityRepository;
+import org.folio.roles.repository.RoleCapabilityRepository;
+import org.folio.roles.repository.projection.CapabilityDirectProjection;
 import org.folio.roles.service.capability.model.UserPermissionMappings;
 import org.folio.roles.support.TestUtils;
 import org.folio.roles.support.TestUtils.TestModRolesKeycloakModuleMetadata;
@@ -62,6 +67,7 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Sort;
 
 @UnitTest
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
@@ -69,6 +75,7 @@ class CapabilityServiceTest {
 
   @InjectMocks private CapabilityService capabilityService;
   @Mock private CapabilityRepository capabilityRepository;
+  @Mock private RoleCapabilityRepository roleCapabilityRepository;
   @Mock private CapabilitySetService capabilitySetService;
   @Mock private CapabilityEntityMapper capabilityEntityMapper;
   @Mock private ApplicationEventPublisher applicationEventPublisher;
@@ -79,9 +86,9 @@ class CapabilityServiceTest {
   @BeforeEach
   void setUp() {
     var folioExecutionContext = new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
-    this.capabilityService = new CapabilityService(capabilityRepository, folioExecutionContext,
-      capabilityEntityMapper, applicationEventPublisher, userPermissionCacheService, mteEntitlementService,
-      capabilitySetService);
+    this.capabilityService = new CapabilityService(capabilityRepository, roleCapabilityRepository,
+      folioExecutionContext, capabilityEntityMapper, applicationEventPublisher, userPermissionCacheService,
+      mteEntitlementService, capabilitySetService);
   }
 
   @AfterEach
@@ -361,6 +368,8 @@ class CapabilityServiceTest {
   class FindByRoleId {
 
     private final OffsetRequest offsetRequest = OffsetRequest.of(0, 10, DEFAULT_CAPABILITY_SORT);
+    private final OffsetRequest noDedupOffsetRequest = OffsetRequest.of(0, 10,
+      Sort.by(Sort.Order.asc("name"), Sort.Order.desc("direct")));
 
     @Test
     void positive_expandIsFalseAndIncludeDummyIsFalse() {
@@ -373,7 +382,26 @@ class CapabilityServiceTest {
 
       var result = capabilityService.findByRoleId(ROLE_ID, false, false, 10, 0);
 
-      assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      assertThat(result.getTotalRecords()).isEqualTo(100);
+      assertThat(result.getRecords()).containsExactly(capability);
+      assertThat(result.getRecords()).extracting(Capability::getDirect).containsExactly(true);
+      verify(capabilityRepository).findByRoleId(ROLE_ID, offsetRequest);
+    }
+
+    @Test
+    void positive_expandIsFalseAndDedupIsFalse() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      var capabilityEntityPage = new PageImpl<>(List.of(capabilityEntity), offsetRequest, 100);
+
+      when(capabilityRepository.findByRoleId(ROLE_ID, offsetRequest)).thenReturn(capabilityEntityPage);
+      when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+
+      var result = capabilityService.findByRoleId(ROLE_ID, false, false, false, 10, 0);
+
+      assertThat(result.getTotalRecords()).isEqualTo(100);
+      assertThat(result.getRecords()).containsExactly(capability);
+      assertThat(result.getRecords()).extracting(Capability::getDirect).containsExactly(true);
       verify(capabilityRepository).findByRoleId(ROLE_ID, offsetRequest);
     }
 
@@ -388,7 +416,9 @@ class CapabilityServiceTest {
 
       var result = capabilityService.findByRoleId(ROLE_ID, false, true, 10, 0);
 
-      assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      assertThat(result.getTotalRecords()).isEqualTo(100);
+      assertThat(result.getRecords()).containsExactly(capability);
+      assertThat(result.getRecords()).extracting(Capability::getDirect).containsExactly(true);
       verify(capabilityRepository).findByRoleIdIncludeDummy(ROLE_ID, offsetRequest);
     }
 
@@ -400,10 +430,13 @@ class CapabilityServiceTest {
 
       when(capabilityRepository.findAllByRoleId(ROLE_ID, offsetRequest)).thenReturn(capabilityEntityPage);
       when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+      when(roleCapabilityRepository.findCapabilityIdsByRoleId(ROLE_ID)).thenReturn(Set.of(CAPABILITY_ID));
 
       var result = capabilityService.findByRoleId(ROLE_ID, true, false, 10, 0);
 
-      assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      assertThat(result.getTotalRecords()).isEqualTo(100);
+      assertThat(result.getRecords()).containsExactly(capability);
+      assertThat(result.getRecords()).extracting(Capability::getDirect).containsExactly(true);
       verify(capabilityRepository).findAllByRoleId(ROLE_ID, offsetRequest);
     }
 
@@ -415,11 +448,97 @@ class CapabilityServiceTest {
 
       when(capabilityRepository.findAllByRoleIdIncludeDummy(ROLE_ID, offsetRequest)).thenReturn(capabilityEntityPage);
       when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+      when(roleCapabilityRepository.findCapabilityIdsByRoleId(ROLE_ID)).thenReturn(emptySet());
 
       var result = capabilityService.findByRoleId(ROLE_ID, true, true, 10, 0);
 
-      assertThat(result).isEqualTo(PageResult.of(100, List.of(capability)));
+      assertThat(result.getTotalRecords()).isEqualTo(100);
+      assertThat(result.getRecords()).containsExactly(capability);
+      assertThat(result.getRecords()).extracting(Capability::getDirect).containsExactly(false);
       verify(capabilityRepository).findAllByRoleIdIncludeDummy(ROLE_ID, offsetRequest);
+    }
+
+    @Test
+    void positive_expandIsTrueAndEmptyPageSkipsDirectIdsLookup() {
+      var capabilityEntityPage = new PageImpl<CapabilityEntity>(List.of(), offsetRequest, 0);
+
+      when(capabilityRepository.findAllByRoleId(ROLE_ID, offsetRequest)).thenReturn(capabilityEntityPage);
+
+      var result = capabilityService.findByRoleId(ROLE_ID, true, false, 10, 0);
+
+      assertThat(result).isEqualTo(PageResult.empty());
+      verify(capabilityRepository).findAllByRoleId(ROLE_ID, offsetRequest);
+      verifyNoInteractions(roleCapabilityRepository);
+    }
+
+    @Test
+    void positive_expandIsTrueAndDedupIsFalse() {
+      var directCapability = capability();
+      var inheritedCapability = capability();
+      var capabilityEntity = capabilityEntity();
+      var directRow = Mockito.mock(CapabilityDirectProjection.class);
+      when(directRow.getId()).thenReturn(CAPABILITY_ID);
+      when(directRow.getDirect()).thenReturn(true);
+      var inheritedRow = Mockito.mock(CapabilityDirectProjection.class);
+      when(inheritedRow.getId()).thenReturn(CAPABILITY_ID);
+      when(inheritedRow.getDirect()).thenReturn(false);
+      var rowsPage = new PageImpl<>(List.of(directRow, inheritedRow), noDedupOffsetRequest, 2);
+
+      when(capabilityRepository.findAllByRoleIdNoDedup(ROLE_ID, noDedupOffsetRequest)).thenReturn(rowsPage);
+      when(capabilityRepository.findAllById(List.of(CAPABILITY_ID))).thenReturn(List.of(capabilityEntity));
+      when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(directCapability, inheritedCapability);
+
+      var result = capabilityService.findByRoleId(ROLE_ID, true, false, false, 10, 0);
+
+      assertThat(result.getTotalRecords()).isEqualTo(2);
+      assertThat(result.getRecords()).containsExactly(directCapability, inheritedCapability);
+      assertThat(result.getRecords()).extracting(Capability::getDirect).containsExactly(true, false);
+      verify(capabilityRepository).findAllByRoleIdNoDedup(ROLE_ID, noDedupOffsetRequest);
+    }
+
+    @Test
+    void positive_expandIsTrueAndDedupIsFalseAndIncludeDummyIsTrue() {
+      var capability = capability();
+      var capabilityEntity = capabilityEntity();
+      var directRow = Mockito.mock(CapabilityDirectProjection.class);
+      when(directRow.getId()).thenReturn(CAPABILITY_ID);
+      when(directRow.getDirect()).thenReturn(true);
+      var rowsPage = new PageImpl<>(List.of(directRow), noDedupOffsetRequest, 1);
+
+      when(capabilityRepository.findAllByRoleIdNoDedupIncludeDummy(ROLE_ID, noDedupOffsetRequest)).thenReturn(rowsPage);
+      when(capabilityRepository.findAllById(List.of(CAPABILITY_ID))).thenReturn(List.of(capabilityEntity));
+      when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+
+      var result = capabilityService.findByRoleId(ROLE_ID, true, true, false, 10, 0);
+
+      assertThat(result.getTotalRecords()).isEqualTo(1);
+      assertThat(result.getRecords()).extracting(Capability::getDirect).containsExactly(true);
+      verify(capabilityRepository).findAllByRoleIdNoDedupIncludeDummy(ROLE_ID, noDedupOffsetRequest);
+    }
+
+    @Test
+    void positive_expandIsTrueAndDedupIsFalseSkipsRowsMissingFromHydration() {
+      var capabilityEntity = capabilityEntity();
+      var capability = capability();
+      var existingRow = Mockito.mock(CapabilityDirectProjection.class);
+      when(existingRow.getId()).thenReturn(CAPABILITY_ID);
+      when(existingRow.getDirect()).thenReturn(true);
+      var missingCapabilityId = UUID.randomUUID();
+      var missingRow = Mockito.mock(CapabilityDirectProjection.class);
+      when(missingRow.getId()).thenReturn(missingCapabilityId);
+      var rowsPage = new PageImpl<>(List.of(existingRow, missingRow), noDedupOffsetRequest, 2);
+
+      when(capabilityRepository.findAllByRoleIdNoDedup(ROLE_ID, noDedupOffsetRequest)).thenReturn(rowsPage);
+      when(capabilityRepository.findAllById(List.of(CAPABILITY_ID, missingCapabilityId)))
+        .thenReturn(List.of(capabilityEntity));
+      when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
+
+      var result = capabilityService.findByRoleId(ROLE_ID, true, false, false, 10, 0);
+
+      assertThat(result.getTotalRecords()).isEqualTo(2);
+      assertThat(result.getRecords()).containsExactly(capability);
+      assertThat(result.getRecords()).extracting(Capability::getDirect).containsExactly(true);
+      verify(capabilityRepository).findAllByRoleIdNoDedup(ROLE_ID, noDedupOffsetRequest);
     }
   }
 

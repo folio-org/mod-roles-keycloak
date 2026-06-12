@@ -119,7 +119,7 @@ class RoleCapabilityControllerTest {
   @Test
   void findByRoleId_positive() throws Exception {
     var foundCapability = capability();
-    when(capabilityService.findByRoleId(ROLE_ID, false, false, 100, 20))
+    when(capabilityService.findByRoleId(ROLE_ID, false, false, true, 100, 20))
       .thenReturn(asSinglePage(foundCapability));
 
     mockMvc.perform(get("/roles/{id}/capabilities", ROLE_ID)
@@ -136,7 +136,7 @@ class RoleCapabilityControllerTest {
   void findByRoleId_positive_defaultPageParameters() throws Exception {
     var capability = capability();
     when(roleService.getById(ROLE_ID)).thenReturn(role());
-    when(capabilityService.findByRoleId(ROLE_ID, false, false, 10, 0)).thenReturn(asSinglePage(capability));
+    when(capabilityService.findByRoleId(ROLE_ID, false, false, true, 10, 0)).thenReturn(asSinglePage(capability));
 
     mockMvc.perform(get("/roles/{id}/capabilities", ROLE_ID)
         .contentType(APPLICATION_JSON)
@@ -144,14 +144,14 @@ class RoleCapabilityControllerTest {
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
-    verify(capabilityService).findByRoleId(ROLE_ID, false, false, 10, 0);
+    verify(capabilityService).findByRoleId(ROLE_ID, false, false, true, 10, 0);
   }
 
   @Test
   void findByRoleId_positive_expandCapabilities() throws Exception {
     var capability = capability();
     when(roleService.getById(ROLE_ID)).thenReturn(role());
-    when(capabilityService.findByRoleId(ROLE_ID, true, false, 10, 0)).thenReturn(asSinglePage(capability));
+    when(capabilityService.findByRoleId(ROLE_ID, true, false, true, 10, 0)).thenReturn(asSinglePage(capability));
 
     mockMvc.perform(get("/roles/{id}/capabilities", ROLE_ID)
         .queryParam("expand", "true")
@@ -160,14 +160,31 @@ class RoleCapabilityControllerTest {
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
-    verify(capabilityService).findByRoleId(ROLE_ID, true, false, 10, 0);
+    verify(capabilityService).findByRoleId(ROLE_ID, true, false, true, 10, 0);
+  }
+
+  @Test
+  void findByRoleId_positive_dedupFalse() throws Exception {
+    var capability = capability();
+    when(roleService.getById(ROLE_ID)).thenReturn(role());
+    when(capabilityService.findByRoleId(ROLE_ID, true, false, false, 10, 0)).thenReturn(asSinglePage(capability));
+
+    mockMvc.perform(get("/roles/{id}/capabilities", ROLE_ID)
+        .queryParam("expand", "true")
+        .queryParam("dedup", "false")
+        .contentType(APPLICATION_JSON)
+        .header(TENANT, TENANT_ID))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
+    verify(capabilityService).findByRoleId(ROLE_ID, true, false, false, 10, 0);
   }
 
   @Test
   void findByRoleId_positive_includeDummyCapabilities() throws Exception {
     var capability = capability();
     when(roleService.getById(ROLE_ID)).thenReturn(role());
-    when(capabilityService.findByRoleId(ROLE_ID, false, true, 10, 0)).thenReturn(asSinglePage(capability));
+    when(capabilityService.findByRoleId(ROLE_ID, false, true, true, 10, 0)).thenReturn(asSinglePage(capability));
 
     mockMvc.perform(get("/roles/{id}/capabilities", ROLE_ID)
         .queryParam("includeDummy", "true")
@@ -176,7 +193,7 @@ class RoleCapabilityControllerTest {
       .andExpect(status().isOk())
       .andExpect(content().contentType(APPLICATION_JSON))
       .andExpect(content().json(asJsonString(capabilities(capability)), JsonCompareMode.STRICT));
-    verify(capabilityService).findByRoleId(ROLE_ID, false, true, 10, 0);
+    verify(capabilityService).findByRoleId(ROLE_ID, false, true, true, 10, 0);
   }
 
   @Test

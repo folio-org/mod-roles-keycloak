@@ -103,7 +103,26 @@ class RoleCapabilityRepositoryIT extends BaseRepositoryTest {
     var offsetRequest = OffsetRequest.of(0, 2, RoleCapabilityEntity.DEFAULT_ROLE_CAPABILITY_SORT);
     var page = roleCapabilityRepository.findByRoleId(roleId, offsetRequest);
     assertThat(page.getTotalElements()).isEqualTo(1);
-    assertThat(page.getContent().get(0)).isEqualTo(roleCapabilityEntity);
+    assertThat(page.getContent().getFirst()).isEqualTo(roleCapabilityEntity);
+  }
+
+  @Test
+  void findCapabilityIdsByRoleId_positive_includesDummy() {
+    var capabilityEntity = capabilityEntity(null);
+    var dummyCapabilityEntity = capabilityEntity(null);
+    dummyCapabilityEntity.setDummyCapability(true);
+    dummyCapabilityEntity.setName("dummyCapability");
+    var roleId = UUID.randomUUID();
+    var roleEntity = roleEntity();
+    roleEntity.setId(roleId);
+    entityManager.persistAndFlush(capabilityEntity);
+    entityManager.persistAndFlush(dummyCapabilityEntity);
+    entityManager.persistAndFlush(roleEntity);
+    entityManager.persistAndFlush(roleCapabilityEntity(roleId, capabilityEntity.getId()));
+    entityManager.persistAndFlush(roleCapabilityEntity(roleId, dummyCapabilityEntity.getId()));
+
+    var capabilityIds = roleCapabilityRepository.findCapabilityIdsByRoleId(roleId);
+    assertThat(capabilityIds).containsExactlyInAnyOrder(capabilityEntity.getId(), dummyCapabilityEntity.getId());
   }
 
   @Test
