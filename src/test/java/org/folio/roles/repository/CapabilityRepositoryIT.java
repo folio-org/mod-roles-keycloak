@@ -18,10 +18,12 @@ import java.util.List;
 import java.util.UUID;
 import org.folio.roles.base.BaseRepositoryTest;
 import org.folio.roles.domain.entity.CapabilityEntity;
+import org.folio.roles.repository.projection.CapabilityDirectProjection;
 import org.folio.spring.data.OffsetRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 
 class CapabilityRepositoryIT extends BaseRepositoryTest {
 
@@ -187,6 +189,40 @@ class CapabilityRepositoryIT extends BaseRepositoryTest {
     offsetRequest = OffsetRequest.of(0, 1, CapabilityEntity.DEFAULT_CAPABILITY_SORT);
     page = capabilityRepository.findAllByRoleIdIncludeDummy(roleId, offsetRequest);
     assertThat(page.getTotalElements()).isEqualTo(3);
+  }
+
+  @Test
+  void findAllByRoleIdNoDedup_positive_keepsDuplicatesAndTagsOrigin() {
+    var roleId = UUID.randomUUID();
+    var roleEntity = roleEntity();
+    roleEntity.setId(roleId);
+    // capability assigned both directly and via a capability set -> appears twice (direct + inherited)
+    var sharedCapability = capabilityEntity(null);
+    // dummy capability assigned directly only -> filtered unless includeDummy
+    var dummyCapability = capabilityEntity(null);
+    dummyCapability.setDummyCapability(true);
+    dummyCapability.setName("dummy_" + UUID.randomUUID());
+    sharedCapability = entityManager.persistAndFlush(sharedCapability);
+    dummyCapability = entityManager.persistAndFlush(dummyCapability);
+    entityManager.persistAndFlush(roleEntity);
+    entityManager.persistAndFlush(roleCapabilityEntity(roleId, sharedCapability.getId()));
+    entityManager.persistAndFlush(roleCapabilityEntity(roleId, dummyCapability.getId()));
+    var capabilitySetEntity = capabilitySetEntity(null, List.of(sharedCapability.getId()));
+    capabilitySetEntity = entityManager.persistAndFlush(capabilitySetEntity);
+    entityManager.persistAndFlush(roleCapabilitySetEntity(roleId, capabilitySetEntity.getId()));
+
+    var offsetRequest = OffsetRequest.of(0, 10,
+      Sort.by(Sort.Order.asc("name"), Sort.Order.desc("direct")));
+
+    var page = capabilityRepository.findAllByRoleIdNoDedup(roleId, offsetRequest);
+    assertThat(page.getTotalElements()).isEqualTo(2);
+    var sharedId = sharedCapability.getId();
+    assertThat(page.getContent()).extracting(CapabilityDirectProjection::getId).containsOnly(sharedId);
+    assertThat(page.getContent()).extracting(CapabilityDirectProjection::getDirect)
+      .containsExactly(true, false);
+
+    var pageWithDummy = capabilityRepository.findAllByRoleIdNoDedupIncludeDummy(roleId, offsetRequest);
+    assertThat(pageWithDummy.getTotalElements()).isEqualTo(3);
   }
 
   @Test

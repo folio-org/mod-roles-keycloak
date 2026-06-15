@@ -25,6 +25,7 @@ public interface CapabilityEntityMapper {
   EmbeddableEndpoint convert(Endpoint endpoint);
 
   @AuditableMapping
+  @Mapping(target = "direct", ignore = true)
   Capability convert(CapabilityEntity entity);
 
   List<Capability> convert(List<CapabilityEntity> entities);

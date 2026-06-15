@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+  <changeSet id="add-permission-table-indexes" author="Yauhen Vavilkin">
+    <comment>
+      Restore indexes on the permission table that were lost when it was recreated in
+      create-permission-table.xml. The btree index on `name` supports joins and lookups in
+      `findAllUserPermissionMappings`, `findAllFolioPermissions`, and `findByPermissionNameIn`.
+      The GIN index on `sub_permissions` is required for the `@>` containment operator used in
+      the recursive CTE in `getAllParentPermissions`.
+    </comment>
+    <sql>
+      CREATE INDEX IF NOT EXISTS idx_permission_name ON permission (name);
+      CREATE INDEX IF NOT EXISTS idx_permission_sub_permissions_gin ON permission USING gin (sub_permissions);
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

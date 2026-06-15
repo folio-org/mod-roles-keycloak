@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.entity.CapabilityEntity;
+import org.folio.roles.repository.projection.CapabilityDirectProjection;
 import org.folio.roles.repository.projection.UserPermissionApplicationProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -187,6 +188,60 @@ public interface CapabilityRepository extends BaseCqlJpaRepository<CapabilityEnt
           INNER JOIN capability c ON csc.capability_id = c.id
       ) capability WHERE capability.dummy_capability = false""")
   Page<CapabilityEntity> findAllByRoleId(@Param("roleId") UUID roleId, Pageable pageable);
+
+  @Query(nativeQuery = true,
+    value = """
+      SELECT capability.id AS id, capability.name AS name, capability.is_direct AS direct FROM (
+        SELECT c.id, c.name, c.dummy_capability, true AS is_direct FROM capability c
+          INNER JOIN role_capability rc ON c.id = rc.capability_id AND rc.role_id = :roleId
+
+        UNION ALL
+
+        SELECT c.id, c.name, c.dummy_capability, false AS is_direct FROM capability_set cs
+          INNER JOIN role_capability_set rcs ON cs.id = rcs.capability_set_id AND rcs.role_id = :roleId
+          INNER JOIN capability_set_capability csc ON cs.id = csc.capability_set_id
+          INNER JOIN capability c ON csc.capability_id = c.id
+      ) capability""",
+    countQuery = """
+      SELECT COUNT(*) FROM (
+        SELECT c.id FROM capability c
+          INNER JOIN role_capability rc ON c.id = rc.capability_id AND rc.role_id = :roleId
+
+        UNION ALL
+
+        SELECT c.id FROM capability_set cs
+          INNER JOIN role_capability_set rcs ON cs.id = rcs.capability_set_id AND rcs.role_id = :roleId
+          INNER JOIN capability_set_capability csc ON cs.id = csc.capability_set_id
+          INNER JOIN capability c ON csc.capability_id = c.id
+      ) capability""")
+  Page<CapabilityDirectProjection> findAllByRoleIdNoDedupIncludeDummy(@Param("roleId") UUID roleId, Pageable pageable);
+
+  @Query(nativeQuery = true,
+    value = """
+      SELECT capability.id AS id, capability.name AS name, capability.is_direct AS direct FROM (
+        SELECT c.id, c.name, c.dummy_capability, true AS is_direct FROM capability c
+          INNER JOIN role_capability rc ON c.id = rc.capability_id AND rc.role_id = :roleId
+
+        UNION ALL
+
+        SELECT c.id, c.name, c.dummy_capability, false AS is_direct FROM capability_set cs
+          INNER JOIN role_capability_set rcs ON cs.id = rcs.capability_set_id AND rcs.role_id = :roleId
+          INNER JOIN capability_set_capability csc ON cs.id = csc.capability_set_id
+          INNER JOIN capability c ON csc.capability_id = c.id
+      ) capability WHERE capability.dummy_capability = false""",
+    countQuery = """
+      SELECT COUNT(*) FROM (
+        SELECT c.id, c.dummy_capability FROM capability c
+          INNER JOIN role_capability rc ON c.id = rc.capability_id AND rc.role_id = :roleId
+
+        UNION ALL
+
+        SELECT c.id, c.dummy_capability FROM capability_set cs
+          INNER JOIN role_capability_set rcs ON cs.id = rcs.capability_set_id AND rcs.role_id = :roleId
+          INNER JOIN capability_set_capability csc ON cs.id = csc.capability_set_id
+          INNER JOIN capability c ON csc.capability_id = c.id
+      ) capability WHERE capability.dummy_capability = false""")
+  Page<CapabilityDirectProjection> findAllByRoleIdNoDedup(@Param("roleId") UUID roleId, Pageable pageable);
 
   @Query("""
     select entity from CapabilityEntity entity where entity.name in :names
