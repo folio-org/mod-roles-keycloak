@@ -1,6 +1,7 @@
-## Version `v4.0.4` (unreleased)
+## Version `v4.0.4` (20.08.2026)
 * Add `dedup` query parameter and `direct` flag for `GET /roles/{id}/capabilities`, add performance indexes (MODROLESKC-408)
 * Fix lost nested capabilities during event reprocessing (MODROLESKC-424)
+  - Fixes processing of new events only; re-entitle all applications to repair already stored capability sets
 
 ## Version `v4.0.3` (14.05.2026)
 * Improve cleanup of keycloak records upon role removal (MODROLESKC-384)
