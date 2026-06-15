@@ -43,4 +43,7 @@
   <include file="changes/create-permission-migration-error-table.xml" relativeToChangelogFile="true"/>
   <include file="changes/fix-role-type-for-non-loadable-roles.xml" relativeToChangelogFile="true"/>
   <include file="changes/add-performance-indexes-user-permissions.xml" relativeToChangelogFile="true"/>
+  <include file="changes/add-permission-table-indexes.xml" relativeToChangelogFile="true"/>
+  <include file="changes/add-reverse-lookup-indexes.xml" relativeToChangelogFile="true"/>
+  <include file="changes/add-folio-permission-indexes.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+  <changeSet id="add-folio-permission-indexes" author="Yauhen Vavilkin">
+    <comment>
+      Add indexes on folio_permission columns used for permission-to-capability resolution
+      in Kafka event processing (CapabilityReplacementsService), loadable-role assembly, and parent
+      capability-set updates. The existing partial index idx_capability_dummy_false leads with `id`
+      and cannot serve lookups by folio_permission.
+    </comment>
+    <sql>
+      CREATE INDEX IF NOT EXISTS idx_capability_folio_permission     ON capability (folio_permission);
+      CREATE INDEX IF NOT EXISTS idx_capability_set_folio_permission ON capability_set (folio_permission);
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

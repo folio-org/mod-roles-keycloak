@@ -1,6 +1,7 @@
 package org.folio.roles.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.entity.RoleCapabilityEntity;
 import org.folio.roles.domain.entity.key.RoleCapabilityKey;
@@ -19,6 +20,9 @@ public interface RoleCapabilityRepository extends BaseCqlJpaRepository<RoleCapab
     inner join CapabilityEntity ce on ce.id = rce.capabilityId and ce.dummyCapability = false
     where rce.roleId = :roleId""")
   List<RoleCapabilityEntity> findAllByRoleId(UUID roleId);
+
+  @Query("select rce.capabilityId from RoleCapabilityEntity rce where rce.roleId = :roleId")
+  Set<UUID> findCapabilityIdsByRoleId(@Param("roleId") UUID roleId);
 
   @Query("""
     select rce from RoleCapabilityEntity rce
