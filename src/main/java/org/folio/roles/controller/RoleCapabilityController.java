@@ -1,6 +1,7 @@
 package org.folio.roles.controller;
 
-import static java.lang.Boolean.TRUE;
+import static org.apache.commons.lang3.BooleanUtils.isNotFalse;
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import java.util.UUID;
@@ -35,11 +36,11 @@ public class RoleCapabilityController implements RoleCapabilityApi {
   }
 
   @Override
-  public ResponseEntity<Capabilities> findCapabilitiesByRoleId(UUID id, Boolean expand, Boolean includeDummy,
-    Integer limit, Integer offset) {
+  public ResponseEntity<Capabilities> findCapabilitiesByRoleId(UUID id, Boolean expand, Boolean dedup,
+    Boolean includeDummy, Integer limit, Integer offset) {
     roleEntityService.getById(id);
-    var pageResult = capabilityService.findByRoleId(id, TRUE.equals(expand),
-      TRUE.equals(includeDummy), limit, offset);
+    var pageResult = capabilityService.findByRoleId(
+      id, isTrue(expand), isTrue(includeDummy), isNotFalse(dedup), limit, offset);
     return ResponseEntity.ok(new Capabilities()
       .capabilities(pageResult.getRecords())
       .totalRecords(pageResult.getTotalRecords()));

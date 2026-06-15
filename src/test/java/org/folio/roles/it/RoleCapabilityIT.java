@@ -31,6 +31,7 @@ import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.USER_ID;
 import static org.folio.test.TestUtils.asJsonString;
 import static org.folio.test.TestUtils.parseResponse;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -313,8 +314,8 @@ class RoleCapabilityIT extends BaseIntegrationTest {
       .header(TENANT, TENANT_ID)
       .header(USER_ID, USER_ID_HEADER))
       .andExpect(content().json(asJsonString(capabilities(
-        fooItemCapability(FOO_CREATE_CAPABILITY, CREATE, "foo.item.post", fooItemPostEndpoint()),
-        fooItemCapability(FOO_VIEW_CAPABILITY, VIEW, "foo.item.get", fooItemGetEndpoint())
+        fooItemCapability(FOO_CREATE_CAPABILITY, CREATE, "foo.item.post", fooItemPostEndpoint()).direct(true),
+        fooItemCapability(FOO_VIEW_CAPABILITY, VIEW, "foo.item.get", fooItemGetEndpoint()).direct(true)
       ))));
   }
 
@@ -334,10 +335,54 @@ class RoleCapabilityIT extends BaseIntegrationTest {
       .header(TENANT, TENANT_ID)
       .header(USER_ID, USER_ID_HEADER))
       .andExpect(content().json(asJsonString(capabilities(
-        capability(FOO_CREATE_CAPABILITY, FOO_RESOURCE, CREATE, "foo.item.post", fooItemPostEndpoint()),
-        capability(FOO_EDIT_CAPABILITY, FOO_RESOURCE, EDIT, "foo.item.put", fooItemPutEndpoint()),
-        capability(FOO_VIEW_CAPABILITY, FOO_RESOURCE, VIEW, "foo.item.get", fooItemGetEndpoint())
+        capability(FOO_CREATE_CAPABILITY, FOO_RESOURCE, CREATE, "foo.item.post", fooItemPostEndpoint()).direct(true),
+        capability(FOO_EDIT_CAPABILITY, FOO_RESOURCE, EDIT, "foo.item.put", fooItemPutEndpoint()).direct(false),
+        capability(FOO_VIEW_CAPABILITY, FOO_RESOURCE, VIEW, "foo.item.get", fooItemGetEndpoint()).direct(true)
       ))));
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-capability-fresh-realm.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-role-capability-relations.sql",
+    "classpath:/sql/capability-sets/populate-capability-sets.sql",
+    "classpath:/sql/capability-sets/populate-many-role-capability-set-relations.sql"
+  })
+  void findByRoleId_positive_expandCapabilitySetsNoDedup() throws Exception {
+    // Direct: FOO_CREATE, FOO_VIEW. Via sets foo_item.create -> {FOO_CREATE, FOO_VIEW},
+    // foo_item.edit -> {FOO_VIEW, FOO_EDIT}. dedup=false keeps every source row.
+    doGet(get("/roles/{id}/capabilities", ROLE_ID)
+      .queryParam("expand", "true")
+      .queryParam("dedup", "false")
+      .header(TENANT, TENANT_ID)
+      .header(USER_ID, USER_ID_HEADER))
+      .andExpect(jsonPath("$.totalRecords", is(6)))
+      .andExpect(jsonPath("$.capabilities.length()", is(6)))
+      .andExpect(jsonPath("$.capabilities[?(@.id=='" + FOO_CREATE_CAPABILITY + "' && @.direct==true)]", hasSize(1)))
+      .andExpect(jsonPath("$.capabilities[?(@.id=='" + FOO_CREATE_CAPABILITY + "' && @.direct==false)]", hasSize(1)))
+      .andExpect(jsonPath("$.capabilities[?(@.id=='" + FOO_EDIT_CAPABILITY + "' && @.direct==false)]", hasSize(1)))
+      .andExpect(jsonPath("$.capabilities[?(@.id=='" + FOO_VIEW_CAPABILITY + "' && @.direct==true)]", hasSize(1)))
+      .andExpect(jsonPath("$.capabilities[?(@.id=='" + FOO_VIEW_CAPABILITY + "' && @.direct==false)]", hasSize(2)));
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-capability-fresh-realm.json")
+  @Sql(scripts = {
+    "classpath:/sql/populate-test-role.sql",
+    "classpath:/sql/populate-role-policy.sql",
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capabilities/populate-role-capability-relations.sql"
+  })
+  void findByRoleId_negative_invalidDedupValue() throws Exception {
+    mockMvc.perform(get("/roles/{id}/capabilities", ROLE_ID)
+        .queryParam("dedup", "invalid")
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].type", is("MethodArgumentTypeMismatchException")));
   }
 
   @Test

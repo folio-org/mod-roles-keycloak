@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+               http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+  <changeSet id="add-reverse-lookup-indexes" author="Yauhen Vavilkin">
+    <comment>
+      Add FK-side (reverse-lookup) indexes on join and assignment tables. PostgreSQL does
+      not auto-index FK columns. All composite PKs lead with the owner column (user_id/role_id/
+      capability_set_id), so reverse lookups by capability_id/capability_set_id/role_id are
+      seq scans. These indexes are exercised per-capability in CapabilityReplacementsService and
+      CapabilityDuplicateMigrationService loops, and also accelerate FK cascade checks on deletion.
+    </comment>
+    <sql>
+      CREATE INDEX IF NOT EXISTS idx_csc_capability_id        ON capability_set_capability (capability_id);
+      CREATE INDEX IF NOT EXISTS idx_user_capability_cap_id   ON user_capability (capability_id);
+      CREATE INDEX IF NOT EXISTS idx_role_capability_cap_id   ON role_capability (capability_id);
+      CREATE INDEX IF NOT EXISTS idx_user_cap_set_cap_set_id  ON user_capability_set (capability_set_id);
+      CREATE INDEX IF NOT EXISTS idx_role_cap_set_cap_set_id  ON role_capability_set (capability_set_id);
+      CREATE INDEX IF NOT EXISTS idx_user_role_role_id        ON user_role (role_id);
+      CREATE INDEX IF NOT EXISTS idx_rlp_capability_id        ON role_loadable_permission (capability_id);
+      CREATE INDEX IF NOT EXISTS idx_rlp_capability_set_id    ON role_loadable_permission (capability_set_id);
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

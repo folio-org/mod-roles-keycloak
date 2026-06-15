@@ -57,6 +57,11 @@
     "metadata": {
       "$ref": "../common/metadata.json",
       "readOnly": true
+    },
+    "direct": {
+      "description": "Indicates whether the capability was directly assigned to the role (true) or inherited via a capability set (false). Populated only by GET /roles/{id}/capabilities.",
+      "type": "boolean",
+      "readOnly": true
     }
   },
   "required": [
