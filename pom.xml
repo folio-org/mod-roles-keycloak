@@ -12,7 +12,7 @@
   <name>mod-roles-keycloak</name>
   <groupId>org.folio</groupId>
   <artifactId>mod-roles-keycloak</artifactId>
-  <version>4.1.0-SNAPSHOT</version>
+  <version>4.1.0-NATIVE</version>
   <description>A roles module which implements the 'roles' interface, using keycloak for authentication and token
     generation
   </description>
@@ -36,9 +36,9 @@
     <openapi-tools.jackson-databind-nullable.version>0.2.10</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.6.3</mapstruct.version>
     <hypersistence-utils-hibernate-70.version>3.15.3</hypersistence-utils-hibernate-70.version>
-    <folio-spring-support.version>10.0.0</folio-spring-support.version>
+    <folio-spring-support.version>10.1.0-NATIVE</folio-spring-support.version>
     <folio-java-checkstyle.version>1.2.0</folio-java-checkstyle.version>
-    <applications-poc-tools.version>4.1.0-SNAPSHOT</applications-poc-tools.version>
+    <applications-poc-tools.version>4.1.0-NATIVE</applications-poc-tools.version>
     <kafka.version>4.2.0</kafka.version> <!-- can be removed once Spring Boot migrates to this version -->
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
@@ -201,9 +201,21 @@
       <version>${apache-commons-collections4.version}</version>
     </dependency>
 
+    <!-- Keycloak representation DTOs (RoleRepresentation, PolicyRepresentation, ScopePermissionRepresentation,
+         etc.) reused by the native-ready Spring HTTP-interface admin client. Keycloak 26 ships these here, not
+         in the unpublished keycloak-core. -->
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-client-common-synced</artifactId>
+    </dependency>
+
+    <!-- keycloak-admin-client is retained ONLY as an integration-test driver (KeycloakTestClient and the it/*
+         suites exercise a real Keycloak via the RESTEasy admin client). Production/native code no longer uses
+         it: the module talks to Keycloak through its own @HttpExchange client (integration.keyclock.client). -->
     <dependency>
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-admin-client</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -236,6 +248,13 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Provides RuntimeHintsPredicates for unit-testing the native RuntimeHints registrar. -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core-test</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -352,6 +371,21 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+
+      <!-- GraalVM native build tooling. Version + the `native`/`nativeTest` profiles (which wire
+           process-aot and the compile/test executions) come from the Spring Boot 4.1.0 parent; here we only
+           declare the plugin and its build args. Inert unless `mvn -Pnative ...` is invoked (native image is
+           built in the Docker GraalVM-25 harness — no local GraalVM). -->
+      <plugin>
+        <groupId>org.graalvm.buildtools</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <configuration>
+          <imageName>mod-roles-keycloak</imageName>
+          <buildArgs>
+            <buildArg>--enable-url-protocols=http,https</buildArg>
+          </buildArgs>
+        </configuration>
       </plugin>
 
       <plugin>

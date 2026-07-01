@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.folio.roles.domain.model.UserPermissions;
+import org.folio.roles.integration.keyclock.client.KeycloakAdminClient;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
 import org.folio.roles.integration.permissions.Permissions;
 import org.folio.roles.integration.permissions.PermissionsClient;
@@ -23,8 +24,6 @@ import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -35,11 +34,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UserPermissionsLoaderTest {
 
   @InjectMocks UserPermissionsLoader userPermissionsLoader;
-  @Mock private Keycloak keycloak;
+  @Mock private KeycloakAdminClient keycloakAdminClient;
   @Mock private PermissionsClient permissionsClient;
   @Mock private FolioExecutionContext folioExecutionContext;
 
-  @Mock(answer = RETURNS_DEEP_STUBS) private RealmResource realmResource;
   @Mock(answer = RETURNS_DEEP_STUBS) private KeycloakConfigurationProperties configurationProperties;
 
   @AfterEach
@@ -50,12 +48,11 @@ class UserPermissionsLoaderTest {
   @Test
   void loadUserPermissions_positive() {
     when(folioExecutionContext.getTenantId()).thenReturn(TENANT_ID);
-    when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
     when(configurationProperties.getMigration().getUsersBatchSize()).thenReturn(1);
 
-    when(realmResource.users().list(0, 1)).thenReturn(List.of(keycloakUser(USER_ID)));
-    when(realmResource.users().list(1, 1)).thenReturn(List.of(keycloakUser(null)));
-    when(realmResource.users().list(2, 1)).thenReturn(emptyList());
+    when(keycloakAdminClient.listUsers(TENANT_ID, 0, 1)).thenReturn(List.of(keycloakUser(USER_ID)));
+    when(keycloakAdminClient.listUsers(TENANT_ID, 1, 1)).thenReturn(List.of(keycloakUser(null)));
+    when(keycloakAdminClient.listUsers(TENANT_ID, 2, 1)).thenReturn(emptyList());
 
     var permissions = List.of("foo.item.get", "foo.item.post");
     var permissionNames = new Permissions().permissionNames(permissions).totalRecords(2);
@@ -68,17 +65,15 @@ class UserPermissionsLoaderTest {
     assertThat(result).containsExactly(userPermissions);
 
     verify(configurationProperties, atLeastOnce()).getMigration();
-    verify(realmResource, atLeastOnce()).users();
   }
 
   @Test
   void loadUserPermissions_positive_permissionNamesNull() {
     when(folioExecutionContext.getTenantId()).thenReturn(TENANT_ID);
-    when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
     when(configurationProperties.getMigration().getUsersBatchSize()).thenReturn(1);
 
-    when(realmResource.users().list(0, 1)).thenReturn(List.of(keycloakUser(USER_ID)));
-    when(realmResource.users().list(1, 1)).thenReturn(emptyList());
+    when(keycloakAdminClient.listUsers(TENANT_ID, 0, 1)).thenReturn(List.of(keycloakUser(USER_ID)));
+    when(keycloakAdminClient.listUsers(TENANT_ID, 1, 1)).thenReturn(emptyList());
 
     when(permissionsClient.getUserPermissions(USER_ID, "userId", true)).thenReturn(Optional.of(new Permissions()));
 
@@ -87,22 +82,19 @@ class UserPermissionsLoaderTest {
     assertThat(result).isEmpty();
 
     verify(configurationProperties, atLeastOnce()).getMigration();
-    verify(realmResource, atLeastOnce()).users();
   }
 
   @Test
   void loadUserPermissions_negative_usersNotFound() {
     when(folioExecutionContext.getTenantId()).thenReturn(TENANT_ID);
-    when(keycloak.realm(TENANT_ID)).thenReturn(realmResource);
     when(configurationProperties.getMigration().getUsersBatchSize()).thenReturn(1);
 
-    when(realmResource.users().list(0, 1)).thenReturn(emptyList());
+    when(keycloakAdminClient.listUsers(TENANT_ID, 0, 1)).thenReturn(emptyList());
 
     var result = userPermissionsLoader.loadUserPermissions();
 
     assertThat(result).isEmpty();
     verify(configurationProperties, atLeastOnce()).getMigration();
-    verify(realmResource, atLeastOnce()).users();
   }
 
   private static UserRepresentation keycloakUser(UUID folioUserId) {

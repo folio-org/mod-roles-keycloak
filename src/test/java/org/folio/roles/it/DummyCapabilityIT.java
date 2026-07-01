@@ -1,7 +1,7 @@
 package org.folio.roles.it;
 
-import static com.github.jknack.handlebars.internal.lang3.BooleanUtils.isNotTrue;
-import static com.github.jknack.handlebars.internal.lang3.BooleanUtils.isTrue;
+import static org.apache.commons.lang3.BooleanUtils.isNotTrue;
+import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.folio.roles.support.TestConstants.TENANT_ID;

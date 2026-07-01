@@ -7,8 +7,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.MapUtils;
+import org.folio.roles.integration.keyclock.client.KeycloakAdminClient;
 import org.folio.spring.FolioExecutionContext;
-import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,7 @@ public class KeycloakUserService {
 
   public static final String USER_ID_ATTR = "user_id";
 
-  private final Keycloak keycloak;
+  private final KeycloakAdminClient keycloakAdminClient;
   private final FolioExecutionContext context;
 
   @Cacheable(cacheNames = "keycloak-user-id", key = "#userId + ':' + @folioExecutionContext.tenantId")
@@ -31,8 +31,7 @@ public class KeycloakUserService {
   @Cacheable(cacheNames = "keycloak-users", key = "#userId + ':' + @folioExecutionContext.tenantId")
   public UserRepresentation getKeycloakUserByUserId(UUID userId) {
     var query = USER_ID_ATTR + ":" + userId;
-    var realmResource = keycloak.realm(context.getTenantId());
-    var users = realmResource.users().searchByAttributes(null, null, null, false, query);
+    var users = keycloakAdminClient.searchUsersByAttributes(context.getTenantId(), false, query);
 
     if (isEmpty(users)) {
       throw new EntityNotFoundException("Keycloak user doesn't exist with the given 'user_id' attribute: " + userId);
