@@ -211,11 +211,22 @@
 
     <!-- keycloak-admin-client is retained ONLY as an integration-test driver (KeycloakTestClient and the it/*
          suites exercise a real Keycloak via the RESTEasy admin client). Production/native code no longer uses
-         it: the module talks to Keycloak through its own @HttpExchange client (integration.keyclock.client). -->
+         it: the module talks to Keycloak through its own @HttpExchange client (integration.keyclock.client).
+         Exclude resteasy-jaxb-provider: this test-only path pulls the glassfish JAXB stack and wins Maven scope
+         mediation for txw2/istack/angus, scoping them to test — while Hibernate ORM needs the SAME JAXB libs at
+         runtime. The result is an incomplete JAXB on the native classpath (jaxb-runtime present, its deps test)
+         that breaks the GraalVM image build. Dropping the XML provider (the admin client uses JSON only) leaves
+         Hibernate as the sole, complete runtime JAXB provider. -->
     <dependency>
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-admin-client</artifactId>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-jaxb-provider</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
