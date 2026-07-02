@@ -395,10 +395,13 @@
           <imageName>mod-roles-keycloak</imageName>
           <buildArgs>
             <buildArg>--enable-url-protocols=http,https</buildArg>
-            <!-- Hibernate 7 selects its bytecode provider purely via ServiceLoader (empty -> the reflection-based
-                 "none" provider). hibernate-core registers the ByteBuddy provider, whose init defines a class at
-                 runtime (net.bytebuddy...Invoker$Dispatcher) — forbidden under GraalVM's closed world. Excluding
-                 the service makes ServiceLoader return empty, so Hibernate uses the native-compatible none provider. -->
+            <!-- Hibernate 7 selects its bytecode provider by discovering BytecodeProvider service registrations
+                 (empty -> the reflection-based "none" provider). hibernate-core registers the ByteBuddy provider,
+                 whose init defines a class at runtime (net.bytebuddy...Invoker$Dispatcher) — forbidden under
+                 GraalVM's closed world. Hibernate's ClassLoaderService reads the service file as a RESOURCE via
+                 getResources(), so we exclude that resource (and, for the module-path ServiceLoader case, the
+                 service): discovery then returns empty and Hibernate uses the native-compatible none provider. -->
+            <buildArg>-H:ExcludeResources=META-INF/services/org\.hibernate\.bytecode\.spi\.BytecodeProvider</buildArg>
             <buildArg>-H:ServiceLoaderFeatureExcludeServices=org.hibernate.bytecode.spi.BytecodeProvider</buildArg>
           </buildArgs>
         </configuration>

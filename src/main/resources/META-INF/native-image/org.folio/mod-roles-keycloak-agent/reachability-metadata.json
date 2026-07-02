@@ -34938,9 +34938,6 @@
       "glob": "META-INF/services/org.hibernate.boot.spi.SessionFactoryBuilderFactory"
     },
     {
-      "glob": "META-INF/services/org.hibernate.bytecode.spi.BytecodeProvider"
-    },
-    {
       "glob": "META-INF/services/org.hibernate.engine.extension.spi.ExtensionIntegration"
     },
     {
