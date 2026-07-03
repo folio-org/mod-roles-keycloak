@@ -20851,7 +20851,9 @@
           "org.springframework.aop.framework.Advised",
           "org.springframework.core.DecoratingProxy"
         ]
-      }
+      },
+      "allDeclaredMethods": true,
+      "allPublicMethods": true
     },
     {
       "type": {
