@@ -41,8 +41,8 @@ import org.folio.roles.repository.RoleCapabilityRepository;
 import org.folio.roles.repository.projection.CapabilityDirectProjection;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
@@ -64,7 +64,11 @@ public class CapabilityService {
   private final UserPermissionCacheService userPermissionCacheService;
   private final MteEntitlementService mteEntitlementService;
 
-  @Lazy private final CapabilitySetService capabilitySetService;
+  // Broken circular dependency (CapabilityService <-> CapabilitySetService). Uses ObjectProvider rather than
+  // @Lazy: a @Lazy-injected CGLIB proxy over the @Transactional CapabilitySetService fails under GraalVM native
+  // image (the AOT-generated proxy bakes in a static-target-source callback layout, but the lazy resolution
+  // proxy has a non-static target source -> SerializableNoOp cannot be cast to Dispatcher in setCallbacks).
+  private final ObjectProvider<CapabilitySetService> capabilitySetServiceProvider;
 
   /**
    * Creates folio resources from incoming resource event.
@@ -325,7 +329,7 @@ public class CapabilityService {
   public PageResult<Capability> findByCapabilitySetId(UUID capabilitySetId,
     boolean includeDummy, int limit, int offset) {
     var offsetRequest = OffsetRequest.of(offset, limit, DEFAULT_CAPABILITY_SORT);
-    capabilitySetService.get(capabilitySetId);
+    capabilitySetServiceProvider.getObject().get(capabilitySetId);
     var capabilityEntities = includeDummy
       ? capabilityRepository.findByCapabilitySetIdIncludeDummy(capabilitySetId, offsetRequest)
       : capabilityRepository.findByCapabilitySetId(capabilitySetId, offsetRequest);
