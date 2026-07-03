@@ -4,6 +4,7 @@ import static org.springframework.aot.hint.MemberCategory.ACCESS_DECLARED_FIELDS
 import static org.springframework.aot.hint.MemberCategory.INVOKE_DECLARED_CONSTRUCTORS;
 import static org.springframework.aot.hint.MemberCategory.INVOKE_DECLARED_METHODS;
 import static org.springframework.aot.hint.MemberCategory.INVOKE_PUBLIC_CONSTRUCTORS;
+import static org.springframework.aot.hint.MemberCategory.INVOKE_PUBLIC_METHODS;
 
 import io.hypersistence.utils.hibernate.type.array.ListArrayType;
 import org.folio.roles.controller.validation.validator.PolicyValidator;
@@ -58,6 +59,7 @@ import org.folio.roles.repository.projection.UserPermissionApplicationProjection
 import org.springframework.aot.hint.BindingReflectionHintsRegistrar;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
+import org.springframework.aot.hint.TypeReference;
 
 /**
  * GraalVM native-image reachability hints owned by {@code mod-roles-keycloak}.
@@ -116,6 +118,42 @@ public class RolesRuntimeHints implements RuntimeHintsRegistrar {
     MteApplicationDescriptor.class, MteApplicationDescriptors.class,
   };
 
+  /**
+   * Liquibase maps changelog XML elements onto {@code Change} objects by reflectively invoking their setters and
+   * no-arg constructors, and constructs value/config helper types the same way. Registered by name (liquibase-core
+   * is a transitive runtime dependency) so tenant migration can parse the changelog in the native image.
+   */
+  private static final String[] LIQUIBASE_CHANGE_TYPE_NAMES = {
+    "liquibase.change.core.AbstractModifyDataChange", "liquibase.change.core.AddAutoIncrementChange",
+    "liquibase.change.core.AddColumnChange", "liquibase.change.core.AddDefaultValueChange",
+    "liquibase.change.core.AddForeignKeyConstraintChange", "liquibase.change.core.AddLookupTableChange",
+    "liquibase.change.core.AddNotNullConstraintChange", "liquibase.change.core.AddPrimaryKeyChange",
+    "liquibase.change.core.AddUniqueConstraintChange", "liquibase.change.core.AlterSequenceChange",
+    "liquibase.change.core.CreateIndexChange", "liquibase.change.core.CreateProcedureChange",
+    "liquibase.change.core.CreateSequenceChange", "liquibase.change.core.CreateTableChange",
+    "liquibase.change.core.CreateViewChange", "liquibase.change.core.DeleteDataChange",
+    "liquibase.change.core.DropAllForeignKeyConstraintsChange", "liquibase.change.core.DropColumnChange",
+    "liquibase.change.core.DropDefaultValueChange", "liquibase.change.core.DropForeignKeyConstraintChange",
+    "liquibase.change.core.DropIndexChange", "liquibase.change.core.DropNotNullConstraintChange",
+    "liquibase.change.core.DropPrimaryKeyChange", "liquibase.change.core.DropProcedureChange",
+    "liquibase.change.core.DropSequenceChange", "liquibase.change.core.DropTableChange",
+    "liquibase.change.core.DropUniqueConstraintChange", "liquibase.change.core.DropViewChange",
+    "liquibase.change.core.EmptyChange", "liquibase.change.core.ExecuteShellCommandChange",
+    "liquibase.change.core.InsertDataChange", "liquibase.change.core.LoadDataChange",
+    "liquibase.change.core.LoadUpdateDataChange", "liquibase.change.core.MergeColumnChange",
+    "liquibase.change.core.ModifyDataTypeChange", "liquibase.change.core.OutputChange",
+    "liquibase.change.core.RawSQLChange", "liquibase.change.core.RenameColumnChange",
+    "liquibase.change.core.RenameSequenceChange", "liquibase.change.core.RenameTableChange",
+    "liquibase.change.core.RenameViewChange", "liquibase.change.core.SetColumnRemarksChange",
+    "liquibase.change.core.SetTableRemarksChange", "liquibase.change.core.SQLFileChange",
+    "liquibase.change.core.StopChange", "liquibase.change.core.TagDatabaseChange",
+    "liquibase.change.core.UpdateDataChange",
+    // Nested column/constraint config beans and function value types referenced by the setters above.
+    "liquibase.change.ColumnConfig", "liquibase.change.AddColumnConfig", "liquibase.change.ConstraintsConfig",
+    "liquibase.statement.DatabaseFunction", "liquibase.statement.SequenceNextValueFunction",
+    "liquibase.statement.SequenceCurrentValueFunction",
+  };
+
   private final BindingReflectionHintsRegistrar bindingRegistrar = new BindingReflectionHintsRegistrar();
 
   @Override
@@ -124,6 +162,7 @@ public class RolesRuntimeHints implements RuntimeHintsRegistrar {
     registerHibernateTypes(hints);
     registerSupportTypes(hints);
     registerBindingTypes(hints);
+    registerLiquibaseTypes(hints);
     registerResources(hints);
 
     // Spring Data interface projection materialised as a JDK dynamic proxy.
@@ -156,10 +195,24 @@ public class RolesRuntimeHints implements RuntimeHintsRegistrar {
     bindingRegistrar.registerReflectionHints(hints.reflection(), BINDING_TYPES);
   }
 
+  private void registerLiquibaseTypes(RuntimeHints hints) {
+    for (var typeName : LIQUIBASE_CHANGE_TYPE_NAMES) {
+      hints.reflection().registerType(TypeReference.of(typeName),
+        builder -> builder.withMembers(INVOKE_PUBLIC_CONSTRUCTORS, INVOKE_DECLARED_CONSTRUCTORS,
+          INVOKE_PUBLIC_METHODS, INVOKE_DECLARED_METHODS));
+    }
+  }
+
   private void registerResources(RuntimeHints hints) {
     // Liquibase changelog master + all included change sets.
     hints.resources().registerPattern("changelog/changelog-master.xml");
     hints.resources().registerPattern("changelog/changes/*.xml");
+    // Liquibase bundles its dbchangelog XSD schemas as classpath resources. With secureParsing=true
+    // (the default) it resolves the referenced XSD from the classpath instead of a remote lookup, so
+    // the schema files (and build metadata) must be present in the native image or tenant migration fails
+    // with XSDLookUpException at runtime.
+    hints.resources().registerPattern("www.liquibase.org/xml/ns/dbchangelog/*.xsd");
+    hints.resources().registerPattern("liquibase.build.properties");
     // Reference data + permission view/edit mappings loaded via classpath resource scanning.
     hints.resources().registerPattern("reference-data/roles/*.json");
     hints.resources().registerPattern("reference-data/policies/*.json");

@@ -2,6 +2,7 @@ package org.folio.roles.nativex;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.aot.hint.MemberCategory.ACCESS_DECLARED_FIELDS;
+import static org.springframework.aot.hint.MemberCategory.INVOKE_PUBLIC_METHODS;
 
 import org.folio.roles.domain.entity.PermissionEntity;
 import org.folio.roles.domain.entity.key.UserRoleKey;
@@ -10,6 +11,7 @@ import org.folio.roles.repository.projection.UserPermissionApplicationProjection
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.aot.hint.RuntimeHints;
+import org.springframework.aot.hint.TypeReference;
 import org.springframework.aot.hint.predicate.RuntimeHintsPredicates;
 
 @UnitTest
@@ -47,5 +49,18 @@ class RolesRuntimeHintsTest {
   @Test
   void registerHints_positive_registersLiquibaseMasterChangelogResource() {
     assertThat(RuntimeHintsPredicates.resource().forResource("changelog/changelog-master.xml")).accepts(hints);
+  }
+
+  @Test
+  void registerHints_positive_registersLiquibaseXsdResource() {
+    assertThat(RuntimeHintsPredicates.resource()
+      .forResource("www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd")).accepts(hints);
+  }
+
+  @Test
+  void registerHints_positive_registersLiquibaseChangeMethodReflection() {
+    assertThat(RuntimeHintsPredicates.reflection()
+      .onType(TypeReference.of("liquibase.change.core.AddDefaultValueChange"))
+      .withMemberCategory(INVOKE_PUBLIC_METHODS)).accepts(hints);
   }
 }
