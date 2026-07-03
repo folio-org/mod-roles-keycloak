@@ -71,7 +71,9 @@ import org.springframework.aot.hint.RuntimeHintsRegistrar;
  */
 public class RolesRuntimeHints implements RuntimeHintsRegistrar {
 
-  /** JPA entities, {@code @MappedSuperclass}, {@code @Embeddable} and {@code @IdClass} types. */
+  /**
+   * JPA entities, {@code @MappedSuperclass}, {@code @Embeddable} and {@code @IdClass} types.
+   */
   private static final Class<?>[] JPA_TYPES = {
     Auditable.class,
     BasePolicyEntity.class, TimePolicyEntity.class, UserPolicyEntity.class, RolePolicyEntity.class,
@@ -90,7 +92,9 @@ public class RolesRuntimeHints implements RuntimeHintsRegistrar {
     UserCapabilityKey.class, UserCapabilitySetKey.class, UserRoleKey.class,
   };
 
-  /** Types reflectively instantiated by Hibernate (custom {@code UserType} / {@code IdentifierGenerator}). */
+  /**
+   * Types reflectively instantiated by Hibernate (custom {@code UserType} / {@code IdentifierGenerator}).
+   */
   private static final Class<?>[] HIBERNATE_TYPES = {
     ListArrayType.class, FolioUuidGenerator.class, FolioUuidGeneratorImpl.class,
   };
@@ -100,7 +104,9 @@ public class RolesRuntimeHints implements RuntimeHintsRegistrar {
     KeycloakMethodRetryPredicate.class, PolicyValidator.class,
   };
 
-  /** Types (de)serialized via Jackson: Kafka {@code ResourceEvent} payloads, domain events, MTE payloads. */
+  /**
+   * Types (de)serialized via Jackson: Kafka {@code ResourceEvent} payloads, domain events, MTE payloads.
+   */
   private static final Class<?>[] BINDING_TYPES = {
     CapabilityEvent.class, CapabilitySetEvent.class, DomainEvent.class, DomainEventType.class,
     TenantPermissionsChangedEvent.class, UserPermissionsChangedEvent.class,

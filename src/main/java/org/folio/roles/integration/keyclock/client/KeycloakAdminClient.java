@@ -79,7 +79,8 @@ public interface KeycloakAdminClient {
   // ---------------------------------------------------------------------------------------------------------
 
   /** POST /admin/realms/{realm}/users/{userId}/role-mappings/realm — assign realm roles to a user. */
-  @PostExchange(value = "/admin/realms/{realm}/users/{userId}/role-mappings/realm", contentType = APPLICATION_JSON_VALUE)
+  @PostExchange(value = "/admin/realms/{realm}/users/{userId}/role-mappings/realm",
+    contentType = APPLICATION_JSON_VALUE)
   void addRealmRoleMappings(@PathVariable String realm, @PathVariable String userId,
     @RequestBody List<RoleRepresentation> roles);
 
