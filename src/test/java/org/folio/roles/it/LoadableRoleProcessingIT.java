@@ -15,6 +15,7 @@ import static org.folio.spring.integration.XOkapiHeaders.USER_ID;
 import static org.folio.test.TestUtils.parseResponse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import lombok.extern.log4j.Log4j2;
 import org.assertj.core.api.ThrowingConsumer;
@@ -45,6 +47,7 @@ import org.folio.roles.domain.dto.LoadableRoles;
 import org.folio.roles.integration.kafka.KafkaMessageListener;
 import org.folio.roles.service.loadablerole.LoadableRoleCapabilityAssignmentHelper;
 import org.folio.roles.service.loadablerole.LoadableRoleCapabilityAssignmentProcessor;
+import org.folio.roles.service.permission.RolePermissionService;
 import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
@@ -83,6 +86,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
   @MockitoSpyBean private LoadableRoleCapabilityAssignmentHelper assignmentHelper;
   @MockitoSpyBean private LoadableRoleCapabilityAssignmentProcessor assignmentProcessor;
+  @MockitoSpyBean private RolePermissionService rolePermissionService;
 
   @BeforeAll
   static void beforeAll() {
@@ -405,6 +409,64 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
         assertThat(roleCapabilityCount(resolvedSecondRole.getId(), capabilityId)).isEqualTo(1);
       });
     }
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
+  void handleCapabilityEvent_positive_allRolesAssignedAfterUniqueViolationRetry() throws Exception {
+    var permissionName = "notes.collection.get";
+    var firstRoleName = "Unique Violation First Role";
+
+    // Step 1: Create two roles having permission "notes.collection.get" before the capability exists,
+    // so both have unresolved (null) capability ids, mirroring parallel entitlement.
+    doPut("/loadable-roles", new LoadableRole()
+      .name(firstRoleName)
+      .description("First role competing for the capability")
+      .permissions(List.of(new LoadablePermission().permissionName(permissionName))));
+
+    var secondRoleName = "Unique Violation Second Role";
+    doPut("/loadable-roles", new LoadableRole()
+      .name(secondRoleName)
+      .description("Second role competing for the capability")
+      .permissions(List.of(new LoadablePermission().permissionName(permissionName))));
+
+    // Step 2: For the first role processed by the capability event, insert the same role-capability row through
+    // a separate committed connection right inside the check-then-insert window (createPermissions runs between
+    // the duplicate check and the insert). This simulates a concurrent entitlement flow winning the race and
+    // makes the event transaction fail with a unique-constraint violation on commit.
+    var conflictInserted = new AtomicBoolean();
+    doAnswer(invocation -> {
+      if (conflictInserted.compareAndSet(false, true)) {
+        UUID roleId = invocation.getArgument(0);
+        // a separate thread gets its own auto-committed connection instead of joining the event transaction
+        var conflictingInsert = new Thread(() -> {
+          var capabilityId = jdbcTemplate.queryForObject(
+            "select id from test_mod_roles_keycloak.capability where folio_permission = ?", UUID.class,
+            permissionName);
+          jdbcTemplate.update("insert into test_mod_roles_keycloak.role_capability (role_id, capability_id) "
+            + "values (?, ?)", roleId, capabilityId);
+        });
+        conflictingInsert.start();
+        conflictingInsert.join();
+      }
+      return invocation.callRealMethod();
+    }).when(rolePermissionService).createPermissions(any(), anyList());
+
+    // Step 3: Send the event through the broker, so that the Kafka error handler applies its retry policy.
+    // The first delivery fails with the unique-constraint violation and must be redelivered, not skipped;
+    // the redelivery assigns the capability to both roles idempotently.
+    sendCapabilityEvent("json/kafka-events/be-notes-capability-event.json");
+
+    await().untilAsserted(() -> {
+      var capabilityId = getExistingCapabilities().get(permissionName).getId();
+      var firstRole = getLoadableRoleByName(firstRoleName);
+      var secondRole = getLoadableRoleByName(secondRoleName);
+
+      assertThat(findPermission(firstRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+      assertThat(findPermission(secondRole, permissionName).getCapabilityId()).isEqualTo(capabilityId);
+      assertThat(roleCapabilityCount(firstRole.getId(), capabilityId)).isEqualTo(1);
+      assertThat(roleCapabilityCount(secondRole.getId(), capabilityId)).isEqualTo(1);
+    });
   }
 
   @Test

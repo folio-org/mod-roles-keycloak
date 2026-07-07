@@ -8,8 +8,12 @@ import static org.folio.roles.support.CapabilitySetUtils.CAPABILITY_SET_ID;
 import static org.folio.roles.support.CapabilitySetUtils.capabilitySet;
 import static org.folio.roles.support.CapabilitySetUtils.extendedCapabilitySet;
 import static org.folio.roles.support.CapabilityUtils.capability;
+import static org.folio.roles.support.LoadablePermissionUtils.loadablePermission;
 import static org.folio.roles.support.LoadablePermissionUtils.loadablePermissions;
 import static org.folio.roles.support.TestUtils.copy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -34,6 +38,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
 @UnitTest
 @ExtendWith(MockitoExtension.class)
@@ -45,6 +52,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Mock private CapabilityService capabilityService;
   @Mock private RoleCapabilityService roleCapabilityService;
   @Mock private RoleCapabilitySetService roleCapabilitySetService;
+  @Mock private PlatformTransactionManager transactionManager;
   private FolioExecutionContext context;
 
   @BeforeEach
@@ -60,6 +68,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Test
   void handleCapabilitiesCreatedEvent_positive() {
     var permission = "permission1";
+    when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+    doNothing().when(transactionManager).commit(any());
     var capabilityId = randomUUID();
 
     var perms = loadablePermissions(5);
@@ -87,6 +97,35 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   }
 
   @Test
+  void handleCapabilitiesCreatedEvent_positive_siblingRoleAssignedWhenOneRoleFails() {
+    var permission = "permission1";
+    var failedPerm = loadablePermission(randomUUID(), permission);
+    failedPerm.setCapabilityId(null);
+    var siblingPerm = loadablePermission(randomUUID(), permission);
+    siblingPerm.setCapabilityId(null);
+
+    when(service.findAllByPermissions(List.of(permission))).thenReturn(List.of(failedPerm, siblingPerm));
+    when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+
+    var capabilityId = randomUUID();
+    var duplicateKey = new DataIntegrityViolationException("duplicate key value violates unique constraint");
+    when(roleCapabilityService.create(failedPerm.getRoleId(), List.of(capabilityId), true)).thenThrow(duplicateKey);
+    when(roleCapabilityService.create(siblingPerm.getRoleId(), List.of(capabilityId), true)).thenReturn(null);
+    var savedSiblingPerms = List.of(copy(siblingPerm).capabilityId(capabilityId));
+    when(service.saveAll(savedSiblingPerms)).thenReturn(savedSiblingPerms);
+
+    var capability = capability(capabilityId, permission);
+    var event = (CapabilityEvent) CapabilityEvent.created(capability).withContext(context);
+
+    assertThatThrownBy(() -> processor.handleCapabilitiesCreatedEvent(event)).isSameAs(duplicateKey);
+
+    verify(service).saveAll(savedSiblingPerms);
+    verify(transactionManager, times(2)).getTransaction(any());
+    verify(transactionManager).commit(any());
+    verify(transactionManager).rollback(any());
+  }
+
+  @Test
   void handleCapabilitiesCreatedEvent_positive_loadablePermissionsNotFound() {
     var permission = "permission1";
     var capability = capability(randomUUID(), permission);
@@ -101,6 +140,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   @Test
   void handleCapabilitiesUpdateEvent_positive() {
     var permission = "permission1";
+    when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+    doNothing().when(transactionManager).commit(any());
     var capabilityId = randomUUID();
 
     var perms = loadablePermissions(5);
@@ -152,6 +193,8 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
 
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
     when(service.findAllByPermissions(List.of(capability.getPermission()))).thenReturn(perms);
+    when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+    doNothing().when(transactionManager).commit(any());
     perms.forEach(perm -> {
       when(roleCapabilitySetService.create(perm.getRoleId(), List.of(capabilitySet.getId()), true)).thenReturn(null);
 

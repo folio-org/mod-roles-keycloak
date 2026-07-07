@@ -4,6 +4,7 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET
 import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +39,8 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 @EnableKafkaConsumer
 @RequiredArgsConstructor
 public class KafkaConfiguration implements KafkaListenerConfigurer {
+
+  private static final String UNIQUE_VIOLATION_SQL_STATE = "23505";
 
   private final KafkaProperties kafkaProperties;
   private final CapabilityEventRetryConfiguration retryConfiguration;
@@ -94,12 +97,34 @@ public class KafkaConfiguration implements KafkaListenerConfigurer {
       return getFixedBackOff();
     }
 
+    if (isUniqueConstraintViolation(exception)) {
+      log.warn("Unique constraint violation during capability event processing (concurrent assignment), "
+        + "retrying Kafka event", exception);
+      return getFixedBackOff();
+    }
+
     log.warn("Non-retryable error, skipping message", exception);
     return new FixedBackOff(0L, 0L);
   }
 
   private FixedBackOff getFixedBackOff() {
     return new FixedBackOff(retryConfiguration.getRetryDelay().toMillis(), retryConfiguration.getRetryAttempts());
+  }
+
+  /**
+   * Detects unique-constraint violations (SQLState 23505) anywhere in the cause chain. They occur when a capability
+   * event races with a concurrent entitlement flow inserting the same role-capability assignment; event processing
+   * is idempotent, so the event must be retried, not skipped.
+   */
+  private static boolean isUniqueConstraintViolation(Exception exception) {
+    for (Throwable current = exception; current != null && current.getCause() != current;
+         current = current.getCause()) {
+      if (current instanceof SQLException sqlException
+        && UNIQUE_VIOLATION_SQL_STATE.equals(sqlException.getSQLState())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
