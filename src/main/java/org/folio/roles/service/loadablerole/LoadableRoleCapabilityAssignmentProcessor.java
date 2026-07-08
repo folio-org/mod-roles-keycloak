@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.utils.CollectionUtils.findOne;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -27,9 +28,12 @@ import org.folio.roles.service.capability.RoleCapabilitySetService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Log4j2
 @Service
@@ -41,6 +45,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
   private final CapabilityService capabilityService;
   private final RoleCapabilityService roleCapabilityService;
   private final RoleCapabilitySetService roleCapabilitySetService;
+  private final PlatformTransactionManager transactionManager;
 
   @TransactionalEventListener(condition = "#event.type == T(org.folio.roles.domain.model.event.DomainEventType).CREATE")
   public void handleCapabilitiesCreatedEvent(CapabilityEvent event) {
@@ -158,14 +163,31 @@ public class LoadableRoleCapabilityAssignmentProcessor {
     return findOne(capabilityService.findByNames(List.of(capabilitySetName))).orElse(null);
   }
 
-  private static void applyActionToRoles(Supplier<Map<UUID, List<LoadablePermission>>> rolesWithPermissionsSupplier,
+  private void applyActionToRoles(Supplier<Map<UUID, List<LoadablePermission>>> rolesWithPermissionsSupplier,
     BiConsumer<UUID, List<LoadablePermission>> action, FolioExecutionContext context) {
     try (var ignored = new FolioExecutionContextSetter(context)) {
       var roleIdWithPermissions = rolesWithPermissionsSupplier.get();
 
       log.debug("Action will be applied to the following roles/permissions: {}", roleIdWithPermissions);
 
-      roleIdWithPermissions.forEach(action);
+      // each role is processed in its own transaction, so that a failure for one role (e.g. a concurrent
+      // entitlement flow assigning the same capability) does not roll back sibling roles' assignments
+      var transactionTemplate = new TransactionTemplate(transactionManager);
+      transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+
+      var failures = new ArrayList<RuntimeException>();
+      roleIdWithPermissions.forEach((roleId, rolePermissions) -> {
+        try {
+          transactionTemplate.executeWithoutResult(status -> action.accept(roleId, rolePermissions));
+        } catch (RuntimeException exception) {
+          log.warn("Failed to apply action to loadable role: roleId = {}", roleId, exception);
+          failures.add(exception);
+        }
+      });
+
+      if (!failures.isEmpty()) {
+        throw failures.getFirst();
+      }
     }
   }
 
