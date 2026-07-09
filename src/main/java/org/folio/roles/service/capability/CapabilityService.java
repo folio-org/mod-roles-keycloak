@@ -114,7 +114,8 @@ public class CapabilityService {
    */
   @Transactional(readOnly = true)
   public Capability get(UUID capabilityId) {
-    var capabilityEntity = capabilityRepository.getReferenceById(capabilityId);
+    var capabilityEntity = capabilityRepository.findById(capabilityId)
+      .orElseThrow(() -> new EntityNotFoundException("Capability is not found: id = " + capabilityId));
     return capabilityEntityMapper.convert(capabilityEntity);
   }
 

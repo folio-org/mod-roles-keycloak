@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.folio.roles.domain.dto.Metadata;
 import org.folio.roles.domain.dto.Role;
@@ -119,7 +120,7 @@ class RoleEntityServiceTest {
       role.setDescription(updatedDescription);
       var updatedEntity = mapper.toRoleEntity(role);
 
-      when(repository.getReferenceById(role.getId())).thenReturn(roleEntity);
+      when(repository.existsById(role.getId())).thenReturn(true);
       when(repository.save(any(RoleEntity.class))).thenReturn(updatedEntity);
 
       var updated = service.update(role);
@@ -133,7 +134,7 @@ class RoleEntityServiceTest {
     void negative_entityNotFound() {
       var role = createRoleDto();
 
-      when(repository.getReferenceById(role.getId())).thenThrow(EntityNotFoundException.class);
+      when(repository.existsById(role.getId())).thenReturn(false);
 
       assertThrows(EntityNotFoundException.class, () -> service.update(role));
     }
@@ -171,7 +172,7 @@ class RoleEntityServiceTest {
     void positive() {
       var roleEntity = createRoleEntity();
 
-      when(repository.getReferenceById(ROLE_ID)).thenReturn(roleEntity);
+      when(repository.findById(ROLE_ID)).thenReturn(Optional.of(roleEntity));
 
       var role = service.getById(ROLE_ID);
 
@@ -182,7 +183,7 @@ class RoleEntityServiceTest {
 
     @Test
     void negative_entityNotFound() {
-      when(repository.getReferenceById(any(UUID.class))).thenThrow(EntityNotFoundException.class);
+      when(repository.findById(any(UUID.class))).thenReturn(Optional.empty());
 
       assertThrows(EntityNotFoundException.class, () -> service.getById(ROLE_ID));
     }

@@ -3,6 +3,7 @@ package org.folio.roles.service.role;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,7 +57,8 @@ public class RoleEntityService {
 
   @Transactional(readOnly = true)
   public Role getById(UUID id) {
-    var roleEntity = repository.getReferenceById(id);
+    var roleEntity = repository.findById(id)
+      .orElseThrow(() -> new EntityNotFoundException("Role is not found: id = " + id));
     log.debug("Role has been found: id = {}, name = {}", roleEntity.getId(), roleEntity.getName());
     return mapper.toRole(roleEntity);
   }
@@ -83,6 +85,8 @@ public class RoleEntityService {
   }
 
   private void checkIfRoleExists(UUID id) {
-    repository.getReferenceById(id);
+    if (!repository.existsById(id)) {
+      throw new EntityNotFoundException("Role is not found: id = " + id);
+    }
   }
 }

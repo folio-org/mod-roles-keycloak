@@ -246,7 +246,7 @@ class CapabilityServiceTest {
     void positive() {
       var capability = capability();
       var capabilityEntity = capabilityEntity();
-      when(capabilityRepository.getReferenceById(CAPABILITY_ID)).thenReturn(capabilityEntity);
+      when(capabilityRepository.findById(CAPABILITY_ID)).thenReturn(Optional.of(capabilityEntity));
       when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
 
       var result = capabilityService.get(CAPABILITY_ID);
@@ -256,7 +256,7 @@ class CapabilityServiceTest {
 
     @Test
     void negative_entityNotFound() {
-      when(capabilityRepository.getReferenceById(CAPABILITY_ID)).thenThrow(EntityNotFoundException.class);
+      when(capabilityRepository.findById(CAPABILITY_ID)).thenReturn(Optional.empty());
       assertThatThrownBy(() -> capabilityService.get(CAPABILITY_ID))
         .isInstanceOf(EntityNotFoundException.class);
     }
