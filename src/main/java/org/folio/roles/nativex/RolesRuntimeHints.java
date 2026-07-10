@@ -119,6 +119,36 @@ public class RolesRuntimeHints implements RuntimeHintsRegistrar {
   };
 
   /**
+   * Additional Jackson (de)serialised types the AOT/serialization metadata otherwise misses. Two groups:
+   * (1) app <b>records</b> parsed from JSON — permission-mapping records, Kafka event payloads, domain events —
+   * whose record components must be reflectively available (else {@code Record components not available ...}); and
+   * (2) the third-party <b>Keycloak admin-API representation DTOs</b> returned by {@code KeycloakAdminClient}
+   * ({@code keycloak-client-common-synced}, no community metadata) — the binding registrar walks their graph, so
+   * nested types (e.g. {@code ProtocolMapperRepresentation}) are picked up from the roots. Referenced by
+   * fully-qualified name to avoid a wall of imports.
+   */
+  private static final Class<?>[] JACKSON_BINDING_TYPES = {
+    org.folio.roles.service.permission.PermissionOverrider.Permission.class,
+    org.folio.roles.domain.model.CapabilityReplacements.class,
+    org.folio.roles.integration.kafka.model.ResultHolder.class,
+    org.folio.roles.service.capability.model.UserPermissionMappings.class,
+    org.folio.roles.service.loadablerole.UnresolvedLoadablePermissionsCreatedEvent.class,
+    org.keycloak.representations.idm.ClientRepresentation.class,
+    org.keycloak.representations.idm.ProtocolMapperRepresentation.class,
+    org.keycloak.representations.idm.CredentialRepresentation.class,
+    org.keycloak.representations.idm.RoleRepresentation.class,
+    org.keycloak.representations.idm.UserRepresentation.class,
+    org.keycloak.representations.idm.authorization.AbstractPolicyRepresentation.class,
+    org.keycloak.representations.idm.authorization.PolicyRepresentation.class,
+    org.keycloak.representations.idm.authorization.RolePolicyRepresentation.class,
+    org.keycloak.representations.idm.authorization.UserPolicyRepresentation.class,
+    org.keycloak.representations.idm.authorization.ResourceRepresentation.class,
+    org.keycloak.representations.idm.authorization.ScopeRepresentation.class,
+    org.keycloak.representations.idm.authorization.ScopePermissionRepresentation.class,
+    org.keycloak.representations.idm.authorization.DecisionStrategy.class,
+  };
+
+  /**
    * Liquibase maps changelog XML elements onto {@code Change} objects by reflectively invoking their setters and
    * no-arg constructors, and constructs value/config helper types the same way. Registered by name (liquibase-core
    * is a transitive runtime dependency) so tenant migration can parse the changelog in the native image.
@@ -193,6 +223,7 @@ public class RolesRuntimeHints implements RuntimeHintsRegistrar {
 
   private void registerBindingTypes(RuntimeHints hints) {
     bindingRegistrar.registerReflectionHints(hints.reflection(), BINDING_TYPES);
+    bindingRegistrar.registerReflectionHints(hints.reflection(), JACKSON_BINDING_TYPES);
   }
 
   private void registerLiquibaseTypes(RuntimeHints hints) {

@@ -63,4 +63,18 @@ class RolesRuntimeHintsTest {
       .onType(TypeReference.of("liquibase.change.core.AddDefaultValueChange"))
       .withMemberCategory(INVOKE_PUBLIC_METHODS)).accepts(hints);
   }
+
+  @Test
+  void registerHints_positive_registersPermissionOverriderRecordBinding() {
+    assertThat(RuntimeHintsPredicates.reflection()
+      .onType(TypeReference.of("org.folio.roles.service.permission.PermissionOverrider$Permission"))).accepts(hints);
+  }
+
+  @Test
+  void registerHints_positive_registersKeycloakDtoBinding() {
+    assertThat(RuntimeHintsPredicates.reflection()
+      .onType(TypeReference.of("org.keycloak.representations.idm.ClientRepresentation"))).accepts(hints);
+    assertThat(RuntimeHintsPredicates.reflection()
+      .onType(TypeReference.of("org.keycloak.representations.idm.ProtocolMapperRepresentation"))).accepts(hints);
+  }
 }
