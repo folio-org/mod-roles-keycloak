@@ -128,6 +128,8 @@ public class RolesRuntimeHints implements RuntimeHintsRegistrar {
    * fully-qualified name to avoid a wall of imports.
    */
   private static final Class<?>[] JACKSON_BINDING_TYPES = {
+    // Jackson mix-in whose @JsonIgnoreProperties annotation must be reflectively readable for the Keycloak client.
+    org.folio.roles.integration.keyclock.configuration.KeycloakConfiguration.ConsentRequiredIgnoringMixin.class,
     org.folio.roles.service.permission.PermissionOverrider.Permission.class,
     org.folio.roles.domain.model.CapabilityReplacements.class,
     org.folio.roles.integration.kafka.model.ResultHolder.class,
