@@ -1,4 +1,5 @@
 ## Version `v4.1.0` (IN PROGRESS)
+* Migrate duplicate capability/capability-set `modperms_circulation_requests_queue_reorder_collection.execute` to `.create` after permission mapping change (MODROLESKC-416)
 * Improve cleanup of keycloak records upon role removal (MODROLESKC-384)
 * Fix race condition that could leave default loadable-role permissions without assigned capabilities during tenant initialization (MODROLESKC-347)
 * Delete the Log4j configuration so the logging settings are automatically inherited from `folio-spring-base`. (EUREKA-889)

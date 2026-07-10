@@ -25,6 +25,9 @@ class CapabilitiesMergeServiceTest {
     verify(capabilityDuplicateMigrationService).migrate(
       "organizations_acquisition_units_assignment.create",
       "ui-organizations_acqunits.execute");
+    verify(capabilityDuplicateMigrationService).migrate(
+      "modperms_circulation_requests_queue_reorder_collection.execute",
+      "modperms_circulation_requests_queue_reorder_collection.create");
   }
 
   @Test
