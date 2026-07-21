@@ -221,8 +221,7 @@ class RoleKeycloakIT extends BaseIntegrationTest {
   @Test
   void deleteRole_negative_notFound() throws Exception {
     var notExistingRoleId = ROLE_NOT_EXISTED.getId();
-    var errorMessage = "No row with the given identifier exists for entity "
-      + "[org.folio.roles.domain.entity.RoleEntity with id '" + notExistingRoleId + "']";
+    var errorMessage = "Role is not found: id = " + notExistingRoleId;
     mockMvc.perform(delete("/roles/{id}", notExistingRoleId)
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER))

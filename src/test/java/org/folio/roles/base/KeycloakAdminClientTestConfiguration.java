@@ -30,7 +30,7 @@ public class KeycloakAdminClientTestConfiguration {
   private static final DefaultHostnameVerifier DEFAULT_HOSTNAME_VERIFIER = new DefaultHostnameVerifier();
 
   @Bean
-  public Keycloak keycloakAdminClient(KeycloakConfigurationProperties properties,
+  public Keycloak keycloakAdminTestClient(KeycloakConfigurationProperties properties,
     RealmConfigurationProvider realmConfigurationProvider) {
     var realmConfiguration = realmConfigurationProvider.getRealmConfiguration();
     var builder = KeycloakBuilder.builder()

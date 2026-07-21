@@ -555,6 +555,11 @@
         <version>${maven-failsafe-plugin.version}</version>
         <configuration>
           <groups>integration</groups>
+          <systemPropertyVariables>
+            <!-- Test Keycloak container serves a self-signed cert whose SAN does not include localhost; the
+                 native-image-friendly JDK-HttpClient Keycloak client verifies hostnames unless this is set. -->
+            <jdk.internal.httpclient.disableHostnameVerification>true</jdk.internal.httpclient.disableHostnameVerification>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
 
