@@ -77,4 +77,16 @@ class RolesRuntimeHintsTest {
     assertThat(RuntimeHintsPredicates.reflection()
       .onType(TypeReference.of("org.keycloak.representations.idm.ProtocolMapperRepresentation"))).accepts(hints);
   }
+
+  @Test
+  void registerHints_positive_registersReferenceDataModelBinding() {
+    assertThat(RuntimeHintsPredicates.reflection()
+      .onType(TypeReference.of("org.folio.roles.domain.model.PlainLoadableRoles"))).accepts(hints);
+    assertThat(RuntimeHintsPredicates.reflection()
+      .onType(TypeReference.of("org.folio.roles.domain.model.PlainLoadableRole"))).accepts(hints);
+    assertThat(RuntimeHintsPredicates.reflection()
+      .onType(TypeReference.of("org.folio.roles.domain.model.PermissionsToManagePermissions"))).accepts(hints);
+    assertThat(RuntimeHintsPredicates.reflection()
+      .onType(TypeReference.of("org.folio.roles.domain.model.CapabilitiesToManageCapabilities"))).accepts(hints);
+  }
 }

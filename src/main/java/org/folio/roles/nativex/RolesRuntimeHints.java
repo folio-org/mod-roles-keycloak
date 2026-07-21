@@ -151,6 +151,24 @@ public class RolesRuntimeHints implements RuntimeHintsRegistrar {
   };
 
   /**
+   * Hand-written {@code domain.model} types deserialized from bundled reference-data / view-edit-mapping JSON via
+   * {@link org.folio.roles.utils.ResourceHelper#readObjectsFromDirectory}. Unlike the OpenAPI-generated
+   * {@code domain.dto} types (e.g. {@code Policies}, {@code Role}, {@code RolePolicyRole}) — which appear on
+   * controller signatures and are therefore registered by Spring AOT automatically — these models are referenced
+   * only through a {@code Class<T>} argument, so AOT never discovers them and Jackson fails at runtime with
+   * {@code cannot deserialize from Object value (no delegate- or property-based Creator)}. The binding registrar
+   * walks the object graph, so registering {@code PlainLoadableRoles} also covers its nested
+   * {@code PlainLoadableRole} (and its {@code domain.dto.Role} superclass); the nested type is listed explicitly
+   * for clarity and test coverage.
+   */
+  private static final Class<?>[] REFERENCE_DATA_BINDING_TYPES = {
+    org.folio.roles.domain.model.PlainLoadableRoles.class,
+    org.folio.roles.domain.model.PlainLoadableRole.class,
+    org.folio.roles.domain.model.PermissionsToManagePermissions.class,
+    org.folio.roles.domain.model.CapabilitiesToManageCapabilities.class,
+  };
+
+  /**
    * Liquibase maps changelog XML elements onto {@code Change} objects by reflectively invoking their setters and
    * no-arg constructors, and constructs value/config helper types the same way. Registered by name (liquibase-core
    * is a transitive runtime dependency) so tenant migration can parse the changelog in the native image.
@@ -226,6 +244,7 @@ public class RolesRuntimeHints implements RuntimeHintsRegistrar {
   private void registerBindingTypes(RuntimeHints hints) {
     bindingRegistrar.registerReflectionHints(hints.reflection(), BINDING_TYPES);
     bindingRegistrar.registerReflectionHints(hints.reflection(), JACKSON_BINDING_TYPES);
+    bindingRegistrar.registerReflectionHints(hints.reflection(), REFERENCE_DATA_BINDING_TYPES);
   }
 
   private void registerLiquibaseTypes(RuntimeHints hints) {
