@@ -159,7 +159,7 @@ class RoleKeycloakIT extends BaseIntegrationTest {
       assertNotNull(find(roles.getRoles(),
         role -> ROLE_2.getName().equals(role.getName()) && ROLE_2.getDescription().equals(role.getDescription())));
 
-      var role1Metadata = roles.getRoles().get(0).getMetadata();
+      var role1Metadata = roles.getRoles().getFirst().getMetadata();
       assertNotNull(role1Metadata.getCreatedByUserId());
       assertNotNull(role1Metadata.getCreatedDate());
       assertNotNull(role1Metadata.getUpdatedByUserId());
@@ -179,6 +179,61 @@ class RoleKeycloakIT extends BaseIntegrationTest {
         .header(USER_ID, USER_ID_HEADER)
         .contentType(APPLICATION_JSON))
       .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void createRole_negative_roleNameContainsForbiddenCharacter() throws Exception {
+    var invalidName = "Circulation/Administrator";
+
+    mockMvc.perform(post("/roles")
+        .content(asJsonString(new Role().name(invalidName).description("test description")))
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(jsonPath("$.errors[0].code", is("validation_error")))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key", is("name")))
+      .andExpect(jsonPath("$.errors[0].parameters[0].value", is(invalidName)));
+
+    var roles = parseResponse(doGet("/roles").andReturn(), Roles.class);
+    assertThat(roles.getRoles()).noneMatch(role -> invalidName.equals(role.getName()));
+  }
+
+  @Test
+  void createRoles_negative_roleNameContainsForbiddenCharacter() throws Exception {
+    var invalidRole = new Role().name("Circulation/Administrator").description("invalid");
+
+    mockMvc.perform(post("/roles/batch")
+        .content(asJsonString(new RolesRequest().addRolesItem(ROLE_1).addRolesItem(invalidRole)))
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].code", is("validation_error")));
+
+    var roles = parseResponse(doGet("/roles").andReturn(), Roles.class);
+    assertThat(roles.getRoles()).isEmpty();
+  }
+
+  @Test
+  @Sql("classpath:/sql/populate-role.sql")
+  void updateRole_negative_roleNameContainsForbiddenCharacter() throws Exception {
+    var invalidName = "Circulation/Administrator";
+    var roleForUpdate = new Role().id(ROLE_1.getId()).name(invalidName).description("updated description");
+
+    mockMvc.perform(put("/roles/{id}", ROLE_1.getId())
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER)
+        .content(asJsonString(roleForUpdate))
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].code", is("validation_error")))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key", is("name")));
+
+    var actual = parseResponse(doGet("/roles/{id}", ROLE_1.getId()).andReturn(), Role.class);
+    assertEquals(ROLE_1.getName(), actual.getName());
+    assertEquals(ROLE_1.getDescription(), actual.getDescription());
   }
 
   @Test

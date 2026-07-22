@@ -3,6 +3,7 @@ package org.folio.roles.service.loadablerole;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.folio.common.utils.CollectionUtils.mapItems;
@@ -13,6 +14,8 @@ import static org.folio.roles.service.ServiceUtils.comparatorById;
 import static org.folio.roles.service.ServiceUtils.merge;
 import static org.folio.roles.service.ServiceUtils.mergeInBatch;
 import static org.folio.roles.service.ServiceUtils.nothing;
+import static org.folio.roles.utils.RoleNameUtils.FORBIDDEN_NAME_CHARACTER;
+import static org.folio.roles.utils.RoleNameUtils.hasForbiddenCharacters;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,11 +31,13 @@ import org.folio.roles.domain.dto.RoleType;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.LoadableRoleEntity;
 import org.folio.roles.domain.entity.type.EntityRoleType;
+import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.service.ServiceUtils.UpdatePair;
+import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -49,6 +54,7 @@ public class LoadableRoleService {
   private final KeycloakRoleService keycloakService;
   private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
   private final ApplicationEventPublisher applicationEventPublisher;
+  private final FolioExecutionContext folioExecutionContext;
 
   @Transactional(readOnly = true)
   public LoadableRoles find(String query, Integer limit, Integer offset) {
@@ -82,6 +88,7 @@ public class LoadableRoleService {
 
   @Transactional
   public LoadableRole save(LoadableRole role) {
+    validateRoleName(role);
     var entity = mapper.toRoleEntity(role);
 
     var saved = saveOrUpdate(entity);
@@ -90,12 +97,18 @@ public class LoadableRoleService {
 
   @Transactional
   public void saveAll(List<LoadableRole> roles) {
+    for (var role : emptyIfNull(roles)) {
+      validateRoleName(role);
+    }
+
     toStream(roles).collect(groupingBy(LoadableRole::getType))
       .forEach(this::saveAllByType);
   }
 
   @Transactional
   public LoadableRole upsertDefaultLoadableRole(LoadableRole loadableRole) {
+    validateRoleName(loadableRole);
+    
     prepareLoadableRole(loadableRole);
     var incoming = mapper.toRoleEntity(loadableRole);
     var existing = findAllDefaultRolesNotLoadedFromFiles();
@@ -117,6 +130,16 @@ public class LoadableRoleService {
       keycloakService.deleteById(id);
     } catch (Exception exception) {
       log.debug("Failed to delete Role in Keycloak: id = {}", id, exception);
+    }
+  }
+
+  private void validateRoleName(LoadableRole role) {
+    var name = role.getName();
+    if (hasForbiddenCharacters(name)) {
+      log.warn("Role name contains a forbidden character: name = {}, tenant = {}",
+        name, folioExecutionContext.getTenantId());
+      throw new RequestValidationException(
+        "Role name must not contain '" + FORBIDDEN_NAME_CHARACTER + "' character", "name", name);
     }
   }
 
