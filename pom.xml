@@ -12,7 +12,7 @@
   <name>mod-roles-keycloak</name>
   <groupId>org.folio</groupId>
   <artifactId>mod-roles-keycloak</artifactId>
-  <version>4.1.0-SNAPSHOT</version>
+  <version>4.1.0-NATIVE</version>
   <description>A roles module which implements the 'roles' interface, using keycloak for authentication and token
     generation
   </description>
@@ -36,9 +36,9 @@
     <openapi-tools.jackson-databind-nullable.version>0.2.10</openapi-tools.jackson-databind-nullable.version>
     <mapstruct.version>1.6.3</mapstruct.version>
     <hypersistence-utils-hibernate-70.version>3.15.3</hypersistence-utils-hibernate-70.version>
-    <folio-spring-support.version>10.0.0</folio-spring-support.version>
+    <folio-spring-support.version>10.1.0-NATIVE</folio-spring-support.version>
     <folio-java-checkstyle.version>1.2.0</folio-java-checkstyle.version>
-    <applications-poc-tools.version>4.1.0-SNAPSHOT</applications-poc-tools.version>
+    <applications-poc-tools.version>4.1.0-NATIVE</applications-poc-tools.version>
     <kafka.version>4.2.0</kafka.version> <!-- can be removed once Spring Boot migrates to this version -->
 
     <mod-roles-keycloak.yaml-file>${project.basedir}/src/main/resources/swagger.api/mod-roles-keycloak.yaml
@@ -201,9 +201,32 @@
       <version>${apache-commons-collections4.version}</version>
     </dependency>
 
+    <!-- Keycloak representation DTOs (RoleRepresentation, PolicyRepresentation, ScopePermissionRepresentation,
+         etc.) reused by the native-ready Spring HTTP-interface admin client. Keycloak 26 ships these here, not
+         in the unpublished keycloak-core. -->
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-client-common-synced</artifactId>
+    </dependency>
+
+    <!-- keycloak-admin-client is retained ONLY as an integration-test driver (KeycloakTestClient and the it/*
+         suites exercise a real Keycloak via the RESTEasy admin client). Production/native code no longer uses
+         it: the module talks to Keycloak through its own @HttpExchange client (integration.keyclock.client).
+         Exclude resteasy-jaxb-provider: this test-only path pulls the glassfish JAXB stack and wins Maven scope
+         mediation for txw2/istack/angus, scoping them to test — while Hibernate ORM needs the SAME JAXB libs at
+         runtime. The result is an incomplete JAXB on the native classpath (jaxb-runtime present, its deps test)
+         that breaks the GraalVM image build. Dropping the XML provider (the admin client uses JSON only) leaves
+         Hibernate as the sole, complete runtime JAXB provider. -->
     <dependency>
       <groupId>org.keycloak</groupId>
       <artifactId>keycloak-admin-client</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.resteasy</groupId>
+          <artifactId>resteasy-jaxb-provider</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -236,6 +259,13 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Provides RuntimeHintsPredicates for unit-testing the native RuntimeHints registrar. -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core-test</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -352,6 +382,29 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+
+      <!-- GraalVM native build tooling. Version + the `native`/`nativeTest` profiles (which wire
+           process-aot and the compile/test executions) come from the Spring Boot 4.1.0 parent; here we only
+           declare the plugin and its build args. Inert unless `mvn -Pnative ...` is invoked (native image is
+           built in the Docker GraalVM-25 harness — no local GraalVM). -->
+      <plugin>
+        <groupId>org.graalvm.buildtools</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <configuration>
+          <imageName>mod-roles-keycloak</imageName>
+          <buildArgs>
+            <buildArg>--enable-url-protocols=http,https</buildArg>
+            <!-- Hibernate 7 selects its bytecode provider by discovering BytecodeProvider service registrations
+                 (empty -> the reflection-based "none" provider). hibernate-core registers the ByteBuddy provider,
+                 whose init defines a class at runtime (net.bytebuddy...Invoker$Dispatcher) — forbidden under
+                 GraalVM's closed world. Hibernate's ClassLoaderService reads the service file as a RESOURCE via
+                 getResources(), so we exclude that resource (and, for the module-path ServiceLoader case, the
+                 service): discovery then returns empty and Hibernate uses the native-compatible none provider. -->
+            <buildArg>-H:ExcludeResources=META-INF/services/org\.hibernate\.bytecode\.spi\.BytecodeProvider</buildArg>
+            <buildArg>-H:ServiceLoaderFeatureExcludeServices=org.hibernate.bytecode.spi.BytecodeProvider</buildArg>
+          </buildArgs>
+        </configuration>
       </plugin>
 
       <plugin>
@@ -502,6 +555,11 @@
         <version>${maven-failsafe-plugin.version}</version>
         <configuration>
           <groups>integration</groups>
+          <systemPropertyVariables>
+            <!-- Test Keycloak container serves a self-signed cert whose SAN does not include localhost; the
+                 native-image-friendly JDK-HttpClient Keycloak client verifies hostnames unless this is set. -->
+            <jdk.internal.httpclient.disableHostnameVerification>true</jdk.internal.httpclient.disableHostnameVerification>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
 
