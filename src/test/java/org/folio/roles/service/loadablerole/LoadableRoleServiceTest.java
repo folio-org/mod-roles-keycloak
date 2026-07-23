@@ -8,6 +8,7 @@ import static org.folio.roles.support.LoadableRoleUtils.loadableRole;
 import static org.folio.roles.support.LoadableRoleUtils.loadableRoleEntity;
 import static org.folio.roles.support.LoadableRoleUtils.regularRole;
 import static org.folio.roles.support.RoleUtils.role;
+import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestUtils.copy;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
@@ -19,11 +20,13 @@ import java.util.Optional;
 import java.util.stream.Stream;
 import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.type.EntityRoleType;
+import org.folio.roles.exception.RequestValidationException;
 import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.support.TestUtils;
+import org.folio.spring.FolioExecutionContext;
 import org.folio.test.types.UnitTest;
 import org.instancio.junit.InstancioExtension;
 import org.junit.jupiter.api.AfterEach;
@@ -48,6 +51,7 @@ class LoadableRoleServiceTest {
   @Mock private KeycloakRoleService keycloakService;
   @Mock private LoadableRoleCapabilityAssignmentHelper capabilityAssignmentHelper;
   @Mock private ApplicationEventPublisher applicationEventPublisher;
+  @Mock private FolioExecutionContext folioExecutionContext;
 
   @AfterEach
   void tearDown() {
@@ -235,6 +239,60 @@ class LoadableRoleServiceTest {
           assertThat(se.getKey()).isEqualTo("cause");
           assertThat(se.getValue()).isEqualTo("Keycloak error");
         });
+    }
+  }
+
+  @Nested
+  @DisplayName("roleNameValidation")
+  class RoleNameValidation {
+
+    private static final String INVALID_NAME = "Circulation/Manager";
+
+    @Test
+    void upsertDefaultLoadableRole_negative_nameContainsForbiddenCharacter() {
+      var role = copy(loadableRole()).name(INVALID_NAME);
+
+      when(folioExecutionContext.getTenantId()).thenReturn(TENANT_ID);
+
+      assertThatThrownBy(() -> service.upsertDefaultLoadableRole(role))
+        .isInstanceOf(RequestValidationException.class)
+        .hasMessage("Role name must not contain '/' character")
+        .satisfies(throwable -> {
+          var rve = (RequestValidationException) throwable;
+
+          assertThat(rve.getKey()).isEqualTo("name");
+          assertThat(rve.getValue()).isEqualTo(INVALID_NAME);
+        });
+
+      verifyNoInteractions(repository, mapper, keycloakService);
+    }
+
+    @Test
+    void save_negative_nameContainsForbiddenCharacter() {
+      var role = copy(loadableRole()).name(INVALID_NAME);
+
+      when(folioExecutionContext.getTenantId()).thenReturn(TENANT_ID);
+
+      assertThatThrownBy(() -> service.save(role))
+        .isInstanceOf(RequestValidationException.class)
+        .hasMessage("Role name must not contain '/' character");
+
+      verifyNoInteractions(repository, mapper, keycloakService);
+    }
+
+    @Test
+    void saveAll_negative_nameContainsForbiddenCharacter() {
+      var validRole = loadableRole();
+      var invalidRole = copy(loadableRole()).name(INVALID_NAME);
+
+      when(folioExecutionContext.getTenantId()).thenReturn(TENANT_ID);
+
+      var args = List.of(validRole, invalidRole);
+      assertThatThrownBy(() -> service.saveAll(args))
+        .isInstanceOf(RequestValidationException.class)
+        .hasMessage("Role name must not contain '/' character");
+
+      verifyNoInteractions(repository, mapper, keycloakService);
     }
   }
 }

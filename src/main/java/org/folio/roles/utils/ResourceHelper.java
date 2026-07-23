@@ -28,8 +28,30 @@ public class ResourceHelper {
    * @return list of deserialized data
    */
   public <T> Stream<T> readObjectsFromDirectory(String resourceDir, Class<T> resourceType) {
+    return readSourced(resourceDir, resourceType)
+      .map(SourcedResource::value);
+  }
+
+  /**
+   * Loads json data from the specified directory and deserializes it to the specified type, keeping the path of the
+   * file each object was read from.
+   *
+   * @param resourceDir  directory to load json data from
+   * @param resourceType type of data
+   * @param <T>          type of data
+   * @return list of deserialized data paired with the source file path
+   */
+  public <T> Stream<SourcedResource<T>> readSourcedObjectsFromDirectory(String resourceDir, Class<T> resourceType) {
+    return readSourced(resourceDir, resourceType);
+  }
+
+  private <T> Stream<SourcedResource<T>> readSourced(String resourceDir, Class<T> resourceType) {
     return stream(getResources(resourceDir))
-      .map(res -> deserializeResource(res, resourceType));
+      .map(res -> new SourcedResource<>(sourceOf(resourceDir, res), deserializeResource(res, resourceType)));
+  }
+
+  private static String sourceOf(String resourceDir, Resource res) {
+    return resourceDir + "/" + res.getFilename();
   }
 
   private <T> T deserializeResource(Resource res, Class<T> resourceType) {
@@ -49,4 +71,13 @@ public class ResourceHelper {
       throw new IllegalStateException("Failed to load data for path: " + resourceDir, e);
     }
   }
+
+  /**
+   * Deserialized object together with the path of the file it was read from.
+   *
+   * @param source path of the file the value was read from
+   * @param value  deserialized value
+   * @param <T>    type of the deserialized value
+   */
+  public record SourcedResource<T>(String source, T value) {}
 }

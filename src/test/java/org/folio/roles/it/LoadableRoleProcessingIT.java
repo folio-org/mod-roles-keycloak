@@ -13,6 +13,7 @@ import static org.folio.roles.utils.TestValues.readValue;
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.USER_ID;
 import static org.folio.test.TestUtils.parseResponse;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
@@ -213,6 +215,28 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
     assertThat(createdRole.getDescription()).isEqualTo(role.getDescription());
     assertThat(createdRole.getPermissions()).hasSize(1);
     assertThat(createdRole.getPermissions().getFirst().getPermissionName()).isEqualTo("test.permission");
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
+  void upsertLoadableRole_negative_roleNameContainsForbiddenCharacter() throws Exception {
+    var invalidName = "Circulation/Manager";
+    var role = new LoadableRole()
+      .name(invalidName)
+      .description("Role with a forbidden character in the name")
+      .permissions(List.of(new LoadablePermission().permissionName("test.permission")));
+
+    attemptPut("/loadable-roles", role)
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].code", is("validation_error")))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key", is("name")))
+      .andExpect(jsonPath("$.errors[0].parameters[0].value", is(invalidName)));
+
+    var loadableRoles = parseResponse(doGet(get("/loadable-roles")
+      .header(TENANT, TENANT_ID)
+      .header(USER_ID, USER_ID_HEADER)).andReturn(), LoadableRoles.class);
+
+    assertThat(loadableRoles.getLoadableRoles()).noneMatch(r -> invalidName.equals(r.getName()));
   }
 
   @Test
