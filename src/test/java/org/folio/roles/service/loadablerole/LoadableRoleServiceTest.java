@@ -287,7 +287,8 @@ class LoadableRoleServiceTest {
 
       when(folioExecutionContext.getTenantId()).thenReturn(TENANT_ID);
 
-      assertThatThrownBy(() -> service.saveAll(List.of(validRole, invalidRole)))
+      var args = List.of(validRole, invalidRole);
+      assertThatThrownBy(() -> service.saveAll(args))
         .isInstanceOf(RequestValidationException.class)
         .hasMessage("Role name must not contain '/' character");
 

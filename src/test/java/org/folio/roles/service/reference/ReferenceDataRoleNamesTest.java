@@ -26,8 +26,7 @@ class ReferenceDataRoleNamesTest {
   void bundledRoleNames_positive_noForbiddenCharacters() {
     var roles = resourceHelper.readSourcedObjectsFromDirectory(ROLES_DATA_DIR, PlainLoadableRoles.class).toList();
 
-    assertThat(roles).isNotEmpty();
-    assertThat(roles).allSatisfy(sourced -> assertThat(sourced.value().getRoles())
+    assertThat(roles).isNotEmpty().allSatisfy(sourced -> assertThat(sourced.value().getRoles())
       .as("role names in %s", sourced.source())
       .noneMatch(role -> RoleNameUtils.hasForbiddenCharacters(role.getName())));
   }
@@ -36,8 +35,7 @@ class ReferenceDataRoleNamesTest {
   void bundledRoleNames_positive_matchApiSchemaPattern() {
     var roles = resourceHelper.readSourcedObjectsFromDirectory(ROLES_DATA_DIR, PlainLoadableRoles.class).toList();
 
-    assertThat(roles).isNotEmpty();
-    assertThat(roles).allSatisfy(sourced -> assertThat(sourced.value().getRoles())
+    assertThat(roles).isNotEmpty().allSatisfy(sourced -> assertThat(sourced.value().getRoles())
       .as("role names in %s", sourced.source())
       .allMatch(role -> role.getName().matches(RoleNameUtils.ROLE_NAME_PATTERN)));
   }

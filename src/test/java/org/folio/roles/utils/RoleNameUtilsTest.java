@@ -2,6 +2,7 @@ package org.folio.roles.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.regex.Pattern;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,9 +51,10 @@ class RoleNameUtilsTest {
 
   @Test
   void roleNamePattern_positive_matchesForbiddenCharacterCheck() {
-    assertThat("Circulation Administrator".matches(RoleNameUtils.ROLE_NAME_PATTERN)).isTrue();
-    assertThat("Circulation/Administrator".matches(RoleNameUtils.ROLE_NAME_PATTERN)).isFalse();
-    assertThat("".matches(RoleNameUtils.ROLE_NAME_PATTERN)).isFalse();
-    assertThat("Circulation/Administrator\n".matches(RoleNameUtils.ROLE_NAME_PATTERN)).isFalse();
+    var pattern = Pattern.compile(RoleNameUtils.ROLE_NAME_PATTERN);
+    assertThat("Circulation Administrator").matches(pattern);
+    assertThat("Circulation/Administrator").doesNotMatch(pattern);
+    assertThat("").doesNotMatch(pattern);
+    assertThat("Circulation/Administrator\n").doesNotMatch(pattern);
   }
 }

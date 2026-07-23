@@ -19,12 +19,13 @@ class ResourceHelperTest {
   void readSourcedObjectsFromDirectory_positive() {
     var actual = resourceHelper.readSourcedObjectsFromDirectory(ROLES_DIR, PlainLoadableRoles.class).toList();
 
-    assertThat(actual).isNotEmpty();
-    assertThat(actual).allSatisfy(sourced -> {
-      assertThat(sourced.source()).startsWith(ROLES_DIR + "/").endsWith(".json");
-      assertThat(sourced.value().getRoles()).isNotEmpty();
-    });
-    assertThat(actual).extracting(SourcedResource::source)
+    assertThat(actual)
+      .isNotEmpty()
+      .allSatisfy(sourced -> {
+        assertThat(sourced.source()).startsWith(ROLES_DIR + "/").endsWith(".json");
+        assertThat(sourced.value().getRoles()).isNotEmpty();
+      })
+      .extracting(SourcedResource::source)
       .contains(ROLES_DIR + "/circ-admin-role.json");
   }
 
