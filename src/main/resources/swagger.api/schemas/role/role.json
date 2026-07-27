@@ -10,8 +10,11 @@
       "format": "uuid"
     },
     "name": {
-      "description": "A human-readable name/label for this role",
-      "type": "string"
+      "description": "A human-readable name/label for this role. Must not contain a '/' character",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "pattern": "^[^/]+$"
     },
     "description": {
       "description": "Free form description of the role",

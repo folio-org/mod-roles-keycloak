@@ -1,6 +1,6 @@
 package org.folio.roles.it;
 
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import static org.apache.commons.lang3.ObjectUtils.getIfNull;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.folio.common.utils.CollectionUtils.toStream;
 import static org.folio.roles.domain.dto.RoleType.DEFAULT;
@@ -25,6 +25,7 @@ import org.folio.roles.domain.dto.LoadableRoles;
 import org.folio.roles.domain.model.PlainLoadableRoles;
 import org.folio.roles.service.reference.PoliciesDataLoader;
 import org.folio.roles.utils.ResourceHelper;
+import org.folio.roles.utils.ResourceHelper.SourcedResource;
 import org.folio.tenant.domain.dto.Parameter;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.test.extensions.KeycloakRealms;
@@ -48,10 +49,10 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   private PoliciesDataLoader policiesDataLoader;
   @MockitoBean
   private ResourceHelper resourceHelper;
-  private PlainLoadableRoles circAdminRole;
-  private PlainLoadableRoles circObserverRole;
-  private PlainLoadableRoles circStaffRole;
-  private PlainLoadableRoles circStudentRole;
+  private SourcedResource<PlainLoadableRoles> circAdminRole;
+  private SourcedResource<PlainLoadableRoles> circObserverRole;
+  private SourcedResource<PlainLoadableRoles> circStaffRole;
+  private SourcedResource<PlainLoadableRoles> circStudentRole;
   @Autowired private Keycloak keycloak;
 
   @BeforeEach
@@ -72,7 +73,7 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
   void defaultRolesInitialized_positive() throws Exception {
-    when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
+    when(resourceHelper.readSourcedObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
       .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole));
 
     enableTenant(TENANT_ID, TENANT_ATTR);
@@ -89,7 +90,7 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
   void defaultRolesUpgraded_positive_rolesAddedAndDeleted() throws Exception {
-    when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
+    when(resourceHelper.readSourcedObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
       .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole))
       .thenReturn(Stream.of(circAdminRole, circObserverRole, circStaffRole)); // admin added, student removed
 
@@ -139,7 +140,7 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
   void defaultRolesUpgraded_positive_roleNameAndDescriptionChanged() throws Exception {
-    when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
+    when(resourceHelper.readSourcedObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
       .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole))
       .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole));
 
@@ -164,7 +165,7 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
   @Test
   @KeycloakRealms("classpath:json/keycloak/test-realm-ref-data.json")
   void defaultRolesUpgraded_positive_permissionsChanged() throws Exception {
-    when(resourceHelper.readObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
+    when(resourceHelper.readSourcedObjectsFromDirectory(anyString(), eq(PlainLoadableRoles.class)))
       .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole))
       .thenReturn(Stream.of(circObserverRole, circStaffRole, circStudentRole));
 
@@ -186,16 +187,18 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
     );
   }
 
-  private void changeNameAndDescription(PlainLoadableRoles roleToChange, List<LoadableRole> existingRoles) {
-    var role = roleToChange.getRoles().getFirst();
+  private void changeNameAndDescription(SourcedResource<PlainLoadableRoles> roleToChange,
+    List<LoadableRole> existingRoles) {
+    var role = roleToChange.value().getRoles().getFirst();
     var roleId = findRoleIdByName(existingRoles, role.getName());
     role.setId(roleId);
     role.setName(role.getName() + " updated");
     role.setDescription(role.getDescription() + " updated");
   }
 
-  private void changePermissions(PlainLoadableRoles roleToChange, List<LoadableRole> existingRoles) {
-    var role = roleToChange.getRoles().getFirst();
+  private void changePermissions(SourcedResource<PlainLoadableRoles> roleToChange,
+    List<LoadableRole> existingRoles) {
+    var role = roleToChange.value().getRoles().getFirst();
     var roleId = findRoleIdByName(existingRoles, role.getName());
     role.setId(roleId);
 
@@ -210,11 +213,11 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
       .findFirst().map(LoadableRole::getId).orElse(null);
   }
 
-  private static ThrowingConsumer<LoadableRole> roleMatches(PlainLoadableRoles expectedPlainRole) {
+  private static ThrowingConsumer<LoadableRole> roleMatches(SourcedResource<PlainLoadableRoles> expectedPlainRole) {
     return role -> {
-      var expected = expectedPlainRole.getRoles().getFirst();
+      var expected = expectedPlainRole.value().getRoles().getFirst();
       assertThat(role.getId()).isNotNull();
-      assertThat(role.getType()).isEqualTo(defaultIfNull(expected.getType(), DEFAULT));
+      assertThat(role.getType()).isEqualTo(getIfNull(expected.getType(), DEFAULT));
       assertThat(role.getName()).isEqualTo(expected.getName());
       assertThat(role.getDescription()).isEqualTo(expected.getDescription());
       assertThat(role.getMetadata()).isNotNull();
@@ -235,11 +238,12 @@ class ReferenceRoleLoadingIT extends BaseIntegrationTest {
     };
   }
 
-  private static PlainLoadableRoles readRole(String filename) {
-    return readValue("json/reference-data/roles/" + filename, PlainLoadableRoles.class);
+  private static SourcedResource<PlainLoadableRoles> readRole(String filename) {
+    return new SourcedResource<>("reference-data/roles/" + filename,
+      readValue("json/reference-data/roles/" + filename, PlainLoadableRoles.class));
   }
 
-  private static String name(PlainLoadableRoles loadableRole) {
-    return loadableRole.getRoles().getFirst().getName();
+  private static String name(SourcedResource<PlainLoadableRoles> loadableRole) {
+    return loadableRole.value().getRoles().getFirst().getName();
   }
 }
