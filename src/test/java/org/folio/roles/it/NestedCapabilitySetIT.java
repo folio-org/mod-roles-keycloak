@@ -11,12 +11,15 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.Capabilities;
 import org.folio.roles.domain.dto.Capability;
+import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.dto.CapabilitySets;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
@@ -128,6 +131,29 @@ class NestedCapabilitySetIT extends BaseIntegrationTest {
     assertThat(capabilityPermissionsB).containsExactlyInAnyOrderElementsOf(expectedPermissions);
   }
 
+  @Test
+  @DisplayName("Handle repeated event: nested dummy capability must be kept in the parent capability set")
+  void handleKafkaCapabilityEvent_positive_parentSetKeepsNestedDummyCapabilityOnReprocessing() throws Exception {
+    sendCapabilityEvent("json/kafka-events/nested-capability-set-event.json");
+    var parentCapabilitySetId = waitForCapabilitySetCreated(FIRST_MODULE_LEVEL1_SET);
+    var childCapabilitySetId = waitForCapabilitySetCreated(FIRST_MODULE_LEVEL2_SET);
+    var updatedDateBeforeReprocessing = getCapabilitySetUpdatedDate(parentCapabilitySetId);
+
+    sendCapabilityEvent("json/kafka-events/nested-capability-set-event.json");
+    waitForCapabilitySetUpdated(parentCapabilitySetId, updatedDateBeforeReprocessing);
+
+    var childCapabilities = getExpandedCapabilitiesForSet(childCapabilitySetId);
+    assertThat(mapItems(childCapabilities, Capability::getPermission)).contains(SECOND_MODULE_LEVEL1_SET);
+
+    var parentCapabilities = getExpandedCapabilitiesForSet(parentCapabilitySetId);
+    assertThat(mapItems(parentCapabilities, Capability::getPermission)).containsExactlyInAnyOrder(
+      FIRST_MODULE_LEVEL1_SET,
+      FIRST_MODULE_LEVEL2_SET,
+      FIRST_MODULE_REAL_PERMISSION,
+      SECOND_MODULE_LEVEL1_SET
+    );
+  }
+
   private void sendCapabilityEvent(String filePath) {
     var capabilityEvent = readValue(filePath, ResourceEvent.class);
     kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, capabilityEvent);
@@ -144,6 +170,17 @@ class NestedCapabilitySetIT extends BaseIntegrationTest {
         }
         return resp.getCapabilitySets().getFirst().getId().toString();
       }, is(notNullValue()));
+  }
+
+  private static void waitForCapabilitySetUpdated(String setId, Date updatedDateBefore) {
+    await().atMost(1, TimeUnit.MINUTES)
+      .pollInterval(1, TimeUnit.SECONDS)
+      .until(() -> !Objects.equals(getCapabilitySetUpdatedDate(setId), updatedDateBefore));
+  }
+
+  private static Date getCapabilitySetUpdatedDate(String setId) throws Exception {
+    var mvcResult = doGet("/capability-sets/{id}", setId).andReturn();
+    return parseResponse(mvcResult, CapabilitySet.class).getMetadata().getUpdatedDate();
   }
 
   private static List<Capability> getExpandedCapabilitiesForSet(String setId) throws Exception {
