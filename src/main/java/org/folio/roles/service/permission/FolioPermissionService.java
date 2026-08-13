@@ -37,29 +37,31 @@ public class FolioPermissionService {
   private final PermissionEntityMapper permissionEntityMapper;
 
   /**
-   * Expands permission names including all backend subPermission entities.
+   * Expands permission names including all reachable subPermission names.
+   *
+   * <p>A name without a stored permission record is kept in the result: the module owning it may not
+   * have been processed yet, and the declared hierarchy remains the source of truth. Dropping such a
+   * name would remove it from every capability set that holds it indirectly.</p>
    *
    * @param permissionNames - list of {@link String} permission names to expand
-   * @return a flat list with expanded {@link Permission} objects
+   * @return a flat list with expanded permission names
    */
   @Transactional(readOnly = true)
-  public List<Permission> expandPermissionNames(Collection<String> permissionNames) {
+  public List<String> expandPermissionNames(Collection<String> permissionNames) {
     if (isEmpty(permissionNames)) {
       return emptyList();
     }
 
-    var foundPermissions = new LinkedHashSet<String>();
-    var foundEntities = new LinkedHashSet<PermissionEntity>();
+    var expandedNames = new LinkedHashSet<String>();
     var currPermissionNames = getAsSetOfStrings(permissionNames);
 
     do {
+      expandedNames.addAll(currPermissionNames);
       var foundPermissionEntities = permissionRepository.findByPermissionNameIn(currPermissionNames);
-      foundPermissions.addAll(mapItems(foundPermissionEntities, PermissionEntity::getPermissionName));
-      foundEntities.addAll(foundPermissionEntities);
-      currPermissionNames = getSubPermissionNames(foundPermissionEntities, foundPermissions);
+      currPermissionNames = getSubPermissionNames(foundPermissionEntities, expandedNames);
     } while (isNotEmpty(currPermissionNames));
 
-    return permissionEntityMapper.toDto(foundEntities);
+    return List.copyOf(expandedNames);
   }
 
   /**
@@ -128,11 +130,11 @@ public class FolioPermissionService {
     permissionRepository.deleteAllByPermissionNameIn(deprecatedPermissionNames);
   }
 
-  private static Set<String> getSubPermissionNames(List<PermissionEntity> entities, Set<String> foundPermissions) {
+  private static Set<String> getSubPermissionNames(List<PermissionEntity> entities, Set<String> expandedNames) {
     return entities.stream()
       .map(PermissionEntity::getSubPermissions)
       .flatMap(CollectionUtils::toStream)
-      .filter(not(foundPermissions::contains))
+      .filter(not(expandedNames::contains))
       .collect(toSet());
   }
 
