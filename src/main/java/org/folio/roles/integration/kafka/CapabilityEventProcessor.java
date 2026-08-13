@@ -34,7 +34,6 @@ import org.folio.roles.integration.kafka.model.CapabilityEvent;
 import org.folio.roles.integration.kafka.model.CapabilityResultHolder;
 import org.folio.roles.integration.kafka.model.CapabilitySetDescriptor;
 import org.folio.roles.integration.kafka.model.FolioResource;
-import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.service.permission.FolioPermissionService;
 import org.folio.roles.service.permission.PermissionOverrider;
 import org.jspecify.annotations.Nullable;
@@ -98,10 +97,7 @@ public class CapabilityEventProcessor {
      * see https://folio-org.atlassian.net/browse/MODROLESKC-240
      */
     var subPermissions = union(capabSetPermission.getSubPermissions(), List.of(capabSetPermission.getPermissionName()));
-    var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions)
-      .stream()
-      .map(Permission::getPermissionName).toList();
-    subPermissionsExpanded = union(subPermissionsExpanded, capabSetPermission.getSubPermissions());
+    var subPermissionsExpanded = folioPermissionService.expandPermissionNames(subPermissions);
     var capabilities = subPermissionsExpanded.stream()
       .map(permissionName -> extractPermissionData(permissionName, permissionOverrider.getPermissionMappings()))
       .filter(CapabilityEventProcessor::hasRequiredFields)

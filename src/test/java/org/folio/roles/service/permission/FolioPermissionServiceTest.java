@@ -6,7 +6,6 @@ import static org.folio.roles.support.AuthResourceUtils.fooPermission;
 import static org.folio.roles.support.AuthResourceUtils.fooPermissionEntity;
 import static org.folio.roles.support.AuthResourceUtils.fooPermissionEntityV2;
 import static org.folio.roles.support.AuthResourceUtils.fooPermissionV2;
-import static org.folio.roles.support.AuthResourceUtils.permission;
 import static org.folio.roles.support.AuthResourceUtils.permissionEntity;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -126,69 +125,79 @@ class FolioPermissionServiceTest {
     @Test
     void positive_notingToExpand() {
       var name = "foo.item.get";
-      var id = UUID.randomUUID();
-      var foundEntity = permissionEntity(id, name);
-      var expectedPermission = permission(id, name);
+      var foundEntity = permissionEntity(UUID.randomUUID(), name);
       when(repository.findByPermissionNameIn(Set.of(name))).thenReturn(List.of(foundEntity));
-      when(mapper.toDto(Set.of(foundEntity))).thenReturn(List.of(expectedPermission));
 
       var result = service.expandPermissionNames(Set.of(name));
 
-      assertThat(result).containsExactly(expectedPermission);
+      assertThat(result).containsExactly(name);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"ui", "module", "plugin", "settings"})
     @DisplayName("positive_expandUiPermissionSet_parametrized")
     void positive_expandUiPermissionSet(String uiPrefix) {
-      var id = UUID.randomUUID();
-      var id1 = UUID.randomUUID();
-      var id2 = UUID.randomUUID();
-
       var subPermissions = List.of("foo.item.get", "foo.item.post");
       var sourcePermissionName = uiPrefix + "-foo.item.create";
-      var rootEntity = permissionEntity(id, sourcePermissionName, subPermissions.toArray(String[]::new));
-      var fooItemGetEntity = permissionEntity(id1, "foo.item.get");
-      var fooItemPostEntity = permissionEntity(id2, "foo.item.post");
-      var childEntities = List.of(fooItemGetEntity, fooItemPostEntity);
+      var rootEntity =
+        permissionEntity(UUID.randomUUID(), sourcePermissionName, subPermissions.toArray(String[]::new));
+      var fooItemGetEntity = permissionEntity(UUID.randomUUID(), "foo.item.get");
+      var fooItemPostEntity = permissionEntity(UUID.randomUUID(), "foo.item.post");
 
       when(repository.findByPermissionNameIn(Set.of(sourcePermissionName))).thenReturn(List.of(rootEntity));
-      when(repository.findByPermissionNameIn(new LinkedHashSet<>(subPermissions))).thenReturn(childEntities);
-
-      var allEntities = Set.of(rootEntity, fooItemGetEntity, fooItemPostEntity);
-      var convertedPermissions = List.of(permission(id, sourcePermissionName),
-        permission(id1, "foo.item.get"), permission(id2, "foo.item.post"));
-      when(mapper.toDto(allEntities)).thenReturn(convertedPermissions);
+      when(repository.findByPermissionNameIn(new LinkedHashSet<>(subPermissions)))
+        .thenReturn(List.of(fooItemGetEntity, fooItemPostEntity));
 
       var result = service.expandPermissionNames(List.of(sourcePermissionName));
 
-      assertThat(result).containsExactly(
-        permission(id, sourcePermissionName),
-        permission(id1, "foo.item.get"),
-        permission(id2, "foo.item.post"));
+      assertThat(result).containsExactlyInAnyOrder(sourcePermissionName, "foo.item.get", "foo.item.post");
     }
 
     @Test
     void positive_visitedPermissionSetMustBeIgnored() {
-      var id = UUID.randomUUID();
-      var id1 = UUID.randomUUID();
-
       var sourcePermissionName = "foo.item.all";
       var subPermissions = List.of(sourcePermissionName, "foo.item.get");
-      var rootEntity = permissionEntity(id, sourcePermissionName, subPermissions.toArray(String[]::new));
-      var fooItemGetEntity = permissionEntity(id1, "foo.item.get");
-      var childEntities = List.of(fooItemGetEntity);
+      var rootEntity =
+        permissionEntity(UUID.randomUUID(), sourcePermissionName, subPermissions.toArray(String[]::new));
+      var fooItemGetEntity = permissionEntity(UUID.randomUUID(), "foo.item.get");
 
       when(repository.findByPermissionNameIn(Set.of(sourcePermissionName))).thenReturn(List.of(rootEntity));
-      when(repository.findByPermissionNameIn(Set.of("foo.item.get"))).thenReturn(childEntities);
-
-      var allEntities = Set.of(rootEntity, fooItemGetEntity);
-      var expectedPermissions = List.of(permission(id, sourcePermissionName), permission(id1, "foo.item.get"));
-      when(mapper.toDto(allEntities)).thenReturn(expectedPermissions);
+      when(repository.findByPermissionNameIn(Set.of("foo.item.get"))).thenReturn(List.of(fooItemGetEntity));
 
       var result = service.expandPermissionNames(List.of(sourcePermissionName));
 
-      assertThat(result).isEqualTo(expectedPermissions);
+      assertThat(result).containsExactly(sourcePermissionName, "foo.item.get");
+    }
+
+    @Test
+    void positive_unresolvedSubPermissionNameIsKept() {
+      var sourcePermissionName = "foo.item.all";
+      var unresolvedName = "bar.item.get";
+      var rootEntity = permissionEntity(UUID.randomUUID(), sourcePermissionName, unresolvedName);
+
+      when(repository.findByPermissionNameIn(Set.of(sourcePermissionName))).thenReturn(List.of(rootEntity));
+      when(repository.findByPermissionNameIn(Set.of(unresolvedName))).thenReturn(emptyList());
+
+      var result = service.expandPermissionNames(List.of(sourcePermissionName));
+
+      assertThat(result).containsExactly(sourcePermissionName, unresolvedName);
+    }
+
+    @Test
+    void positive_unresolvedNestedSubPermissionNameIsKept() {
+      var sourcePermissionName = "foo.item.all";
+      var nestedSetName = "foo.item.execute";
+      var unresolvedName = "bar.item.get";
+      var rootEntity = permissionEntity(UUID.randomUUID(), sourcePermissionName, nestedSetName);
+      var nestedSetEntity = permissionEntity(UUID.randomUUID(), nestedSetName, unresolvedName);
+
+      when(repository.findByPermissionNameIn(Set.of(sourcePermissionName))).thenReturn(List.of(rootEntity));
+      when(repository.findByPermissionNameIn(Set.of(nestedSetName))).thenReturn(List.of(nestedSetEntity));
+      when(repository.findByPermissionNameIn(Set.of(unresolvedName))).thenReturn(emptyList());
+
+      var result = service.expandPermissionNames(List.of(sourcePermissionName));
+
+      assertThat(result).containsExactly(sourcePermissionName, nestedSetName, unresolvedName);
     }
 
     @Test
