@@ -3,7 +3,6 @@ package org.folio.roles.integration.kafka;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.dto.CapabilityAction.EDIT;
 import static org.folio.roles.domain.dto.CapabilityAction.VIEW;
 import static org.folio.roles.domain.dto.CapabilityType.DATA;
@@ -49,7 +48,6 @@ import org.folio.roles.integration.kafka.model.ModuleType;
 import org.folio.roles.integration.kafka.model.Permission;
 import org.folio.roles.service.permission.FolioPermissionService;
 import org.folio.roles.service.permission.PermissionOverrider;
-import org.folio.roles.support.AuthResourceUtils;
 import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
 import org.junit.jupiter.api.AfterEach;
@@ -82,8 +80,7 @@ class CapabilityEventProcessorTest {
   void process_parameterized(@SuppressWarnings("unused") String name,
     CapabilityEvent event, CapabilityResultHolder expectedResult) {
     if (CollectionUtils.isNotEmpty(expectedResult.capabilitySets())) {
-      when(folioPermissionService.expandPermissionNames(any())).then(inv ->
-        mapItems(inv.<List<String>>getArgument(0), AuthResourceUtils::permission));
+      when(folioPermissionService.expandPermissionNames(any())).then(inv -> inv.getArgument(0));
     }
 
     when(permissionOverrider.getPermissionMappings()).thenReturn(permissionMappingOverrides());
