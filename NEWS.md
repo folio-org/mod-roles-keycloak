@@ -7,6 +7,8 @@
 * Retry capability events on unique-constraint violations and isolate per-role capability assignment in separate transactions, so a concurrent assignment no longer loses sibling roles' capabilities (MODROLESKC-414)
 * Migrate duplicate capability/capability-set `modperms_circulation_requests_queue_reorder_collection.execute` to `.create` after permission mapping change (MODROLESKC-416)
 * Enforce Role Name Character Constraint on Internal Write Paths (MODROLESKC-418)
+* Add batch API to query effective capability-set names for users (MODROLESKC-427)
+  - `POST /users/capability-sets/query` accepts 1-500 `userIds` and optional exact-name `capabilitySetNames`; returns direct and role-inherited sets.
 
 ## Version `v4.0.0` (16.04.2025)
 * Added endpoint to create or update default roles via REST API (MODROLESKC-301)
