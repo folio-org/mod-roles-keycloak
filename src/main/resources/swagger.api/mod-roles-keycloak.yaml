@@ -976,6 +976,34 @@ paths:
         '500':
           $ref: '#/components/responses/internalServerErrorResponse'
 
+  /users/capability-sets/query:
+    post:
+      description: >-
+        Query effective capability-set names for up to 500 users. Effective capability sets include
+        sets assigned directly to a user and sets inherited through the user's assigned roles. More
+        than 500 user IDs is a schema violation and returns 400 Bad Request with a validation_error
+        on 'userIds'; split larger user lists across several requests.
+      operationId: queryUserCapabilitySets
+      tags:
+        - user-capability-set
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/userCapabilitySetsQueryRequest'
+      responses:
+        '200':
+          description: Effective capability-set names for requested users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userCapabilitySetsQueryResult'
+        '400':
+          $ref: '#/components/responses/badRequestResponse'
+        '500':
+          $ref: '#/components/responses/internalServerErrorResponse'
+
   /users/{id}/capability-sets:
     get:
       description: Retrieve capability sets assigned to role by role identifier
@@ -1159,6 +1187,12 @@ components:
       $ref: schemas/capability/user/userCapabilitiesRequest.json
     userCapabilitySetsRequest:
       $ref: schemas/capability/user/userCapabilitySetsRequest.json
+    userCapabilitySetsQueryRequest:
+      $ref: schemas/capability/user/userCapabilitySetsQueryRequest.json
+    userCapabilitySetNames:
+      $ref: schemas/capability/user/userCapabilitySetNames.json
+    userCapabilitySetsQueryResult:
+      $ref: schemas/capability/user/userCapabilitySetsQueryResult.json
     roleCapabilities:
       $ref: schemas/capability/role/roleCapabilities.json
     roleCapabilitySets:
@@ -1418,4 +1452,3 @@ components:
 #      $ref: examples/responses/errors/notImplemented.json
 #    internalServerErrorResponse:
 #      $ref: examples/responses/errors/internalServerError.json
-

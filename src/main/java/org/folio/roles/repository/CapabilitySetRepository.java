@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.folio.roles.domain.entity.CapabilitySetEntity;
+import org.folio.roles.repository.projection.UserCapabilitySetNameProjection;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.Modifying;
@@ -42,6 +43,58 @@ public interface CapabilitySetRepository extends BaseCqlJpaRepository<Capability
   Optional<CapabilitySetEntity> findByName(String capabilitySetName);
 
   List<CapabilitySetEntity> findByNameIn(Collection<String> capabilitySetNames);
+
+  /**
+   * Returns effective capability-set names for the given users: sets assigned directly and sets
+   * inherited through assigned roles.
+   *
+   * <p>{@code UNION} (not {@code UNION ALL}) is the enforcement point for "a capability-set name is
+   * returned once per user" - the callers rely on it and do not deduplicate again. The user ids are
+   * bound as a single array rather than an expanded {@code IN} list so the statement text stays
+   * constant regardless of batch size.</p>
+   *
+   * @param userIds user identifiers to look up
+   * @return user id / capability-set name pairs, unordered
+   */
+  @Query(nativeQuery = true,
+    value = """
+      SELECT ucs.user_id AS userId, cs.name AS capabilitySetName
+      FROM user_capability_set ucs
+      INNER JOIN capability_set cs ON cs.id = ucs.capability_set_id
+      WHERE ucs.user_id = ANY(:userIds)
+      UNION
+      SELECT ur.user_id AS userId, cs.name AS capabilitySetName
+      FROM user_role ur
+      INNER JOIN role_capability_set rcs ON rcs.role_id = ur.role_id
+      INNER JOIN capability_set cs ON cs.id = rcs.capability_set_id
+      WHERE ur.user_id = ANY(:userIds)""")
+  List<UserCapabilitySetNameProjection> findEffectiveCapabilitySetNames(@Param("userIds") UUID[] userIds);
+
+  /**
+   * Returns effective capability-set names for the given users, restricted to an exact-name whitelist.
+   *
+   * <p>The name filter is repeated inside both union branches on purpose: as a hard predicate it lets
+   * PostgreSQL drive the join from the unique {@code capability_set(name)} index. Folding both variants
+   * into one query with a {@code (:names IS NULL OR ...)} guard would take that plan away.</p>
+   *
+   * @param userIds user identifiers to look up
+   * @param names capability-set names to keep; an empty array matches nothing
+   * @return user id / capability-set name pairs, unordered
+   */
+  @Query(nativeQuery = true,
+    value = """
+      SELECT ucs.user_id AS userId, cs.name AS capabilitySetName
+      FROM user_capability_set ucs
+      INNER JOIN capability_set cs ON cs.id = ucs.capability_set_id
+      WHERE ucs.user_id = ANY(:userIds) AND cs.name = ANY(:names)
+      UNION
+      SELECT ur.user_id AS userId, cs.name AS capabilitySetName
+      FROM user_role ur
+      INNER JOIN role_capability_set rcs ON rcs.role_id = ur.role_id
+      INNER JOIN capability_set cs ON cs.id = rcs.capability_set_id
+      WHERE ur.user_id = ANY(:userIds) AND cs.name = ANY(:names)""")
+  List<UserCapabilitySetNameProjection> findEffectiveCapabilitySetNames(
+    @Param("userIds") UUID[] userIds, @Param("names") String[] names);
 
   @Query("select entity from CapabilitySetEntity entity where entity.permission in :names order by entity.name")
   List<CapabilitySetEntity> findByPermissionNames(@Param("names") Collection<String> names);

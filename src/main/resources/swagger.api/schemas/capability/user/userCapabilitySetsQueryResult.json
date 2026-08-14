@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "User Capability Sets Query Result Schema",
+  "description": "Effective capability-set names for users",
+  "type": "object",
+  "properties": {
+    "userCapabilitySets": {
+      "description": "Effective capability-set names grouped by user",
+      "type": "array",
+      "items": {
+        "$ref": "userCapabilitySetNames.json"
+      }
+    }
+  },
+  "required": [ "userCapabilitySets" ]
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "User Capability Sets Query Request Schema",
+  "description": "Request body to query effective capability-set names for users",
+  "type": "object",
+  "properties": {
+    "userIds": {
+      "description": "User identifiers",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid",
+        "description": "User identifier"
+      },
+      "minItems": 1,
+      "maxItems": 500
+    },
+    "capabilitySetNames": {
+      "description": "Optional exact-name whitelist for capability sets",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Capability-set name"
+      }
+    }
+  },
+  "required": [ "userIds" ]
+}

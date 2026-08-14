@@ -7,10 +7,13 @@ import lombok.RequiredArgsConstructor;
 import org.folio.roles.domain.dto.CapabilitySets;
 import org.folio.roles.domain.dto.CapabilitySetsUpdateRequest;
 import org.folio.roles.domain.dto.UserCapabilitySets;
+import org.folio.roles.domain.dto.UserCapabilitySetsQueryRequest;
+import org.folio.roles.domain.dto.UserCapabilitySetsQueryResult;
 import org.folio.roles.domain.dto.UserCapabilitySetsRequest;
 import org.folio.roles.integration.keyclock.KeycloakUserService;
 import org.folio.roles.rest.resource.UserCapabilitySetApi;
 import org.folio.roles.service.capability.CapabilitySetService;
+import org.folio.roles.service.capability.UserCapabilitySetQueryService;
 import org.folio.roles.service.capability.UserCapabilitySetService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +25,7 @@ public class UserCapabilitySetController implements UserCapabilitySetApi {
   private final KeycloakUserService keycloakUserService;
   private final CapabilitySetService capabilitySetService;
   private final UserCapabilitySetService userCapabilitySetService;
+  private final UserCapabilitySetQueryService userCapabilitySetQueryService;
 
   @Override
   public ResponseEntity<UserCapabilitySets> createUserCapabilitySets(UserCapabilitySetsRequest request) {
@@ -37,6 +41,11 @@ public class UserCapabilitySetController implements UserCapabilitySetApi {
     return ResponseEntity.ok(new UserCapabilitySets()
       .userCapabilitySets(pageResult.getRecords())
       .totalRecords(pageResult.getTotalRecords()));
+  }
+
+  @Override
+  public ResponseEntity<UserCapabilitySetsQueryResult> queryUserCapabilitySets(UserCapabilitySetsQueryRequest request) {
+    return ResponseEntity.ok(userCapabilitySetQueryService.query(request));
   }
 
   @Override
