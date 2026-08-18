@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "User Capability Set Names Schema",
+  "description": "Effective capability-set names for a user",
+  "type": "object",
+  "properties": {
+    "userId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "User identifier"
+    },
+    "capabilitySetNames": {
+      "type": "array",
+      "description": "Effective capability-set names",
+      "items": {
+        "type": "string",
+        "description": "Capability-set name"
+      }
+    }
+  },
+  "required": [ "userId", "capabilitySetNames" ]
+}

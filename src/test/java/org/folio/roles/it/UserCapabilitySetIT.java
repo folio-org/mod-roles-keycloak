@@ -23,6 +23,7 @@ import static org.folio.roles.support.EndpointUtils.fooItemDeleteEndpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemGetEndpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemPostEndpoint;
 import static org.folio.roles.support.EndpointUtils.fooItemPutEndpoint;
+import static org.folio.roles.support.TestConstants.MEMBER_TENANT_ID;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
 import static org.folio.roles.support.UserCapabilitySetUtils.userCapabilitySet;
@@ -65,6 +66,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
+import org.springframework.test.json.JsonCompareMode;
 import org.springframework.test.web.servlet.ResultActions;
 
 @IntegrationTest
@@ -73,7 +75,8 @@ import org.springframework.test.web.servlet.ResultActions;
 @Sql(executionPhase = AFTER_TEST_METHOD, scripts = {
   "classpath:/sql/truncate-policy-tables.sql",
   "classpath:/sql/truncate-capability-tables.sql",
-  "classpath:/sql/truncate-user-capability-tables.sql"
+  "classpath:/sql/truncate-user-capability-tables.sql",
+  "classpath:/sql/truncate-roles-user-related-tables.sql"
 })
 class UserCapabilitySetIT extends BaseIntegrationTest {
 
@@ -85,11 +88,13 @@ class UserCapabilitySetIT extends BaseIntegrationTest {
   @BeforeAll
   static void beforeAll() {
     enableTenant(TENANT_ID);
+    enableTenant(MEMBER_TENANT_ID);
   }
 
   @AfterAll
   static void afterAll() {
     removeTenant(TENANT_ID);
+    removeTenant(MEMBER_TENANT_ID);
   }
 
   @BeforeEach
@@ -146,6 +151,86 @@ class UserCapabilitySetIT extends BaseIntegrationTest {
       .andExpect(content().json(asJsonString(userCapabilitySets(
         userCapabilitySet(USER_ID, FOO_CREATE_CAPABILITY_SET)))
       ));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capability-sets/populate-capability-sets.sql",
+    "classpath:/sql/populate-user-capability-relations.sql"
+  })
+  void queryCapabilitySets_positive_directRoleInheritedAndUnknownUsers() throws Exception {
+    var directAndRoleUser = fromString("cf078e4a-5d9c-45f1-9c1d-f87003790d9f");
+    var roleOnlyUser = fromString("9d30bb2b-8c6d-47da-9726-0e067b65f30b");
+    var unknownUser = fromString("00000000-0000-0000-0000-000000000001");
+    var request = """
+      {"userIds":["%s","%s","%s"]}
+      """.formatted(directAndRoleUser, roleOnlyUser, unknownUser);
+    var expected = """
+      {
+        "userCapabilitySets":[
+          {"userId":"%s","capabilitySetNames":["foo_item.create","foo_item.edit","ui_foo_item.create"]},
+          {"userId":"%s","capabilitySetNames":["foo_item.create","foo_item.edit","foo_item.manage","ui_foo_item.edit"]},
+          {"userId":"%s","capabilitySetNames":[]}
+        ]
+      }
+      """.formatted(directAndRoleUser, roleOnlyUser, unknownUser);
+
+    mockMvc.perform(post("/users/capability-sets/query")
+        .header(TENANT, TENANT_ID)
+        .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
+        .contentType(APPLICATION_JSON)
+        .content(request))
+      .andExpect(status().isOk())
+      .andExpect(content().json(expected, JsonCompareMode.STRICT));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:/sql/capabilities/populate-capabilities.sql",
+    "classpath:/sql/capability-sets/populate-capability-sets.sql",
+    "classpath:/sql/populate-user-capability-relations.sql"
+  })
+  void queryCapabilitySets_positive_otherTenantAssignmentsAreNotReturned() throws Exception {
+    var userId = fromString("cf078e4a-5d9c-45f1-9c1d-f87003790d9f");
+    var request = """
+      {"userIds":["%s"]}
+      """.formatted(userId);
+    var expected = """
+      {"userCapabilitySets":[{"userId":"%s","capabilitySetNames":[]}]}
+      """.formatted(userId);
+
+    mockMvc.perform(post("/users/capability-sets/query")
+        .header(TENANT, MEMBER_TENANT_ID)
+        .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
+        .contentType(APPLICATION_JSON)
+        .content(request))
+      .andExpect(status().isOk())
+      .andExpect(content().json(expected, JsonCompareMode.STRICT));
+  }
+
+  @Test
+  void queryCapabilitySets_negative_nullUserIdReturnsBadRequest() throws Exception {
+    mockMvc.perform(post("/users/capability-sets/query")
+        .header(TENANT, TENANT_ID)
+        .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
+        .contentType(APPLICATION_JSON)
+        .content("{\"userIds\":[null]}"))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].code", is("validation_error")))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key", is("userIds")));
+  }
+
+  @Test
+  void queryCapabilitySets_negative_nullCapabilitySetNameReturnsBadRequest() throws Exception {
+    mockMvc.perform(post("/users/capability-sets/query")
+        .header(TENANT, TENANT_ID)
+        .header(XOkapiHeaders.USER_ID, USER_ID_HEADER)
+        .contentType(APPLICATION_JSON)
+        .content("{\"userIds\":[\"" + USER_ID + "\"],\"capabilitySetNames\":[null]}"))
+      .andExpect(status().isBadRequest())
+      .andExpect(jsonPath("$.errors[0].code", is("validation_error")))
+      .andExpect(jsonPath("$.errors[0].parameters[0].key", is("capabilitySetNames")));
   }
 
   @Test

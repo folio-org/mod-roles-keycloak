@@ -39,6 +39,7 @@ build/
 
 ### Agents ###
 .agents/
+.tasks/
 .codemie/
 .claude/
 .gemini/
