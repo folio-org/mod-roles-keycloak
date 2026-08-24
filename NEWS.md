@@ -1,3 +1,7 @@
+## Version `v3.0.16` (24.08.2026)
+* Add `dedup` query parameter and `direct` flag for `GET /roles/{id}/capabilities`, add performance indexes (MODROLESKC-408)
+* Use GitHub Workflows for Maven builds instead of Jenkins (MODROLESKC-366)
+
 ## Version `v3.0.15` (23.04.2026)
 * Filter Kafka messages by tenant entitlements (MODROLESKC-396)
 
