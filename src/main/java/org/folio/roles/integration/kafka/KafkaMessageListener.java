@@ -3,6 +3,8 @@ package org.folio.roles.integration.kafka;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.integration.kafka.consumer.confirmation.ResourceResultEventPublisher;
+import org.folio.integration.kafka.consumer.recover.ModuleIdExtractor;
 import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
 import org.folio.roles.service.capability.UserPermissionsCacheEvictor;
@@ -26,6 +28,8 @@ public class KafkaMessageListener {
   private final SystemUserScopedExecutionService systemUserScopedExecutionService;
   private final UserPermissionsCacheEvictor userPermissionsCacheEvictor;
   private final LiquibaseMigrationLockService liquibaseMigrationLockService;
+  private final ResourceResultEventPublisher eventPublisher;
+  private final ModuleIdExtractor moduleIdExtractor;
 
   /**
    * Handles capability event.
@@ -53,6 +57,8 @@ public class KafkaMessageListener {
           capabilityReplacements.ifPresent(capabilityReplacementsService::processReplacements);
           return null;
         });
+
+        eventPublisher.publishSuccessFor(resourceEvent, moduleIdExtractor.apply(resourceEvent));
       } finally {
         userPermissionsCacheEvictor.evictUserPermissionsForCurrentTenant();
       }

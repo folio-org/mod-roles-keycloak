@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import org.folio.integration.kafka.consumer.confirmation.ResourceResultEventPublisher;
+import org.folio.integration.kafka.consumer.recover.ModuleIdExtractor;
 import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.domain.model.CapabilityReplacements;
 import org.folio.roles.service.capability.CapabilityReplacementsService;
@@ -48,11 +50,13 @@ class KafkaMessageListenerTest {
   @Mock private ExecutionContextBuilder executionContextBuilder;
   @Mock private UserPermissionsCacheEvictor userPermissionsCacheEvictor;
   @Mock private LiquibaseMigrationLockService liquibaseMigrationLockService;
+  @Mock private ResourceResultEventPublisher eventPublisher;
+  @Mock private ModuleIdExtractor moduleIdExtractor;
 
   @AfterEach
   void tearDown() {
     verifyNoMoreInteractions(folioModuleMetadata, capabilityKafkaEventHandler, userPermissionsCacheEvictor,
-      liquibaseMigrationLockService);
+      liquibaseMigrationLockService, eventPublisher, moduleIdExtractor);
   }
 
   @BeforeEach
@@ -65,13 +69,15 @@ class KafkaMessageListenerTest {
   @Test
   void handleCapabilityEvent_positive_evictsUserPermissionsCache() {
     givenSystemUserScopedExecutionRunsCallable();
+    when(moduleIdExtractor.apply(any())).thenReturn(MODULE_ID);
     var resourceEvent = resourceEvent();
 
     kafkaMessageListener.handleCapabilityEvent(resourceEvent);
 
-    // Assert
     verify(capabilityKafkaEventHandler).handleEvent(resourceEvent);
     verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
+    verify(moduleIdExtractor).apply(resourceEvent);
+    verify(eventPublisher).publishSuccessFor(resourceEvent, MODULE_ID);
     verifyNoInteractions(capabilityReplacementsService);
   }
 
@@ -127,6 +133,7 @@ class KafkaMessageListenerTest {
   void handleCapabilityEvent_positive_whenMigrationIsNotRunning_processesEvent() {
     givenSystemUserScopedExecutionRunsCallable();
     when(liquibaseMigrationLockService.isMigrationRunning()).thenReturn(false);
+    when(moduleIdExtractor.apply(any())).thenReturn(MODULE_ID);
     var resourceEvent = resourceEvent();
 
     kafkaMessageListener.handleCapabilityEvent(resourceEvent);
@@ -134,6 +141,8 @@ class KafkaMessageListenerTest {
     verify(liquibaseMigrationLockService).isMigrationRunning();
     verify(capabilityKafkaEventHandler).handleEvent(resourceEvent);
     verify(userPermissionsCacheEvictor).evictUserPermissionsForCurrentTenant();
+    verify(moduleIdExtractor).apply(resourceEvent);
+    verify(eventPublisher).publishSuccessFor(resourceEvent, MODULE_ID);
     verifyNoInteractions(capabilityReplacementsService);
   }
 

@@ -10,6 +10,7 @@
 * Fix lost nested capabilities during event reprocessing (MODROLESKC-424)
 * Add batch API to query effective capability-set names for users (MODROLESKC-427)
   - `POST /users/capability-sets/query` accepts 1-500 `userIds` and optional exact-name `capabilitySetNames`; returns direct and role-inherited sets.
+* Async entitlement processing feedback loop for capability events (MODROLESKC-361)
 
 ## Version `v4.0.0` (16.04.2025)
 * Added endpoint to create or update default roles via REST API (MODROLESKC-301)

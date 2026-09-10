@@ -15,9 +15,12 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.integration.kafka.consumer.EnableKafkaConsumer;
 import org.folio.integration.kafka.consumer.filter.TenantIsDisabledException;
 import org.folio.integration.kafka.consumer.filter.TenantsAreDisabledException;
+import org.folio.integration.kafka.consumer.recover.LoggingRecoverer;
+import org.folio.integration.kafka.consumer.recover.ResourceResultEventPublishingRecoverer;
 import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.spring.exception.LiquibaseMigrationException;
 import org.hibernate.exception.SQLGrammarException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +31,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistrar;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.listener.ConsumerRecordRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import org.springframework.util.backoff.BackOff;
@@ -47,11 +51,21 @@ public class KafkaConfiguration implements KafkaListenerConfigurer {
   private final LocalValidatorFactoryBean validator;
 
   @Bean
+  public ConsumerRecordRecoverer capabilityRecoverer(ResourceResultEventPublishingRecoverer mainRecoverer,
+    LoggingRecoverer loggingRecoverer) {
+    return (consumerRecord, exception) -> {
+      loggingRecoverer.accept(consumerRecord, exception);
+      mainRecoverer.accept(consumerRecord, exception);
+    };
+  }
+
+  @Bean
   public ConcurrentKafkaListenerContainerFactory<String, ResourceEvent<?>> kafkaListenerContainerFactory(
-    ConsumerFactory<String, ResourceEvent<?>> consumerFactory) {
+    ConsumerFactory<String, ResourceEvent<?>> consumerFactory,
+    @Qualifier("capabilityRecoverer") ConsumerRecordRecoverer recoverer) {
     var factory = new ConcurrentKafkaListenerContainerFactory<String, ResourceEvent<?>>();
     factory.setConsumerFactory(consumerFactory);
-    factory.setCommonErrorHandler(capabilityEventErrorHandler());
+    factory.setCommonErrorHandler(capabilityEventErrorHandler(recoverer));
     return factory;
   }
 
@@ -70,9 +84,8 @@ public class KafkaConfiguration implements KafkaListenerConfigurer {
     registrar.setValidator(this.validator);
   }
 
-  private DefaultErrorHandler capabilityEventErrorHandler() {
-    var errorHandler = new DefaultErrorHandler((message, exception) ->
-      log.warn("Failed to process capability event [record: {}]", message, exception.getCause()));
+  private DefaultErrorHandler capabilityEventErrorHandler(ConsumerRecordRecoverer recoverer) {
+    var errorHandler = new DefaultErrorHandler(recoverer);
     errorHandler.setBackOffFunction((message, exception) -> getBackOff(exception));
     errorHandler.setLogLevel(Level.DEBUG);
 
