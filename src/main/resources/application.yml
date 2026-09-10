@@ -31,6 +31,15 @@ spring:
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+        retries: 5
+        spring.json.add.type.headers: false
 
 server:
   port: 8081
@@ -133,6 +142,11 @@ application:
       trust-store-path: ${MTE_CLIENT_TLS_TRUSTSTORE_PATH:}
       trust-store-password: ${MTE_CLIENT_TLS_TRUSTSTORE_PASSWORD:}
       trust-store-type: ${MTE_CLIENT_TLS_TRUSTSTORE_TYPE:}
+  event-confirmation:
+    enabled: ${EVENT_CONFIRMATION_ENABLED:false}
+    topic: ${EVENT_CONFIRMATION_TOPIC:${application.environment}.mgr-tenant-entitlements.resource-result}
+    success-listener:
+      transactional: false
 
 cache:
   permission-mappings:

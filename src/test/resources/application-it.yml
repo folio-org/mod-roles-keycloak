@@ -13,6 +13,8 @@ spring:
         format_sql: true
     show-sql: true
   kafka:
+    consumer:
+      group-id: it-test-mod-roles-keycloak-group
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

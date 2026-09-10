@@ -9,6 +9,7 @@ This module provides the following features:
 | [User Permissions Cache](features/user-permissions-cache.md) | Caches user permission lookups with tenant-scoped eviction on role/capability changes | Active |
 | [Capability Event Deduplication](features/capability-event-deduplication.md) | De-duplicates capabilities by generated name and merges single-endpoint PUT/PATCH pairs for the same path | Active |
 | [Entitled User Permission Filtering](features/entitled-user-permission-filtering.md) | Filters user permissions to only those from applications currently entitled for the tenant when `entitledOnly=true` | Active |
+| [Capability Event Confirmation](features/capability-event-confirmation.md) | Publishes SUCCESS/FAILURE result events to `mgr-tenant-entitlements` after processing each capability event, enabling async entitlement workflow tracking | Active |
 
 ## Quick Reference
 
@@ -20,7 +21,7 @@ This module provides the following features:
   - `authorization-client-cache`: Keycloak authorization client cache (3600s TTL, 100 max)
 
 - **Events**:
-  - **Published**: `UserPermissionsChangedEvent`, `TenantPermissionsChangedEvent`
+  - **Published**: `UserPermissionsChangedEvent`, `TenantPermissionsChangedEvent`, `ResourceResultEvent` (capability processing confirmations, opt-in)
   - **Consumed**: Kafka events from `mgr-tenant-entitlements.capability` topic (CREATE, UPDATE, DELETE for capabilities)
 
 - **External APIs**:
