@@ -40,7 +40,15 @@ public class LoadablePermissionEntity extends Auditable implements Identifiable<
   @Column(name = "capability_set_id")
   private UUID capabilitySetId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  /**
+   * Fetched eagerly on purpose: a lazy {@code @ManyToOne} makes Hibernate materialise a {@code HibernateProxy}
+   * whenever this entity is <em>loaded</em> (not merely navigated), which fails in the GraalVM native image because
+   * the bytecode provider is {@code none} (see the native build args in the pom — ByteBuddy cannot define classes at
+   * runtime). This is the only to-one association in the model; the role is read-only here (mapped to the same
+   * column as {@link #roleId}) and is shared by all permissions of a role, so the persistence context de-duplicates
+   * the fetch.
+   */
+  @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "role_loadable_id", updatable = false, insertable = false)
   @EqualsAndHashCode.Exclude
   @ToString.Exclude

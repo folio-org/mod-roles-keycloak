@@ -3,7 +3,6 @@ package org.folio.roles.service;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -11,7 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.folio.roles.integration.kafka.KafkaAdminService;
-import org.folio.roles.integration.keyclock.KeycloakAuthorizationClientProvider;
+import org.folio.roles.integration.keyclock.KeycloakAdminTokenProvider;
 import org.folio.roles.integration.keyclock.KeycloakClientService;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.service.migration.CapabilitiesMergeService;
@@ -26,8 +25,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.keycloak.admin.client.Keycloak;
-import org.keycloak.admin.client.token.TokenManager;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -52,29 +49,27 @@ class CustomTenantServiceTest {
   @Mock
   private LoadableRoleService loadableRoleService;
   @Mock
-  private Keycloak keycloak;
+  private KeycloakAdminTokenProvider keycloakAdminTokenProvider;
   @Mock
   private CapabilitiesMergeService capabilitiesMergeService;
   @Mock
   private KafkaAdminService kafkaAdminService;
   @Mock
   private KeycloakClientService keycloakClientService;
-  @Mock
-  private KeycloakAuthorizationClientProvider authorizationClientProvider;
   private CustomTenantService customTenantService;
 
   @BeforeEach
   void setUp() {
     var referenceDataLoader = List.of(rolesDataLoader, policiesDataLoader);
     customTenantService = new TestCustomTenantService(jdbcTemplate, context, folioSpringLiquibase,
-      kafkaAdminService, referenceDataLoader, loadableRoleService, keycloak, capabilitiesMergeService,
-      keycloakClientService, authorizationClientProvider);
+      kafkaAdminService, referenceDataLoader, loadableRoleService, keycloakAdminTokenProvider,
+      capabilitiesMergeService, keycloakClientService);
   }
 
   @AfterEach
   void tearDown() {
     verifyNoMoreInteractions(kafkaAdminService, loadableRoleService, capabilitiesMergeService,
-      keycloakClientService, authorizationClientProvider);
+      keycloakClientService, keycloakAdminTokenProvider);
   }
 
   @Test
@@ -115,7 +110,6 @@ class CustomTenantServiceTest {
 
     verify(loadableRoleService).cleanupDefaultRolesFromKeycloak();
     verify(keycloakClientService).evictLoginClient(TENANT_ID);
-    verify(authorizationClientProvider).evictAuthorizationClient(TENANT_ID);
   }
 
   @Test
@@ -139,19 +133,15 @@ class CustomTenantServiceTest {
 
     verify(loadableRoleService).cleanupDefaultRolesFromKeycloak();
     verify(keycloakClientService).evictLoginClient(TENANT_ID);
-    verify(authorizationClientProvider).evictAuthorizationClient(TENANT_ID);
   }
 
   @Test
   void afterTenantUpdate_positive_kafkaRestartedAndKeycloakTokenRefreshed() {
-    var tokenManager = mock(TokenManager.class);
-    when(keycloak.tokenManager()).thenReturn(tokenManager);
-
     var attributes = new TenantAttributes();
     customTenantService.afterTenantUpdate(attributes);
 
     verify(kafkaAdminService).restartEventListeners();
-    verify(tokenManager).grantToken();
+    verify(keycloakAdminTokenProvider).refreshToken();
     verify(capabilitiesMergeService).mergeDuplicateCapabilities();
   }
 
@@ -160,13 +150,13 @@ class CustomTenantServiceTest {
     TestCustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
       FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
       List<ReferenceDataLoader> referenceDataLoaders,
-      LoadableRoleService loadableRoleService, Keycloak keycloak, CapabilitiesMergeService capabilitiesMergeService,
-      KeycloakClientService keycloakClientService,
-      KeycloakAuthorizationClientProvider authorizationClientProvider) {
+      LoadableRoleService loadableRoleService, KeycloakAdminTokenProvider keycloakAdminTokenProvider,
+      CapabilitiesMergeService capabilitiesMergeService,
+      KeycloakClientService keycloakClientService) {
 
       super(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService,
         referenceDataLoaders, loadableRoleService,
-        keycloak, capabilitiesMergeService, keycloakClientService, authorizationClientProvider);
+        keycloakAdminTokenProvider, capabilitiesMergeService, keycloakClientService);
     }
 
     @Override

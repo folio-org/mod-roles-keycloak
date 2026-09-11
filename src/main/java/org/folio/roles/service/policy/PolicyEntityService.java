@@ -133,6 +133,8 @@ public class PolicyEntityService {
   }
 
   private void checkIfPolicyExists(UUID id) {
-    repository.getReferenceById(id);
+    if (!repository.existsById(id)) {
+      throw new EntityNotFoundException("Policy not found: id = " + id);
+    }
   }
 }

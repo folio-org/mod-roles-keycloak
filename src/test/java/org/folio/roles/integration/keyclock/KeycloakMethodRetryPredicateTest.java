@@ -2,7 +2,6 @@ package org.folio.roles.integration.keyclock;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import jakarta.ws.rs.WebApplicationException;
 import java.lang.reflect.Method;
 import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.test.types.UnitTest;
@@ -19,8 +18,7 @@ class KeycloakMethodRetryPredicateTest {
 
     @Test
     void positive_returnsTrueForKeycloakApiExceptionWithStatus500() throws NoSuchMethodException {
-      var webApplicationException = new WebApplicationException("Server error", 500);
-      var exception = new KeycloakApiException("Server error", webApplicationException);
+      var exception = new KeycloakApiException("Server error", null, 500);
       var predicate = new KeycloakMethodRetryPredicate();
       Method method = KeycloakRoleService.class.getMethod("findByName", String.class);
 
@@ -29,8 +27,7 @@ class KeycloakMethodRetryPredicateTest {
 
     @Test
     void positive_returnsFalseForKeycloakApiExceptionWithStatus400() throws NoSuchMethodException {
-      var webApplicationException = new WebApplicationException("Client error", 400);
-      var exception = new KeycloakApiException("Client error", webApplicationException);
+      var exception = new KeycloakApiException("Client error", null, 400);
       var predicate = new KeycloakMethodRetryPredicate();
       Method method = KeycloakRoleService.class.getMethod("findByName", String.class);
 

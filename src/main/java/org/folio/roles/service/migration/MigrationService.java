@@ -51,7 +51,8 @@ public class MigrationService {
    */
   @Transactional(readOnly = true)
   public PermissionMigrationJob getMigrationById(UUID id) {
-    var entity = migrationJobRepository.getReferenceById(id);
+    var entity = migrationJobRepository.findById(id)
+      .orElseThrow(() -> new EntityNotFoundException("Permission migration job is not found: id = " + id));
     return migrationJobMapper.toDto(entity);
   }
 

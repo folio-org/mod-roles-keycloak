@@ -12,11 +12,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.folio.roles.domain.model.UserPermissions;
+import org.folio.roles.integration.keyclock.client.KeycloakAdminClient;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
 import org.folio.roles.integration.permissions.Permissions;
 import org.folio.roles.integration.permissions.PermissionsClient;
 import org.folio.spring.FolioExecutionContext;
-import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class UserPermissionsLoader {
 
-  private final Keycloak keycloak;
+  private final KeycloakAdminClient keycloakAdminClient;
   private final PermissionsClient permissionsClient;
   private final FolioExecutionContext folioExecutionContext;
   private final KeycloakConfigurationProperties configurationProperties;
@@ -37,11 +37,10 @@ public class UserPermissionsLoader {
    */
   public List<UserPermissions> loadUserPermissions() {
     var tenantId = folioExecutionContext.getTenantId();
-    var realm = keycloak.realm(tenantId);
-    var usersClient = realm.users();
 
     var batchSize = configurationProperties.getMigration().getUsersBatchSize();
-    var keycloakUsers = loadPaginatedData(batchSize, usersClient::list);
+    var keycloakUsers = loadPaginatedData(batchSize,
+      (offset, limit) -> keycloakAdminClient.listUsers(tenantId, offset, limit));
     log.info("Keycloak users are loaded: size = {}", keycloakUsers.size());
     var userIds = getMigratedUserIds(keycloakUsers);
     log.info("Folio user ids found: size = {}", userIds.size());
