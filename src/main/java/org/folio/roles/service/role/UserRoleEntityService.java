@@ -110,7 +110,7 @@ public class UserRoleEntityService {
 
     return new UserRoles()
       .userRoles(mapper.toDto(pagedResult.getContent()))
-      .totalRecords(pagedResult.getTotalPages());
+      .totalRecords((int) pagedResult.getTotalElements());
   }
 
   private List<UUID> findExistingUserRoles(UUID userId, List<UUID> roleIds) {

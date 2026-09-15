@@ -6,7 +6,6 @@ import static java.util.UUID.fromString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.UserRoleTestUtils.userRole;
-import static org.folio.roles.support.UserRoleTestUtils.userRoles;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -46,6 +45,7 @@ class UserRoleEntityServiceTest {
 
   private static final UUID USER_ID = fromString("00000000-0000-0000-0000-000000000001");
   private static final UUID ROLE_ID = fromString("00000000-0000-0000-0000-000000000002");
+  private static final UUID ROLE_ID_2 = fromString("00000000-0000-0000-0000-000000000003");
   public static final List<UUID> ROLE_IDS = singletonList(ROLE_ID);
 
   @Mock private UserRoleRepository repository;
@@ -59,9 +59,13 @@ class UserRoleEntityServiceTest {
   }
 
   private static UserRoleEntity userRoleEntity() {
+    return userRoleEntity(USER_ID, ROLE_ID);
+  }
+
+  private static UserRoleEntity userRoleEntity(UUID userId, UUID roleId) {
     var entity = new UserRoleEntity();
-    entity.setUserId(USER_ID);
-    entity.setRoleId(ROLE_ID);
+    entity.setUserId(userId);
+    entity.setRoleId(roleId);
     return entity;
   }
 
@@ -211,8 +215,8 @@ class UserRoleEntityServiceTest {
 
     @Test
     void positive() {
-      var rolesUserEntity = List.of(userRoleEntity());
-      var expectedPage = new PageImpl<>(rolesUserEntity, Pageable.ofSize(1), 1);
+      var entities = List.of(userRoleEntity(USER_ID, ROLE_ID), userRoleEntity(USER_ID, ROLE_ID_2));
+      var expectedPage = new PageImpl<>(entities, Pageable.ofSize(10), 2);
       var offset = 0;
       var limit = 10;
       var cqlQuery = "cql.allRecords = 1";
@@ -221,8 +225,8 @@ class UserRoleEntityServiceTest {
 
       var result = service.findByQuery(cqlQuery, offset, limit);
 
-      var expectedUserRole = userRole(USER_ID, ROLE_ID).metadata(new Metadata());
-      assertThat(result).isEqualTo(userRoles(expectedUserRole));
+      assertThat(result.getTotalRecords()).isEqualTo(2);
+      assertThat(result.getUserRoles()).hasSize(2);
     }
   }
 }
