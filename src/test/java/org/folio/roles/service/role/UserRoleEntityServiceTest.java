@@ -58,10 +58,6 @@ class UserRoleEntityServiceTest {
     verifyNoMoreInteractions(repository);
   }
 
-  private static UserRoleEntity userRoleEntity() {
-    return userRoleEntity(USER_ID, ROLE_ID);
-  }
-
   private static UserRoleEntity userRoleEntity(UUID userId, UUID roleId) {
     var entity = new UserRoleEntity();
     entity.setUserId(userId);
@@ -76,18 +72,18 @@ class UserRoleEntityServiceTest {
     @Test
     void positive() {
       when(repository.findByUserIdAndRoleIdIn(USER_ID, ROLE_IDS)).thenReturn(emptyList());
-      when(repository.saveAll(anyList())).thenReturn(List.of(userRoleEntity()));
+      when(repository.saveAll(anyList())).thenReturn(List.of(userRoleEntity(USER_ID, ROLE_ID)));
 
       var result = service.create(USER_ID, ROLE_IDS);
 
       assertThat(result).containsExactly(userRole(USER_ID, ROLE_ID).metadata(new Metadata()));
       verify(mapper).toEntity(List.of(userRole(USER_ID, ROLE_ID)));
-      verify(mapper).toDto(List.of(userRoleEntity()));
+      verify(mapper).toDto(List.of(userRoleEntity(USER_ID, ROLE_ID)));
     }
 
     @Test
     void negative_userRoleAlreadyExists() {
-      when(repository.findByUserIdAndRoleIdIn(USER_ID, ROLE_IDS)).thenReturn(List.of(userRoleEntity()));
+      when(repository.findByUserIdAndRoleIdIn(USER_ID, ROLE_IDS)).thenReturn(List.of(userRoleEntity(USER_ID, ROLE_ID)));
       assertThatThrownBy(() -> service.create(USER_ID, ROLE_IDS))
         .isInstanceOf(EntityExistsException.class)
         .hasMessageMatching("Relations between user and roles already exists \\(userId: .*, roles: \\[.*]\\)");
@@ -107,7 +103,7 @@ class UserRoleEntityServiceTest {
 
     @Test
     void positive() {
-      when(repository.findByUserId(USER_ID)).thenReturn(List.of(userRoleEntity()));
+      when(repository.findByUserId(USER_ID)).thenReturn(List.of(userRoleEntity(USER_ID, ROLE_ID)));
       service.deleteByUserId(USER_ID);
       verify(repository).deleteByUserId(USER_ID);
     }
@@ -150,7 +146,7 @@ class UserRoleEntityServiceTest {
 
     @Test
     void positive() {
-      var rolesUserEntity = userRoleEntity();
+      var rolesUserEntity = userRoleEntity(USER_ID, ROLE_ID);
       when(repository.findByUserId(USER_ID)).thenReturn(List.of(rolesUserEntity));
 
       var result = service.findByUserId(USER_ID);
@@ -173,7 +169,7 @@ class UserRoleEntityServiceTest {
 
     @Test
     void positive() {
-      var rolesUserEntity = userRoleEntity();
+      var rolesUserEntity = userRoleEntity(USER_ID, ROLE_ID);
       when(repository.findByRoleId(ROLE_ID)).thenReturn(List.of(rolesUserEntity));
 
       var result = service.findByRoleId(ROLE_ID);
