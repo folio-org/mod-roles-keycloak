@@ -6,7 +6,6 @@ import static java.util.UUID.fromString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.roles.support.UserRoleTestUtils.userRole;
-import static org.folio.roles.support.UserRoleTestUtils.userRoles;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -46,6 +45,7 @@ class UserRoleEntityServiceTest {
 
   private static final UUID USER_ID = fromString("00000000-0000-0000-0000-000000000001");
   private static final UUID ROLE_ID = fromString("00000000-0000-0000-0000-000000000002");
+  private static final UUID ROLE_ID_2 = fromString("00000000-0000-0000-0000-000000000003");
   public static final List<UUID> ROLE_IDS = singletonList(ROLE_ID);
 
   @Mock private UserRoleRepository repository;
@@ -58,10 +58,10 @@ class UserRoleEntityServiceTest {
     verifyNoMoreInteractions(repository);
   }
 
-  private static UserRoleEntity userRoleEntity() {
+  private static UserRoleEntity userRoleEntity(UUID userId, UUID roleId) {
     var entity = new UserRoleEntity();
-    entity.setUserId(USER_ID);
-    entity.setRoleId(ROLE_ID);
+    entity.setUserId(userId);
+    entity.setRoleId(roleId);
     return entity;
   }
 
@@ -72,18 +72,18 @@ class UserRoleEntityServiceTest {
     @Test
     void positive() {
       when(repository.findByUserIdAndRoleIdIn(USER_ID, ROLE_IDS)).thenReturn(emptyList());
-      when(repository.saveAll(anyList())).thenReturn(List.of(userRoleEntity()));
+      when(repository.saveAll(anyList())).thenReturn(List.of(userRoleEntity(USER_ID, ROLE_ID)));
 
       var result = service.create(USER_ID, ROLE_IDS);
 
       assertThat(result).containsExactly(userRole(USER_ID, ROLE_ID).metadata(new Metadata()));
       verify(mapper).toEntity(List.of(userRole(USER_ID, ROLE_ID)));
-      verify(mapper).toDto(List.of(userRoleEntity()));
+      verify(mapper).toDto(List.of(userRoleEntity(USER_ID, ROLE_ID)));
     }
 
     @Test
     void negative_userRoleAlreadyExists() {
-      when(repository.findByUserIdAndRoleIdIn(USER_ID, ROLE_IDS)).thenReturn(List.of(userRoleEntity()));
+      when(repository.findByUserIdAndRoleIdIn(USER_ID, ROLE_IDS)).thenReturn(List.of(userRoleEntity(USER_ID, ROLE_ID)));
       assertThatThrownBy(() -> service.create(USER_ID, ROLE_IDS))
         .isInstanceOf(EntityExistsException.class)
         .hasMessageMatching("Relations between user and roles already exists \\(userId: .*, roles: \\[.*]\\)");
@@ -103,7 +103,7 @@ class UserRoleEntityServiceTest {
 
     @Test
     void positive() {
-      when(repository.findByUserId(USER_ID)).thenReturn(List.of(userRoleEntity()));
+      when(repository.findByUserId(USER_ID)).thenReturn(List.of(userRoleEntity(USER_ID, ROLE_ID)));
       service.deleteByUserId(USER_ID);
       verify(repository).deleteByUserId(USER_ID);
     }
@@ -146,7 +146,7 @@ class UserRoleEntityServiceTest {
 
     @Test
     void positive() {
-      var rolesUserEntity = userRoleEntity();
+      var rolesUserEntity = userRoleEntity(USER_ID, ROLE_ID);
       when(repository.findByUserId(USER_ID)).thenReturn(List.of(rolesUserEntity));
 
       var result = service.findByUserId(USER_ID);
@@ -169,7 +169,7 @@ class UserRoleEntityServiceTest {
 
     @Test
     void positive() {
-      var rolesUserEntity = userRoleEntity();
+      var rolesUserEntity = userRoleEntity(USER_ID, ROLE_ID);
       when(repository.findByRoleId(ROLE_ID)).thenReturn(List.of(rolesUserEntity));
 
       var result = service.findByRoleId(ROLE_ID);
@@ -211,8 +211,8 @@ class UserRoleEntityServiceTest {
 
     @Test
     void positive() {
-      var rolesUserEntity = List.of(userRoleEntity());
-      var expectedPage = new PageImpl<>(rolesUserEntity, Pageable.ofSize(1), 1);
+      var entities = List.of(userRoleEntity(USER_ID, ROLE_ID), userRoleEntity(USER_ID, ROLE_ID_2));
+      var expectedPage = new PageImpl<>(entities, Pageable.ofSize(10), 2);
       var offset = 0;
       var limit = 10;
       var cqlQuery = "cql.allRecords = 1";
@@ -221,8 +221,8 @@ class UserRoleEntityServiceTest {
 
       var result = service.findByQuery(cqlQuery, offset, limit);
 
-      var expectedUserRole = userRole(USER_ID, ROLE_ID).metadata(new Metadata());
-      assertThat(result).isEqualTo(userRoles(expectedUserRole));
+      assertThat(result.getTotalRecords()).isEqualTo(2);
+      assertThat(result.getUserRoles()).hasSize(2);
     }
   }
 }

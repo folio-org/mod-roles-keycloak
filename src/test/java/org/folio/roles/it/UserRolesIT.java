@@ -171,6 +171,19 @@ class UserRolesIT extends BaseIntegrationTest {
   }
 
   @Test
+  @Sql("classpath:/sql/populate-two-user-roles.sql")
+  void findUserRoles_positive_totalRecordsMatchesActualCount() throws Exception {
+    mockMvc.perform(get("/roles/users")
+        .param("query", "userId==" + USER_UUID)
+        .header(TENANT, TENANT_ID)
+        .header(USER_ID, USER_ID_HEADER))
+      .andExpect(status().isOk())
+      .andExpect(content().contentType(APPLICATION_JSON))
+      .andExpect(jsonPath("$.totalRecords", is(2)))
+      .andExpect(jsonPath("$.userRoles.length()", is(2)));
+  }
+
+  @Test
   void updateRolesUser_negative_notFound() throws Exception {
     var unknownUuid = UUID.randomUUID();
     mockMvc.perform(put("/roles/users/{userId}", USER_UUID)

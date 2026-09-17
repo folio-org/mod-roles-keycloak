@@ -10,7 +10,6 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
@@ -110,12 +109,12 @@ public class UserRoleEntityService {
 
     return new UserRoles()
       .userRoles(mapper.toDto(pagedResult.getContent()))
-      .totalRecords(pagedResult.getTotalPages());
+      .totalRecords((int) pagedResult.getTotalElements());
   }
 
   private List<UUID> findExistingUserRoles(UUID userId, List<UUID> roleIds) {
     return emptyIfNull(repository.findByUserIdAndRoleIdIn(userId, roleIds)).stream()
       .map(UserRoleEntity::getRoleId)
-      .collect(Collectors.toList());
+      .toList();
   }
 }
