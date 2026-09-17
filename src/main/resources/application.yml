@@ -47,6 +47,9 @@ coffee-boots:
 
 server:
   port: 8081
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 okapi:
   url: ${OKAPI_URL:http://localhost:9130}
@@ -65,7 +68,7 @@ management:
   endpoints.web:
     base-path: /admin
     exposure:
-      include: info,health,liquibase,threaddump,heapdump,httptrace,loggers
+      include: info,health,liquibase,threaddump,heapdump,httptrace,loggers,metrics,prometheus
 
 application:
   environment: ${ENV:folio}
