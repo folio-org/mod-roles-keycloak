@@ -46,6 +46,9 @@ coffee-boots:
 
 server:
   port: 8081
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 folio:
   environment: ${ENV:folio}
@@ -61,7 +64,7 @@ management:
   endpoints.web:
     base-path: /admin
     exposure:
-      include: info,health,liquibase,threaddump,heapdump,httptrace,loggers
+      include: info,health,liquibase,threaddump,heapdump,httptrace,loggers,metrics,prometheus
 
 application:
   environment: ${ENV:folio}
