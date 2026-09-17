@@ -216,7 +216,7 @@ class CapabilitySetServiceTest {
       var updatedEntity = capabilitySetEntity(updatedCapabilityIds);
       var updatedCapabilitySet = capabilitySet(updatedCapabilityIds);
 
-      when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenReturn(foundEntity);
+      when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(foundEntity));
       when(mapper.convert(updatedCapabilitySet)).thenReturn(updatedEntity);
       when(capabilitySetRepository.saveAndFlush(updatedEntity)).thenReturn(updatedEntity);
 
@@ -232,7 +232,7 @@ class CapabilitySetServiceTest {
       var updatedEntity = capabilitySetEntity(updatedCapabilityIds);
       var updatedCapabilitySet = capabilitySet(updatedCapabilityIds).name(null);
 
-      when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenReturn(foundEntity);
+      when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(foundEntity));
       when(mapper.convert(updatedCapabilitySet)).thenReturn(updatedEntity);
       when(capabilitySetRepository.saveAndFlush(updatedEntity)).thenReturn(updatedEntity);
 
@@ -248,7 +248,7 @@ class CapabilitySetServiceTest {
       var updatedEntity = capabilitySetEntity(RESOURCE_NAME, CapabilityAction.EDIT);
       var updatedCapabilitySet = capabilitySet(RESOURCE_NAME, CapabilityAction.EDIT);
 
-      when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenReturn(foundEntity);
+      when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(foundEntity));
       when(capabilitySetRepository.existsByName("test_resource.edit")).thenReturn(false);
       when(mapper.convert(updatedCapabilitySet)).thenReturn(updatedEntity);
       when(capabilitySetRepository.saveAndFlush(updatedEntity)).thenReturn(updatedEntity);
@@ -265,7 +265,7 @@ class CapabilitySetServiceTest {
       var capabilitySetToUpdate = capabilitySet(updatedCapabilityIds);
 
       doThrow(EntityNotFoundException.class).when(capabilityService).checkIds(updatedCapabilityIds);
-      when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenReturn(foundEntity);
+      when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(foundEntity));
 
       assertThatThrownBy(() -> capabilitySetService.update(CAPABILITY_SET_ID, capabilitySetToUpdate))
         .isInstanceOf(EntityNotFoundException.class);
@@ -276,7 +276,7 @@ class CapabilitySetServiceTest {
       var foundEntity = capabilitySetEntity(RESOURCE_NAME, org.folio.roles.domain.dto.CapabilityAction.CREATE);
       var capabilitySetToUpdate = capabilitySet(RESOURCE_NAME, EDIT);
 
-      when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenReturn(foundEntity);
+      when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(foundEntity));
       when(capabilitySetRepository.existsByName("test_resource.edit")).thenReturn(true);
 
       assertThatThrownBy(() -> capabilitySetService.update(CAPABILITY_SET_ID, capabilitySetToUpdate))
@@ -388,7 +388,7 @@ class CapabilitySetServiceTest {
       var foundEntity = capabilitySetEntity();
       var expectedCapability = capabilitySet();
 
-      when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenReturn(foundEntity);
+      when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.of(foundEntity));
       when(mapper.convert(foundEntity)).thenReturn(expectedCapability);
 
       var result = capabilitySetService.get(CAPABILITY_SET_ID);
@@ -398,7 +398,7 @@ class CapabilitySetServiceTest {
 
     @Test
     void negative_capabilitySetIsNotFoundById() {
-      when(capabilitySetRepository.getReferenceById(CAPABILITY_SET_ID)).thenThrow(EntityNotFoundException.class);
+      when(capabilitySetRepository.findById(CAPABILITY_SET_ID)).thenReturn(Optional.empty());
 
       assertThatThrownBy(() -> capabilitySetService.get(CAPABILITY_SET_ID))
         .isInstanceOf(EntityNotFoundException.class);

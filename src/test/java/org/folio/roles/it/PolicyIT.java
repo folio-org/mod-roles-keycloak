@@ -234,7 +234,7 @@ class PolicyIT extends BaseIntegrationTest {
         .contentType(APPLICATION_JSON))
       .andExpect(status().isNotFound())
       .andExpect(content().contentType(APPLICATION_JSON))
-      .andExpect(jsonPath("$.errors[0].type", is("ObjectRetrievalFailureException")))
+      .andExpect(jsonPath("$.errors[0].type", is("EntityNotFoundException")))
       .andExpect(jsonPath("$.errors[0].code", is("not_found_error")));
   }
 
