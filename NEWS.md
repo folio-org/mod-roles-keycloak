@@ -6,6 +6,7 @@
 * Add `dedup` query parameter and `direct` flag for `GET /roles/{id}/capabilities`, add performance indexes (MODROLESKC-408)
 * Migrate duplicate capability/capability-set `modperms_circulation_requests_queue_reorder_collection.execute` to `.create` after permission mapping change (MODROLESKC-416)
 * Enforce Role Name Character Constraint on Internal Write Paths (MODROLESKC-418)
+* Enforce '/' character constraint on role names via API validation (MODROLESKC-413)
 * Fix lost nested capabilities during event reprocessing (MODROLESKC-424)
 * Add batch API to query effective capability-set names for users (MODROLESKC-427)
   - `POST /users/capability-sets/query` accepts 1-500 `userIds` and optional exact-name `capabilitySetNames`; returns direct and role-inherited sets.
