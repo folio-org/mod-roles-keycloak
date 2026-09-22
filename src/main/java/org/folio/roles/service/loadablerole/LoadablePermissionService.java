@@ -1,6 +1,7 @@
 package org.folio.roles.service.loadablerole;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.Collection;
 import java.util.List;
@@ -10,6 +11,7 @@ import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadablePermissionRepository;
+import org.folio.roles.service.role.RoleEntityService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LoadablePermissionService {
 
+  private final RoleEntityService roleEntityService;
   private final LoadablePermissionRepository repository;
   private final LoadableRoleMapper mapper;
   private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
@@ -27,6 +30,11 @@ public class LoadablePermissionService {
   public List<LoadablePermission> findAllByPermissions(Collection<String> permissionNames) {
     var entities = repository.findAllByPermissionNameIn(permissionNames);
     return mapper.toPermission(entities);
+  }
+
+  @Transactional(readOnly = true)
+  public List<LoadablePermission> findAllByIds(Collection<LoadablePermissionKey> permissionKeys) {
+    return mapper.toPermission(repository.findAllById(permissionKeys));
   }
 
   public LoadablePermission save(LoadablePermission perm) {
@@ -48,6 +56,8 @@ public class LoadablePermissionService {
       return;
     }
 
+    toStream(permissionKeys).map(LoadablePermissionKey::getRoleId).distinct().sorted()
+      .forEach(roleEntityService::lockById);
     var permissions = repository.findAllById(permissionKeys);
     assignmentHelper.assignCapabilitiesAndSetsForPermissions(permissions);
   }

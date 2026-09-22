@@ -25,6 +25,7 @@ import org.folio.roles.exception.ServiceException;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
+import org.folio.roles.service.role.RoleEntityService;
 import org.folio.roles.support.TestUtils;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.test.types.UnitTest;
@@ -47,6 +48,7 @@ class LoadableRoleServiceTest {
 
   @InjectMocks private LoadableRoleService service;
   @Mock private LoadableRoleRepository repository;
+  @Mock private RoleEntityService roleEntityService;
   @Mock private LoadableRoleMapper mapper;
   @Mock private KeycloakRoleService keycloakService;
   @Mock private LoadableRoleCapabilityAssignmentHelper capabilityAssignmentHelper;

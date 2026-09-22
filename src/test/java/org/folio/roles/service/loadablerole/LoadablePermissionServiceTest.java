@@ -16,6 +16,7 @@ import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadablePermissionRepository;
+import org.folio.roles.service.role.RoleEntityService;
 import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
 import org.instancio.junit.InstancioExtension;
@@ -32,6 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class LoadablePermissionServiceTest {
 
   @InjectMocks private LoadablePermissionService service;
+  @Mock private RoleEntityService roleEntityService;
   @Mock private LoadablePermissionRepository repository;
   @Mock private LoadableRoleMapper mapper;
   @Mock private LoadableRoleCapabilityAssignmentHelper assignmentHelper;
@@ -53,6 +55,17 @@ class LoadablePermissionServiceTest {
     var actual = service.findAllByPermissions(permNames);
 
     assertThat(actual).isEqualTo(perms);
+  }
+
+  @Test
+  void findAllByIds_positive() {
+    var permissions = loadablePermissions(2);
+    var entities = loadablePermissionEntities(permissions);
+    var keys = mapItems(entities, entity -> entity.getId());
+    when(repository.findAllById(keys)).thenReturn(entities);
+    when(mapper.toPermission(entities)).thenReturn(permissions);
+
+    assertThat(service.findAllByIds(keys)).isEqualTo(permissions);
   }
 
   @Test
@@ -95,6 +108,9 @@ class LoadablePermissionServiceTest {
       Set.of(permissionEntities.getFirst()));
 
     service.assignCapabilitiesAndSets(permissionKeys);
+
+    permissionKeys.stream().map(LoadablePermissionKey::getRoleId).distinct()
+      .forEach(roleId -> verify(roleEntityService).lockById(roleId));
 
     verify(assignmentHelper).assignCapabilitiesAndSetsForPermissions(permissionEntities);
   }

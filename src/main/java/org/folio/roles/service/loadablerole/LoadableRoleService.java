@@ -37,6 +37,7 @@ import org.folio.roles.integration.keyclock.KeycloakRoleService;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadableRoleRepository;
 import org.folio.roles.service.ServiceUtils.UpdatePair;
+import org.folio.roles.service.role.RoleEntityService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class LoadableRoleService {
 
   private final LoadableRoleRepository repository;
+  private final RoleEntityService roleEntityService;
   private final LoadableRoleMapper mapper;
   private final KeycloakRoleService keycloakService;
   private final LoadableRoleCapabilityAssignmentHelper assignmentHelper;
@@ -201,6 +203,7 @@ public class LoadableRoleService {
 
   private void saveDefaultRoles(List<LoadableRole> roles) {
     var existing = findAllDefaultRolesLoadedFromFiles();
+    existing.stream().map(LoadableRoleEntity::getId).sorted().forEach(roleEntityService::lockById);
     var incoming = mapper.toRoleEntity(roles);
     incoming.forEach(role -> role.setLoadedFromFile(true));
     log.debug("Saving default roles:\n\texisting = {},\n\tincoming = {}", () -> toIdNames(existing),

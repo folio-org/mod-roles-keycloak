@@ -13,6 +13,7 @@ import static org.folio.roles.support.LoadablePermissionUtils.loadablePermission
 import static org.folio.roles.support.TestUtils.copy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -20,11 +21,13 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import org.folio.roles.domain.dto.LoadablePermission;
+import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.folio.roles.domain.model.event.CapabilityEvent;
 import org.folio.roles.domain.model.event.CapabilitySetEvent;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
+import org.folio.roles.service.role.RoleEntityService;
 import org.folio.roles.support.TestUtils;
 import org.folio.roles.support.TestUtils.TestModRolesKeycloakModuleMetadata;
 import org.folio.spring.DefaultFolioExecutionContext;
@@ -48,6 +51,7 @@ import org.springframework.transaction.support.SimpleTransactionStatus;
 class LoadableRoleCapabilityAssignmentProcessorTest {
 
   @InjectMocks private LoadableRoleCapabilityAssignmentProcessor processor;
+  @Mock private RoleEntityService roleEntityService;
   @Mock private LoadablePermissionService service;
   @Mock private CapabilityService capabilityService;
   @Mock private RoleCapabilityService roleCapabilityService;
@@ -70,7 +74,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     var permission = "permission1";
     when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
     doNothing().when(transactionManager).commit(any());
-    var capabilityId = randomUUID();
+    final var capabilityId = randomUUID();
 
     var perms = loadablePermissions(5);
     for (LoadablePermission perm : perms) {
@@ -79,6 +83,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     }
 
     when(service.findAllByPermissions(List.of(permission))).thenReturn(perms);
+    mockCurrentPermissions(perms);
 
     perms.forEach(perm -> {
       when(roleCapabilityService.create(perm.getRoleId(), List.of(capabilityId), true)).thenReturn(null);
@@ -97,6 +102,46 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
   }
 
   @Test
+  void handleCapabilitiesCreatedEvent_concurrentCapabilitySetAssignment_preservesCurrentPermission() {
+    var permission = loadablePermission(randomUUID(), "permission1").capabilityId(null).capabilitySetId(null);
+    var currentPermission = copy(permission).capabilitySetId(randomUUID());
+    final var capability = capability(randomUUID(), permission.getPermissionName());
+    var keys = List.of(LoadablePermissionKey.of(permission.getRoleId(), permission.getPermissionName()));
+    when(service.findAllByPermissions(List.of(permission.getPermissionName()))).thenReturn(List.of(permission));
+    when(service.findAllByIds(keys)).thenReturn(List.of(currentPermission));
+    when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+    var saved = List.of(copy(currentPermission).capabilityId(capability.getId()));
+    when(roleCapabilityService.create(permission.getRoleId(), List.of(capability.getId()), true)).thenReturn(null);
+    when(service.saveAll(saved)).thenReturn(saved);
+
+    var event = (CapabilityEvent) CapabilityEvent.created(capability).withContext(context);
+    processor.handleCapabilitiesCreatedEvent(event);
+
+    var order = inOrder(roleEntityService, service);
+    order.verify(roleEntityService).lockById(permission.getRoleId());
+    order.verify(service).findAllByIds(keys);
+    order.verify(service).saveAll(saved);
+    verify(transactionManager).commit(any());
+  }
+
+  @Test
+  void handleCapabilitiesCreatedEvent_permissionRemovedWhileWaiting_skipsAssignment() {
+    var permission = loadablePermission(randomUUID(), "permission1");
+    final var capability = capability(randomUUID(), permission.getPermissionName());
+    var keys = List.of(LoadablePermissionKey.of(permission.getRoleId(), permission.getPermissionName()));
+    when(service.findAllByPermissions(List.of(permission.getPermissionName()))).thenReturn(List.of(permission));
+    when(service.findAllByIds(keys)).thenReturn(emptyList());
+    when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+
+    var event = (CapabilityEvent) CapabilityEvent.created(capability).withContext(context);
+    processor.handleCapabilitiesCreatedEvent(event);
+
+    verify(roleEntityService).lockById(permission.getRoleId());
+    verify(transactionManager).commit(any());
+    verifyNoInteractions(roleCapabilityService, roleCapabilitySetService);
+  }
+
+  @Test
   void handleCapabilitiesCreatedEvent_positive_siblingRoleAssignedWhenOneRoleFails() {
     var permission = "permission1";
     var failedPerm = loadablePermission(randomUUID(), permission);
@@ -105,9 +150,10 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     siblingPerm.setCapabilityId(null);
 
     when(service.findAllByPermissions(List.of(permission))).thenReturn(List.of(failedPerm, siblingPerm));
+    mockCurrentPermissions(List.of(failedPerm, siblingPerm));
     when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
 
-    var capabilityId = randomUUID();
+    final var capabilityId = randomUUID();
     var duplicateKey = new DataIntegrityViolationException("duplicate key value violates unique constraint");
     when(roleCapabilityService.create(failedPerm.getRoleId(), List.of(capabilityId), true)).thenThrow(duplicateKey);
     when(roleCapabilityService.create(siblingPerm.getRoleId(), List.of(capabilityId), true)).thenReturn(null);
@@ -142,7 +188,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     var permission = "permission1";
     when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
     doNothing().when(transactionManager).commit(any());
-    var capabilityId = randomUUID();
+    final var capabilityId = randomUUID();
 
     var perms = loadablePermissions(5);
     for (LoadablePermission perm : perms) {
@@ -151,6 +197,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     }
 
     when(service.findAllByPermissions(List.of(permission))).thenReturn(perms);
+    mockCurrentPermissions(perms);
 
     perms.forEach(perm -> {
       when(roleCapabilityService.create(perm.getRoleId(), List.of(capabilityId), true)).thenReturn(null);
@@ -193,6 +240,7 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
 
     when(capabilityService.findByNames(List.of(capabilitySet.getName()))).thenReturn(List.of(capability));
     when(service.findAllByPermissions(List.of(capability.getPermission()))).thenReturn(perms);
+    mockCurrentPermissions(perms);
     when(transactionManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
     doNothing().when(transactionManager).commit(any());
     perms.forEach(perm -> {
@@ -261,5 +309,13 @@ class LoadableRoleCapabilityAssignmentProcessorTest {
     assertThatThrownBy(() -> processor.handleCapabilitySetUpdatedEvent(event))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Ids of old and new version of capability set don't match");
+  }
+
+  private void mockCurrentPermissions(List<LoadablePermission> permissions) {
+    permissions.forEach(permission -> {
+      doNothing().when(roleEntityService).lockById(permission.getRoleId());
+      var keys = List.of(LoadablePermissionKey.of(permission.getRoleId(), permission.getPermissionName()));
+      when(service.findAllByIds(keys)).thenReturn(List.of(copy(permission)));
+    });
   }
 }

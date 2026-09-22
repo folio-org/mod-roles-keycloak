@@ -7,6 +7,8 @@ import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Durations.ONE_MINUTE;
 import static org.awaitility.Durations.TWO_HUNDRED_MILLISECONDS;
+import static org.folio.roles.service.role.RolePolicyNameProvider.getPermissionNameGenerator;
+import static org.folio.roles.service.role.RolePolicyNameProvider.getPolicyName;
 import static org.folio.roles.support.TestConstants.TENANT_ID;
 import static org.folio.roles.support.TestConstants.USER_ID_HEADER;
 import static org.folio.roles.utils.TestValues.readValue;
@@ -17,6 +19,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -24,6 +27,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import jakarta.persistence.EntityManager;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,6 +36,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import lombok.extern.log4j.Log4j2;
 import org.assertj.core.api.ThrowingConsumer;
@@ -38,6 +44,7 @@ import org.awaitility.Awaitility;
 import org.awaitility.core.ConditionFactory;
 import org.folio.common.domain.model.error.ErrorResponse;
 import org.folio.integration.kafka.model.ResourceEvent;
+import org.folio.roles.KeycloakTestClient;
 import org.folio.roles.base.BaseIntegrationTest;
 import org.folio.roles.domain.dto.Capabilities;
 import org.folio.roles.domain.dto.Capability;
@@ -46,18 +53,36 @@ import org.folio.roles.domain.dto.CapabilitySets;
 import org.folio.roles.domain.dto.LoadablePermission;
 import org.folio.roles.domain.dto.LoadableRole;
 import org.folio.roles.domain.dto.LoadableRoles;
+import org.folio.roles.domain.dto.RoleType;
+import org.folio.roles.domain.entity.LoadableRoleEntity;
+import org.folio.roles.domain.entity.key.LoadablePermissionKey;
+import org.folio.roles.domain.entity.type.EntityRoleType;
+import org.folio.roles.domain.model.event.CapabilityEvent;
 import org.folio.roles.integration.kafka.KafkaMessageListener;
+import org.folio.roles.repository.LoadableRoleRepository;
+import org.folio.roles.service.capability.CapabilityService;
+import org.folio.roles.service.capability.RoleCapabilityServiceImpl;
+import org.folio.roles.service.loadablerole.LoadablePermissionService;
 import org.folio.roles.service.loadablerole.LoadableRoleCapabilityAssignmentHelper;
 import org.folio.roles.service.loadablerole.LoadableRoleCapabilityAssignmentProcessor;
+import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.service.permission.RolePermissionService;
+import org.folio.roles.service.policy.PolicyEntityService;
+import org.folio.roles.service.role.RoleEntityService;
+import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.keycloak.admin.client.Keycloak;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -67,6 +92,7 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 
 @Log4j2
 @IntegrationTest
+@Import(KeycloakTestClient.class)
 @SqlMergeMode(MERGE)
 @Sql(executionPhase = AFTER_TEST_METHOD, scripts = {
   "classpath:/sql/truncate-role-loadable-tables.sql",
@@ -84,11 +110,21 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
   @Autowired private JdbcTemplate jdbcTemplate;
   @Autowired private Keycloak keycloak;
+  @Autowired private KeycloakTestClient keycloakTestClient;
   @Autowired private KafkaMessageListener kafkaMessageListener;
 
   @MockitoSpyBean private LoadableRoleCapabilityAssignmentHelper assignmentHelper;
   @MockitoSpyBean private LoadableRoleCapabilityAssignmentProcessor assignmentProcessor;
   @MockitoSpyBean private RolePermissionService rolePermissionService;
+  @MockitoSpyBean private PolicyEntityService policyEntityService;
+  @MockitoSpyBean private RoleCapabilityServiceImpl roleCapabilityService;
+  @Autowired private ExecutionContextBuilder executionContextBuilder;
+  @Autowired private CapabilityService capabilityService;
+  @Autowired private LoadableRoleService loadableRoleService;
+  @Autowired private LoadablePermissionService loadablePermissionService;
+  @Autowired private EntityManager entityManager;
+  @MockitoSpyBean private RoleEntityService roleEntityService;
+  @MockitoSpyBean private LoadableRoleRepository loadableRoleRepository;
 
   @BeforeAll
   static void beforeAll() {
@@ -356,6 +392,172 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       .contains(permissionName);
   }
 
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
+  void upsertLoadableRole_concurrentAssignment_assignsWholeBatch(boolean policyRace) throws Exception {
+    var roleName = "Concurrent Assignment Role";
+    var competingPermission = "notes.item.get";
+    var role = new LoadableRole().name(roleName).description("Concurrent assignment")
+      .permissions(List.of(new LoadablePermission().permissionName("notes.collection.get"),
+        new LoadablePermission().permissionName(competingPermission)));
+    var initialAssignmentDone = new CountDownLatch(1);
+    var allowRoleCommit = new CountDownLatch(1);
+    var roleCommitted = new CountDownLatch(1);
+    var allowAssignment = new CountDownLatch(1);
+    var assignmentCalls = new AtomicInteger();
+    doAnswer(invocation -> {
+      if (assignmentCalls.incrementAndGet() == 1) {
+        var result = invocation.callRealMethod();
+        initialAssignmentDone.countDown();
+        assertThat(allowRoleCommit.await(30, TimeUnit.SECONDS)).isTrue();
+        return result;
+      }
+      roleCommitted.countDown();
+      assertThat(allowAssignment.await(30, TimeUnit.SECONDS)).isTrue();
+      return invocation.callRealMethod();
+    }).when(assignmentHelper).assignCapabilitiesAndSetsForPermissions(anyCollection());
+
+    var assignmentPaused = new CountDownLatch(1);
+    var finishAssignment = new CountDownLatch(1);
+    var firstAssignment = new AtomicBoolean(true);
+    Answer<Object> pauseAssignment = invocation -> {
+      var result = invocation.callRealMethod();
+      if (firstAssignment.compareAndSet(true, false)) {
+        assignmentPaused.countDown();
+        assertThat(finishAssignment.await(30, TimeUnit.SECONDS)).isTrue();
+      }
+      return result;
+    };
+
+    try (var executor = Executors.newFixedThreadPool(2)) {
+      var request = executor.submit(() -> {
+        doPut("/loadable-roles", role);
+        return null;
+      });
+      try {
+        assertThat(initialAssignmentDone.await(30, TimeUnit.SECONDS)).isTrue();
+        kafkaMessageListener.handleCapabilityEvent(
+          readValue("json/kafka-events/be-notes-capability-event.json", ResourceEvent.class));
+        allowRoleCommit.countDown();
+        assertThat(roleCommitted.await(30, TimeUnit.SECONDS)).isTrue();
+        var context = executionContextBuilder.buildContext(TENANT_ID);
+        Capability competingCapability;
+        try (var ignored = new FolioExecutionContextSetter(context)) {
+          competingCapability = capabilityService.findByPermissionNames(List.of(competingPermission)).getFirst();
+          if (!policyRace) {
+            rolePermissionService.createPermissions(getLoadableRoleByName(roleName).getId(),
+              competingCapability.getEndpoints());
+          }
+        }
+        if (policyRace) {
+          doAnswer(pauseAssignment).when(policyEntityService).findByName(any());
+        } else {
+          doAnswer(pauseAssignment).when(roleCapabilityService).create(any(UUID.class), anyList(), eq(true));
+        }
+        allowAssignment.countDown();
+        assertThat(assignmentPaused.await(30, TimeUnit.SECONDS)).isTrue();
+        var competingAssignment = executor.submit(() -> {
+          try (var ignored = new FolioExecutionContextSetter(context)) {
+            assignmentProcessor.handleCapabilitiesCreatedEvent(
+              (CapabilityEvent) CapabilityEvent.created(competingCapability).withContext(context));
+          }
+        });
+        // On the old code the competitor commits first; with serialization it waits for the role lock.
+        await().until(() -> competingAssignment.isDone() || roleAssignmentWaitingForLock());
+        finishAssignment.countDown();
+        competingAssignment.get(30, TimeUnit.SECONDS);
+        request.get(30, TimeUnit.SECONDS);
+      } finally {
+        allowRoleCommit.countDown();
+        allowAssignment.countDown();
+        finishAssignment.countDown();
+      }
+    }
+
+    assertThat(firstAssignment).isFalse();
+    assertThat(unassignedCapabilityCountForPermissionLike("note")).isZero();
+    var capabilities = parseResponse(
+      doGet("/roles/{id}/capabilities", getLoadableRoleByName(roleName).getId()).andReturn(), Capabilities.class);
+    assertThat(capabilities.getCapabilities()).extracting(Capability::getPermission)
+      .containsExactlyInAnyOrder("notes.collection.get", competingPermission);
+    var roleId = getLoadableRoleByName(roleName).getId();
+    assertThat(keycloakTestClient.getPolicyNames())
+      .contains(getPolicyName(roleId));
+    var permissionName = getPermissionNameGenerator(roleId);
+    assertThat(keycloakTestClient.getPermissionNames()).containsAll(capabilities.getCapabilities().stream()
+      .flatMap(capability -> capability.getEndpoints().stream()).map(permissionName).toList());
+  }
+
+  @Test
+  @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
+  void saveAll_reversedRoleOrderAndConcurrentAssignment_completesWithoutDeadlock() throws Exception {
+    var firstRole = new LoadableRole().name("First Bulk Role").description("Initial").type(RoleType.DEFAULT)
+      .permissions(List.of(new LoadablePermission().permissionName("existing.permission")));
+    var secondRole = new LoadableRole().name("Second Bulk Role").description("Initial").type(RoleType.DEFAULT)
+      .permissions(List.of(new LoadablePermission().permissionName("existing.permission")));
+    var context = executionContextBuilder.buildContext(TENANT_ID);
+    try (var ignored = new FolioExecutionContextSetter(context)) {
+      loadableRoleService.saveAll(List.of(firstRole, secondRole));
+    }
+    var roles = List.of(getLoadableRoleByName(firstRole.getName()), getLoadableRoleByName(secondRole.getName()));
+    final var keys = roles.stream().map(role -> LoadablePermissionKey.of(role.getId(), "existing.permission")).toList();
+    roles.forEach(role -> role.description("Updated")
+      .addPermissionsItem(new LoadablePermission().permissionName("new.permission")));
+
+    doAnswer(invocation -> entityManager.createQuery("""
+      select role from LoadableRoleEntity role
+      where role.type = :type and role.loadedFromFile = true
+      """, LoadableRoleEntity.class).setParameter("type", EntityRoleType.DEFAULT).getResultStream()
+      .sorted(Comparator.comparing(LoadableRoleEntity::getId).reversed()))
+      .when(loadableRoleRepository).findAllByTypeAndLoadedFromFile(EntityRoleType.DEFAULT, true);
+
+    var firstRoleLocked = new CountDownLatch(1);
+    var finishBulkUpdate = new CountDownLatch(1);
+    var firstLock = new AtomicBoolean(true);
+    doAnswer(invocation -> {
+      invocation.callRealMethod();
+      if (firstLock.compareAndSet(true, false)) {
+        firstRoleLocked.countDown();
+        assertThat(finishBulkUpdate.await(30, TimeUnit.SECONDS)).isTrue();
+      }
+      return null;
+    }).when(roleEntityService).lockById(any(UUID.class));
+
+    try (var executor = Executors.newFixedThreadPool(2)) {
+      var bulkUpdate = executor.submit(() -> {
+        try (var ignored = new FolioExecutionContextSetter(context)) {
+          loadableRoleService.saveAll(roles);
+        }
+      });
+      try {
+        assertThat(firstRoleLocked.await(30, TimeUnit.SECONDS)).isTrue();
+        final var assignment = executor.submit(() -> {
+          try (var ignored = new FolioExecutionContextSetter(context)) {
+            loadablePermissionService.assignCapabilitiesAndSets(keys);
+          }
+        });
+        await().until(this::roleAssignmentWaitingForLock);
+        finishBulkUpdate.countDown();
+        bulkUpdate.get(30, TimeUnit.SECONDS);
+        assignment.get(30, TimeUnit.SECONDS);
+      } finally {
+        finishBulkUpdate.countDown();
+      }
+    }
+
+    assertThat(getLoadableRoleByName(firstRole.getName()).getDescription()).isEqualTo("Updated");
+    assertThat(getLoadableRoleByName(secondRole.getName()).getDescription()).isEqualTo("Updated");
+  }
+
+  private boolean roleAssignmentWaitingForLock() {
+    return Boolean.TRUE.equals(jdbcTemplate.queryForObject("""
+      select exists(select 1 from pg_stat_activity
+        where datname = current_database() and wait_event_type = 'Lock'
+          and lower(query) like '%for no key update%')
+      """, Boolean.class));
+  }
+
   @Test
   @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
   void handleCapabilityEvent_positive_whenOneMatchingRoleAlreadyHasCapabilityAndAnotherDoesNot() throws Exception {
@@ -437,7 +639,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
   @Test
   @KeycloakRealms("/json/keycloak/role-loadable-processing-realm.json")
-  void handleCapabilityEvent_positive_allRolesAssignedAfterUniqueViolationRetry() throws Exception {
+  void handleCapabilityEvent_existingConcurrentAssignment_assignsBothRoles() throws Exception {
     var permissionName = "notes.collection.get";
     var firstRoleName = "Unique Violation First Role";
 
@@ -454,10 +656,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       .description("Second role competing for the capability")
       .permissions(List.of(new LoadablePermission().permissionName(permissionName))));
 
-    // Step 2: For the first role processed by the capability event, insert the same role-capability row through
-    // a separate committed connection right inside the check-then-insert window (createPermissions runs between
-    // the duplicate check and the insert). This simulates a concurrent entitlement flow winning the race and
-    // makes the event transaction fail with a unique-constraint violation on commit.
+    // Commit a concurrent assignment before Hibernate merge checks whether the row exists.
     var conflictInserted = new AtomicBoolean();
     doAnswer(invocation -> {
       if (conflictInserted.compareAndSet(false, true)) {
@@ -476,9 +675,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       return invocation.callRealMethod();
     }).when(rolePermissionService).createPermissions(any(), anyList());
 
-    // Step 3: Send the event through the broker, so that the Kafka error handler applies its retry policy.
-    // The first delivery fails with the unique-constraint violation and must be redelivered, not skipped;
-    // the redelivery assigns the capability to both roles idempotently.
+    // Hibernate sees the committed row and completes both assignments without a constraint violation.
     sendCapabilityEvent("json/kafka-events/be-notes-capability-event.json");
 
     await().untilAsserted(() -> {

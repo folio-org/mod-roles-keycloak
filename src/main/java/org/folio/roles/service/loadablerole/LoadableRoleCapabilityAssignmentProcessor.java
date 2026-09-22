@@ -20,11 +20,13 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.folio.roles.domain.dto.Capability;
 import org.folio.roles.domain.dto.CapabilitySet;
 import org.folio.roles.domain.dto.LoadablePermission;
+import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.folio.roles.domain.model.event.CapabilityEvent;
 import org.folio.roles.domain.model.event.CapabilitySetEvent;
 import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
+import org.folio.roles.service.role.RoleEntityService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class LoadableRoleCapabilityAssignmentProcessor {
 
   private final LoadablePermissionService service;
+  private final RoleEntityService roleEntityService;
   private final CapabilityService capabilityService;
   private final RoleCapabilityService roleCapabilityService;
   private final RoleCapabilitySetService roleCapabilitySetService;
@@ -178,7 +181,7 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       var failures = new ArrayList<RuntimeException>();
       roleIdWithPermissions.forEach((roleId, rolePermissions) -> {
         try {
-          transactionTemplate.executeWithoutResult(status -> action.accept(roleId, rolePermissions));
+          transactionTemplate.executeWithoutResult(status -> applyActionToRole(roleId, rolePermissions, action));
         } catch (RuntimeException exception) {
           log.warn("Failed to apply action to loadable role: roleId = {}", roleId, exception);
           failures.add(exception);
@@ -188,6 +191,16 @@ public class LoadableRoleCapabilityAssignmentProcessor {
       if (!failures.isEmpty()) {
         throw failures.getFirst();
       }
+    }
+  }
+
+  private void applyActionToRole(UUID roleId, List<LoadablePermission> permissions,
+    BiConsumer<UUID, List<LoadablePermission>> action) {
+    roleEntityService.lockById(roleId);
+    var keys = mapItems(permissions, permission -> LoadablePermissionKey.of(roleId, permission.getPermissionName()));
+    var currentPermissions = service.findAllByIds(keys);
+    if (!currentPermissions.isEmpty()) {
+      action.accept(roleId, currentPermissions);
     }
   }
 

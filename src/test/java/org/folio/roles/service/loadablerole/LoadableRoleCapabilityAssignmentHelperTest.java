@@ -22,6 +22,7 @@ import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
+import org.folio.roles.service.role.RoleEntityService;
 import org.folio.roles.support.LoadablePermissionUtils;
 import org.folio.test.types.UnitTest;
 import org.instancio.junit.InstancioExtension;
@@ -39,6 +40,7 @@ class LoadableRoleCapabilityAssignmentHelperTest {
   private static final UUID ROLE1_ID = randomUUID();
   private static final UUID ROLE2_ID = randomUUID();
 
+  @Mock private RoleEntityService roleEntityService;
   @Mock private CapabilitySetService capabilitySetService;
   @Mock private CapabilityService capabilityService;
   @Mock private RoleCapabilityService roleCapabilityService;
