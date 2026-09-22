@@ -69,6 +69,8 @@ class RoleEntityServiceTest {
     when(repository.lockById(ROLE_ID)).thenReturn(Optional.of(ROLE_ID));
 
     service.lockById(ROLE_ID);
+
+    verify(repository).lockById(ROLE_ID);
   }
 
   @Test

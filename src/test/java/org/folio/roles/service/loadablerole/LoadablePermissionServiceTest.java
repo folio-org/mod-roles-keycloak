@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Set;
 import org.folio.roles.domain.dto.LoadablePermission;
+import org.folio.roles.domain.entity.LoadablePermissionEntity;
 import org.folio.roles.domain.entity.key.LoadablePermissionKey;
 import org.folio.roles.mapper.LoadableRoleMapper;
 import org.folio.roles.repository.LoadablePermissionRepository;
@@ -61,7 +62,7 @@ class LoadablePermissionServiceTest {
   void findAllByIds_positive() {
     var permissions = loadablePermissions(2);
     var entities = loadablePermissionEntities(permissions);
-    var keys = mapItems(entities, entity -> entity.getId());
+    var keys = mapItems(entities, LoadablePermissionEntity::getId);
     when(repository.findAllById(keys)).thenReturn(entities);
     when(mapper.toPermission(entities)).thenReturn(permissions);
 

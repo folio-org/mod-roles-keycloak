@@ -69,7 +69,9 @@ import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.service.permission.RolePermissionService;
 import org.folio.roles.service.policy.PolicyEntityService;
 import org.folio.roles.service.role.RoleEntityService;
-import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.roles.support.TestUtils.TestModRolesKeycloakModuleMetadata;
+import org.folio.spring.DefaultFolioExecutionContext;
+import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.test.extensions.KeycloakRealms;
 import org.folio.test.types.IntegrationTest;
@@ -118,7 +120,6 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
   @MockitoSpyBean private RolePermissionService rolePermissionService;
   @MockitoSpyBean private PolicyEntityService policyEntityService;
   @MockitoSpyBean private RoleCapabilityServiceImpl roleCapabilityService;
-  @Autowired private ExecutionContextBuilder executionContextBuilder;
   @Autowired private CapabilityService capabilityService;
   @Autowired private LoadableRoleService loadableRoleService;
   @Autowired private LoadablePermissionService loadablePermissionService;
@@ -441,7 +442,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
           readValue("json/kafka-events/be-notes-capability-event.json", ResourceEvent.class));
         allowRoleCommit.countDown();
         assertThat(roleCommitted.await(30, TimeUnit.SECONDS)).isTrue();
-        var context = executionContextBuilder.buildContext(TENANT_ID);
+        var context = tenantExecutionContext();
         Capability competingCapability;
         try (var ignored = new FolioExecutionContextSetter(context)) {
           competingCapability = capabilityService.findByPermissionNames(List.of(competingPermission)).getFirst();
@@ -496,7 +497,7 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
       .permissions(List.of(new LoadablePermission().permissionName("existing.permission")));
     var secondRole = new LoadableRole().name("Second Bulk Role").description("Initial").type(RoleType.DEFAULT)
       .permissions(List.of(new LoadablePermission().permissionName("existing.permission")));
-    var context = executionContextBuilder.buildContext(TENANT_ID);
+    var context = tenantExecutionContext();
     try (var ignored = new FolioExecutionContextSetter(context)) {
       loadableRoleService.saveAll(List.of(firstRole, secondRole));
     }
@@ -882,5 +883,10 @@ class LoadableRoleProcessingIT extends BaseIntegrationTest {
 
   private static ConditionFactory await() {
     return Awaitility.await().atMost(ONE_MINUTE).pollInterval(TWO_HUNDRED_MILLISECONDS);
+  }
+
+  private static FolioExecutionContext tenantExecutionContext() {
+    return new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(),
+      Map.of(TENANT, List.of(TENANT_ID)));
   }
 }
