@@ -3,6 +3,7 @@ package org.folio.roles.service.role;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -80,6 +81,10 @@ public class RoleEntityService {
 
   public Optional<Role> findByName(String roleName) {
     return repository.findByName(roleName).map(mapper::toRole);
+  }
+
+  public void lockById(UUID id) {
+    repository.lockById(id).orElseThrow(() -> new EntityNotFoundException("Role not found: " + id));
   }
 
   private void checkIfRoleExists(UUID id) {

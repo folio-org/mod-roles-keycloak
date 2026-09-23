@@ -5,10 +5,14 @@ import java.util.Optional;
 import java.util.UUID;
 import org.folio.roles.domain.entity.RoleEntity;
 import org.folio.spring.cql.JpaCqlRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RoleEntityRepository extends JpaCqlRepository<RoleEntity, UUID> {
+
+  @Query(value = "SELECT id FROM role WHERE id = :id FOR NO KEY UPDATE", nativeQuery = true)
+  Optional<UUID> lockById(UUID id);
 
   List<RoleEntity> findByIdIn(List<UUID> ids);
 

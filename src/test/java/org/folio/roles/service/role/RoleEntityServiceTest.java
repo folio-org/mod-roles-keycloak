@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.folio.roles.domain.dto.Metadata;
 import org.folio.roles.domain.dto.Role;
@@ -61,6 +62,22 @@ class RoleEntityServiceTest {
   @AfterEach
   void afterEach() {
     verifyNoMoreInteractions(repository, eventPublisher);
+  }
+
+  @Test
+  void lockById_existingRole_locksRole() {
+    when(repository.lockById(ROLE_ID)).thenReturn(Optional.of(ROLE_ID));
+
+    service.lockById(ROLE_ID);
+
+    verify(repository).lockById(ROLE_ID);
+  }
+
+  @Test
+  void lockById_missingRole_throwsException() {
+    when(repository.lockById(ROLE_ID)).thenReturn(Optional.empty());
+
+    assertThrows(EntityNotFoundException.class, () -> service.lockById(ROLE_ID));
   }
 
   private static Role createRoleDto() {

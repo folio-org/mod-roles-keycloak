@@ -26,6 +26,7 @@ import org.folio.roles.service.capability.CapabilityService;
 import org.folio.roles.service.capability.CapabilitySetService;
 import org.folio.roles.service.capability.RoleCapabilityService;
 import org.folio.roles.service.capability.RoleCapabilitySetService;
+import org.folio.roles.service.role.RoleEntityService;
 import org.springframework.stereotype.Component;
 
 @Log4j2
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LoadableRoleCapabilityAssignmentHelper {
 
+  private final RoleEntityService roleEntityService;
   private final CapabilitySetService capabilitySetService;
   private final CapabilityService capabilityService;
   private final RoleCapabilityService roleCapabilityService;
@@ -140,7 +142,11 @@ public class LoadableRoleCapabilityAssignmentHelper {
   private Set<LoadablePermissionEntity> processPermissionsByRoleId(Collection<LoadablePermissionEntity> perms,
     BiFunction<UUID, List<LoadablePermissionEntity>, Stream<LoadablePermissionEntity>> processor) {
     return groupPermissionsByRoleId(perms)
-      .flatMap(entry -> processor.apply(entry.getKey(), entry.getValue()))
+      .sorted(Entry.comparingByKey())
+      .flatMap(entry -> {
+        roleEntityService.lockById(entry.getKey());
+        return processor.apply(entry.getKey(), entry.getValue());
+      })
       .collect(toSet());
   }
 
