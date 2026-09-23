@@ -1,0 +1,28 @@
+# Runtime image for the GraalVM native executable of mod-roles-keycloak.
+#
+# The native binary is produced by the Docker GraalVM-25 builder with the host Maven repo mounted (the
+# -NATIVE library artifacts are only in the local ~/.m2, not in Maven Central):
+#
+#   MSYS_NO_PATHCONV=1 docker run --rm \
+#     -v "$PWD":/app \
+#     -v "$HOME/.m2":/root/.m2 \
+#     -w /app folio-graalvm-builder:25 \
+#     mvn -B -Pnative -DskipTests -Dcheckstyle.skip=true clean native:compile
+#
+# That leaves the executable at ./target/mod-roles-keycloak (glibc, dynamically linked). Then build this image:
+#
+#   docker build -f Dockerfile.native -t mod-roles-keycloak:native .
+#
+# glibc-slim base (Debian) is the lowest-risk runtime for a glibc native-image binary; ca-certificates is
+# needed for the outbound HTTPS calls to Keycloak. (The JVM Dockerfile stays as the fallback.)
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY ./target/mod-roles-keycloak /app/mod-roles-keycloak
+
+EXPOSE 8081
+ENTRYPOINT ["/app/mod-roles-keycloak"]
