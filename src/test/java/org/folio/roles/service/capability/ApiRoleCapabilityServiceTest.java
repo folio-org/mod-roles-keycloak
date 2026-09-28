@@ -13,12 +13,12 @@ import org.folio.roles.exception.ServiceException;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
+import org.instancio.junit.Given;
 import org.instancio.junit.InstancioExtension;
-import org.instancio.junit.InstancioSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,9 +40,9 @@ class ApiRoleCapabilityServiceTest {
   @Nested
   class ProtectedWithDefaultRoleCheckMethods {
 
-    @ParameterizedTest
-    @InstancioSource
-    void create_positive(UUID roleId, List<UUID> capabilityIds, PageResult<RoleCapability> result) {
+    @Test
+    void create_positive(@Given UUID roleId, @Given List<UUID> capabilityIds,
+      @Given PageResult<RoleCapability> result) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
       when(delegate.create(roleId, capabilityIds, false)).thenReturn(result);
 
@@ -51,9 +51,8 @@ class ApiRoleCapabilityServiceTest {
       assertThat(actual).isEqualTo(result);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void create_negative_roleIsDefault(UUID roleId, List<UUID> capabilityIds) {
+    @Test
+    void create_negative_roleIsDefault(@Given UUID roleId, @Given List<UUID> capabilityIds) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(true);
 
       assertThatThrownBy(() -> service.create(roleId, capabilityIds, false))
@@ -61,17 +60,15 @@ class ApiRoleCapabilityServiceTest {
         .hasMessage("Changes to default role are prohibited: roleId = %s", roleId);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void update_positive(UUID roleId, List<UUID> capabilityIds) {
+    @Test
+    void update_positive(@Given UUID roleId, @Given List<UUID> capabilityIds) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
       service.update(roleId, capabilityIds);
       verify(delegate).update(roleId, capabilityIds);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void update_negative_roleIsDefault(UUID roleId, List<UUID> capabilityIds) {
+    @Test
+    void update_negative_roleIsDefault(@Given UUID roleId, @Given List<UUID> capabilityIds) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(true);
 
       assertThatThrownBy(() -> service.update(roleId, capabilityIds))
@@ -79,25 +76,22 @@ class ApiRoleCapabilityServiceTest {
         .hasMessage("Changes to default role are prohibited: roleId = %s", roleId);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void deleteAll_positive(UUID roleId) {
+    @Test
+    void deleteAll_positive(@Given UUID roleId) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
       service.deleteAll(roleId);
       verify(delegate).deleteAll(roleId);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void delete_positive(UUID roleId, UUID capabilityId) {
+    @Test
+    void delete_positive(@Given UUID roleId, @Given UUID capabilityId) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
       service.delete(roleId, capabilityId);
       verify(delegate).delete(roleId, capabilityId);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void deleteAll_negative_roleIsDefault(UUID roleId) {
+    @Test
+    void deleteAll_negative_roleIsDefault(@Given UUID roleId) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(true);
 
       assertThatThrownBy(() -> service.deleteAll(roleId))
@@ -109,18 +103,17 @@ class ApiRoleCapabilityServiceTest {
   @Nested
   class UnProtectedMethods {
 
-    @ParameterizedTest
-    @InstancioSource
-    void find_positive(String query, Integer limit, Integer offset, PageResult<RoleCapability> result) {
+    @Test
+    void find_positive(@Given String query, @Given Integer limit, @Given Integer offset,
+      @Given PageResult<RoleCapability> result) {
       when(delegate.find(query, limit, offset)).thenReturn(result);
 
       var actual = service.find(query, limit, offset);
       assertThat(actual).isEqualTo(result);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void getCapabilitySetCapabilityIds_positive(UUID roleId, List<UUID> result) {
+    @Test
+    void getCapabilitySetCapabilityIds_positive(@Given UUID roleId, @Given List<UUID> result) {
       when(delegate.getCapabilitySetCapabilityIds(roleId)).thenReturn(result);
 
       var actual = service.getCapabilitySetCapabilityIds(roleId);
