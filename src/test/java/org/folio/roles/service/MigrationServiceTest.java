@@ -103,7 +103,7 @@ class MigrationServiceTest {
 
     @Test
     void positive() {
-      when(migrationJobRepository.getReferenceById(MIGRATION_ID)).thenReturn(migrationJobEntity());
+      when(migrationJobRepository.findById(MIGRATION_ID)).thenReturn(Optional.of(migrationJobEntity()));
       when(permissionMigrationMapper.toDto(migrationJobEntity())).thenReturn(migrationJob());
 
       var result = migrationService.getMigrationById(MIGRATION_ID);
@@ -113,7 +113,7 @@ class MigrationServiceTest {
 
     @Test
     void negative_migrationNotFound() {
-      when(migrationJobRepository.getReferenceById(MIGRATION_ID)).thenThrow(new EntityNotFoundException());
+      when(migrationJobRepository.findById(MIGRATION_ID)).thenReturn(Optional.empty());
       assertThatThrownBy(() -> migrationService.getMigrationById(MIGRATION_ID))
         .isInstanceOf(EntityNotFoundException.class);
     }

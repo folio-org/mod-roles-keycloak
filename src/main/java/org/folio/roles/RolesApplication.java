@@ -1,14 +1,17 @@
 package org.folio.roles;
 
 import org.folio.common.configuration.properties.FolioEnvironment;
+import org.folio.roles.nativex.RolesRuntimeHints;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.resilience.annotation.EnableResilientMethods;
 
 @SpringBootApplication
 @EnableResilientMethods
 @Import(FolioEnvironment.class)
+@ImportRuntimeHints(RolesRuntimeHints.class)
 public class RolesApplication {
 
   /**
