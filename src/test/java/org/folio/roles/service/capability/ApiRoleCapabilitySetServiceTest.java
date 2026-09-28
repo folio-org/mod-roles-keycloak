@@ -13,12 +13,12 @@ import org.folio.roles.exception.ServiceException;
 import org.folio.roles.service.loadablerole.LoadableRoleService;
 import org.folio.roles.support.TestUtils;
 import org.folio.test.types.UnitTest;
+import org.instancio.junit.Given;
 import org.instancio.junit.InstancioExtension;
-import org.instancio.junit.InstancioSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,9 +40,9 @@ class ApiRoleCapabilitySetServiceTest {
   @Nested
   class ProtectedWithDefaultRoleCheckMethods {
 
-    @ParameterizedTest
-    @InstancioSource
-    void create_positive(UUID roleId, List<UUID> capabilitySetIds, PageResult<RoleCapabilitySet> result) {
+    @Test
+    void create_positive(@Given UUID roleId, @Given List<UUID> capabilitySetIds,
+      @Given PageResult<RoleCapabilitySet> result) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
       when(delegate.create(roleId, capabilitySetIds, false)).thenReturn(result);
 
@@ -51,9 +51,8 @@ class ApiRoleCapabilitySetServiceTest {
       assertThat(actual).isEqualTo(result);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void create_negative_roleIsDefault(UUID roleId, List<UUID> capabilitySetIds) {
+    @Test
+    void create_negative_roleIsDefault(@Given UUID roleId, @Given List<UUID> capabilitySetIds) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(true);
 
       assertThatThrownBy(() -> service.create(roleId, capabilitySetIds, false))
@@ -61,18 +60,16 @@ class ApiRoleCapabilitySetServiceTest {
         .hasMessage("Changes to default role are prohibited: roleId = %s", roleId);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void update_positive(UUID roleId, List<UUID> capabilitySetIds) {
+    @Test
+    void update_positive(@Given UUID roleId, @Given List<UUID> capabilitySetIds) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
       doNothing().when(delegate).update(roleId, capabilitySetIds);
 
       service.update(roleId, capabilitySetIds);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void update_negative_roleIsDefault(UUID roleId, List<UUID> capabilitySetIds) {
+    @Test
+    void update_negative_roleIsDefault(@Given UUID roleId, @Given List<UUID> capabilitySetIds) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(true);
 
       assertThatThrownBy(() -> service.update(roleId, capabilitySetIds))
@@ -80,18 +77,16 @@ class ApiRoleCapabilitySetServiceTest {
         .hasMessage("Changes to default role are prohibited: roleId = %s", roleId);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void deleteAll_positive(UUID roleId) {
+    @Test
+    void deleteAll_positive(@Given UUID roleId) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
       doNothing().when(delegate).deleteAll(roleId);
 
       service.deleteAll(roleId);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void deleteAll_negative_roleIsDefault(UUID roleId) {
+    @Test
+    void deleteAll_negative_roleIsDefault(@Given UUID roleId) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(true);
 
       assertThatThrownBy(() -> service.deleteAll(roleId))
@@ -99,18 +94,16 @@ class ApiRoleCapabilitySetServiceTest {
         .hasMessage("Changes to default role are prohibited: roleId = %s", roleId);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void delete_positive(UUID roleId, UUID capabilitySetId) {
+    @Test
+    void delete_positive(@Given UUID roleId, @Given UUID capabilitySetId) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(false);
       doNothing().when(delegate).delete(roleId, capabilitySetId);
 
       service.delete(roleId, capabilitySetId);
     }
 
-    @ParameterizedTest
-    @InstancioSource
-    void delete_negative_roleIsDefault(UUID roleId, UUID capabilitySetId) {
+    @Test
+    void delete_negative_roleIsDefault(@Given UUID roleId, @Given UUID capabilitySetId) {
       when(loadableRoleService.isDefaultRole(roleId)).thenReturn(true);
 
       assertThatThrownBy(() -> service.delete(roleId, capabilitySetId))
@@ -122,9 +115,9 @@ class ApiRoleCapabilitySetServiceTest {
   @Nested
   class UnProtectedMethods {
 
-    @ParameterizedTest
-    @InstancioSource
-    void find_positive(String query, Integer limit, Integer offset, PageResult<RoleCapabilitySet> result) {
+    @Test
+    void find_positive(@Given String query, @Given Integer limit, @Given Integer offset,
+      @Given PageResult<RoleCapabilitySet> result) {
       when(delegate.find(query, limit, offset)).thenReturn(result);
 
       var actual = service.find(query, limit, offset);
