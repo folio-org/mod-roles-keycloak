@@ -53,7 +53,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = AFTER_CLASS)
 @SqlMergeMode(MERGE)
-@Import(BaseIntegrationTest.TopicConfiguration.class)
+@Import({BaseIntegrationTest.TopicConfiguration.class, KeycloakAdminClientTestConfiguration.class})
 @TestExecutionListeners(listeners = {WireMockExecutionListener.class, KeycloakExecutionListener.class},
   mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public abstract class BaseIntegrationTest extends BaseBackendIntegrationTest {

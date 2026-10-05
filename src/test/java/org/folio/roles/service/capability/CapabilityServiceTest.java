@@ -63,6 +63,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -77,6 +78,7 @@ class CapabilityServiceTest {
   @Mock private CapabilityRepository capabilityRepository;
   @Mock private RoleCapabilityRepository roleCapabilityRepository;
   @Mock private CapabilitySetService capabilitySetService;
+  @Mock private ObjectProvider<CapabilitySetService> capabilitySetServiceProvider;
   @Mock private CapabilityEntityMapper capabilityEntityMapper;
   @Mock private ApplicationEventPublisher applicationEventPublisher;
   @Mock private UserPermissionCacheService userPermissionCacheService;
@@ -88,7 +90,7 @@ class CapabilityServiceTest {
     var folioExecutionContext = new DefaultFolioExecutionContext(new TestModRolesKeycloakModuleMetadata(), emptyMap());
     this.capabilityService = new CapabilityService(capabilityRepository, roleCapabilityRepository,
       folioExecutionContext, capabilityEntityMapper, applicationEventPublisher, userPermissionCacheService,
-      mteEntitlementService, capabilitySetService);
+      mteEntitlementService, capabilitySetServiceProvider);
   }
 
   @AfterEach
@@ -244,7 +246,7 @@ class CapabilityServiceTest {
     void positive() {
       var capability = capability();
       var capabilityEntity = capabilityEntity();
-      when(capabilityRepository.getReferenceById(CAPABILITY_ID)).thenReturn(capabilityEntity);
+      when(capabilityRepository.findById(CAPABILITY_ID)).thenReturn(Optional.of(capabilityEntity));
       when(capabilityEntityMapper.convert(capabilityEntity)).thenReturn(capability);
 
       var result = capabilityService.get(CAPABILITY_ID);
@@ -254,7 +256,7 @@ class CapabilityServiceTest {
 
     @Test
     void negative_entityNotFound() {
-      when(capabilityRepository.getReferenceById(CAPABILITY_ID)).thenThrow(EntityNotFoundException.class);
+      when(capabilityRepository.findById(CAPABILITY_ID)).thenReturn(Optional.empty());
       assertThatThrownBy(() -> capabilityService.get(CAPABILITY_ID))
         .isInstanceOf(EntityNotFoundException.class);
     }
@@ -566,6 +568,11 @@ class CapabilityServiceTest {
   class FindByCapabilitySetId {
 
     private final OffsetRequest offsetRequest = OffsetRequest.of(0, 10, DEFAULT_CAPABILITY_SORT);
+
+    @BeforeEach
+    void setUpProvider() {
+      when(capabilitySetServiceProvider.getObject()).thenReturn(capabilitySetService);
+    }
 
     @Test
     void positive() {

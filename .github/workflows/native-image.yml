@@ -1,0 +1,154 @@
+# Build the mod-roles-keycloak GraalVM native image and push it to a container registry.
+#
+# This is a manual (workflow_dispatch) pipeline. It builds the whole native-ready chain, because the
+# native build depends on `-NATIVE` library artifacts that are NOT published to any Maven repository:
+#   folio-spring-support (10.1.0-NATIVE)  ->  applications-poc-tools (4.1.0-NATIVE)  ->  mod-roles-keycloak
+# so the two upstream repos are checked out and `mvn install`ed into the runner's local ~/.m2 first.
+#
+# Registry credentials — either set these repository secrets, or pass them per-run via the registry_username /
+# registry_password inputs below (a non-blank input overrides the secret). Secrets are the secure default;
+# inputs are NOT masked and are visible on the run page (public on public repos), so avoid the password input there.
+#   NATIVE_IMG_REGISTRY_USERNAME  - registry account username (e.g. your Docker Hub user)
+#   NATIVE_IMG_REGISTRY_PASSWORD  - registry access token / password with push rights to the target image
+#
+# NOTE on the default branch: the native-image support currently lives on `feature/native-image-support`
+# in all three repos. Until it is merged, run this workflow with branch = feature/native-image-support
+# (the `master` defaults below will only work once the native work is on master).
+#
+# NOTE on runner memory: the optimized native-image analysis peaks ~13 GB. The standard `ubuntu-latest`
+# runner has 16 GB and usually copes, but if the build is OOM-killed, set `quick_build: true` (uses -Ob,
+# lower memory, slightly less optimized) or switch `runs-on` to a larger runner.
+
+name: native-image
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'mod-roles-keycloak branch/ref to build'
+        required: true
+        default: 'master'
+      image:
+        description: 'Target image repository, e.g. <account>/mod-roles-keycloak (prefix the registry host for non-Docker-Hub)'
+        required: true
+      tag:
+        description: 'Image tag'
+        required: true
+        default: 'native'
+      registry:
+        description: 'Registry host to log in to (docker.io for Docker Hub, ghcr.io for GHCR, ...)'
+        required: true
+        default: 'docker.io'
+      registry_username:
+        description: 'Registry username. Leave blank to use the NATIVE_IMG_REGISTRY_USERNAME secret.'
+        required: false
+        default: ''
+      registry_password:
+        description: 'Registry password/token. WARNING: workflow inputs are NOT masked and are visible on the run page (public on public repos). Prefer leaving blank to use the NATIVE_IMG_REGISTRY_PASSWORD secret.'
+        required: false
+        default: ''
+      folio_spring_support_ref:
+        description: 'folio-spring-support ref (provides the 10.1.0-NATIVE artifacts)'
+        required: true
+        default: 'feature/native-image-support'
+      applications_poc_tools_ref:
+        description: 'applications-poc-tools ref (provides the 4.1.0-NATIVE artifacts)'
+        required: true
+        default: 'feature/native-image-support'
+      graalvm_version:
+        description: 'GraalVM Community (JDK) version, e.g. 25.0.2 or 25 for latest 25.x (must be 25.x for Spring Boot 4.1.0)'
+        required: true
+        default: '25.0.2'
+      quick_build:
+        description: 'Use -Ob quick build (faster, lower memory, less optimized binary)'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+  # For pushing to GHCR instead of Docker Hub, also grant: packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up GraalVM (Community) + Maven cache
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ inputs.graalvm_version }}
+          distribution: 'graalvm-community'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          cache: 'maven'
+
+      # --- Upstream native-ready libraries: build + install into ~/.m2 (not published anywhere) ---
+      - name: Checkout folio-spring-support
+        uses: actions/checkout@v4
+        with:
+          repository: folio-org/folio-spring-support
+          ref: ${{ inputs.folio_spring_support_ref }}
+          path: folio-spring-support
+
+      - name: Install folio-spring-support (-NATIVE) to local repo
+        run: mvn -B -ntp -f folio-spring-support/pom.xml clean install -DskipTests
+
+      - name: Checkout applications-poc-tools
+        uses: actions/checkout@v4
+        with:
+          repository: folio-org/applications-poc-tools
+          ref: ${{ inputs.applications_poc_tools_ref }}
+          path: applications-poc-tools
+
+      - name: Install applications-poc-tools (-NATIVE) to local repo
+        run: mvn -B -ntp -f applications-poc-tools/pom.xml clean install -DskipTests
+
+      # --- mod-roles-keycloak: compile the native binary ---
+      - name: Checkout mod-roles-keycloak
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+          path: mod-roles-keycloak
+
+      - name: Resolve short commit SHA
+        id: sha
+        run: echo "short=$(git -C mod-roles-keycloak rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Build native binary
+        working-directory: mod-roles-keycloak
+        env:
+          NATIVE_IMAGE_OPTIONS: ${{ inputs.quick_build && '-Ob' || '' }}
+        run: mvn -B -ntp -Pnative -DskipTests -Dcheckstyle.skip=true clean package native:compile
+
+      # --- Runtime image: build from Dockerfile.native and push ---
+      - name: Log in to the registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ inputs.registry_username || secrets.NATIVE_IMG_REGISTRY_USERNAME }}
+          password: ${{ inputs.registry_password || secrets.NATIVE_IMG_REGISTRY_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: mod-roles-keycloak
+          file: mod-roles-keycloak/Dockerfile.native
+          push: true
+          provenance: false
+          tags: |
+            ${{ inputs.image }}:${{ inputs.tag }}
+            ${{ inputs.image }}:${{ inputs.tag }}-${{ steps.sha.outputs.short }}
+
+      - name: Summary
+        run: |
+          {
+            echo "### Native image pushed"
+            echo ""
+            echo "- Source: \`${{ inputs.branch }}\` @ \`${{ steps.sha.outputs.short }}\`"
+            echo "- Tags:"
+            echo "  - \`${{ inputs.image }}:${{ inputs.tag }}\`"
+            echo "  - \`${{ inputs.image }}:${{ inputs.tag }}-${{ steps.sha.outputs.short }}\`"
+            echo "- Quick build (-Ob): \`${{ inputs.quick_build }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

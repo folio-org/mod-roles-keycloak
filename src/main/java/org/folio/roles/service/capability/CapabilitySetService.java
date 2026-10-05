@@ -154,7 +154,8 @@ public class CapabilitySetService {
 
   @Transactional(readOnly = true)
   public CapabilitySet get(UUID id) {
-    var capabilitySetEntity = repository.getReferenceById(id);
+    var capabilitySetEntity = repository.findById(id)
+      .orElseThrow(() -> new EntityNotFoundException("Capability set is not found: id = " + id));
     return capabilitySetEntityMapper.convert(capabilitySetEntity);
   }
 
@@ -169,7 +170,8 @@ public class CapabilitySetService {
       throw new RequestValidationException("Id from path and in entity does not match", "id", capabilitySetId);
     }
 
-    var foundEntity = repository.getReferenceById(id);
+    var foundEntity = repository.findById(id)
+      .orElseThrow(() -> new EntityNotFoundException("Capability set is not found: id = " + id));
     var newCapabilityName = getCapabilityName(capabilitySet.getResource(), capabilitySet.getAction());
 
     if (!Objects.equals(foundEntity.getName(), newCapabilityName)) {

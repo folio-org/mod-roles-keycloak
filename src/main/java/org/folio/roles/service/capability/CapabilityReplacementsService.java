@@ -249,7 +249,6 @@ public class CapabilityReplacementsService {
           newLoadablePermission.setCapabilityId(capability.getId());
           newLoadablePermission.setPermissionName(capability.getPermission());
           newLoadablePermission.setRoleId(loadablePermission.getRoleId());
-          newLoadablePermission.setRole(loadablePermission.getRole());
 
           log.info("Storing capability replacement {} for loadable permission {} of role {}",
             capability.getPermission(), loadablePermission.getPermissionName(), loadablePermission.getRoleId());
@@ -281,7 +280,6 @@ public class CapabilityReplacementsService {
           newLoadablePermission.setCapabilitySetId(capabilitySet.getId());
           newLoadablePermission.setPermissionName(capabilitySet.getPermission());
           newLoadablePermission.setRoleId(loadablePermission.getRoleId());
-          newLoadablePermission.setRole(loadablePermission.getRole());
 
           log.info("Storing capability set replacement {} for loadable permission {} of role {}",
             capabilitySet.getPermission(), loadablePermission.getPermissionName(), loadablePermission.getRoleId());

@@ -17,6 +17,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        # GraalVM native image forbids defining classes at runtime; disable Hibernate's ByteBuddy runtime
+        # bytecode provider (it generates net.bytebuddy.utility.Invoker$Dispatcher at runtime). Hibernate then
+        # uses reflection-based attribute access instead — native-image compatible.
+        bytecode:
+          provider: none
   cache:
     type: caffeine
   kafka:
