@@ -13,7 +13,6 @@ import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.integration.keyclock.configuration.KeycloakConfigurationProperties;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -25,15 +24,15 @@ public class KeycloakPermissionsExecutor {
   private final FolioExecutionContext folioExecutionContext;
 
   /**
-   * Shared thread pool for parallel permission operations.
-   * {@code null} when parallelism is configured to 1 (sequential mode).
+   * Shared thread pool for parallel permission operations. Always injected (the bean is created
+   * unconditionally); it is simply left unused when the executor runs sequentially.
    */
   private final ExecutorService executorService;
 
   public KeycloakPermissionsExecutor(
     KeycloakConfigurationProperties keycloakConfigurationProperties,
     FolioExecutionContext folioExecutionContext,
-    @Qualifier("keycloakPermissionsExecutorService") @Autowired(required = false) ExecutorService executorService) {
+    @Qualifier("keycloakPermissionsExecutorService") ExecutorService executorService) {
     this.keycloakConfigurationProperties = keycloakConfigurationProperties;
     this.folioExecutionContext = folioExecutionContext;
     this.executorService = executorService;
@@ -44,9 +43,11 @@ public class KeycloakPermissionsExecutor {
       return;
     }
 
-    // Sequential execution: either no thread pool (parallelism <= 1) or only a single endpoint.
-    // When there is a single endpoint, we skip thread dispatch to avoid unnecessary context-wrapping overhead.
-    if (executorService == null || endpoints.size() == 1) {
+    // Sequential execution: parallelism disabled (<= 1) or only a single endpoint. Selecting the mode at
+    // runtime (rather than via a conditional bean) keeps the AOT/native context single-shaped. When there is a
+    // single endpoint, we skip thread dispatch to avoid unnecessary context-wrapping overhead.
+    var parallelism = keycloakConfigurationProperties.getPermissions().getParallelism();
+    if (parallelism <= 1 || endpoints.size() == 1) {
       endpoints.forEach(action);
       return;
     }

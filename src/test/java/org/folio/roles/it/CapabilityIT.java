@@ -143,8 +143,7 @@ class CapabilityIT extends BaseIntegrationTest {
   @Test
   void getCapabilityById_negative_notFoundError() throws Exception {
     var unknownId = UUID.fromString("2078cf51-dd12-4830-b081-ae849df2793e");
-    var errorMessage = "No row with the given identifier exists for entity "
-      + "[org.folio.roles.domain.entity.CapabilityEntity with id '" + unknownId + "']";
+    var errorMessage = "Capability is not found: id = " + unknownId;
     mockMvc.perform(get("/capabilities/{id}", unknownId)
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER))
@@ -175,8 +174,7 @@ class CapabilityIT extends BaseIntegrationTest {
   @Test
   void findCapabilitiesByCapabilityId_negative_capabilitySetIsNotFound() throws Exception {
     var capabilitySetId = UUID.randomUUID();
-    var errorMessage = "No row with the given identifier exists for entity "
-      + "[org.folio.roles.domain.entity.CapabilitySetEntity with id '" + capabilitySetId + "']";
+    var errorMessage = "Capability set is not found: id = " + capabilitySetId;
     mockMvc.perform(get("/capability-sets/{id}/capabilities", capabilitySetId)
         .header(TENANT, TENANT_ID)
         .header(USER_ID, USER_ID_HEADER))

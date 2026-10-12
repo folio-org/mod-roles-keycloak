@@ -1,13 +1,12 @@
 package org.folio.roles.integration.keyclock;
 
-import static jakarta.ws.rs.core.Response.Status.CONFLICT;
-import static jakarta.ws.rs.core.Response.Status.Family.SUCCESSFUL;
 import static java.lang.Integer.MAX_VALUE;
 import static java.lang.String.format;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,14 +19,16 @@ import org.folio.roles.domain.dto.Endpoint;
 import org.folio.roles.domain.dto.HttpMethod;
 import org.folio.roles.domain.dto.Policy;
 import org.folio.roles.exception.ServiceException;
+import org.folio.roles.integration.keyclock.client.KeycloakAdminClient;
 import org.folio.roles.utils.JsonHelper;
-import org.keycloak.admin.client.resource.AuthorizationResource;
+import org.folio.spring.FolioExecutionContext;
 import org.keycloak.representations.idm.authorization.DecisionStrategy;
 import org.keycloak.representations.idm.authorization.ResourceRepresentation;
 import org.keycloak.representations.idm.authorization.ScopePermissionRepresentation;
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
 import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientResponseException;
 
 @Log4j2
 @Service
@@ -40,7 +41,9 @@ import org.springframework.stereotype.Service;
 public class KeycloakAuthorizationService {
 
   private final JsonHelper jsonHelper;
-  private final KeycloakAuthorizationClientProvider authResourceProvider;
+  private final KeycloakAdminClient keycloakAdminClient;
+  private final KeycloakClientService keycloakClientService;
+  private final FolioExecutionContext context;
   private final KeycloakPermissionsExecutor permissionsExecutor;
 
   /**
@@ -61,9 +64,9 @@ public class KeycloakAuthorizationService {
   }
 
   private void createPermission(Policy policy, Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
-    var authClient = authResourceProvider.createAuthorizationClient();
-    var scopePermissionsClient = authClient.permissions().scope();
-    var resource = getAuthResourceByStaticPath(authClient, endpoint.getPath());
+    var realm = context.getTenantId();
+    var clientUuid = getLoginClientUuid();
+    var resource = getAuthResourceByStaticPath(realm, clientUuid, endpoint.getPath());
     var scope = getScopeByMethod(resource, endpoint.getMethod());
     if (scope.isEmpty()) {
       log.warn(
@@ -73,8 +76,11 @@ public class KeycloakAuthorizationService {
     }
     var policyName = nameGenerator.apply(endpoint);
     var permission = buildPermissionFor(policyName, resource.getId(), scope.get().getId(), policy.getId());
-    try (var response = scopePermissionsClient.create(permission)) {
-      processKeycloakResponse(permission, response);
+    try {
+      keycloakAdminClient.createScopePermission(realm, clientUuid, permission);
+      log.debug("Permission created in Keycloak [name: {}]", permission.getName());
+    } catch (RestClientResponseException exception) {
+      processKeycloakPermissionFailure(permission, exception);
     }
   }
 
@@ -97,9 +103,9 @@ public class KeycloakAuthorizationService {
     permissionsExecutor.execute(endpoints, endpoint -> removeKeycloakPermission(endpoint, nameGenerator));
   }
 
-  private ResourceRepresentation getAuthResourceByStaticPath(AuthorizationResource authClient, String staticPath) {
+  private ResourceRepresentation getAuthResourceByStaticPath(String realm, String clientUuid, String staticPath) {
     log.debug("Searching for Keycloak resource by permission: {}", staticPath);
-    var resources = authClient.resources().find(staticPath, null, null, null, null, 0, MAX_VALUE);
+    var resources = keycloakAdminClient.findAuthResources(realm, clientUuid, staticPath, 0, MAX_VALUE);
 
     var resourceRepresentation = resources.stream()
       .filter(resource -> Strings.CS.equals(staticPath, resource.getName()))
@@ -114,6 +120,10 @@ public class KeycloakAuthorizationService {
     return resource.getScopes().stream()
       .filter(scope -> Strings.CI.equals(scope.getName(), method.toString()))
       .findFirst();
+  }
+
+  private String getLoginClientUuid() {
+    return keycloakClientService.getLoginClient().getId();
   }
 
   private String toJson(Object value) {
@@ -134,34 +144,40 @@ public class KeycloakAuthorizationService {
   }
 
   private void removeKeycloakPermission(Endpoint endpoint, Function<Endpoint, String> nameGenerator) {
-    var authClient = authResourceProvider.createAuthorizationClient();
-    var scopePermissionsClient = authClient.permissions().scope();
+    var realm = context.getTenantId();
+    var clientUuid = getLoginClientUuid();
     var permissionName = nameGenerator.apply(endpoint);
-    var foundPermission = scopePermissionsClient.findByName(permissionName);
+    var foundPermission = findScopePermissionByName(realm, clientUuid, permissionName);
     if (foundPermission == null) {
       log.info("Keycloak permission is not found [name: {}]", permissionName);
       return;
     }
 
-    scopePermissionsClient.findById(foundPermission.getId()).remove();
+    keycloakAdminClient.deleteScopePermissionById(realm, clientUuid, foundPermission.getId());
     log.debug("Permission removed from Keycloak [name: {}]", permissionName);
   }
 
-  private static void processKeycloakResponse(ScopePermissionRepresentation permission, Response response) {
-    var statusInfo = response.getStatusInfo();
-    if (statusInfo.getFamily() == SUCCESSFUL) {
-      log.debug("Permission created in Keycloak [name: {}]", permission.getName());
-      return;
+  private ScopePermissionRepresentation findScopePermissionByName(String realm, String clientUuid, String name) {
+    try {
+      return keycloakAdminClient.findScopePermissionByName(realm, clientUuid, name);
+    } catch (RestClientResponseException exception) {
+      if (exception.getStatusCode().value() == NOT_FOUND.value()) {
+        return null;
+      }
+      throw exception;
     }
+  }
 
-    if (statusInfo.toEnum() == CONFLICT) {
+  private static void processKeycloakPermissionFailure(ScopePermissionRepresentation permission,
+    RestClientResponseException exception) {
+    if (exception.getStatusCode().value() == CONFLICT.value()) {
       log.info("Permission already exists in Keycloak [name: {}]", permission.getName());
       return;
     }
 
     throw new ServiceException(format(
       "Error during scope-based permission creation in Keycloak. Details: status = %s, message = %s",
-      statusInfo.getStatusCode(), statusInfo.getReasonPhrase()),
+      exception.getStatusCode().value(), exception.getStatusText()),
       "permission", permission.getName());
   }
 }

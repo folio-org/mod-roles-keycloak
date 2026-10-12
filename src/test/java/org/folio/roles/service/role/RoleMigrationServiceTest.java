@@ -7,7 +7,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import jakarta.ws.rs.WebApplicationException;
 import java.util.List;
 import java.util.Optional;
 import org.folio.roles.integration.keyclock.KeycloakRoleService;
@@ -52,7 +51,7 @@ class RoleMigrationServiceTest {
     void positive_roleExistsInKeycloak() {
       var role = role();
       when(keycloakRoleService.create(role)).thenThrow(
-        new KeycloakApiException("Role already exists", new WebApplicationException()));
+        new KeycloakApiException("Role already exists", null, 500));
       when(keycloakRoleService.findByName(role.getName())).thenReturn(Optional.of(role));
       when(roleEntityService.findByName(role.getName())).thenReturn(Optional.empty());
       when(roleEntityService.create(role)).thenReturn(role);
@@ -73,7 +72,7 @@ class RoleMigrationServiceTest {
     void positive_roleAlreadyExistsInDb() {
       var role = role();
       when(keycloakRoleService.create(role)).thenThrow(
-        new KeycloakApiException("Role already exists", new WebApplicationException()));
+        new KeycloakApiException("Role already exists", null, 500));
       when(roleEntityService.findByName(role.getName())).thenReturn(Optional.of(role));
 
       var result = roleMigrationService.createRolesSafely(List.of(role));
@@ -108,7 +107,7 @@ class RoleMigrationServiceTest {
     void positive_keycloakRoleNotFound() {
       var role = role();
       when(keycloakRoleService.create(role)).thenThrow(
-        new KeycloakApiException("Role already exists", new WebApplicationException()));
+        new KeycloakApiException("Role already exists", null, 500));
       when(keycloakRoleService.findByName(role.getName())).thenReturn(Optional.empty());
       when(roleEntityService.findByName(role.getName())).thenReturn(Optional.empty());
 
@@ -126,7 +125,7 @@ class RoleMigrationServiceTest {
     void positive_roleExistsInKeycloakButDbCreateFails() {
       var role = role();
       when(keycloakRoleService.create(role)).thenThrow(
-        new KeycloakApiException("Role already exists", new WebApplicationException()));
+        new KeycloakApiException("Role already exists", null, 500));
       when(keycloakRoleService.findByName(role.getName())).thenReturn(Optional.of(role));
       when(roleEntityService.findByName(role.getName())).thenReturn(Optional.empty());
       when(roleEntityService.create(role)).thenThrow(RuntimeException.class);
@@ -152,7 +151,7 @@ class RoleMigrationServiceTest {
       when(roleEntityService.create(role1)).thenReturn(role1);
       
       when(keycloakRoleService.create(role2)).thenThrow(
-        new KeycloakApiException("Failed", new WebApplicationException()));
+        new KeycloakApiException("Failed", null, 500));
 
       var result = roleMigrationService.createRolesSafely(List.of(role1, role2));
 

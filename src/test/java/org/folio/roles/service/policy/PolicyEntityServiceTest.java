@@ -139,7 +139,7 @@ class PolicyEntityServiceTest {
 
       when(mapper.toPolicyEntity(timePolicy)).thenReturn(updatedTimePolicyEntity);
       when(mapper.toPolicy(updatedTimePolicyEntity)).thenReturn(timePolicy);
-      when(repository.getReferenceById(POLICY_ID)).thenReturn(timePolicyEntity);
+      when(repository.existsById(POLICY_ID)).thenReturn(true);
       when(repository.save(updatedTimePolicyEntity)).thenReturn(updatedTimePolicyEntity);
 
       var result = service.update(timePolicy);
@@ -151,7 +151,7 @@ class PolicyEntityServiceTest {
     void negative_entityNotFound() {
       var userPolicy = userPolicy();
 
-      when(repository.getReferenceById(any(UUID.class))).thenThrow(EntityNotFoundException.class);
+      when(repository.existsById(any(UUID.class))).thenReturn(false);
 
       assertThrows(EntityNotFoundException.class, () -> service.update(userPolicy));
     }

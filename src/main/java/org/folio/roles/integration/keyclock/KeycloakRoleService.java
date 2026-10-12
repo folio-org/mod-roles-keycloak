@@ -1,21 +1,21 @@
 package org.folio.roles.integration.keyclock;
 
 import static java.lang.String.format;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.WebApplicationException;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.roles.domain.dto.Role;
+import org.folio.roles.integration.keyclock.client.KeycloakAdminClient;
 import org.folio.roles.integration.keyclock.exception.KeycloakApiException;
 import org.folio.roles.mapper.KeycloakRoleMapper;
 import org.folio.spring.FolioExecutionContext;
-import org.keycloak.admin.client.Keycloak;
 import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.springframework.web.client.RestClientResponseException;
 
 @Log4j2
 @Service
@@ -27,23 +27,23 @@ import org.springframework.util.Assert;
 @RequiredArgsConstructor
 public class KeycloakRoleService {
 
-  private final Keycloak keycloak;
+  private final KeycloakAdminClient keycloakAdminClient;
   private final KeycloakRoleMapper keycloakRoleMapper;
   private final FolioExecutionContext context;
 
   public Optional<Role> findByName(String name) {
-    var realmResource = keycloak.realm(context.getTenantId());
     try {
-      var keycloakRoleByName = realmResource.roles().get(name).toRepresentation();
+      var keycloakRoleByName = keycloakAdminClient.getRoleByName(context.getTenantId(), name);
       log.debug("Role has been found by name: name = {}", name);
       return Optional.of(keycloakRoleMapper.toRole(keycloakRoleByName));
-    } catch (NotFoundException notFoundException) {
-      log.debug("Role hasn't been found by name: name = {}", name);
-      return Optional.empty();
-    } catch (WebApplicationException exception) {
+    } catch (RestClientResponseException exception) {
+      if (exception.getStatusCode().value() == NOT_FOUND.value()) {
+        log.debug("Role hasn't been found by name: name = {}", name);
+        return Optional.empty();
+      }
       var errorMessage = format("Failed to find role by name: %s", name);
       log.debug(errorMessage);
-      throw new KeycloakApiException(errorMessage, exception);
+      throw new KeycloakApiException(errorMessage, exception, exception.getStatusCode().value());
     }
   }
 
@@ -54,18 +54,17 @@ public class KeycloakRoleService {
    * @return created {@link Role} object
    */
   public Role create(Role role) {
-    var realmResource = keycloak.realm(context.getTenantId());
+    var realm = context.getTenantId();
     var keycloakRole = keycloakRoleMapper.toKeycloakRole(role);
     try {
-      var rolesResource = realmResource.roles();
-      rolesResource.create(keycloakRole);
-      var foundKeycloakRole = rolesResource.get(keycloakRole.getName()).toRepresentation();
+      keycloakAdminClient.createRole(realm, keycloakRole);
+      var foundKeycloakRole = keycloakAdminClient.getRoleByName(realm, keycloakRole.getName());
       log.debug("Role has been created: id = {}, name = {}", role.getId(), role.getName());
       return keycloakRoleMapper.toRole(foundKeycloakRole);
-    } catch (WebApplicationException exception) {
+    } catch (RestClientResponseException exception) {
       var errorMessage = format("Failed to create keycloak role: name = %s", role.getName());
       log.debug(errorMessage);
-      throw new KeycloakApiException(errorMessage, exception);
+      throw new KeycloakApiException(errorMessage, exception, exception.getStatusCode().value());
     }
   }
 
@@ -79,17 +78,16 @@ public class KeycloakRoleService {
   public Role update(Role role) {
     Assert.notNull(role, "Role cannot be null");
     Assert.notNull(role.getId(), "Role id cannot be null");
-    var realmResource = keycloak.realm(context.getTenantId());
     var keycloakRole = keycloakRoleMapper.toKeycloakRole(role);
 
     try {
-      realmResource.rolesById().updateRole(role.getId().toString(), keycloakRole);
+      keycloakAdminClient.updateRoleById(context.getTenantId(), role.getId().toString(), keycloakRole);
       log.debug("Role has been updated: name = {}", role.getName());
       return role;
-    } catch (WebApplicationException exception) {
+    } catch (RestClientResponseException exception) {
       var errorMessage = format("Failed to update role: %s", role.getId());
       log.debug(errorMessage);
-      throw new KeycloakApiException(errorMessage, exception);
+      throw new KeycloakApiException(errorMessage, exception, exception.getStatusCode().value());
     }
   }
 
@@ -97,18 +95,16 @@ public class KeycloakRoleService {
    * Deletes role by identifier.
    *
    * @param id - role identifier
-   * @throws IllegalArgumentException if role identifier is null
    * @throws KeycloakApiException if failed to delete a role
    */
   public void deleteById(UUID id) {
-    var realmResource = keycloak.realm(context.getTenantId());
     try {
-      realmResource.rolesById().deleteRole(id != null ? id.toString() : null);
+      keycloakAdminClient.deleteRoleById(context.getTenantId(), id != null ? id.toString() : null);
       log.debug("Role has been deleted: id = {}", id);
-    } catch (WebApplicationException exception) {
+    } catch (RestClientResponseException exception) {
       var errorMessage = format("Failed to delete role: %s", id);
       log.debug(errorMessage);
-      throw new KeycloakApiException(errorMessage, exception);
+      throw new KeycloakApiException(errorMessage, exception, exception.getStatusCode().value());
     }
   }
 }
