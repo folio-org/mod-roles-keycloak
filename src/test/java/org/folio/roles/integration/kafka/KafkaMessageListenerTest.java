@@ -172,7 +172,7 @@ class KafkaMessageListenerTest {
   }
 
   private static ResourceEvent resourceEvent() {
-    return ResourceEvent.builder()
+    return ResourceEvent.baseBuilder()
       .tenant(TENANT_ID)
       .newValue(capabilityEventBodyAsMap())
       .build();

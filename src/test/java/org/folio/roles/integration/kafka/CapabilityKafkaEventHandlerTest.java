@@ -65,7 +65,7 @@ class CapabilityKafkaEventHandlerTest {
     when(capabilityEventProcessor.process(null)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
-    var resourceEvent = ResourceEvent.builder()
+    var resourceEvent = ResourceEvent.baseBuilder()
       .tenant(TENANT_ID)
       .type(CREATE)
       .newValue(newValueMap)
@@ -90,7 +90,7 @@ class CapabilityKafkaEventHandlerTest {
     when(capabilityEventProcessor.process(capabilityEvent())).thenReturn(capabilityResultHolder());
     when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
-    var resourceEvent = ResourceEvent.builder()
+    var resourceEvent = ResourceEvent.baseBuilder()
       .tenant(TENANT_ID)
       .type(DELETE)
       .oldValue(oldValueMap)
@@ -112,7 +112,7 @@ class CapabilityKafkaEventHandlerTest {
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
     when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
-    var resourceEvent = ResourceEvent.builder()
+    var resourceEvent = ResourceEvent.baseBuilder()
       .tenant(TENANT_ID)
       .type(UPDATE)
       .oldValue(capabilityEventBodyAsMap(MODULE_ID, List.of(sampleResources())))
@@ -139,7 +139,7 @@ class CapabilityKafkaEventHandlerTest {
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
     when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
-    var resourceEvent = ResourceEvent.builder()
+    var resourceEvent = ResourceEvent.baseBuilder()
       .tenant(TENANT_ID)
       .type(UPDATE)
       .oldValue(capabilityEventBodyAsMap(MODULE_ID, emptyList()))
@@ -162,7 +162,7 @@ class CapabilityKafkaEventHandlerTest {
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder(emptyList(), emptyList()));
     when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
-    var resourceEvent = ResourceEvent.builder()
+    var resourceEvent = ResourceEvent.baseBuilder()
       .tenant(TENANT_ID)
       .type(UPDATE)
       .oldValue(capabilityEventBodyAsMap(MODULE_ID, List.of(sampleResources())))
@@ -185,7 +185,7 @@ class CapabilityKafkaEventHandlerTest {
     when(capabilityEventProcessor.process(newEvent)).thenReturn(capabilityResultHolder());
     when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
-    var resourceEvent = ResourceEvent.builder()
+    var resourceEvent = ResourceEvent.baseBuilder()
       .tenant(TENANT_ID)
       .type(UPDATE)
       .oldValue(capabilityEventBodyAsMap(MODULE_ID, emptyList()))
@@ -208,7 +208,7 @@ class CapabilityKafkaEventHandlerTest {
     when(capabilityEventProcessor.process(oldEvent)).thenReturn(capabilityResultHolder());
     when(capabilityReplacementsService.deduceReplacements(any())).thenReturn(Optional.empty());
 
-    var resourceEvent = ResourceEvent.builder()
+    var resourceEvent = ResourceEvent.baseBuilder()
       .tenant(TENANT_ID)
       .type(UPDATE)
       .oldValue(capabilityEventBodyAsMap(MODULE_ID, List.of(sampleResources())))
@@ -225,7 +225,7 @@ class CapabilityKafkaEventHandlerTest {
 
   @Test
   void handleEvent_positive_applicationVersionUpgradeEvent() {
-    var resourceEvent = ResourceEvent.builder()
+    var resourceEvent = ResourceEvent.baseBuilder()
       .tenant(TENANT_ID)
       .type(UPDATE)
       .oldValue(Map.of("moduleId", MODULE_ID, "moduleType", "module", "applicationId", APPLICATION_ID))
