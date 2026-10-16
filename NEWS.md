@@ -1,3 +1,6 @@
+## Version `v4.0.5` (16.10.2026)
+* Upgrade Spring Boot to 4.1.1 version (MODROLESKC-436)
+
 ## Version `v4.0.4` (20.08.2026)
 * Add `dedup` query parameter and `direct` flag for `GET /roles/{id}/capabilities`, add performance indexes (MODROLESKC-408)
 * Fix lost nested capabilities during event reprocessing (MODROLESKC-424)
