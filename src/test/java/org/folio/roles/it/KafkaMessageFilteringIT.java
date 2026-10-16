@@ -136,7 +136,7 @@ class KafkaMessageFilteringIT extends BaseIntegrationTest {
 
   private ResourceEvent<?> eventForTenant(String tenant) {
     var base = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
-    return ResourceEvent.builder()
+    return ResourceEvent.baseBuilder()
       .type(base.getType())
       .tenant(tenant)
       .resourceName(base.getResourceName())
