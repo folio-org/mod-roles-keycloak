@@ -46,4 +46,5 @@
   <include file="changes/add-permission-table-indexes.xml" relativeToChangelogFile="true"/>
   <include file="changes/add-reverse-lookup-indexes.xml" relativeToChangelogFile="true"/>
   <include file="changes/add-folio-permission-indexes.xml" relativeToChangelogFile="true"/>
+  <include file="changes/create-tenant-module-version.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

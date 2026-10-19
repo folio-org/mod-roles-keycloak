@@ -13,16 +13,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.integration.kafka.consumer.EnableKafkaConsumer;
-import org.folio.integration.kafka.consumer.filter.TenantIsDisabledException;
-import org.folio.integration.kafka.consumer.filter.TenantsAreDisabledException;
+import org.folio.integration.kafka.consumer.filter.MarkerTableBasedTenantAwareMessageFilter;
+import org.folio.integration.kafka.consumer.filter.TenantInitializationDetector;
+import org.folio.integration.kafka.consumer.filter.TenantModuleVersionRepository;
+import org.folio.integration.kafka.consumer.filter.TenantModuleVersionService;
 import org.folio.integration.kafka.model.ResourceEvent;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.exception.LiquibaseMigrationException;
 import org.hibernate.exception.SQLGrammarException;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.KafkaException.Level;
 import org.springframework.kafka.annotation.KafkaListenerConfigurer;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -31,6 +37,7 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConsumerRecordRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.listener.adapter.RecordFilterStrategy;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.FixedBackOff;
@@ -47,6 +54,31 @@ public class KafkaConfiguration implements KafkaListenerConfigurer {
   private final KafkaProperties kafkaProperties;
   private final CapabilityEventRetryConfiguration retryConfiguration;
   private final LocalValidatorFactoryBean validator;
+
+  @Bean
+  public TenantModuleVersionRepository tenantModuleVersionRepository(JdbcTemplate jdbcTemplate) {
+    return new TenantModuleVersionRepository(jdbcTemplate);
+  }
+
+  @Bean
+  public TenantInitializationDetector tenantInitializationDetector(TenantModuleVersionRepository repository) {
+    return schema -> repository.tableExists(schema, "role");
+  }
+
+  @Bean
+  public TenantModuleVersionService tenantModuleVersionService(TenantModuleVersionRepository repository,
+    TenantInitializationDetector initializationDetector,
+    FolioExecutionContext context, FolioModuleMetadata folioModuleMetadata) {
+    return new TenantModuleVersionService(repository, initializationDetector, context::getTenantId,
+      folioModuleMetadata::getDBSchemaName, folioModuleMetadata.getModuleId());
+  }
+
+  @Bean("markerTableBasedTenantAwareMessageFilter")
+  public RecordFilterStrategy<String, Object> markerTableBasedTenantAwareMessageFilter(
+    TenantModuleVersionService tenantModuleVersionService,
+    @Value("${application.kafka.consumer.filtering.tenant-filter.enabled:false}") boolean enabled) {
+    return new MarkerTableBasedTenantAwareMessageFilter<>(tenantModuleVersionService, enabled);
+  }
 
   @Bean
   public ConsumerRecordRecoverer capabilityRecoverer(
@@ -94,12 +126,6 @@ public class KafkaConfiguration implements KafkaListenerConfigurer {
   private BackOff getBackOff(Exception exception) {
     if (exception instanceof LiquibaseMigrationException) {
       log.warn("Liquibase migration in progress, retrying Kafka event", exception);
-      return getFixedBackOff();
-    }
-
-    if (exception instanceof TenantsAreDisabledException
-      || exception instanceof TenantIsDisabledException) {
-      log.warn("Tenant(s) is disabled, retrying Kafka event", exception);
       return getFixedBackOff();
     }
 

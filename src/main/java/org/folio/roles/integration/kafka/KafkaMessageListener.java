@@ -35,8 +35,8 @@ public class KafkaMessageListener {
    * Handles capability event.
    *
    * <p>The {@code kafkaConsumerProperties} bean (used in SpEL expressions) and the
-   * {@code tenantAwareMessageFilter} bean are both registered by {@code @EnableKafkaConsumer}
-   * on {@link org.folio.roles.integration.kafka.configuration.KafkaConfiguration}.
+   * {@code markerTableBasedTenantAwareMessageFilter} bean is registered by
+   * {@link org.folio.roles.integration.kafka.configuration.KafkaConfiguration}.
    *
    * @param resourceEvent - capability {@link ResourceEvent} object
    */
@@ -45,7 +45,7 @@ public class KafkaMessageListener {
     containerFactory = "kafkaListenerContainerFactory",
     groupId = "#{kafkaConsumerProperties.listener['capability'].groupId}",
     topicPattern = "#{kafkaConsumerProperties.listener['capability'].topicPattern}",
-    filter = "tenantAwareMessageFilter")
+    filter = "markerTableBasedTenantAwareMessageFilter")
   public void handleCapabilityEvent(@Payload @Valid ResourceEvent<?> resourceEvent) {
     try (
       var ignored = new FolioExecutionContextSetter(executionContextBuilder.buildContext(resourceEvent.getTenant()))) {

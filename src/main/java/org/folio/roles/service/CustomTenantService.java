@@ -4,6 +4,7 @@ import static org.folio.common.utils.CollectionUtils.toStream;
 
 import java.util.List;
 import lombok.extern.log4j.Log4j2;
+import org.folio.integration.kafka.consumer.filter.TenantModuleVersionService;
 import org.folio.roles.integration.kafka.KafkaAdminService;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationClientProvider;
 import org.folio.roles.integration.keyclock.KeycloakClientService;
@@ -32,13 +33,15 @@ public class CustomTenantService extends TenantService {
   private final KeycloakClientService keycloakClientService;
   private final KeycloakAuthorizationClientProvider authorizationClientProvider;
   private final FolioExecutionContext folioExecutionContext;
+  private final TenantModuleVersionService tenantModuleVersionService;
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
     FolioSpringLiquibase folioSpringLiquibase, KafkaAdminService kafkaAdminService,
     List<ReferenceDataLoader> referenceDataLoaders,
     LoadableRoleService loadableRoleService, Keycloak keycloak, CapabilitiesMergeService capabilitiesMergeService,
     KeycloakClientService keycloakClientService,
-    KeycloakAuthorizationClientProvider authorizationClientProvider) {
+    KeycloakAuthorizationClientProvider authorizationClientProvider,
+    TenantModuleVersionService tenantModuleVersionService) {
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.kafkaAdminService = kafkaAdminService;
     this.referenceDataLoaders = referenceDataLoaders;
@@ -48,6 +51,7 @@ public class CustomTenantService extends TenantService {
     this.keycloakClientService = keycloakClientService;
     this.authorizationClientProvider = authorizationClientProvider;
     this.folioExecutionContext = context;
+    this.tenantModuleVersionService = tenantModuleVersionService;
   }
 
   @Override
@@ -73,6 +77,12 @@ public class CustomTenantService extends TenantService {
     keycloak.tokenManager().grantToken();
     log.debug("Merging duplicate capabilities after tenant update");
     capabilitiesMergeService.mergeDuplicateCapabilities();
+    tenantModuleVersionService.markCurrentVersion();
+  }
+
+  @Override
+  protected void beforeTenantDeletion(TenantAttributes tenantAttributes) {
+    tenantModuleVersionService.clear();
   }
 
   @Override
