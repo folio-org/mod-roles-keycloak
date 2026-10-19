@@ -19,7 +19,7 @@ more information.
 * [Loading of client IDs/secrets](#loading-of-client-idssecrets)
 * [Custom permission-capability mappings](#custom-permission-capability-mappings)
 * [Capability duplicate removal](#capability-duplicate-removal)
-* [Kafka message filtering](#kafka-message-filtering)
+* [Kafka tenant filtering](#kafka-tenant-filtering)
 
 ## Introduction
 
@@ -88,8 +88,8 @@ Maximum concurrent migrations: **1** (configurable in code)
 | FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH             | [folio permission mapping json file](https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json) |  false   | Link or path to resource that contains folio permission mappings. File path or URL can be used.                                                       |
 | CACHE_PERMISSION_MAPPINGS_TTL                     | 60                                                                                                                                                     |  false   | TTL for cache of permission mapping overrides, in seconds                                                                                             |
 | OKAPI_URL                                         | http://localhost:9130                                                                                                                                  |  false   | Okapi URL                                                                                                                                            |
-| MODULE_VERSION                                    | -                                                                                                                                                      |  false   | Deployed module version. Required for mixed-version deployments and must match `MODULE_VERSION` in the associated sidecar.                            |
-| KAFKA_TENANT_FILTER_ENABLED                       | false                                                                                                                                                  |  false   | Enables marker-table-based filtering of Kafka capability events.                                                                                     |
+| MODULE_VERSION                                    | -                                                                                                                                                      |  false   | Deployed module version. Required for mixed-version deployments and must exactly match `MODULE_VERSION` in the associated sidecar.                    |
+| KAFKA_TENANT_FILTER_ENABLED                       | false                                                                                                                                                  |  false   | Enables marker-table-based Kafka tenant filtering. Set to `true` in mixed-version deployments.                                                        |
 | EVENT_CONFIRMATION_ENABLED                        | false                                                                                                                                                  |  false   | Enable publishing of SUCCESS/FAILURE confirmations after processing capability events                                                                 |
 | EVENT_CONFIRMATION_TOPIC                          | `${ENV}.mgr-tenant-entitlements.resource-result`                                                                                                       |  false   | Kafka topic for publishing capability event confirmation results                                                                                      |
 
@@ -254,26 +254,22 @@ public void mergeDuplicateCapabilities() {
 If either the old or new capability does not exist, the migration is skipped with a log message.
 Migration errors are logged but do not block tenant initialization.
 
-## Kafka message filtering
+## Kafka tenant filtering
 
-The module uses `markerTableBasedTenantAwareMessageFilter` to ensure that only the module version that initialized a
-tenant processes its Kafka capability events. The marker is stored in the tenant schema; filtering does not perform
-an entitlement-service lookup for each event.
-
-The module version is appended to the capability Kafka consumer group ID. Therefore, each deployed module version
-receives its own copy of each capability event before tenant filtering is applied.
+In a mixed-version deployment, multiple versions of the module consume the same `capability` topic, each using a
+separate consumer group identified by the module version. Each version processes events only for tenants initialized
+by that version.
 
 ### How it works
 
-1. Tenant initialization records the running module ID in the tenant schema.
+1. During tenant initialization, the module stores its full module ID,
+   `<spring.application.name>-<spring.application.version>`, in the tenant’s `tenant_module_version` table.
 2. Events are processed when the recorded module ID matches the running version.
 3. Events owned by another module version are skipped.
 
-`MODULE_VERSION` supplies `spring.application.version` and must exactly match the value supplied to the module's
+When `KAFKA_TENANT_FILTER_ENABLED=true`, `MarkerTableBasedTenantAwareMessageFilter` reads the tenant from the
+`x-okapi-tenant` Kafka header, falling back to `folio.tenantId`, and skips the message when the recorded module ID
+belongs to another version.
+
+`MODULE_VERSION` (`spring.application.version`) must exactly match the value supplied to the module's
 associated sidecar container.
-
-### Configuration properties
-
-| Property                                                     | Default | Env variable                  | Description                                  |
-|:-------------------------------------------------------------|:--------|:------------------------------|:---------------------------------------------|
-| `application.kafka.consumer.filtering.tenant-filter.enabled` | `false` | `KAFKA_TENANT_FILTER_ENABLED` | Enables marker-table-based tenant filtering. |

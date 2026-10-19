@@ -51,6 +51,9 @@ folio:
   environment: ${ENV:folio}
   exchange:
     enabled: true
+  kafka:
+    tenant-filter:
+      enabled: ${KAFKA_TENANT_FILTER_ENABLED:false}
   logging:
     request:
       enabled: false
@@ -122,9 +125,6 @@ application:
         capability:
           topic-pattern: ${KAFKA_CAPABILITIES_TOPIC_PATTERN:(${application.environment}\.)(.*\.)mgr-tenant-entitlements.capability}
           group-id: ${application.environment}-mod-roles-keycloak-capability-group-${spring.application.version}
-      filtering:
-        tenant-filter:
-          enabled: ${KAFKA_TENANT_FILTER_ENABLED:false}
   retry:
     capability-event:
       retry-attempts: ${CAPABILITY_TOPIC_RETRY_ATTEMPTS:9223372036854775807}
