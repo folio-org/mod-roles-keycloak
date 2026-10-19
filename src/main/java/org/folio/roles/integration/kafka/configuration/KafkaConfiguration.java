@@ -14,8 +14,6 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.integration.kafka.consumer.EnableKafkaConsumer;
 import org.folio.integration.kafka.consumer.configuration.TenantModuleVersionConfiguration;
-import org.folio.integration.kafka.consumer.filter.TenantInitializationDetector;
-import org.folio.integration.kafka.consumer.filter.TenantModuleVersionRepository;
 import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.spring.exception.LiquibaseMigrationException;
 import org.hibernate.exception.SQLGrammarException;
@@ -50,11 +48,6 @@ public class KafkaConfiguration implements KafkaListenerConfigurer {
   private final KafkaProperties kafkaProperties;
   private final CapabilityEventRetryConfiguration retryConfiguration;
   private final LocalValidatorFactoryBean validator;
-
-  @Bean
-  public TenantInitializationDetector tenantInitializationDetector(TenantModuleVersionRepository repository) {
-    return () -> repository.tableExists("role");
-  }
 
   @Bean
   public ConsumerRecordRecoverer capabilityRecoverer(
