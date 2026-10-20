@@ -75,7 +75,7 @@ public class KafkaConfiguration implements KafkaListenerConfigurer {
     Map<String, Object> config = new HashMap<>(kafkaProperties.buildConsumerProperties());
     config.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
-    config.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
+    config.put(AUTO_OFFSET_RESET_CONFIG, "latest");
     return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), deserializer);
   }
 
