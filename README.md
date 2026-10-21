@@ -19,7 +19,7 @@ more information.
 * [Loading of client IDs/secrets](#loading-of-client-idssecrets)
 * [Custom permission-capability mappings](#custom-permission-capability-mappings)
 * [Capability duplicate removal](#capability-duplicate-removal)
-* [Kafka message filtering](#kafka-message-filtering)
+* [Kafka tenant filtering](#kafka-tenant-filtering)
 
 ## Introduction
 
@@ -87,10 +87,9 @@ Maximum concurrent migrations: **1** (configurable in code)
 | CAPABILITY_TOPIC_RETRY_ATTEMPTS                   | 9223372036854775807                                                                                                                                    |  false   | `capability` topic retry attempts if tenant is not initialized (default value is Long.MAX_VALUE ~= infinite amount of retries)                        |
 | FOLIO_PERMISSIONS_MAPPING_SOURCE_PATH             | [folio permission mapping json file](https://raw.githubusercontent.com/folio-org/folio-permissions-mappings/refs/heads/master/mappings-overrides.json) |  false   | Link or path to resource that contains folio permission mappings. File path or URL can be used.                                                       |
 | CACHE_PERMISSION_MAPPINGS_TTL                     | 60                                                                                                                                                     |  false   | TTL for cache of permission mapping overrides, in seconds                                                                                             |
-| OKAPI_URL                                         | http://localhost:9130                                                                                                                                  |  false   | Base URL of the tenant entitlement service (`mgr-tenant-entitlements`). Required when `KAFKA_TENANT_FILTER_ENABLED=true`.                             |
-| KAFKA_TENANT_FILTER_ENABLED                       | false                                                                                                                                                  |  false   | Enables tenant-based filtering of Kafka capability events. When `true`, events for disabled/unentitled tenants are skipped or retried.                |
-| KAFKA_TENANT_FILTER_TENANT_DISABLED_STRATEGY      | skip                                                                                                                                                   |  false   | Action when a message's tenant is not in the enabled set. `skip` — silently discard; `fail` — throw `TenantIsDisabledException` to trigger retry.     |
-| KAFKA_TENANT_FILTER_ALL_TENANTS_DISABLED_STRATEGY | fail                                                                                                                                                   |  false   | Action when the enabled-tenant set is empty or unavailable. `skip` — silently discard; `fail` — throw `TenantsAreDisabledException` to trigger retry. |
+| OKAPI_URL                                         | http://localhost:9130                                                                                                                                  |  false   | Okapi URL                                                                                                                                            |
+| MODULE_VERSION                                    | -                                                                                                                                                      |  false   | Deployed module version. Required for mixed-version deployments and must exactly match `MODULE_VERSION` in the associated sidecar.                    |
+| KAFKA_TENANT_FILTER_ENABLED                       | false                                                                                                                                                  |  false   | Enables marker-table-based Kafka tenant filtering. Set to `true` in mixed-version deployments.                                                        |
 | EVENT_CONFIRMATION_ENABLED                        | false                                                                                                                                                  |  false   | Enable publishing of SUCCESS/FAILURE confirmations after processing capability events                                                                 |
 | EVENT_CONFIRMATION_TOPIC                          | `${ENV}.mgr-tenant-entitlements.resource-result`                                                                                                       |  false   | Kafka topic for publishing capability event confirmation results                                                                                      |
 
@@ -255,38 +254,22 @@ public void mergeDuplicateCapabilities() {
 If either the old or new capability does not exist, the migration is skipped with a log message.
 Migration errors are logged but do not block tenant initialization.
 
-## Kafka message filtering
+## Kafka tenant filtering
 
-The module filters incoming Kafka capability events by tenant entitlement status. Before processing an event, the
-`tenantAwareMessageFilter` checks whether the event's tenant is currently enabled (i.e. entitled) by querying the
-tenant entitlement service. Events for disabled tenants are either silently skipped or retried, depending on the
-configured strategy.
+In a mixed-version deployment, multiple versions of the module consume the same `capability` topic, each using a
+separate consumer group identified by the module version. Each version processes events only for tenants initialized
+by that version.
 
 ### How it works
 
-1. The filter calls the tenant entitlement service to retrieve the set of enabled tenants for the current module.
-2. If the event's tenant is in the enabled set, the message is passed through and processed normally.
-3. If the event's tenant is **not** in the enabled set, the configured `tenant-disabled-strategy` determines what
-   happens (see below).
-4. If the enabled-tenant set is **empty or unavailable**, the `all-tenants-disabled-strategy` determines what happens.
+1. During tenant initialization, the module stores its full module ID,
+   `<spring.application.name>-<spring.application.version>`, in the tenant’s `tenant_module_version` table.
+2. Events are processed when the recorded module ID matches the running version.
+3. Events owned by another module version are skipped.
 
-When a strategy throws an exception (`FAIL`), the error handler retries the message with the configured backoff until
-the tenant becomes enabled or the retry limit is reached.
+When `KAFKA_TENANT_FILTER_ENABLED=true`, `MarkerTableBasedTenantAwareMessageFilter` reads the tenant from the
+`x-okapi-tenant` Kafka header, falling back to `folio.tenantId`, and skips the message when the recorded module ID
+belongs to another version.
 
-### Configuration properties
-
-| Property                                                                           | Default | Env variable                                              | Description                                                                                                                                                             |
-|:-----------------------------------------------------------------------------------|:--------|:----------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `application.kafka.consumer.filtering.tenant-filter.enabled`                       | `false` | `KAFKA_TENANT_FILTER_ENABLED`                             | Enables or disables tenant-based message filtering.                                                                                                                     |
-| `application.kafka.consumer.filtering.tenant-filter.ignore-empty-batch`            | `true`  | —                                                         | When `true`, messages with an empty payload batch are silently ignored without invoking the filter.                                                                     |
-| `application.kafka.consumer.filtering.tenant-filter.tenant-disabled-strategy`      | `skip`  | `KAFKA_TENANT_FILTER_TENANT_DISABLED_STRATEGY`            | Action taken when the event's tenant is not in the enabled set. `skip` — silently discard the message; `fail` — throw `TenantIsDisabledException` to trigger retry.     |
-| `application.kafka.consumer.filtering.tenant-filter.all-tenants-disabled-strategy` | `fail`  | `KAFKA_TENANT_FILTER_ALL_TENANTS_DISABLED_STRATEGY`       | Action taken when the enabled-tenant set is empty or unavailable. `skip` — silently discard the message; `fail` — throw `TenantsAreDisabledException` to trigger retry. |
-
-### Strategy summary
-
-| Strategy value | Applicable condition           | Behaviour                                                                                               |
-|:---------------|:-------------------------------|:--------------------------------------------------------------------------------------------------------|
-| `skip`         | Single tenant disabled         | Message is silently discarded. Use when receiving messages for tenants that are not yet installed.      |
-| `fail`         | Single tenant disabled         | `TenantIsDisabledException` is thrown; the error handler retries the message until the tenant is ready. |
-| `skip`         | All tenants disabled           | Message is silently discarded.                                                                          |
-| `fail`         | All tenants disabled (default) | `TenantsAreDisabledException` is thrown; the error handler retries until at least one tenant is ready.  |
+`MODULE_VERSION` (`spring.application.version`) must exactly match the value supplied to the module's
+associated sidecar container.

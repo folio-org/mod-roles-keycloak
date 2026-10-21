@@ -13,6 +13,7 @@
 * Async entitlement processing feedback loop for capability events (MODROLESKC-361)
 * Incorrect "totalRecords" value in "GET /roles/users?query=..." API response (MODROLESKC-409)
 * Serialize loadable-role capability assignments to prevent concurrent entitlement from losing system-user permissions (MODROLESKC-414)
+* Add marker-table-based Kafka tenant filtering for mixed-version deployments (MODROLESKC-438)
 
 ## Version `v4.0.0` (16.04.2025)
 * Added endpoint to create or update default roles via REST API (MODROLESKC-301)

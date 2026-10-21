@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import org.folio.integration.kafka.consumer.filter.TenantModuleVersionService;
 import org.folio.roles.integration.kafka.KafkaAdminService;
 import org.folio.roles.integration.keyclock.KeycloakAuthorizationClientProvider;
 import org.folio.roles.integration.keyclock.KeycloakClientService;
@@ -61,6 +62,8 @@ class CustomTenantServiceTest {
   private KeycloakClientService keycloakClientService;
   @Mock
   private KeycloakAuthorizationClientProvider authorizationClientProvider;
+  @Mock
+  private TenantModuleVersionService tenantModuleVersionService;
   private CustomTenantService customTenantService;
 
   @BeforeEach
@@ -68,7 +71,7 @@ class CustomTenantServiceTest {
     var referenceDataLoader = List.of(rolesDataLoader, policiesDataLoader);
     customTenantService = new TestCustomTenantService(jdbcTemplate, context, folioSpringLiquibase,
       kafkaAdminService, referenceDataLoader, loadableRoleService, keycloak, capabilitiesMergeService,
-      keycloakClientService, authorizationClientProvider);
+      keycloakClientService, authorizationClientProvider, tenantModuleVersionService);
   }
 
   @AfterEach
@@ -153,6 +156,14 @@ class CustomTenantServiceTest {
     verify(kafkaAdminService).restartEventListeners();
     verify(tokenManager).grantToken();
     verify(capabilitiesMergeService).mergeDuplicateCapabilities();
+    verify(tenantModuleVersionService).markCurrentVersion();
+  }
+
+  @Test
+  void beforeTenantDeletion_positive_markerCleared() {
+    customTenantService.beforeTenantDeletion(new TenantAttributes());
+
+    verify(tenantModuleVersionService).clear();
   }
 
   public static class TestCustomTenantService extends CustomTenantService {
@@ -162,11 +173,13 @@ class CustomTenantServiceTest {
       List<ReferenceDataLoader> referenceDataLoaders,
       LoadableRoleService loadableRoleService, Keycloak keycloak, CapabilitiesMergeService capabilitiesMergeService,
       KeycloakClientService keycloakClientService,
-      KeycloakAuthorizationClientProvider authorizationClientProvider) {
+      KeycloakAuthorizationClientProvider authorizationClientProvider,
+      TenantModuleVersionService tenantModuleVersionService) {
 
       super(jdbcTemplate, context, folioSpringLiquibase, kafkaAdminService,
         referenceDataLoaders, loadableRoleService,
-        keycloak, capabilitiesMergeService, keycloakClientService, authorizationClientProvider);
+        keycloak, capabilitiesMergeService, keycloakClientService, authorizationClientProvider,
+        tenantModuleVersionService);
     }
 
     @Override

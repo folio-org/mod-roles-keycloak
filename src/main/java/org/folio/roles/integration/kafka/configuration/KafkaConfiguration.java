@@ -13,8 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.integration.kafka.consumer.EnableKafkaConsumer;
-import org.folio.integration.kafka.consumer.filter.TenantIsDisabledException;
-import org.folio.integration.kafka.consumer.filter.TenantsAreDisabledException;
+import org.folio.integration.kafka.consumer.configuration.TenantModuleVersionConfiguration;
 import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.spring.exception.LiquibaseMigrationException;
 import org.hibernate.exception.SQLGrammarException;
@@ -22,6 +21,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.kafka.KafkaException.Level;
 import org.springframework.kafka.annotation.KafkaListenerConfigurer;
@@ -39,6 +39,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 @Log4j2
 @Configuration
 @EnableKafkaConsumer
+@Import(TenantModuleVersionConfiguration.class)
 @RequiredArgsConstructor
 public class KafkaConfiguration implements KafkaListenerConfigurer {
 
@@ -74,7 +75,7 @@ public class KafkaConfiguration implements KafkaListenerConfigurer {
     Map<String, Object> config = new HashMap<>(kafkaProperties.buildConsumerProperties());
     config.put(KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
     config.put(VALUE_DESERIALIZER_CLASS_CONFIG, deserializer);
-    config.put(AUTO_OFFSET_RESET_CONFIG, "earliest");
+    config.put(AUTO_OFFSET_RESET_CONFIG, "latest");
     return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), deserializer);
   }
 
@@ -94,12 +95,6 @@ public class KafkaConfiguration implements KafkaListenerConfigurer {
   private BackOff getBackOff(Exception exception) {
     if (exception instanceof LiquibaseMigrationException) {
       log.warn("Liquibase migration in progress, retrying Kafka event", exception);
-      return getFixedBackOff();
-    }
-
-    if (exception instanceof TenantsAreDisabledException
-      || exception instanceof TenantIsDisabledException) {
-      log.warn("Tenant(s) is disabled, retrying Kafka event", exception);
       return getFixedBackOff();
     }
 

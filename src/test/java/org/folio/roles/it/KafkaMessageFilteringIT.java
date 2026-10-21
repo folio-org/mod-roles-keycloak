@@ -1,146 +1,146 @@
 package org.folio.roles.it;
 
-import static org.folio.roles.support.TestConstants.TENANT_ID;
-import static org.folio.roles.support.TestUtils.await;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.awaitility.Awaitility.await;
+import static org.awaitility.Durations.FIVE_SECONDS;
 import static org.folio.roles.utils.TestValues.readValue;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.times;
+import static org.folio.spring.integration.XOkapiHeaders.TENANT;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
-import java.util.Set;
-import org.folio.integration.kafka.consumer.filter.te.TenantEntitlementClient;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.integration.kafka.consumer.filter.TenantModuleVersionRepository;
 import org.folio.integration.kafka.model.ResourceEvent;
 import org.folio.roles.base.BaseIntegrationTest;
+import org.folio.roles.integration.kafka.CapabilityKafkaEventHandler;
+import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.liquibase.LiquibaseMigrationLockService;
+import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.test.types.IntegrationTest;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.jdbc.Sql;
 
 @IntegrationTest
-@TestPropertySource(properties = {
-  "application.kafka.consumer.filtering.tenant-filter.enabled=true",
-  "application.retry.capability-event.retry-delay=10ms"
-})
-@Sql(executionPhase = AFTER_TEST_METHOD, scripts = {
-  "classpath:/sql/truncate-capability-tables.sql",
-  "classpath:/sql/truncate-permission-table.sql"
-})
+@TestPropertySource(properties =
+  "folio.kafka.tenant-filter.enabled=true")
 class KafkaMessageFilteringIT extends BaseIntegrationTest {
 
-  private static final String DISABLED_TENANT = "disabled";
+  private static final String CURRENT_TENANT = "filtercurrent";
+  private static final String DIFFERENT_VERSION_TENANT = "filterdifferent";
+  private static final String PRE_MARKER_TENANT = "filterlegacy";
+  private static final String CURRENT_MODULE_ID = "mod-roles-keycloak-0.0.1-TEST";
+  private static final String DIFFERENT_MODULE_ID = "mod-roles-keycloak-0.0.0";
+
+  @MockitoBean private CapabilityKafkaEventHandler capabilityKafkaEventHandler;
+  @MockitoBean private LiquibaseMigrationLockService liquibaseMigrationLockService;
 
   @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
-  @MockitoBean private TenantEntitlementClient tenantEntitlementClient;
+  @Autowired private JdbcOperations jdbcOperations;
+  @Autowired private TenantModuleVersionRepository repository;
+  @Autowired private FolioModuleMetadata folioModuleMetadata;
 
-  @BeforeAll
-  static void beforeAll() {
-    enableTenant(TENANT_ID);
+  @AfterEach
+  void removeTenantSchemas() {
+    dropSchema(CURRENT_TENANT);
+    dropSchema(DIFFERENT_VERSION_TENANT);
+    dropSchema(PRE_MARKER_TENANT);
   }
 
-  @AfterAll
-  static void afterAll() {
-    removeTenant(TENANT_ID);
-  }
-
-  /**
-   * Testing the case when message for disabled tenant is ignored.
-   * Verifies that:
-   * <ul>
-   *   <li>A message for a disabled tenant is filtered out and not processed.</li>
-   *   <li>The next message for an enabled tenant is processed normally.</li>
-   * </ul>
-   */
   @Test
-  void shouldFilterMessageForDisabledTenant_andProcessNextMessageForEnabledTenant() {
-    // given: only TENANT_ID is enabled
-    when(tenantEntitlementClient.lookupTenantsByModuleId(anyString())).thenReturn(Set.of(TENANT_ID));
+  void shouldProcessMessageForTenantOwnedByCurrentVersion() throws Exception {
+    recreateInitializedTenant(CURRENT_TENANT, true);
+    saveModuleVersion(CURRENT_TENANT, CURRENT_MODULE_ID);
 
-    // when: sending a message for the disabled tenant followed by a message for the enabled tenant
-    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, eventForTenant(DISABLED_TENANT));
-    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, eventForTenant(TENANT_ID));
+    sendCapabilityEvent(CURRENT_TENANT);
 
-    // then: filter is consulted for both messages
-    await().untilAsserted(() -> verify(tenantEntitlementClient, times(2)).lookupTenantsByModuleId(anyString()));
-
-    // and: only the enabled tenant's message is processed — 5 capabilities are created
-    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(5))));
+    await().atMost(FIVE_SECONDS).untilAsserted(() -> verifyProcessed(CURRENT_TENANT));
   }
 
-  /**
-   * Testing the case when no tenants are enabled initially (production-default FAIL strategy).
-   * Verifies that:
-   * <ul>
-   *   <li>When no tenants are enabled, the filter throws {@code TenantsAreDisabledException},
-   *       causing the message to be retried rather than silently discarded.</li>
-   *   <li>As soon as a tenant becomes enabled, the pending message is processed on the next retry.</li>
-   * </ul>
-   */
   @Test
-  void shouldRetryMessagesWhenNoTenantsEnabled_thenProcessWhenTenantBecomesEnabled() throws Exception {
-    // given: no tenants are enabled — filter throws TenantsAreDisabledException → message is retried
-    when(tenantEntitlementClient.lookupTenantsByModuleId(anyString())).thenReturn(null);
+  void shouldSkipMessageForTenantOwnedByDifferentVersion() throws Exception {
+    recreateInitializedTenant(DIFFERENT_VERSION_TENANT, true);
+    saveModuleVersion(DIFFERENT_VERSION_TENANT, DIFFERENT_MODULE_ID);
+    prepareCurrentTenant();
 
+    sendCapabilityEvent(DIFFERENT_VERSION_TENANT);
+    sendCapabilityEvent(CURRENT_TENANT);
+
+    await().atMost(FIVE_SECONDS).untilAsserted(() -> verifyProcessed(CURRENT_TENANT));
+    verifyNotProcessed(DIFFERENT_VERSION_TENANT);
+  }
+
+  @Test
+  void shouldSkipMessageForTenantWhoseSchemaPredatesMarkerTable() throws Exception {
+    recreateInitializedTenant(PRE_MARKER_TENANT, false);
+    prepareCurrentTenant();
+
+    sendCapabilityEvent(PRE_MARKER_TENANT);
+    sendCapabilityEvent(CURRENT_TENANT);
+
+    await().atMost(FIVE_SECONDS).untilAsserted(() -> verifyProcessed(CURRENT_TENANT));
+    verifyNotProcessed(PRE_MARKER_TENANT);
+  }
+
+  private void prepareCurrentTenant() {
+    recreateInitializedTenant(CURRENT_TENANT, true);
+    saveModuleVersion(CURRENT_TENANT, CURRENT_MODULE_ID);
+  }
+
+  private void saveModuleVersion(String tenant, String moduleId) {
+    var headers = Map.<String, Collection<String>>of(TENANT, List.of(tenant));
+    try (var ignored = new FolioExecutionContextSetter(folioModuleMetadata, headers)) {
+      repository.saveModuleVersion(moduleId);
+    }
+  }
+
+  private void sendCapabilityEvent(String tenant) throws Exception {
     var event = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
-
-    // when: a message is sent while no tenant is enabled
-    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, event);
-
-    // then: the filter is called more than once — proves the message is being retried, not discarded
-    await().untilAsserted(() -> verify(tenantEntitlementClient, atLeast(3)).lookupTenantsByModuleId(anyString()));
-
-    // and: no capabilities created while retrying
-    doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(0)));
-
-    // when: tenant becomes enabled
-    when(tenantEntitlementClient.lookupTenantsByModuleId(anyString())).thenReturn(Set.of(TENANT_ID));
-
-    // then: the pending message is processed on the next retry — capabilities are created
-    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(5))));
+    event.setTenant(tenant);
+    var producerRecord = new ProducerRecord<String, Object>(FOLIO_IT_CAPABILITIES_TOPIC, event);
+    producerRecord.headers().add(TENANT, tenant.getBytes(UTF_8));
+    kafkaTemplate.send(producerRecord).get();
   }
 
-  /**
-   * Testing the case when messages for enabled and disabled tenants are interleaved in the topic.
-   * Verifies that when the topic contains messages for multiple tenants:
-   * <ul>
-   *   <li>Messages for tenants not in the enabled set are filtered out.</li>
-   *   <li>Messages for the single enabled tenant are processed.</li>
-   *   <li>The total count of processed capabilities reflects only the enabled tenant's events.</li>
-   * </ul>
-   */
-  @Test
-  void shouldFilterMessagesForNonEnabledTenants_whileProcessingForEnabledTenant() {
-    // given: TENANT_ID is enabled; DISABLED_TENANT is not
-    when(tenantEntitlementClient.lookupTenantsByModuleId(anyString())).thenReturn(Set.of(TENANT_ID));
-
-    // when: three messages are sent — two for a disabled tenant, one for the enabled tenant
-    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, eventForTenant(DISABLED_TENANT));
-    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, eventForTenant(DISABLED_TENANT));
-    kafkaTemplate.send(FOLIO_IT_CAPABILITIES_TOPIC, eventForTenant(TENANT_ID));
-
-    // then: filter is consulted for all three messages
-    await().untilAsserted(() -> verify(tenantEntitlementClient, times(3)).lookupTenantsByModuleId(anyString()));
-
-    // and: only the enabled tenant's message produces capabilities
-    await().untilAsserted(() -> doGet("/capabilities").andExpect(jsonPath("$.totalRecords", is(5))));
+  private void verifyProcessed(String tenant) {
+    verify(capabilityKafkaEventHandler).handleEvent(argThat(event -> tenant.equals(event.getTenant())));
   }
 
-  private ResourceEvent<?> eventForTenant(String tenant) {
-    var base = readValue("json/kafka-events/be-capability-event.json", ResourceEvent.class);
-    return ResourceEvent.baseBuilder()
-      .type(base.getType())
-      .tenant(tenant)
-      .resourceName(base.getResourceName())
-      .newValue(base.getNewValue())
-      .build();
+  private void verifyNotProcessed(String tenant) {
+    verify(capabilityKafkaEventHandler, never()).handleEvent(argThat(event -> tenant.equals(event.getTenant())));
+  }
+
+  @SuppressWarnings("java:S2077") // Test schemas are derived exclusively from constants in this class.
+  private void recreateInitializedTenant(String tenant, boolean createMarkerTable) {
+    var schema = schema(tenant);
+    dropSchema(tenant);
+    jdbcOperations.execute("CREATE SCHEMA \"%s\"".formatted(schema));
+    jdbcOperations.execute("CREATE TABLE \"%s\".role (id INTEGER PRIMARY KEY)".formatted(schema));
+    if (createMarkerTable) {
+      jdbcOperations.execute("""
+        CREATE TABLE "%s".tenant_module_version (
+          id INTEGER PRIMARY KEY,
+          module_id VARCHAR(255) NOT NULL,
+          updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+        )
+        """.formatted(schema));
+    }
+  }
+
+  @SuppressWarnings("java:S2077") // Test schemas are derived exclusively from constants in this class.
+  private void dropSchema(String tenant) {
+    jdbcOperations.execute("DROP SCHEMA IF EXISTS \"%s\" CASCADE".formatted(schema(tenant)));
+  }
+
+  private static String schema(String tenant) {
+    return tenant + "_mod_roles_keycloak";
   }
 }
