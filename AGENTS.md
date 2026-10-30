@@ -1,65 +1,34 @@
 # mod-roles-keycloak
 
-FOLIO Spring Boot 4 service (Java 21) managing roles, capabilities, policies, and permission migrations in the Eureka authorization model. Proxies role/policy management to Keycloak; stores metadata in Postgres; handles async migration of legacy FOLIO permissions to the roles model.
+FOLIO service (Java 21, Spring Boot) managing roles, capabilities, policies, and permission migrations in the Eureka authorization model. Proxies role/policy management to Keycloak; stores metadata in Postgres; handles async migration of legacy FOLIO permissions to the roles model.
 
 ## Build & Test
 
 ```bash
 mvn package -DskipTests        # build, skip tests
 mvn test                       # unit tests (@UnitTest)
-mvn test -Dtest=RoleServiceTest#positive_singleRole   # single unit test
-mvn verify                     # unit + integration (@IntegrationTest, profile `it`)
-mvn verify -Dit.test=RoleKeycloakIT#createRole_positive   # single IT
-mvn verify -Pcoverage          # JaCoCo 80% instruction min
+mvn test -Dtest='RoleServiceTest$Create#positive_singleRole'   # single unit test (@Nested class; single quotes keep the $)
+mvn verify                     # unit + integration (@IntegrationTest; `it` Spring profile comes from BaseIntegrationTest)
+mvn verify -Dit.test=RoleKeycloakIT#createRole_positive -Dtest=SkipSurefire -Dsurefire.failIfNoSpecifiedTests=false   # single IT, skips unit tests
+mvn verify -Pcoverage          # JaCoCo report; the 80% instruction rule does not fail the build
 mvn test -Dcheckstyle.skip=true        # skip checkstyle while developing
 mvn generate-sources           # regenerate OpenAPI sources
 ```
 
-Checkstyle: `folio-checkstyle/checkstyle.xml` + suppressions in `checkstyle/checkstyle-suppressions.xml`; max 20 violations before build fails.
+## Style
 
-## Architecture
+Match the repository's existing style: use maintained implementations and tests as templates for new code, and keep the structure, naming, and conventions of neighboring files. Mockito strict stubbing is enforced (`@MockitoSettings(strictness = LENIENT)` forbidden); name tests `methodName_positive_scenario` / `methodName_negative_scenario`, and inside a `@Nested` class named after the method, drop the method name (`positive_scenario`).
 
-**Request flow**:
-```
-HTTP → Controller (OpenAPI-generated interface) → Service → Repository (Postgres/JPA) + KeycloakXxxService (Keycloak Admin API)
-Kafka (capability events) → KafkaMessageListener → CapabilityKafkaEventHandler → Capability(Set)Service → Repository + KeycloakAuthorizationService
-Tenant lifecycle (/_/tenant) → CustomTenantService → Liquibase + ReferenceDataLoader + LoadableRoleService + CapabilitiesMergeService
-```
+## Pitfalls
 
-**Patterns**:
-- **Dual-write**: every mutation writes Postgres + Keycloak; failures trigger compensating rollback.
-- **OpenAPI-first**: interfaces generated from `src/main/resources/swagger.api/mod-roles-keycloak.yaml`; DTOs in `domain.dto` (generated, do not edit).
-- **CQL**: paginated list endpoints support FOLIO CQL via `BaseCqlJpaRepository`.
-- **Caching**: Caffeine for Keycloak data + user permissions; evicted via Spring app events on mutations.
-- **Kafka retry**: capability events retry infinitely at 1s intervals by default.
-
-**Package map**:
-| Package | Role |
-|---|---|
-| `controller/` | 14 REST controllers + global `ApiExceptionHandler` |
-| `domain/entity/` | JPA entities (composite keys in `key/`, migration in `migration/`) |
-| `domain/dto/` | **Generated — do not edit** |
-| `domain/model/` | internal models (`PageResult`, domain events) |
-| `integration/kafka/` | Kafka listener + capability event pipeline |
-| `integration/keyclock/` | Keycloak Admin client wrappers (roles, policies, permissions, users, realms) |
-| `integration/permissions/` | HTTP client to `mod-permissions` |
-| `mapper/` | MapStruct mappers |
-| `repository/` | JPA repos; `BaseCqlJpaRepository` adds CQL |
-| `service/capability/` | capability + set CRUD, role/user assignments, permission cache |
-| `service/migration/` | async permission-migration job |
-| `service/role/` | `RoleService` (dual-write), `UserRoleService`, `RoleEntityService` |
-| `service/reference/`, `service/loadablerole/` | JSON reference + loadable roles on tenant init |
-| `configuration/` | caches, JPA auditing, Keycloak client, key generators |
-
-## Codegen & DB
-
-- Do not edit `domain/dto/` or `rest/resource/` — generated from the OpenAPI spec at `generate-sources`.
-- Liquibase `src/main/resources/changelog/changelog-master.xml` (40+ changesets); always add new changesets, never modify existing.
+- **Dual-write is not uniform**: `RoleService` and `RoleMigrationService` undo Keycloak writes on failure; other services rely on the Postgres rollback only. Capability updates and deletions reach Keycloak after commit, via `@TransactionalEventListener` handlers; do not expect an in-transaction rollback of Keycloak there.
+- **Kafka retry is selective**: capability events retry only for migration-in-progress errors and unique-constraint violations; every other error goes straight to the recoverer (`KafkaConfiguration`). Do not tune a retry mechanism for the other cases.
+- **Keycloak caches expire by TTL only** (`CacheConfig`): a change made directly in Keycloak can stay hidden until the TTL ends. Only `user-permissions` is actively evicted on mutations (`UserPermissionsCacheEvictor`).
+- Do not edit `domain/dto/` or `rest/resource/`; both are generated from the OpenAPI spec at `generate-sources`.
+- Liquibase `src/main/resources/changelog/changelog-master.xml`: always add new changesets, never modify existing ones.
+- Paginated list endpoints support FOLIO CQL via `BaseCqlJpaRepository`.
 
 ## Testing
 
-JUnit 5 + Mockito. `@UnitTest` → `mvn test` (Surefire); `@IntegrationTest` → `mvn verify` (Failsafe, profile `it`).
-- **Unit**: `@ExtendWith(MockitoExtension.class)`, `@Mock`/`@InjectMocks`; strict stubbing enforced (`@MockitoSettings(strictness=LENIENT)` forbidden); name `methodName_scenario_expectedBehavior`.
-- **Repository IT**: extend `BaseRepositoryTest` (`@DataJpaTest` + Testcontainers Postgres).
-- **Full IT**: extend `BaseIntegrationTest` (full context + Kafka + Postgres + WireMock + Keycloak TLS).
-- Support utilities in `src/test/java/.../support/`.
+- Repository ITs extend `BaseRepositoryTest` (`@DataJpaTest` + Testcontainers Postgres); full ITs extend `BaseIntegrationTest` (full context + Kafka + Postgres + WireMock + Keycloak TLS).
+- Support utilities live in `src/test/java/.../support/`.
