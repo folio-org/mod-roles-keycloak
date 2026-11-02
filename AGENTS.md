@@ -15,16 +15,41 @@ mvn test -Dcheckstyle.skip=true        # skip checkstyle while developing
 mvn generate-sources           # regenerate OpenAPI sources
 ```
 
-Checkstyle: `folio-checkstyle/checkstyle.xml` + suppressions in `checkstyle/checkstyle-suppressions.xml`; max 20 violations before build fails.
+Checkstyle: `folio-checkstyle/checkstyle.xml` from the `folio-java-checkstyle` artifact, local overrides in `checkstyle/checkstyle-checker.properties`, suppressions in `checkstyle/checkstyle-suppressions.xml`; max 20 violations before build fails.
 
 ## Architecture
+
+**Request flow**:
+```
+HTTP → Controller (OpenAPI-generated interface) → Service → Repository (Postgres/JPA) + KeycloakXxxService (Keycloak Admin API)
+Kafka (capability events) → KafkaMessageListener → CapabilityKafkaEventHandler → Capability(Set)Service → Repository + KeycloakAuthorizationService
+Tenant lifecycle (/_/tenant) → CustomTenantService → Liquibase + ReferenceDataLoader + LoadableRoleService + CapabilitiesMergeService
+```
 
 **Patterns**:
 - **Dual-write**: mutations write Postgres + Keycloak.
 - **OpenAPI-first**: interfaces generated from `src/main/resources/swagger.api/mod-roles-keycloak.yaml`; DTOs in `domain.dto` (generated, do not edit).
 - **CQL**: paginated list endpoints support FOLIO CQL via `BaseCqlJpaRepository`.
-- **Caching**: Caffeine for Keycloak data + user permissions; `user-permissions` is evicted via Spring app events after commit, Keycloak caches expire by TTL (`CacheConfig`).
+- **Caching**: Caffeine for Keycloak data + user permissions, with TTL (`CacheConfig`); `user-permissions` is evicted via Spring app events after commit.
 - **Kafka retry**: capability events retry (by default every 1s, no practical limit) only on tenant-migration errors and unique-constraint violations; other errors are not retried (`KafkaConfiguration`).
+
+**Package map**:
+| Package | Role |
+|---|---|
+| `controller/` | REST controllers + global `ApiExceptionHandler` |
+| `domain/entity/` | JPA entities (composite keys in `key/`, migration in `migration/`) |
+| `domain/dto/` | **Generated — do not edit** |
+| `domain/model/` | internal models (`PageResult`, domain events) |
+| `integration/kafka/` | Kafka listener + capability event pipeline |
+| `integration/keyclock/` | Keycloak Admin client wrappers (roles, policies, permissions, users, realms); the package name is spelled `keyclock` |
+| `integration/permissions/` | HTTP client to `mod-permissions` |
+| `mapper/` | MapStruct mappers |
+| `repository/` | JPA repos; `BaseCqlJpaRepository` adds CQL |
+| `service/capability/` | capability + set CRUD, role/user assignments, permission cache |
+| `service/migration/` | async permission-migration job |
+| `service/role/` | `RoleService`, `UserRoleService`, `RoleEntityService` |
+| `service/reference/`, `service/loadablerole/` | JSON reference + loadable roles on tenant init |
+| `configuration/` | caches, JPA auditing, Keycloak client, key generators |
 
 ## Codegen & DB
 
