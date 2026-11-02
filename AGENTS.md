@@ -1,6 +1,6 @@
 # mod-roles-keycloak
 
-FOLIO Spring Boot service managing roles, capabilities, policies, and permission migrations in the Eureka authorization model. Proxies role/policy management to Keycloak; stores metadata in Postgres; handles async migration of legacy FOLIO permissions to the roles model.
+FOLIO Java/Spring Boot service managing roles, capabilities, policies, and permission migrations in the Eureka authorization model. Proxies role/policy management to Keycloak; stores metadata in PostgreSQL (Liquibase); consumes capability events from Kafka; handles async migration of legacy FOLIO permissions to the roles model.
 
 ## Build & Test
 
