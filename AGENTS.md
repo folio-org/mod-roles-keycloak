@@ -32,24 +32,8 @@ Tenant lifecycle (/_/tenant) → CustomTenantService → Liquibase + ReferenceDa
 - **CQL**: paginated list endpoints support FOLIO CQL via `BaseCqlJpaRepository`.
 - **Caching**: Caffeine for Keycloak data + user permissions, with TTL (`CacheConfig`); `user-permissions` is evicted via Spring app events after commit.
 - **Kafka retry**: capability events retry (by default every 1s, no practical limit) only on tenant-migration errors and unique-constraint violations; other errors are not retried (`KafkaConfiguration`).
-
-**Package map**:
-| Package | Role |
-|---|---|
-| `controller/` | REST controllers + global `ApiExceptionHandler` |
-| `domain/entity/` | JPA entities (composite keys in `key/`, migration in `migration/`) |
-| `domain/dto/` | **Generated — do not edit** |
-| `domain/model/` | internal models (`PageResult`, domain events) |
-| `integration/kafka/` | Kafka listener + capability event pipeline |
-| `integration/keyclock/` | Keycloak Admin client wrappers (roles, policies, permissions, users, realms); the package name is spelled `keyclock` |
-| `integration/permissions/` | HTTP client to `mod-permissions` |
-| `mapper/` | MapStruct mappers |
-| `repository/` | JPA repos; `BaseCqlJpaRepository` adds CQL |
-| `service/capability/` | capability + set CRUD, role/user assignments, permission cache |
-| `service/migration/` | async permission-migration job |
-| `service/role/` | `RoleService`, `UserRoleService`, `RoleEntityService` |
-| `service/reference/`, `service/loadablerole/` | JSON reference + loadable roles on tenant init |
-| `configuration/` | caches, JPA auditing, Keycloak client, key generators |
+- **Permission migration**: the async migration job loads users' legacy permissions from `mod-permissions` (`UserPermissionsLoader`).
+- **Keycloak wrappers** live in `integration/keyclock/` (the package name is spelled `keyclock`).
 
 ## Codegen & DB
 
