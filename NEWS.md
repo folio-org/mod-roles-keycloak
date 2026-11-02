@@ -1,3 +1,6 @@
+## Version `v4.0.6` (02.11.2026)
+* Add DeployConfig.json to mod-roles-keycloak (ADR-0013 Configuration Management) (MODROLESKC-433)
+
 ## Version `v4.0.5` (16.10.2026)
 * Upgrade Spring Boot to 4.1.1 version (MODROLESKC-436)
 
