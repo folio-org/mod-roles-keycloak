@@ -20,7 +20,7 @@ Checkstyle: `folio-checkstyle/checkstyle.xml` + suppressions in `checkstyle/chec
 ## Architecture
 
 **Patterns**:
-- **Dual-write**: mutations write Postgres + Keycloak. Only `RoleService` and `RoleMigrationService` compensate Keycloak writes on failure; other services call Keycloak inside the database transaction, so a failure rolls back only the database.
+- **Dual-write**: mutations write Postgres + Keycloak.
 - **OpenAPI-first**: interfaces generated from `src/main/resources/swagger.api/mod-roles-keycloak.yaml`; DTOs in `domain.dto` (generated, do not edit).
 - **CQL**: paginated list endpoints support FOLIO CQL via `BaseCqlJpaRepository`.
 - **Caching**: Caffeine for Keycloak data + user permissions; `user-permissions` is evicted via Spring app events after commit, Keycloak caches expire by TTL (`CacheConfig`).
