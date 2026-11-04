@@ -45,7 +45,7 @@ server:
   port: 8081
   compression:
     enabled: true
-    mime-types: text/html,text/plain,text/css,application/javascript,application/json
+    mime-types: application/json
 
 okapi:
   url: ${OKAPI_URL:http://localhost:9130}
