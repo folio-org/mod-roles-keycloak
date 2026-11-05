@@ -15,6 +15,7 @@
 * Serialize loadable-role capability assignments to prevent concurrent entitlement from losing system-user permissions (MODROLESKC-414)
 * Add marker-table-based Kafka tenant filtering for mixed-version deployments (MODROLESKC-438)
 * Add DeployConfig.json to mod-roles-keycloak (ADR-0013 Configuration Management) (MODROLESKC-433)
+* Enable gzip compression for JSON responses
 
 ## Version `v4.0.0` (16.04.2025)
 * Added endpoint to create or update default roles via REST API (MODROLESKC-301)
