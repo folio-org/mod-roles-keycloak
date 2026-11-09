@@ -25,6 +25,8 @@ public class RoleUtils {
   public static final String ROLE_NAME_3 = "role3";
   public static final String ROLE_DESCRIPTION_3 = "role3_description";
 
+  public static final String ROLE_DESCRIPTION_LONGER_255 = "a".repeat(256);
+
   public static Role role() {
     var role = new Role();
     role.setId(ROLE_ID);
@@ -49,6 +51,13 @@ public class RoleUtils {
     role.setName(ROLE_NAME_3);
     role.setDescription(ROLE_DESCRIPTION_3);
     role.setType(RoleType.DEFAULT);
+    return role;
+  }
+
+  public static Role roleWithDescriptionLongerThan255() {
+    var role = new Role();
+    role.setName(ROLE_NAME_3);
+    role.setDescription(ROLE_DESCRIPTION_LONGER_255);
     return role;
   }
 

@@ -1,6 +1,7 @@
 package org.folio.roles.service.role;
 
 import static java.util.Collections.emptyList;
+import static java.util.Objects.nonNull;
 import static org.folio.common.utils.CollectionUtils.mapItems;
 import static org.folio.roles.domain.dto.PolicyType.ROLE;
 import static org.folio.roles.service.role.RolePolicyNameProvider.getPermissionNameGenerator;
@@ -37,6 +38,8 @@ import org.springframework.util.Assert;
 @Service
 @RequiredArgsConstructor
 public class RoleService {
+
+  private static final int MAX_LENGTH_OF_DESCRIPTION = 255;
 
   private final KeycloakRoleService keycloakService;
   private final KeycloakRolesUserService keycloakRolesUserService;
@@ -100,6 +103,7 @@ public class RoleService {
   @Transactional
   public Role create(Role role) {
     checkIfRoleHasDefaultType(role);
+    checkMaxLengthOfDescription(role);
     var createdRole = keycloakService.create(role);
     try {
       createdRole.setType(role.getType());
@@ -275,6 +279,13 @@ public class RoleService {
       log.debug("Default role cannot be created, updated or deleted via roles API: id = {}, name = {}", role.getId(),
         role.getName());
       throw new IllegalArgumentException("Default role cannot be created, updated or deleted via roles API.");
+    }
+  }
+
+  private static void checkMaxLengthOfDescription(Role role) {
+    var description = role.getDescription();
+    if (nonNull(description) && description.length() > MAX_LENGTH_OF_DESCRIPTION) {
+      throw new IllegalArgumentException("Description cannot be longer than 255 characters.");
     }
   }
 

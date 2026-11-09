@@ -9,18 +9,7 @@ import static org.folio.roles.domain.dto.RoleType.DEFAULT;
 import static org.folio.roles.domain.dto.RoleType.REGULAR;
 import static org.folio.roles.support.EndpointUtils.endpoint;
 import static org.folio.roles.support.PolicyUtils.rolePolicy;
-import static org.folio.roles.support.RoleUtils.ROLE_DESCRIPTION;
-import static org.folio.roles.support.RoleUtils.ROLE_DESCRIPTION_2;
-import static org.folio.roles.support.RoleUtils.ROLE_DESCRIPTION_3;
-import static org.folio.roles.support.RoleUtils.ROLE_ID;
-import static org.folio.roles.support.RoleUtils.ROLE_ID_2;
-import static org.folio.roles.support.RoleUtils.ROLE_ID_3;
-import static org.folio.roles.support.RoleUtils.ROLE_NAME;
-import static org.folio.roles.support.RoleUtils.ROLE_NAME_2;
-import static org.folio.roles.support.RoleUtils.ROLE_NAME_3;
-import static org.folio.roles.support.RoleUtils.consortiumRole;
-import static org.folio.roles.support.RoleUtils.defaultRole;
-import static org.folio.roles.support.RoleUtils.role;
+import static org.folio.roles.support.RoleUtils.*;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -155,6 +144,18 @@ class RoleServiceTest {
       assertThatThrownBy(() -> facade.create(defaultRole))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Default role cannot be created, updated or deleted via roles API.");
+
+      verifyNoInteractions(keycloakService);
+      verifyNoInteractions(entityService);
+    }
+
+    @Test
+    void negative_cannotCreateRoleWithDescriptionLongerThan255() {
+      var roleWithLongDescription = roleWithDescriptionLongerThan255();
+
+      assertThatThrownBy(() -> facade.create(roleWithLongDescription))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Description cannot be longer than 255 characters.");
 
       verifyNoInteractions(keycloakService);
       verifyNoInteractions(entityService);
