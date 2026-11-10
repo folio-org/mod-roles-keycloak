@@ -21,6 +21,7 @@ import static org.folio.roles.support.RoleUtils.ROLE_NAME_3;
 import static org.folio.roles.support.RoleUtils.consortiumRole;
 import static org.folio.roles.support.RoleUtils.defaultRole;
 import static org.folio.roles.support.RoleUtils.role;
+import static org.folio.roles.support.RoleUtils.roleWithDescriptionLongerThan255;
 import static org.folio.roles.support.TestConstants.USER_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -155,6 +156,18 @@ class RoleServiceTest {
       assertThatThrownBy(() -> facade.create(defaultRole))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Default role cannot be created, updated or deleted via roles API.");
+
+      verifyNoInteractions(keycloakService);
+      verifyNoInteractions(entityService);
+    }
+
+    @Test
+    void negative_cannotCreateRoleWithDescriptionLongerThan255() {
+      var roleWithLongDescription = roleWithDescriptionLongerThan255();
+
+      assertThatThrownBy(() -> facade.create(roleWithLongDescription))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Description cannot be longer than 255 characters.");
 
       verifyNoInteractions(keycloakService);
       verifyNoInteractions(entityService);
