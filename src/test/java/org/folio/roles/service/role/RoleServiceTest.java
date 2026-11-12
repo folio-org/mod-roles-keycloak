@@ -174,6 +174,18 @@ class RoleServiceTest {
     }
 
     @Test
+    void negative_cannotUpdateRoleWithDescriptionLongerThan255() {
+      var roleWithLongDescription = roleWithDescriptionLongerThan255();
+
+      assertThatThrownBy(() -> facade.update(roleWithLongDescription))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Description cannot be longer than 255 characters.");
+
+      verifyNoInteractions(keycloakService);
+      verifyNoInteractions(entityService);
+    }
+
+    @Test
     void createRole_withNullDescription_positive() {
       var role = role();
       role.setDescription(null);
@@ -282,14 +294,11 @@ class RoleServiceTest {
 
     @Test
     void negative_cannotChangeRoleTypeFromRegularToDefault() {
-      var existingRole = role();
       var updatedRole = new Role()
         .id(ROLE_ID)
         .name(ROLE_NAME)
         .description(ROLE_DESCRIPTION)
         .type(DEFAULT);
-
-      when(entityService.getById(ROLE_ID)).thenReturn(existingRole);
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
@@ -300,14 +309,11 @@ class RoleServiceTest {
 
     @Test
     void negative_cannotChangeRoleTypeFromConsortiumToDefault() {
-      var existingRole = consortiumRole();
       var updatedRole = new Role()
         .id(ROLE_ID_2)
         .name(ROLE_NAME_2)
         .description(ROLE_DESCRIPTION_2)
         .type(DEFAULT);
-
-      when(entityService.getById(ROLE_ID_2)).thenReturn(existingRole);
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
@@ -388,14 +394,11 @@ class RoleServiceTest {
     @Test
     void negative_cannotChangeTypeFromRegularToDefaultWithDifferentFields() {
       // Validates that even when changing other fields, type cannot be changed to DEFAULT
-      var existingRole = role();
       var updatedRole = new Role()
         .id(ROLE_ID)
         .name("Completely New Name")
         .description("Completely New Description")
         .type(DEFAULT);
-
-      when(entityService.getById(ROLE_ID)).thenReturn(existingRole);
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
@@ -407,14 +410,11 @@ class RoleServiceTest {
     @Test
     void negative_cannotChangeTypeFromConsortiumToDefaultWithDifferentFields() {
       // Validates that CONSORTIUM roles also cannot be changed to DEFAULT
-      var existingRole = consortiumRole();
       var updatedRole = new Role()
         .id(ROLE_ID_2)
         .name("Completely New Name")
         .description("Completely New Description")
         .type(DEFAULT);
-
-      when(entityService.getById(ROLE_ID_2)).thenReturn(existingRole);
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)

@@ -56,6 +56,7 @@ public class RoleUtils {
 
   public static Role roleWithDescriptionLongerThan255() {
     var role = new Role();
+    role.setId(ROLE_ID_3);
     role.setName(ROLE_NAME_3);
     role.setDescription(ROLE_DESCRIPTION_LONGER_255);
     return role;
