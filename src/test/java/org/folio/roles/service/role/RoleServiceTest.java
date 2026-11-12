@@ -294,7 +294,6 @@ class RoleServiceTest {
 
     @Test
     void negative_cannotChangeRoleTypeFromRegularToDefault() {
-      var existingRole = role();
       var updatedRole = new Role()
         .id(ROLE_ID)
         .name(ROLE_NAME)
@@ -310,7 +309,6 @@ class RoleServiceTest {
 
     @Test
     void negative_cannotChangeRoleTypeFromConsortiumToDefault() {
-      var existingRole = consortiumRole();
       var updatedRole = new Role()
         .id(ROLE_ID_2)
         .name(ROLE_NAME_2)
@@ -396,7 +394,6 @@ class RoleServiceTest {
     @Test
     void negative_cannotChangeTypeFromRegularToDefaultWithDifferentFields() {
       // Validates that even when changing other fields, type cannot be changed to DEFAULT
-      var existingRole = role();
       var updatedRole = new Role()
         .id(ROLE_ID)
         .name("Completely New Name")
@@ -413,7 +410,6 @@ class RoleServiceTest {
     @Test
     void negative_cannotChangeTypeFromConsortiumToDefaultWithDifferentFields() {
       // Validates that CONSORTIUM roles also cannot be changed to DEFAULT
-      var existingRole = consortiumRole();
       var updatedRole = new Role()
         .id(ROLE_ID_2)
         .name("Completely New Name")
