@@ -301,8 +301,6 @@ class RoleServiceTest {
         .description(ROLE_DESCRIPTION)
         .type(DEFAULT);
 
-      when(entityService.getById(ROLE_ID)).thenReturn(existingRole);
-
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Default role cannot be created, updated or deleted via roles API.");
@@ -318,8 +316,6 @@ class RoleServiceTest {
         .name(ROLE_NAME_2)
         .description(ROLE_DESCRIPTION_2)
         .type(DEFAULT);
-
-      when(entityService.getById(ROLE_ID_2)).thenReturn(existingRole);
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
@@ -407,8 +403,6 @@ class RoleServiceTest {
         .description("Completely New Description")
         .type(DEFAULT);
 
-      when(entityService.getById(ROLE_ID)).thenReturn(existingRole);
-
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Default role cannot be created, updated or deleted via roles API.");
@@ -425,8 +419,6 @@ class RoleServiceTest {
         .name("Completely New Name")
         .description("Completely New Description")
         .type(DEFAULT);
-
-      when(entityService.getById(ROLE_ID_2)).thenReturn(existingRole);
 
       assertThatThrownBy(() -> facade.update(updatedRole))
         .isInstanceOf(IllegalArgumentException.class)
