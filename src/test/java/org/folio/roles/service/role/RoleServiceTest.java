@@ -174,6 +174,18 @@ class RoleServiceTest {
     }
 
     @Test
+    void negative_cannotUpdateRoleWithDescriptionLongerThan255() {
+      var roleWithLongDescription = roleWithDescriptionLongerThan255();
+
+      assertThatThrownBy(() -> facade.update(roleWithLongDescription))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Description cannot be longer than 255 characters.");
+
+      verifyNoInteractions(keycloakService);
+      verifyNoInteractions(entityService);
+    }
+
+    @Test
     void createRole_withNullDescription_positive() {
       var role = role();
       role.setDescription(null);

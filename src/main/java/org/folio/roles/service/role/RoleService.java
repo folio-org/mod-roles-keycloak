@@ -139,8 +139,9 @@ public class RoleService {
   @Transactional
   public Role update(Role role) {
     Assert.notNull(role.getId(), "Role should has ID");
-    var actualRole = entityService.getById(role.getId());
     checkIfRoleHasDefaultType(role);
+    checkMaxLengthOfDescription(role);
+    var actualRole = entityService.getById(role.getId());
     checkIfRoleHasDefaultType(actualRole);
     keycloakService.update(role);
     try {
