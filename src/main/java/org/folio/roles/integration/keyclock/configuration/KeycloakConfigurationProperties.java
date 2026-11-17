@@ -57,7 +57,6 @@ public class KeycloakConfigurationProperties {
   @Valid
   private Permissions permissions = new Permissions();
 
-
   /**
    * Containing retry configuration for Keycloak communication.
    **/
