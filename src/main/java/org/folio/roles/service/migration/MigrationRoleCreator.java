@@ -56,12 +56,12 @@ public class MigrationRoleCreator {
   public List<Role> createRoles(List<UserPermissions> userPermissions, UUID jobId) {
     var roleNames = extractUniqueRoleNames(userPermissions);
     log.info("Creating {} role(s)...", roleNames.size());
-    
+
     var roles = mapItems(roleNames, MigrationRoleCreator::createRole);
     var creationResult = roleMigrationService.createRolesSafely(roles);
-    
+
     logCreationErrors(creationResult, jobId);
-    
+
     var createdRoles = creationResult.getSuccessfulRoles();
     log.info("Roles created successfully: {} out of {} requested", createdRoles.size(), roles.size());
 
@@ -81,7 +81,7 @@ public class MigrationRoleCreator {
     }
 
     log.warn("Recording {} role creation failure(s)", result.getFailures().size());
-    
+
     for (var failure : result.getFailures()) {
       logRoleCreationError(jobId, failure.getRoleName(), failure.getFullErrorMessage());
     }
@@ -113,7 +113,7 @@ public class MigrationRoleCreator {
   private List<Role> searchAndCombineRoles(List<Role> createdRoles, List<String> missingRoleNames) {
     log.info("Searching for {} missing role(s)...", missingRoleNames.size());
     var foundRoles = searchForMissingRoles(missingRoleNames);
-    
+
     if (isEmpty(foundRoles)) {
       return createdRoles;
     }
@@ -124,11 +124,11 @@ public class MigrationRoleCreator {
 
   private List<Role> searchForMissingRoles(List<String> roleNames) {
     var foundRoles = new ArrayList<Role>();
-    
+
     for (String roleName : roleNames) {
       searchSingleRole(roleName).ifPresent(foundRoles::add);
     }
-    
+
     return foundRoles;
   }
 
@@ -159,7 +159,6 @@ public class MigrationRoleCreator {
       roleName
     );
   }
-  
 
   /**
    * Assigns users to a role from the given list of {@link UserPermissions} objects.
