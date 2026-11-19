@@ -18,6 +18,7 @@ import lombok.EqualsAndHashCode;
 import org.folio.roles.domain.entity.type.EntityCapabilityAction;
 import org.folio.roles.domain.entity.type.EntityCapabilityType;
 import org.folio.roles.repository.generators.FolioUuidGenerator;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -65,6 +66,8 @@ public class CapabilitySetEntity extends Auditable {
   @Column(name = "folio_permission")
   private String permission;
 
+  // SUBSELECT serves JPQL queries; native queries cannot use it and fall back to batch loading
+  @BatchSize(size = 100)
   @Fetch(FetchMode.SUBSELECT)
   @ElementCollection(fetch = EAGER)
   @CollectionTable(name = "capability_set_capability", joinColumns = @JoinColumn(name = "capability_set_id"))
